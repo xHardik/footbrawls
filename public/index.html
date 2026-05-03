@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Footinho.gg — World Cup 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+
+:root{
+  --ink:     #04080a;
+  --deep:    #070f0c;
+  --panel:   #0b1a14;
+  --card:    #0e1f18;
+  --card2:   #102318;
+  --rim:     rgba(255,255,255,0.06);
+  --rim2:    rgba(255,255,255,0.10);
+  --neon:    #00ff6a;
+  --neon2:   #00e25e;
+  --neon3:   #00c850;
+  --glow:    rgba(0,255,106,0.18);
+  --gold:    #f5c842;
+  --gold2:   #e6a800;
+  --amber:   #ff9500;
+  --red:     #ff3b5c;
+  --blue:    #3b82f6;
+  --white:   #eef2ee;
+  --off:     #9ab09a;
+  --dim:     #4a6454;
+
+  --f-display: 'Bebas Neue', sans-serif;
+  --f-mono:    'Space Mono', monospace;
+  --f-body:    'DM Sans', sans-serif;
+
+  --r: 4px;
+}
+
+body{
+  background:var(--ink);
+  color:var(--white);
+  font-family:var(--f-body);
+  overflow-x:hidden;
+}
+
+/* Desktop-only cursor */
+@media (pointer: fine) {
+  body { cursor: none; }
+  #cur,#cur2{
+    position:fixed;z-index:9999;
+    border-radius:50%;pointer-events:none;
+    transform:translate(-50%,-50%);
+  }
+  #cur{
+    width:8px;height:8px;
+    background:var(--neon);
+    box-shadow:0 0 12px var(--neon);
+    transition:width .15s,height .15s,background .15s,box-shadow .15s;
+  }
+  #cur2{
+    width:36px;height:36px;
+    border:1px solid rgba(0,255,106,0.35);
+    transition:width .35s cubic-bezier(.16,1,.3,1),
+               height .35s cubic-bezier(.16,1,.3,1),
+               border-color .35s;
+    backdrop-filter:invert(5%);
+  }
+  body.hovering #cur{width:4px;height:4px;background:var(--gold)}
+  body.hovering #cur2{width:56px;height:56px;border-color:rgba(245,200,66,0.5)}
+}
+@media (pointer: coarse) {
+  #cur,#cur2{display:none}
+}
+
+/* ── BACKGROUND ── */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-pitch{
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,rgba(0,200,83,.016) 0,rgba(0,200,83,.016) 80px,transparent 80px,transparent 160px);
+}
+.bg-vgrid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,255,106,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,106,.028) 1px,transparent 1px);
+  background-size:100px 100px;
+}
+.bg-spot{
+  position:absolute;top:-5%;left:50%;transform:translateX(-50%);
+  width:1400px;height:1000px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,106,.055) 0%,rgba(0,200,83,.02) 35%,transparent 65%);
+}
+.bg-trophy{
+  position:absolute;top:42%;left:50%;
+  transform:translate(-50%,-50%);
+  width:900px;height:900px;
+  background:radial-gradient(circle,rgba(245,200,66,.05) 0%,rgba(245,200,66,.01) 40%,transparent 70%);
+  animation:troGlow 5s ease-in-out infinite;
+}
+@keyframes troGlow{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+.bg-grain{
+  position:absolute;inset:-200%;width:400%;height:400%;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.02;
+  animation:grainShift .4s steps(2) infinite;
+}
+@keyframes grainShift{0%{transform:translate(0,0)}25%{transform:translate(-1%,-2%)}50%{transform:translate(2%,1%)}75%{transform:translate(-2%,2%)}100%{transform:translate(1%,-1%)}}
+
+.spark{position:absolute;bottom:-8px;border-radius:50%;background:var(--neon);animation:sparkRise linear infinite;opacity:0;}
+@keyframes sparkRise{0%{opacity:0;transform:translateY(0) scale(1)}8%{opacity:.5}90%{opacity:.1}100%{opacity:0;transform:translateY(-105vh) scale(.2)}}
+
+/* ── LAYOUT ── */
+.wrap{position:relative;z-index:10}
+
+/* ── TICKER BAR ── */
+.ticker-bar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:34px;background:var(--neon);
+  display:flex;align-items:center;overflow:hidden;
+}
+.tb-badge{
+  flex-shrink:0;background:var(--ink);color:var(--neon);
+  font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:3px;
+  padding:0 16px;height:100%;display:flex;align-items:center;gap:8px;
+}
+.live-pip{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pip 1.1s ease-in-out infinite;}
+@keyframes pip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.7)}}
+.tb-scroll{flex:1;overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 4%,black 96%,transparent)}
+.tb-inner{display:flex;gap:0;animation:tbMove 32s linear infinite;white-space:nowrap;}
+.tb-item{
+  font-family:var(--f-mono);font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--ink);padding:0 28px;display:inline-flex;align-items:center;gap:8px;
+}
+.tb-item::after{content:'●';font-size:6px;opacity:.4}
+@keyframes tbMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:34px;left:0;right:0;z-index:100;
+  height:60px;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 40px;
+  background:rgba(4,8,10,.88);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--rim);
+}
+nav::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,106,.2),transparent);
+}
+.logo{font-family:var(--f-display);font-size:28px;letter-spacing:3px;display:flex;align-items:center;gap:4px;}
+.logo-dot{color:var(--neon)}
+.logo-gg{
+  font-family:var(--f-mono);font-size:13px;font-weight:700;color:var(--gold);letter-spacing:1px;
+  background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.2);
+  padding:3px 7px;border-radius:3px;margin-left:2px;
+}
+
+/* Nav links — FIX: pointer-events none on ::before pseudo to stop hover loop */
+.nav-links{display:flex;gap:4px;align-items:center;list-style:none}
+.nav-links a{
+  font-family:var(--f-mono);font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;
+  padding:7px 16px;border-radius:var(--r);
+  transition:color .18s,background .18s;
+  position:relative;
+}
+.nav-links a:hover{color:var(--white);background:rgba(255,255,255,.05)}
+.nav-cta{
+  background:var(--neon)!important;color:var(--ink)!important;
+  font-weight:700!important;overflow:hidden;
+}
+/* FIX: pointer-events:none on shimmer so it doesn't cause hover loop */
+.nav-cta::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  transform:translateX(-100%);
+  pointer-events:none;
+}
+.nav-cta:hover::before{animation:shimmer .6s ease forwards}
+.nav-cta:hover{color:var(--ink)!important}
+@keyframes shimmer{to{transform:translateX(100%)}}
+
+/* Hamburger — mobile only */
+.nav-hamburger{
+  display:none;
+  flex-direction:column;gap:5px;
+  background:none;border:none;cursor:pointer;padding:8px;
+}
+.nav-hamburger span{display:block;width:22px;height:2px;background:var(--white);border-radius:2px;transition:all .25s;}
+.nav-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-hamburger.open span:nth-child(2){opacity:0}
+.nav-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* Mobile nav drawer */
+.nav-drawer{
+  display:none;
+  position:fixed;top:94px;left:0;right:0;z-index:99;
+  background:rgba(4,8,10,.97);
+  border-bottom:1px solid var(--rim);
+  backdrop-filter:blur(20px);
+  padding:16px 24px 24px;
+  flex-direction:column;gap:4px;
+  transform:translateY(-12px);opacity:0;
+  transition:transform .25s ease,opacity .25s ease;
+}
+.nav-drawer.open{transform:translateY(0);opacity:1}
+.nav-drawer a{
+  font-family:var(--f-mono);font-size:12px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--off);text-decoration:none;
+  padding:12px 16px;border-radius:var(--r);
+  display:block;transition:color .18s,background .18s;
+}
+.nav-drawer a:hover{color:var(--white);background:rgba(255,255,255,.05)}
+.nav-drawer .nd-cta{
+  background:var(--neon);color:var(--ink)!important;
+  font-weight:700;text-align:center;margin-top:8px;
+}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  padding:160px 60px 100px;
+  display:grid;
+  grid-template-columns:1fr 400px;
+  gap:72px;align-items:center;
+  max-width:1380px;margin:0 auto;
+  position:relative;
+}
+
+.wc-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  border:1px solid rgba(245,200,66,.25);background:rgba(245,200,66,.06);
+  padding:7px 14px;border-radius:2px;margin-bottom:24px;
+  animation:rise .7s ease both;
+}
+.wc-badge-text{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+
+.hero-h1{
+  font-family:var(--f-display);
+  font-size:clamp(64px,10vw,130px);
+  line-height:.85;letter-spacing:2px;margin-bottom:24px;
+  animation:rise .7s .08s ease both;
+}
+.h1-l1{display:block;color:var(--white)}
+.h1-l2{display:block;color:var(--neon);text-shadow:0 0 80px rgba(0,255,106,.35);position:relative;}
+.h1-l2::after{
+  content:'';position:absolute;bottom:6px;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--neon) 0%,transparent 80%);border-radius:2px;
+}
+.h1-l3{display:block;color:rgba(255,255,255,.22);font-size:.7em}
+.hero-sub{font-size:17px;color:var(--off);line-height:1.75;max-width:500px;margin-bottom:40px;animation:rise .7s .16s ease both;}
+.hero-sub strong{color:var(--white);font-weight:500}
+
+.hero-btns{display:flex;gap:12px;align-items:center;flex-wrap:wrap;animation:rise .7s .24s ease both;}
+.btn-p{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--neon);color:var(--ink);
+  font-family:var(--f-mono);font-size:13px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:14px 32px;border-radius:var(--r);border:none;
+  cursor:pointer;text-decoration:none;
+  position:relative;overflow:hidden;
+  transition:transform .18s,box-shadow .18s;
+}
+.btn-p::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+  transform:translateX(-100%);pointer-events:none;
+}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,255,106,.35)}
+.btn-p:hover::after{animation:shimmer .5s ease forwards}
+.btn-s{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--rim2);color:var(--off);background:transparent;
+  font-family:var(--f-mono);font-size:13px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:14px 24px;border-radius:var(--r);
+  cursor:pointer;text-decoration:none;transition:all .18s;
+}
+.btn-s:hover{border-color:var(--neon);color:var(--neon);background:rgba(0,255,106,.05)}
+
+.hero-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:0;margin-top:52px;
+  border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;
+  animation:rise .7s .32s ease both;
+}
+.stat{
+  padding:20px 18px;border-right:1px solid var(--rim);
+  position:relative;cursor:default;transition:background .18s;
+}
+.stat:last-child{border-right:none}
+.stat::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--neon);transform:scaleX(0);transform-origin:left;transition:transform .4s ease;
+}
+.stat:hover{background:rgba(0,255,106,.04)}
+.stat:hover::before{transform:scaleX(1)}
+.stat-val{font-family:var(--f-display);font-size:44px;color:var(--neon);line-height:1;display:block;}
+.stat-lbl{font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+
+/* ── MATCH CARD ── */
+.hero-card{animation:rise .7s .18s ease both}
+.mc{
+  background:var(--card);border:1px solid var(--rim);border-radius:6px;overflow:hidden;
+  position:relative;box-shadow:0 32px 80px rgba(0,0,0,.5);
+}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--neon),var(--gold),var(--neon));}
+.mc::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:80px;
+  background:linear-gradient(180deg,rgba(0,255,106,.03),transparent);
+  animation:scan 4s ease-in-out infinite;pointer-events:none;
+}
+@keyframes scan{0%{top:0;opacity:1}50%{top:calc(100% - 80px);opacity:.5}100%{top:0;opacity:1}}
+.mc-head{
+  padding:12px 18px;background:rgba(0,255,106,.05);border-bottom:1px solid var(--rim);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.mc-head-l{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--neon);}
+.mc-head-r{font-family:var(--f-mono);font-size:11px;color:var(--dim);letter-spacing:1px;}
+.mc-match{padding:28px 22px;display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;}
+.mc-team{text-align:center}
+.mc-flag{font-size:48px;display:block;margin-bottom:8px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+.mc-name{font-family:var(--f-display);font-size:18px;letter-spacing:2px;color:var(--white)}
+.mc-vs{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--dim);text-align:center;}
+.mc-raid{
+  margin:0 14px 0;padding:12px 14px;
+  background:rgba(255,59,92,.07);border:1px solid rgba(255,59,92,.18);border-radius:3px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.mc-raid-l{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);}
+.mc-raid-xp{font-family:var(--f-display);font-size:22px;color:var(--red);letter-spacing:1px;}
+.mc-btns{padding:14px 14px 0;display:flex;gap:8px;}
+.mcb{
+  flex:1;padding:11px 8px;
+  font-family:var(--f-mono);font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;border-radius:3px;border:none;cursor:pointer;transition:all .18s;
+}
+.mcb-1{background:var(--neon);color:var(--ink)}
+.mcb-1:hover{background:#1fff7a}
+.mcb-2{background:transparent;color:var(--gold);border:1px solid rgba(245,200,66,.22);}
+.mcb-2:hover{background:rgba(245,200,66,.1)}
+.mc-daily{padding:14px}
+.mcd-label{font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
+.mcd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mcd-item{
+  background:rgba(255,255,255,.03);border:1px solid var(--rim);border-radius:3px;
+  padding:10px 6px;text-align:center;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+}
+.mcd-item::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 120%,rgba(0,255,106,.12),transparent 65%);
+  opacity:0;transition:opacity .2s;pointer-events:none;
+}
+.mcd-item:hover::before{opacity:1}
+.mcd-item:hover{border-color:rgba(0,255,106,.25);transform:translateY(-2px)}
+.mcd-item.done{border-color:rgba(0,255,106,.3)}
+.mcd-item.done::after{content:'✓';position:absolute;top:3px;right:4px;font-size:8px;color:var(--neon);}
+.mcd-icon{font-size:18px;display:block}
+.mcd-name{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin-top:3px;line-height:1.3;}
+
+/* ── DIVIDER ── */
+.sep{height:1px;background:linear-gradient(90deg,transparent,var(--rim2) 30%,var(--rim2) 70%,transparent);margin:0 60px;}
+
+/* ── SECTIONS ── */
+.section{padding:100px 60px;max-width:1380px;margin:0 auto}
+.s-tag{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:5px;text-transform:uppercase;color:var(--neon);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.s-tag::before{content:'';width:24px;height:1px;background:var(--neon)}
+.s-h2{font-family:var(--f-display);font-size:clamp(36px,6vw,80px);line-height:.88;color:var(--white);margin-bottom:14px;}
+.s-h2 em{color:var(--neon);font-style:normal}
+.s-h2 .gold{color:var(--gold)}
+.s-sub{font-size:16px;color:var(--off);line-height:1.7;max-width:460px}
+
+/* ── GAMES ── */
+.games-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:56px;}
+.g-card{
+  background:var(--card);border:1px solid var(--rim);border-radius:var(--r);
+  padding:22px 18px;position:relative;overflow:hidden;cursor:pointer;
+  transition:border-color .2s,transform .2s,box-shadow .2s;
+}
+.g-card::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,255,106,.07),transparent 55%);
+  opacity:0;transition:opacity .25s;pointer-events:none;
+}
+.g-card:hover{border-color:rgba(0,255,106,.3);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 0 1px rgba(0,255,106,.12);}
+.g-card:hover::after{opacity:1}
+.g-card.feat{grid-column:span 2;border-color:rgba(0,255,106,.15);background:linear-gradient(135deg,rgba(0,255,106,.05),rgba(4,8,10,0));}
+.g-card.feat:hover{border-color:rgba(0,255,106,.35)}
+.gc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.gc-ico{font-size:26px}
+.gc-tag{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+.t-new{background:rgba(0,255,106,.12);color:var(--neon)}
+.t-cls{background:rgba(245,200,66,.09);color:var(--gold);border:1px solid rgba(245,200,66,.18)}
+.gc-name{font-family:var(--f-display);font-size:24px;letter-spacing:1px;color:var(--white);margin-bottom:6px;}
+.gc-desc{font-size:12px;color:var(--off);line-height:1.65}
+.gc-dur{position:absolute;bottom:14px;right:14px;font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--neon);opacity:.55;}
+
+/* ── RAIDS ── */
+.raids-wrap{padding:100px 60px;background:linear-gradient(180deg,transparent,rgba(0,255,106,.015),transparent)}
+.raid-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:56px;max-width:1380px;margin-left:auto;margin-right:auto;}
+.acts-col{display:flex;flex-direction:column;gap:3px}
+.act{display:flex;gap:0;border:1px solid var(--rim);background:var(--card);transition:border-color .2s,transform .2s;cursor:default;position:relative;overflow:hidden;}
+.act:hover{border-color:rgba(0,255,106,.28);transform:translateX(3px)}
+.act-n{width:60px;flex-shrink:0;background:rgba(0,255,106,.045);border-right:1px solid var(--rim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:18px 0;}
+.an-l{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.an-n{font-family:var(--f-display);font-size:36px;color:var(--neon);line-height:1}
+.act-b{padding:18px 22px;flex:1}
+.act-ic{font-size:22px;margin-bottom:7px;display:block}
+.act-title{font-family:var(--f-display);font-size:22px;letter-spacing:1px;color:var(--white);margin-bottom:3px;}
+.act-desc{font-size:12px;color:var(--off);line-height:1.6}
+.act-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.act-tag{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);border:1px solid var(--rim);padding:2px 7px;border-radius:2px;}
+.modes-col{display:flex;flex-direction:column;gap:10px}
+.mode{padding:22px;border-radius:var(--r);border:1px solid;position:relative;overflow:hidden;transition:transform .2s;}
+.mode:hover{transform:translateY(-2px)}
+.m-norm{background:var(--card);border-color:var(--rim)}
+.m-chal{background:linear-gradient(135deg,rgba(245,200,66,.06),rgba(4,8,10,0));border-color:rgba(245,200,66,.2);}
+.m-train{background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(4,8,10,0));border-color:rgba(59,130,246,.18);}
+.mode-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.mode-name{font-family:var(--f-display);font-size:22px;letter-spacing:1px}
+.m-norm .mode-name{color:var(--white)}.m-chal .mode-name{color:var(--gold)}.m-train .mode-name{color:var(--blue)}
+.mode-mult{font-family:var(--f-display);font-size:32px;line-height:1}
+.m-norm .mode-mult{color:rgba(255,255,255,.3)}.m-chal .mode-mult{color:var(--gold)}.m-train .mode-mult{color:rgba(59,130,246,.5)}
+.mode-badge{position:absolute;top:10px;right:10px;font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 7px;border-radius:2px;}
+.bd-md{background:rgba(245,200,66,.12);color:var(--gold)}.bd-al{background:rgba(255,255,255,.05);color:var(--dim)}.bd-pr{background:rgba(59,130,246,.1);color:var(--blue)}
+.mode-desc{font-size:12px;color:var(--off);line-height:1.65}
+
+/* ── GUILDS ── */
+.guilds-section{padding:100px 60px}
+.guild-layout{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:end;margin-bottom:48px;}
+.hp-info{background:var(--card);border:1px solid var(--rim);border-left:3px solid var(--neon);padding:22px 26px;border-radius:0 var(--r) var(--r) 0;}
+.hp-info-tag{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--neon);margin-bottom:8px;}
+.hp-info p{font-size:13px;color:var(--off);line-height:1.7}
+.hp-info-note{margin-top:12px;font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--dim);}
+.guild-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;}
+.gd{background:var(--card);border:1px solid var(--rim);border-radius:3px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.gd:hover{transform:translateY(-3px);border-color:rgba(0,255,106,.28);background:rgba(0,255,106,.04)}
+.gd.bl{border-color:rgba(0,255,106,.32);background:rgba(0,255,106,.05)}
+.gd.cu{border-color:rgba(255,59,92,.28);background:rgba(255,59,92,.04)}
+.gd-flag{font-size:22px;display:block;margin-bottom:4px;transition:transform .18s}
+.gd:hover .gd-flag{transform:scale(1.18)}
+.gd-name{font-family:var(--f-mono);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+.gd-hp{position:absolute;bottom:0;left:0;height:2px;background:var(--neon);transition:width 1.4s ease}
+.gd-st{position:absolute;top:3px;right:3px;font-size:8px}
+
+/* ── CURSE / BLESS ── */
+.irl-section{padding:100px 60px}
+.irl-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-top:52px;border-radius:var(--r);overflow:hidden;}
+.irlc{padding:40px 30px;position:relative;overflow:hidden}
+.irlc-plain{background:var(--card);border:1px solid var(--rim)}
+.irlc-curse{background:linear-gradient(145deg,rgba(255,59,92,.07),rgba(4,8,10,0));border:1px solid rgba(255,59,92,.2);}
+.irlc-bless{background:linear-gradient(145deg,rgba(0,255,106,.07),rgba(4,8,10,0));border:1px solid rgba(0,255,106,.2);}
+.irlc-bg{position:absolute;top:-16px;right:12px;font-family:var(--f-display);font-size:120px;line-height:1;opacity:.035;pointer-events:none;letter-spacing:-3px;}
+.irlc-icon{font-size:38px;margin-bottom:16px;display:block}
+.irlc-title{font-family:var(--f-display);font-size:28px;letter-spacing:1px;margin-bottom:8px;}
+.irlc-plain .irlc-title{color:var(--white)}.irlc-curse .irlc-title{color:var(--red)}.irlc-bless .irlc-title{color:var(--neon)}
+.irlc-desc{font-size:13px;color:var(--off);line-height:1.7}
+.irlc-eff{display:inline-block;margin-top:16px;font-family:var(--f-display);font-size:40px;line-height:1;}
+.irlc-curse .irlc-eff{color:var(--red)}.irlc-bless .irlc-eff{color:var(--neon)}
+
+/* ── TIERS ── */
+.tiers-section{padding:100px 60px}
+.tiers-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:52px;}
+.tc{border-radius:var(--r);padding:28px 16px;text-align:center;border:1px solid;transition:transform .25s;cursor:default;position:relative;overflow:hidden;}
+.tc:hover{transform:translateY(-5px)}
+.tc::before{content:'';position:absolute;bottom:0;left:0;right:0;height:120px;background:radial-gradient(ellipse at 50% 100%,var(--tc-clr,rgba(0,255,106,.04)),transparent 70%);}
+.tc-lurk{--tc-clr:rgba(255,255,255,.03);background:rgba(255,255,255,.015);border-color:rgba(255,255,255,.07)}
+.tc-fan{--tc-clr:rgba(59,130,246,.06);background:rgba(59,130,246,.03);border-color:rgba(59,130,246,.18)}
+.tc-vet{--tc-clr:rgba(0,255,106,.06);background:rgba(0,255,106,.03);border-color:rgba(0,255,106,.18)}
+.tc-ultra{--tc-clr:rgba(245,200,66,.07);background:rgba(245,200,66,.04);border-color:rgba(245,200,66,.25)}
+.tc-leg{--tc-clr:rgba(192,132,252,.06);background:linear-gradient(135deg,rgba(192,132,252,.05),rgba(245,200,66,.02));border-color:rgba(192,132,252,.3)}
+.tc-ico{font-size:30px;margin-bottom:12px;display:block}
+.tc-name{font-family:var(--f-display);font-size:22px;letter-spacing:1px;margin-bottom:4px}
+.tc-lurk .tc-name{color:var(--off)}.tc-fan .tc-name{color:var(--blue)}.tc-vet .tc-name{color:var(--neon)}.tc-ultra .tc-name{color:var(--gold)}.tc-leg .tc-name{color:#c084fc}
+.tc-xp{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:2px;color:var(--dim);margin-bottom:10px;}
+.tc-perk{font-size:12px;color:var(--off);line-height:1.55}
+
+/* ── CTA ── */
+.cta{padding:140px 60px;text-align:center;position:relative;}
+.cta::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 50% 50%,rgba(0,255,106,.06),transparent 70%);}
+.cta-h{font-family:var(--f-display);font-size:clamp(52px,10vw,130px);line-height:.85;color:var(--white);margin-bottom:24px;position:relative;text-shadow:0 0 120px rgba(0,255,106,.1);}
+.cta-h em{color:var(--neon);font-style:normal}
+.cta-sub{font-size:17px;color:var(--off);max-width:440px;margin:0 auto 36px;line-height:1.7}
+.cta-note{margin-top:18px;font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--dim);}
+
+/* V1 APP SHELL */
+.app-shell{padding:90px 60px;background:linear-gradient(180deg,rgba(245,200,66,.025),rgba(0,255,106,.012),transparent)}
+.app-grid{max-width:1380px;margin:42px auto 0;display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:stretch}
+.app-panel{border:1px solid var(--rim2);background:rgba(11,26,20,.74);border-radius:var(--r);padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.24)}
+.profile-strip{max-width:1380px;margin:0 auto;display:grid;grid-template-columns:1.2fr repeat(4,1fr);gap:10px}
+.metric{border:1px solid var(--rim);background:rgba(255,255,255,.025);padding:16px;border-radius:var(--r);min-height:86px}
+.metric-k{font-family:var(--f-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.metric-v{font-family:var(--f-display);font-size:34px;letter-spacing:1px;color:var(--white);line-height:1}
+.metric small{display:block;color:var(--off);font-size:12px;margin-top:7px;line-height:1.35}
+.profile-name{font-size:25px}
+.xp-bar{height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-top:12px}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--gold));width:0%;transition:width .35s}
+.panel-title{font-family:var(--f-display);font-size:30px;letter-spacing:1px;margin-bottom:8px}
+.panel-copy{color:var(--off);line-height:1.55;font-size:14px;margin-bottom:18px}
+.split-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.split-card{border:1px solid var(--rim);background:rgba(255,255,255,.025);padding:14px;border-radius:var(--r)}
+.split-card b{display:block;font-family:var(--f-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.split-card span{font-family:var(--f-display);font-size:28px;color:var(--neon)}
+.mini-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.app-btn{border:1px solid rgba(0,255,106,.28);background:rgba(0,255,106,.11);color:var(--white);font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border-radius:var(--r);padding:11px 14px;cursor:pointer}
+.app-btn.primary{background:var(--neon);color:var(--ink)}
+.app-btn.warn{border-color:rgba(245,200,66,.32);background:rgba(245,200,66,.11)}
+.app-btn:disabled{opacity:.38;cursor:not-allowed}
+.game-board{max-width:1380px;margin:26px auto 0;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.game-board .g-card{min-height:226px;display:flex;flex-direction:column}
+.game-board .gc-desc{flex:1}
+.game-state{font-family:var(--f-mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-top:10px}
+.chat-box{height:226px;border:1px solid var(--rim);background:rgba(4,8,10,.35);padding:12px;overflow:auto;margin-top:12px;border-radius:var(--r)}
+.chat-line{font-size:13px;color:var(--off);line-height:1.5;margin-bottom:10px}
+.chat-line b{color:var(--neon);font-family:var(--f-mono);font-size:11px}
+.chat-form{display:flex;gap:8px;margin-top:10px}
+.chat-form input,.modal-card input,.modal-card select{width:100%;border:1px solid var(--rim2);background:rgba(4,8,10,.72);color:var(--white);border-radius:var(--r);padding:12px;font-family:var(--f-body)}
+.chat-form button{flex:0 0 auto}
+.result-card{margin-top:14px;border:1px solid var(--rim);background:rgba(255,255,255,.025);padding:14px;border-radius:var(--r);min-height:76px;color:var(--off);font-size:14px;line-height:1.55}
+.modal-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(4,8,10,.84);backdrop-filter:blur(18px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-backdrop.open{display:flex}
+.modal-card{width:min(720px,100%);border:1px solid rgba(0,255,106,.24);background:#07110d;border-radius:var(--r);padding:26px;box-shadow:0 24px 90px rgba(0,0,0,.55)}
+.modal-title{font-family:var(--f-display);font-size:42px;letter-spacing:1px;margin-bottom:8px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.modal-note{color:var(--off);line-height:1.55;font-size:14px}
+.share-preview{max-width:100%;border:1px solid var(--rim);margin-top:14px;display:none}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--rim);padding:44px 60px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;}
+.f-logo{font-family:var(--f-display);font-size:22px;letter-spacing:3px;color:var(--neon)}
+.f-links{display:flex;gap:24px;list-style:none;flex-wrap:wrap;}
+.f-links a{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .18s;}
+.f-links a:hover{color:var(--white)}
+.f-copy{font-family:var(--f-mono);font-size:10px;letter-spacing:1px;color:var(--dim)}
+
+/* ── SCROLL REVEAL ── */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SCROLL INDICATOR ── */
+.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;animation:rise 1s 1.4s ease both;}
+.sh-label{font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--dim)}
+.sh-arrow{width:16px;height:16px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg);animation:bounce 1.6s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(5px)}}
+
+/* ════════════════════════════════════
+   MOBILE RESPONSIVE — max 768px
+   ════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Ticker */
+  .tb-badge { font-size: 9px; letter-spacing: 2px; padding: 0 10px; }
+  .tb-item { font-size: 10px; padding: 0 16px; }
+
+  /* Nav */
+  nav { padding: 0 20px; height: 56px; top: 34px; }
+  .logo { font-size: 22px; }
+  .logo-gg { font-size: 11px; padding: 2px 5px; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .nav-drawer { display: flex; }
+
+  /* Hero */
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 130px 20px 80px;
+    gap: 40px;
+    min-height: auto;
+  }
+  .hero-h1 { font-size: clamp(56px, 15vw, 80px); }
+  .hero-sub { font-size: 15px; }
+  .hero-btns { flex-direction: column; align-items: stretch; }
+  .btn-p, .btn-s { text-align: center; justify-content: center; }
+
+  /* Hero stats — 2 col on mobile */
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .stat:nth-child(2) { border-right: none; }
+  .stat:nth-child(3) { border-top: 1px solid var(--rim); }
+  .stat:nth-child(4) { border-top: 1px solid var(--rim); border-right: none; }
+  .stat-val { font-size: 36px; }
+
+  /* Match card — full width */
+  .hero-card { width: 100%; }
+  .mc-flag { font-size: 36px; }
+  .mc-name { font-size: 15px; }
+
+  /* Dividers */
+  .sep { margin: 0 20px; }
+
+  /* Sections */
+  .section { padding: 60px 20px; }
+  .raids-wrap { padding: 60px 20px; }
+  .guilds-section { padding: 60px 20px; }
+  .irl-section { padding: 60px 20px; }
+  .tiers-section { padding: 60px 20px; }
+  .cta { padding: 80px 20px; }
+  footer { padding: 36px 20px; flex-direction: column; align-items: flex-start; gap: 16px; }
+
+  /* Games grid — 1 col on mobile, no span */
+  .games-grid { grid-template-columns: 1fr; margin-top: 32px; }
+  .g-card.feat { grid-column: span 1; }
+
+  /* Raids */
+  .raid-grid { grid-template-columns: 1fr; gap: 32px; }
+
+  /* Guilds layout */
+  .guild-layout { grid-template-columns: 1fr; gap: 24px; }
+  /* Guild grid — 4 col on mobile */
+  .guild-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .gd { padding: 10px 4px; }
+  .gd-flag { font-size: 18px; }
+  .gd-name { font-size: 7px; letter-spacing: 0; }
+
+  /* IRL cards — stack on mobile */
+  .irl-cards { grid-template-columns: 1fr; gap: 8px; }
+  .irlc { padding: 28px 20px; }
+  .irlc-bg { font-size: 80px; }
+
+  /* Tiers — 2 col on mobile, 3rd centers */
+  .tiers-grid { grid-template-columns: repeat(2, 1fr); }
+  .tc-leg { grid-column: span 2; max-width: 260px; margin: 0 auto; width: 100%; }
+
+  /* CTA */
+  .cta-sub { font-size: 15px; }
+  .cta-note { font-size: 9px; letter-spacing: 2px; }
+
+  /* Hide scroll hint on mobile */
+  .scroll-hint { display: none; }
+}
+
+/* ════════════════════════════════════
+   TABLET — 769px to 1024px
+   ════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  nav { padding: 0 28px; }
+  .hero { grid-template-columns: 1fr 320px; padding: 140px 40px 80px; gap: 40px; }
+  .section { padding: 80px 40px; }
+  .raids-wrap { padding: 80px 40px; }
+  .raid-grid { padding: 0; }
+  .guilds-section { padding: 80px 40px; }
+  .guild-grid { grid-template-columns: repeat(6, 1fr); }
+  .irl-section { padding: 80px 40px; }
+  .tiers-section { padding: 80px 40px; }
+  .tiers-grid { grid-template-columns: repeat(3, 1fr); }
+  .tc-leg { grid-column: span 1; max-width: none; }
+  .games-grid { grid-template-columns: repeat(2, 1fr); }
+  .g-card.feat { grid-column: span 2; }
+  .cta { padding: 100px 40px; }
+  footer { padding: 44px 40px; }
+  .sep { margin: 0 40px; }
+}
+@media (max-width: 1024px){
+  .profile-strip,.app-grid{grid-template-columns:1fr 1fr}
+  .game-board{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width: 768px){
+  .app-shell{padding:60px 20px}
+  .profile-strip,.app-grid,.split-row,.modal-grid{grid-template-columns:1fr}
+  .game-board{grid-template-columns:1fr}
+  .modal-card{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<div class="bg">
+  <div class="bg-pitch"></div>
+  <div class="bg-vgrid"></div>
+  <div class="bg-spot"></div>
+  <div class="bg-trophy"></div>
+  <div class="bg-grain"></div>
+  <div id="sparks"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- TICKER -->
+  <div class="ticker-bar">
+    <div class="tb-badge"><div class="live-pip"></div>LIVE</div>
+    <div class="tb-scroll">
+      <div class="tb-inner" id="ticker">
+        <span class="tb-item">World Cup 2026 · June 11</span>
+        <span class="tb-item">48 country guilds · pick yours now</span>
+        <span class="tb-item">Daily games reset midnight UTC</span>
+        <span class="tb-item">Penalty Nerve · 9 zones · 1 shot</span>
+        <span class="tb-item">Challenge Raids · 2× XP on match days</span>
+        <span class="tb-item">Win IRL → Blessed · Lose IRL → Cursed</span>
+        <span class="tb-item">No login · No download · 15 games daily</span>
+        <span class="tb-item">Find a buddy · Raid a rival</span>
+        <span class="tb-item">World Cup 2026 · June 11</span>
+        <span class="tb-item">48 country guilds · pick yours now</span>
+        <span class="tb-item">Daily games reset midnight UTC</span>
+        <span class="tb-item">Penalty Nerve · 9 zones · 1 shot</span>
+        <span class="tb-item">Challenge Raids · 2× XP on match days</span>
+        <span class="tb-item">Win IRL → Blessed · Lose IRL → Cursed</span>
+        <span class="tb-item">No login · No download · 15 games daily</span>
+        <span class="tb-item">Find a buddy · Raid a rival</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">FOOTINHO<span class="logo-dot">.</span><span class="logo-gg">GG</span></div>
+    <ul class="nav-links">
+      <li><a href="#games">Games</a></li>
+      <li><a href="#raids">Raids</a></li>
+      <li><a href="#guilds">Guilds</a></li>
+      <li><a href="#cta" class="nav-cta">▶ Play Free</a></li>
+    </ul>
+    <button class="nav-hamburger" id="hamburger" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- MOBILE DRAWER -->
+  <div class="nav-drawer" id="navDrawer">
+    <a href="#games" class="nd-link">Games</a>
+    <a href="#raids" class="nd-link">Raids</a>
+    <a href="#guilds" class="nd-link">Guilds</a>
+    <a href="#cta" class="nd-cta">▶ Play Free</a>
+  </div>
+
+  <!-- HERO -->
+  <div style="position:relative">
+    <div class="hero">
+      <div>
+        <div class="wc-badge">
+          <span>🏆</span>
+          <span class="wc-badge-text">FIFA World Cup 2026 — Official Fan Arena</span>
+        </div>
+        <h1 class="hero-h1">
+          <span class="h1-l1">THE WORLD</span>
+          <span class="h1-l2">CUP</span>
+          <span class="h1-l3">ARENA</span>
+        </h1>
+        <p class="hero-sub">
+          Daily football games, <strong>country guild wars</strong>, and
+          3-act raid battles — all synced to the
+          <strong>real WC 2026 fixture list.</strong>
+          No login. No download. Just pick your country and fight.
+        </p>
+        <div class="hero-btns">
+          <a href="#cta" class="btn-p">⚽ Join Your Guild</a>
+          <a href="#games" class="btn-s">See the Games →</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-val">15+</span><span class="stat-lbl">Daily Games</span></div>
+          <div class="stat"><span class="stat-val">48</span><span class="stat-lbl">Guild Rooms</span></div>
+          <div class="stat"><span class="stat-val">3</span><span class="stat-lbl">Raid Acts</span></div>
+          <div class="stat"><span class="stat-val">0</span><span class="stat-lbl">Signups Needed</span></div>
+        </div>
+      </div>
+
+      <!-- MATCH CARD -->
+      <div class="hero-card">
+        <div class="mc">
+          <div class="mc-head">
+            <div class="mc-head-l"><div class="live-pip"></div>Match Day · Raid Available</div>
+            <div class="mc-head-r">TODAY 21:00 UTC</div>
+          </div>
+          <div class="mc-match">
+            <div class="mc-team"><span class="mc-flag">🇧🇷</span><div class="mc-name">Brazil</div></div>
+            <div class="mc-vs">VS</div>
+            <div class="mc-team"><span class="mc-flag">🇦🇷</span><div class="mc-name">Argentina</div></div>
+          </div>
+          <div style="padding:0 14px 14px">
+            <div class="mc-raid">
+              <div class="mc-raid-l"><div class="live-pip"></div>Challenge Raid Active</div>
+              <div class="mc-raid-xp">2× XP</div>
+            </div>
+          </div>
+          <div class="mc-btns">
+            <button class="mcb mcb-1">⚔️ Challenge Raid</button>
+            <button class="mcb mcb-2">🔮 Predict</button>
+          </div>
+          <div class="mc-daily">
+            <div class="mcd-label">Today's Daily Games</div>
+            <div class="mcd-grid">
+              <div class="mcd-item done"><span class="mcd-icon">👤</span><div class="mcd-name">Who Are Ya</div></div>
+              <div class="mcd-item done"><span class="mcd-icon">⚡</span><div class="mcd-name">Rapid Fire</div></div>
+              <div class="mcd-item"><span class="mcd-icon">⚽</span><div class="mcd-name">Penalty Nerve</div></div>
+              <div class="mcd-item"><span class="mcd-icon">📚</span><div class="mcd-name">Trivia</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">
+      <span class="sh-label">Scroll</span>
+      <div class="sh-arrow"></div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- V1 APP -->
+  <div class="app-shell reveal" id="app">
+    <div style="max-width:1380px;margin:0 auto">
+      <div class="s-tag">Playable V1 Skeleton</div>
+      <h2 class="s-h2">Your Guild<br><em>Starts Here.</em></h2>
+      <p class="s-sub">Local identity, daily game seed, XP caps, guild split, chat gating, and share-card generation are wired in now.</p>
+    </div>
+
+    <div class="profile-strip">
+      <div class="metric">
+        <div class="metric-k">Player</div>
+        <div class="metric-v profile-name" id="uiName">Unclaimed fan</div>
+        <small id="uiIdentity">Pick a country and support team.</small>
+      </div>
+      <div class="metric">
+        <div class="metric-k">Total XP</div>
+        <div class="metric-v" id="uiXp">0</div>
+        <div class="xp-bar"><div class="xp-fill" id="uiTierFill"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">Tier</div>
+        <div class="metric-v" id="uiTier">Lurker</div>
+        <small id="uiTierHint">50 XP unlocks chat.</small>
+      </div>
+      <div class="metric">
+        <div class="metric-k">Daily Cap</div>
+        <div class="metric-v" id="uiDaily">0/200</div>
+        <small>Hard PRD ceiling.</small>
+      </div>
+      <div class="metric">
+        <div class="metric-k">Daily Seed</div>
+        <div class="metric-v" id="uiSeed">0</div>
+        <small>Same puzzle day for everyone.</small>
+      </div>
+    </div>
+
+    <div class="app-grid">
+      <div class="app-panel">
+        <div class="panel-title">Castle HP</div>
+        <p class="panel-copy">XP earned today splits automatically: 80% to your home guild, 20% to your World Cup support team.</p>
+        <div class="split-row">
+          <div class="split-card"><b id="homeLabel">Home Guild</b><span id="homeHp">0 HP</span></div>
+          <div class="split-card"><b id="supportLabel">Support Team</b><span id="supportHp">0 HP</span></div>
+        </div>
+        <div class="mini-actions">
+          <button class="app-btn primary" id="openOnboarding">Edit Profile</button>
+          <button class="app-btn warn" id="resetToday">Reset Today</button>
+          <button class="app-btn" id="makeShare">Make Share Card</button>
+        </div>
+        <canvas id="shareCanvas" width="900" height="500" style="display:none"></canvas>
+        <img id="sharePreview" class="share-preview" alt="Generated Footinho share card">
+      </div>
+
+      <div class="app-panel">
+        <div class="panel-title">Country Room</div>
+        <p class="panel-copy">This is a local Firestore-shaped chat stub with tier gating and a client-side word filter. Swap the storage adapter for Firestore later.</p>
+        <div class="chat-box" id="chatBox"></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" maxlength="120" placeholder="Earn 50 XP to post">
+          <button class="app-btn primary" type="submit">Post</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="game-board" id="gameBoard"></div>
+    <div class="result-card" id="resultCard" style="max-width:1380px;margin-left:auto;margin-right:auto">Pick a game to earn XP. Each card can be scored once per UTC day.</div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- GAMES -->
+  <div class="section reveal" id="games">
+    <div class="s-tag">The Arcade</div>
+    <h2 class="s-h2">15 <em>Games.</em><br>Under 60 Seconds.</h2>
+    <p class="s-sub">Same puzzle every day for every fan on the planet. No login. Play, share, repeat.</p>
+    <div class="games-grid">
+      <div class="g-card feat">
+        <div class="gc-top"><span class="gc-ico">⚽</span><span class="gc-tag t-new">New</span></div>
+        <div class="gc-name">PENALTY NERVE</div>
+        <p class="gc-desc">Pick your zone — the keeper picks theirs. Simultaneously. Top corners score 85% of the time but the keeper knows that too. 5 penalties, then sudden death if you're perfect.</p>
+        <span class="gc-dur">30 SEC</span>
+      </div>
+      <div class="g-card feat">
+        <div class="gc-top"><span class="gc-ico">⚡</span><span class="gc-tag t-new">New</span></div>
+        <div class="gc-name">RAPID FIRE</div>
+        <p class="gc-desc">20 true/false football statements. 60 seconds total. Answer faster, attempt more, score higher. Most replayable game on the platform.</p>
+        <span class="gc-dur">60 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">👤</span><span class="gc-tag t-cls">Classic</span></div>
+        <div class="gc-name">WHO ARE YA?</div>
+        <p class="gc-desc">Guess the player from their silhouette. Each wrong guess reveals one more detail.</p>
+        <span class="gc-dur">45 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">🔤</span><span class="gc-tag t-cls">Classic</span></div>
+        <div class="gc-name">PLAYER WORDLE</div>
+        <p class="gc-desc">Guess the footballer from attributes — age, club, nationality, position.</p>
+        <span class="gc-dur">60 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">🎯</span><span class="gc-tag t-new">New</span></div>
+        <div class="gc-name">FIRST TOUCH</div>
+        <p class="gc-desc">Ball appears on screen. Tap it as fast as you can. Daily global reaction time leaderboard.</p>
+        <span class="gc-dur">15 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">📈</span><span class="gc-tag t-cls">Classic</span></div>
+        <div class="gc-name">HIGHER OR LOWER</div>
+        <p class="gc-desc">Is this player's market value higher or lower than the last one?</p>
+        <span class="gc-dur">40 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">🔢</span><span class="gc-tag t-new">New</span></div>
+        <div class="gc-name">SQUAD NUMBER</div>
+        <p class="gc-desc">Who wears this number for this country? Easy for #10 Brazil. Brutal for #17 Morocco.</p>
+        <span class="gc-dur">45 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">🔗</span><span class="gc-tag t-cls">Classic</span></div>
+        <div class="gc-name">TRANSFER TRAIL</div>
+        <p class="gc-desc">Connect two players through shared clubs. Shortest chain wins.</p>
+        <span class="gc-dur">60 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">📍</span><span class="gc-tag t-new">New</span></div>
+        <div class="gc-name">PASSPORT</div>
+        <p class="gc-desc">Face only, no kit. Which country? 4 flags. 8 seconds per player.</p>
+        <span class="gc-dur">40 SEC</span>
+      </div>
+      <div class="g-card">
+        <div class="gc-top"><span class="gc-ico">🔮</span><span class="gc-tag t-cls">Classic</span></div>
+        <div class="gc-name">MATCH PREDICTOR</div>
+        <p class="gc-desc">Predict today's WC results. XP multiplier for prediction streaks.</p>
+        <span class="gc-dur">30 SEC</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- RAIDS -->
+  <div class="raids-wrap reveal" id="raids">
+    <div style="max-width:1380px;margin:0 auto">
+      <div class="s-tag">The War Room</div>
+      <h2 class="s-h2">Find a Buddy.<br><em>Raid</em> a <span class="gold">Rival.</span></h2>
+      <p class="s-sub">A raid is a best-of-3 series between two 2-player duos. Three acts. Three skills. One winner.</p>
+    </div>
+    <div class="raid-grid" style="max-width:1380px;margin-top:56px">
+      <div class="acts-col">
+        <div class="act">
+          <div class="act-n"><span class="an-l">Act</span><span class="an-n">1</span></div>
+          <div class="act-b">
+            <span class="act-ic">🎲</span>
+            <div class="act-title">RANDOM GAME</div>
+            <p class="act-desc">Any solo game from the arcade, selected randomly. Same game for all 4 players. Best score from your duo counts.</p>
+            <div class="act-tags">
+              <span class="act-tag">Who Are Ya</span><span class="act-tag">Rapid Fire</span>
+              <span class="act-tag">Penalty Nerve</span><span class="act-tag">Trivia</span>
+              <span class="act-tag">+ 11 more</span>
+            </div>
+          </div>
+        </div>
+        <div class="act">
+          <div class="act-n" style="background:rgba(245,200,66,.05);border-color:rgba(245,200,66,.12)">
+            <span class="an-l">Act</span><span class="an-n" style="color:var(--gold)">2</span>
+          </div>
+          <div class="act-b">
+            <span class="act-ic">⚔️</span>
+            <div class="act-title">1v1 DUEL</div>
+            <p class="act-desc">Your top XP player vs theirs. Both pick simultaneously — no communication. Best of 5 rounds.</p>
+            <div class="act-tags">
+              <span class="act-tag">Penalty Duel</span><span class="act-tag">1v1 Dribble</span>
+              <span class="act-tag">Free Kick Wall</span><span class="act-tag">Last Man</span>
+            </div>
+          </div>
+        </div>
+        <div class="act">
+          <div class="act-n" style="background:rgba(255,59,92,.05);border-color:rgba(255,59,92,.12)">
+            <span class="an-l">Act</span><span class="an-n" style="color:var(--red)">3</span>
+          </div>
+          <div class="act-b">
+            <span class="act-ic">🌪️</span>
+            <div class="act-title">2v2 WAR</div>
+            <p class="act-desc">All 4 players simultaneously. Pick your role without talking to your buddy. Coordination without communication.</p>
+            <div class="act-tags">
+              <span class="act-tag">Counter Attack</span><span class="act-tag">Last Minute Corner</span>
+              <span class="act-tag">Press Trap</span><span class="act-tag">Overlap Run</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modes-col">
+        <div class="mode m-norm">
+          <span class="mode-badge bd-al">Always Available</span>
+          <div class="mode-top"><div class="mode-name">Normal Raid</div><div class="mode-mult">1×</div></div>
+          <p class="mode-desc">Random matchmaking against any guild, anytime. Bot fallback if no one found in 45 seconds — bot ELO scales with your guild rating.</p>
+        </div>
+        <div class="mode m-chal">
+          <span class="mode-badge bd-md">Match Day Only</span>
+          <div class="mode-top"><div class="mode-name">Challenge Raid 🔥</div><div class="mode-mult">2×</div></div>
+          <p class="mode-desc">Your country faces them IRL today. 2× XP on a win. Same consolation on a loss. Zero downside — all upside. Available automatically on match days.</p>
+        </div>
+        <div class="mode m-train">
+          <span class="mode-badge bd-pr">Practice</span>
+          <div class="mode-top"><div class="mode-name">Training Mode</div><div class="mode-mult">—</div></div>
+          <p class="mode-desc">Vs bots. No XP, no war record. Bot difficulty scales with your guild rating. Learn the games, practice all three acts, rest day activity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- GUILDS -->
+  <div class="guilds-section reveal" id="guilds">
+    <div style="max-width:1380px;margin:0 auto">
+      <div class="guild-layout">
+        <div>
+          <div class="s-tag">The 48 Guilds</div>
+          <h2 class="s-h2">Pick Your <em>Country.</em><br>Go to <span class="gold">War.</span></h2>
+          <p class="s-sub">Win IRL and your guild gets blessed. Lose IRL and you're cursed. Every real match automatically changes your guild's power.</p>
+        </div>
+        <div class="hp-info">
+          <div class="hp-info-tag">Castle HP System</div>
+          <p>Your guild's castle strength = sum of all member XP earned in the last 24 hours. Play daily games to build your walls. Castle HP affects raid outcomes — above 7,000 and you have home advantage.</p>
+          <div class="hp-info-note">Your 20% XP also boosts your WC support team's castle.</div>
+        </div>
+      </div>
+      <div class="guild-grid">
+        <div class="gd bl"><span class="gd-st">✨</span><span class="gd-flag">🇧🇷</span><span class="gd-name">Brazil</span><div class="gd-hp" style="width:92%"></div></div>
+        <div class="gd cu"><span class="gd-st">💀</span><span class="gd-flag">🇦🇷</span><span class="gd-name">Argentina</span><div class="gd-hp" style="width:38%;background:var(--red)"></div></div>
+        <div class="gd"><span class="gd-flag">🇫🇷</span><span class="gd-name">France</span><div class="gd-hp" style="width:85%"></div></div>
+        <div class="gd"><span class="gd-flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="gd-name">England</span><div class="gd-hp" style="width:71%"></div></div>
+        <div class="gd"><span class="gd-flag">🇩🇪</span><span class="gd-name">Germany</span><div class="gd-hp" style="width:64%"></div></div>
+        <div class="gd bl"><span class="gd-st">✨</span><span class="gd-flag">🇵🇹</span><span class="gd-name">Portugal</span><div class="gd-hp" style="width:88%"></div></div>
+        <div class="gd"><span class="gd-flag">🇪🇸</span><span class="gd-name">Spain</span><div class="gd-hp" style="width:76%"></div></div>
+        <div class="gd"><span class="gd-flag">🇳🇱</span><span class="gd-name">Netherlands</span><div class="gd-hp" style="width:59%"></div></div>
+        <div class="gd"><span class="gd-flag">🇲🇦</span><span class="gd-name">Morocco</span><div class="gd-hp" style="width:82%"></div></div>
+        <div class="gd cu"><span class="gd-st">💀</span><span class="gd-flag">🇯🇵</span><span class="gd-name">Japan</span><div class="gd-hp" style="width:28%;background:var(--red)"></div></div>
+        <div class="gd"><span class="gd-flag">🇺🇸</span><span class="gd-name">USA</span><div class="gd-hp" style="width:66%"></div></div>
+        <div class="gd"><span class="gd-flag">🇲🇽</span><span class="gd-name">Mexico</span><div class="gd-hp" style="width:53%"></div></div>
+        <div class="gd"><span class="gd-flag">🇭🇷</span><span class="gd-name">Croatia</span><div class="gd-hp" style="width:70%"></div></div>
+        <div class="gd"><span class="gd-flag">🇸🇳</span><span class="gd-name">Senegal</span><div class="gd-hp" style="width:61%"></div></div>
+        <div class="gd"><span class="gd-flag">🇨🇴</span><span class="gd-name">Colombia</span><div class="gd-hp" style="width:48%"></div></div>
+        <div class="gd"><span class="gd-flag">🇺🇾</span><span class="gd-name">Uruguay</span><div class="gd-hp" style="width:57%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- IRL -->
+  <div class="irl-section reveal">
+    <div style="max-width:1380px;margin:0 auto">
+      <div class="s-tag">IRL Results Matter</div>
+      <h2 class="s-h2">Win IRL → <em>Blessed.</em><br>Lose IRL → <span style="color:var(--red)">Cursed.</span></h2>
+    </div>
+    <div class="irl-cards" style="max-width:1380px;margin:16px auto 0">
+      <div class="irlc irlc-plain">
+        <div class="irlc-bg">IRL</div>
+        <span class="irlc-icon">⚽</span>
+        <div class="irlc-title">Real Match Result</div>
+        <p class="irlc-desc">Every time your WC team plays a real match, the result automatically changes your guild's status. No manual trigger needed. The tournament runs the platform.</p>
+      </div>
+      <div class="irlc irlc-curse">
+        <div class="irlc-bg">💀</div>
+        <span class="irlc-icon">💀</span>
+        <div class="irlc-title">CURSED</div>
+        <p class="irlc-desc">Your team lost tonight. Your guild is cursed for 24 hours — XP at reduced rate, castle HP drops immediately. Lift it early by winning 3 raids before the timer expires.</p>
+        <div class="irlc-eff">−50% XP</div>
+      </div>
+      <div class="irlc irlc-bless">
+        <div class="irlc-bg">✨</div>
+        <span class="irlc-icon">✨</span>
+        <div class="irlc-title">BLESSED</div>
+        <p class="irlc-desc">Your team won tonight. Your guild is blessed for 24 hours — bonus XP on everything, castle HP regenerates faster. The best time to raid your rivals.</p>
+        <div class="irlc-eff">+25% XP</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- TIERS -->
+  <div class="tiers-section reveal">
+    <div style="max-width:1380px;margin:0 auto">
+      <div class="s-tag">The Hierarchy</div>
+      <h2 class="s-h2">Earn <em>XP.</em><br>Earn Your Place.</h2>
+    </div>
+    <div class="tiers-grid" style="max-width:1380px;margin:52px auto 0">
+      <div class="tc tc-lurk"><span class="tc-ico">👀</span><div class="tc-name">Lurker</div><div class="tc-xp">0 XP</div><p class="tc-perk">Play all games. Read all rooms. No chat.</p></div>
+      <div class="tc tc-fan"><span class="tc-ico">🔵</span><div class="tc-name">Fan</div><div class="tc-xp">50 XP</div><p class="tc-perk">Post in country rooms. Blue name badge.</p></div>
+      <div class="tc tc-vet"><span class="tc-ico">🟢</span><div class="tc-name">Veteran</div><div class="tc-xp">200 XP</div><p class="tc-perk">Global chat. Join the raid buddy pool.</p></div>
+      <div class="tc tc-ultra"><span class="tc-ico">🟡</span><div class="tc-name">Ultra</div><div class="tc-xp">500 XP</div><p class="tc-perk">Gold name. Pin messages for 10 minutes.</p></div>
+      <div class="tc tc-leg"><span class="tc-ico">👑</span><div class="tc-name">Legend</div><div class="tc-xp">Top 1%</div><p class="tc-perk">Purple name. Permanent badge. Global leaderboard.</p></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta reveal" id="cta">
+    <h2 class="cta-h">JOIN THE<br><em>ARENA.</em></h2>
+    <p class="cta-sub">No sign-up. No download. Pick your country and start playing in 10 seconds. The World Cup starts June 11, 2026.</p>
+    <a href="#" class="btn-p" style="font-size:14px;padding:16px 52px;display:inline-flex">⚽ Play Now — It's Free</a>
+    <p class="cta-note">No login · No download · Works on mobile · 15 games daily</p>
+  </div>
+
+  <div class="modal-backdrop" id="onboardingModal" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+    <div class="modal-card">
+      <div class="modal-title" id="onboardingTitle">Claim Your Guild</div>
+      <p class="modal-note">No account needed. This creates a local UUID profile and stores your progress in this browser.</p>
+      <div class="modal-grid">
+        <input id="nickInput" maxlength="18" placeholder="Nickname">
+        <select id="homeSelect"></select>
+        <select id="supportSelect"></select>
+        <button class="app-btn primary" id="saveProfile">Start Playing</button>
+      </div>
+      <p class="modal-note">Your home guild receives 80% of XP. Your support team receives 20%. The PRD says no switching, but this prototype keeps editing enabled for testing.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="f-logo">FOOTINHO.GG</div>
+    <ul class="f-links">
+      <li><a href="#">Games</a></li>
+      <li><a href="#">Guilds</a></li>
+      <li><a href="#">Raids</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+    <div class="f-copy">FIFA World Cup 2026 · Built on Crickingo</div>
+  </footer>
+
+</div>
+
+<script>
+// V1 APP RUNTIME
+const APP_KEY='footinho_v1_profile';
+const TODAY_KEY='footinho_v1_day';
+const COUNTRIES=['Argentina','Australia','Belgium','Brazil','Canada','Chile','Colombia','Costa Rica','Croatia','Denmark','Ecuador','Egypt','England','France','Germany','Ghana','India','Iran','Italy','Japan','Mexico','Morocco','Netherlands','Nigeria','Norway','Pakistan','Poland','Portugal','Qatar','Saudi Arabia','Senegal','Serbia','South Africa','South Korea','Spain','Switzerland','Tunisia','Turkey','Ukraine','Uruguay','USA','Wales'];
+const WC_TEAMS=['Argentina','Brazil','Canada','Mexico','USA','France','England','Germany','Spain','Portugal','Netherlands','Belgium','Croatia','Morocco','Senegal','Japan','South Korea','Australia','Uruguay','Colombia','Ecuador','Denmark','Switzerland','Poland','Serbia','Iran','Saudi Arabia','Ghana','Tunisia','Qatar','Chile','Norway'];
+const GAMES=[
+  ['who','Who Are Ya?','Silhouette identifier','45 sec',25,'Classic'],['wordle','Player Wordle','Attribute guesser','60 sec',25,'Classic'],
+  ['higher','Higher or Lower','Stat comparison streak','40 sec',20,'Classic'],['trail','Transfer Trail','Club connection chain','60 sec',25,'Classic'],
+  ['predictor','Match Predictor','Fixture prediction card','30 sec',30,'Classic'],['bracket','Bracket Predictor','Tournament path pick','60 sec',20,'Classic'],
+  ['trivia','Daily Trivia','10 timed questions','60 sec',30,'New'],['silhouette','Silhouette','Hint reveal shadow','45 sec',25,'New'],
+  ['passport','Passport','Nationality from face','40 sec',20,'New'],['touch','First Touch','Reaction tap test','15 sec',15,'New'],
+  ['squad','Squad Number','Player from shirt','45 sec',20,'New'],['rapid','Rapid Fire','20 true or false','60 sec',30,'New'],
+  ['penalty','Penalty Nerve','9-zone penalty run','30 sec',30,'New'],['fee','Fee or Free','Transfer cost guesser','40 sec',20,'New'],
+  ['year','What Year','Guess from photo','50 sec',20,'New']
+].map(([id,name,desc,time,xp,type])=>({id,name,desc,time,xp,type}));
+const badWords=['spam','abuse','hate'];
+const todayUTC=()=>new Date().toISOString().slice(0,10);
+const seedForToday=()=>Math.floor((new Date(todayUTC()+'T00:00:00Z').getTime()-Date.UTC(2026,5,11))/86400000);
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'u-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+const hash=s=>[...s].reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0);
+const tierFor=xp=>xp>=500?['Ultra','Gold name and pins unlocked.',500,900]:xp>=200?['Veteran','Raid buddy pool unlocked.',200,500]:xp>=50?['Fan','Country room posting unlocked.',50,200]:['Lurker','50 XP unlocks chat.',0,50];
+const loadProfile=()=>{
+  const saved=localStorage.getItem(APP_KEY);
+  const profile=saved?JSON.parse(saved):{id:uuid(),nick:'',home:'',support:'',xp:0,homeXp:0,supportXp:0,chat:[]};
+  if(localStorage.getItem(TODAY_KEY)!==todayUTC()){profile.daily={date:todayUTC(),earned:0,solo:0,games:{}};localStorage.setItem(TODAY_KEY,todayUTC());}
+  profile.daily=profile.daily||{date:todayUTC(),earned:0,solo:0,games:{}};
+  return profile;
+};
+let profile=loadProfile();
+const saveProfile=()=>localStorage.setItem(APP_KEY,JSON.stringify(profile));
+const $=id=>document.getElementById(id);
+function fillSelect(select,items,placeholder){select.innerHTML='<option value="">'+placeholder+'</option>'+items.map(x=>'<option value="'+x+'">'+x+'</option>').join('');}
+function openOnboarding(){fillSelect($('homeSelect'),COUNTRIES,'Home country');fillSelect($('supportSelect'),WC_TEAMS,'WC support team');$('nickInput').value=profile.nick||'';$('homeSelect').value=profile.home||'';$('supportSelect').value=profile.support||'';$('onboardingModal').classList.add('open');}
+function closeOnboarding(){$('onboardingModal').classList.remove('open');}
+function awardXP(game){
+  if(!profile.nick){openOnboarding();return;}
+  if(profile.daily.games[game.id]){$('resultCard').textContent=game.name+' is already scored for '+todayUTC()+'. Come back after the UTC reset.';return;}
+  const remaining=Math.max(0,200-profile.daily.earned),soloRemaining=Math.max(0,150-profile.daily.solo);
+  const raw=Math.max(5,Math.min(game.xp,5+Math.abs(hash(profile.id+game.id+todayUTC()))%game.xp));
+  const earned=Math.min(raw,remaining,soloRemaining);
+  if(earned<=0){$('resultCard').textContent='Daily XP cap reached. Scoring resumes at the next UTC reset.';renderApp();return;}
+  const score=1+Math.abs(hash(game.id+profile.id+todayUTC()))%10;
+  const homeGain=Math.round(earned*.8),supportGain=earned-homeGain;
+  profile.xp+=earned;profile.homeXp+=homeGain;profile.supportXp+=supportGain;profile.daily.earned+=earned;profile.daily.solo+=earned;
+  profile.daily.games[game.id]={earned,score,at:new Date().toISOString()};
+  $('resultCard').innerHTML='<b>'+game.name+'</b> scored '+score+'/10 and earned '+earned+' XP. '+homeGain+' HP went to '+profile.home+'; '+supportGain+' HP went to '+profile.support+'.';
+  saveProfile();renderApp();
+}
+function renderGames(){
+  const board=$('gameBoard');
+  board.innerHTML=GAMES.map(g=>{const done=profile.daily.games[g.id];return '<button class="g-card" data-game="'+g.id+'"><div class="gc-top"><span class="gc-ico">'+(done?'OK':'FC')+'</span><span class="gc-tag '+(g.type==='New'?'t-new':'t-cls')+'">'+g.type+'</span></div><div class="gc-name">'+g.name.toUpperCase()+'</div><p class="gc-desc">'+g.desc+'. Daily seed '+seedForToday()+'.</p><span class="gc-dur">'+g.time+'</span><div class="game-state">'+(done?'Scored '+done.score+'/10, +'+done.earned+' XP':'Tap to play, +'+g.xp+' max XP')+'</div></button>';}).join('');
+  board.querySelectorAll('[data-game]').forEach(card=>card.addEventListener('click',()=>awardXP(GAMES.find(g=>g.id===card.dataset.game))));
+  const oldGrid=document.querySelector('#games .games-grid');
+  if(oldGrid&&!oldGrid.dataset.converted){oldGrid.dataset.converted='true';oldGrid.innerHTML=GAMES.map(g=>'<div class="g-card"><div class="gc-top"><span class="gc-ico">FC</span><span class="gc-tag '+(g.type==='New'?'t-new':'t-cls')+'">'+g.type+'</span></div><div class="gc-name">'+g.name.toUpperCase()+'</div><p class="gc-desc">'+g.desc+'. Functional version lives in the V1 skeleton above.</p><span class="gc-dur">'+g.time+'</span></div>').join('');}
+}
+function renderChat(){
+  const room=profile.home||'Global';
+  const lines=(profile.chat&&profile.chat.length?profile.chat:[{nick:'System',text:'Welcome to '+room+'. Local chat is ready for the Firestore adapter.'}]);
+  $('chatBox').innerHTML=lines.slice(-30).map(m=>'<div class="chat-line"><b>'+m.nick+'</b> '+m.text+'</div>').join('');
+  $('chatBox').scrollTop=$('chatBox').scrollHeight;$('chatInput').disabled=profile.xp<50;$('chatInput').placeholder=profile.xp<50?'Earn 50 XP to post':'Message '+room;
+}
+function renderApp(){
+  const [tier,hint,min,max]=tierFor(profile.xp);
+  $('uiName').textContent=profile.nick||'Unclaimed fan';$('uiIdentity').textContent=profile.home&&profile.support?profile.home+' guild, backing '+profile.support:'Pick a country and support team.';
+  $('uiXp').textContent=profile.xp;$('uiTier').textContent=tier;$('uiTierHint').textContent=hint;$('uiDaily').textContent=profile.daily.earned+'/200';$('uiSeed').textContent=seedForToday();
+  $('uiTierFill').style.width=Math.min(100,Math.max(0,((profile.xp-min)/(max-min))*100))+'%';
+  $('homeLabel').textContent=profile.home||'Home Guild';$('supportLabel').textContent=profile.support||'Support Team';$('homeHp').textContent=Math.min(10000,profile.homeXp)+' HP';$('supportHp').textContent=Math.min(10000,profile.supportXp)+' HP';
+  renderGames();renderChat();
+}
+function makeShareCard(){
+  if(!profile.nick){openOnboarding();return;}
+  const canvas=$('shareCanvas'),ctx=canvas.getContext('2d');ctx.fillStyle='#04080a';ctx.fillRect(0,0,900,500);ctx.fillStyle='#00ff6a';ctx.fillRect(0,0,900,14);
+  ctx.fillStyle='#f5c842';ctx.font='42px Arial';ctx.fillText('FOOTINHO.GG',52,92);ctx.fillStyle='#eef2ee';ctx.font='78px Arial';ctx.fillText(profile.nick,52,190);
+  ctx.fillStyle='#9ab09a';ctx.font='28px Arial';ctx.fillText(profile.home+' guild | backing '+profile.support,56,236);ctx.fillStyle='#00ff6a';ctx.font='92px Arial';ctx.fillText(profile.xp+' XP',56,350);
+  ctx.fillStyle='#eef2ee';ctx.font='24px Arial';ctx.fillText('Daily seed '+seedForToday()+' | '+profile.daily.earned+'/200 XP today',58,405);$('sharePreview').src=canvas.toDataURL('image/png');$('sharePreview').style.display='block';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  $('openOnboarding').addEventListener('click',openOnboarding);
+  document.querySelectorAll('.nav-cta,.cta .btn-p,.hero-btns .btn-p').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();openOnboarding();}));
+  $('saveProfile').addEventListener('click',()=>{const nick=$('nickInput').value.trim(),home=$('homeSelect').value,support=$('supportSelect').value;if(!nick||!home||!support)return;profile.nick=nick;profile.home=home;profile.support=support;saveProfile();closeOnboarding();renderApp();});
+  $('resetToday').addEventListener('click',()=>{profile.daily={date:todayUTC(),earned:0,solo:0,games:{}};saveProfile();renderApp();$('resultCard').textContent='Today was reset for testing. Total XP and castle HP were kept.';});
+  $('makeShare').addEventListener('click',makeShareCard);
+  $('chatForm').addEventListener('submit',e=>{e.preventDefault();if(profile.xp<50)return;const text=$('chatInput').value.trim();if(!text)return;if(badWords.some(w=>text.toLowerCase().includes(w))){$('resultCard').textContent='Message blocked by the prototype profanity filter.';return;}profile.chat=profile.chat||[];profile.chat.push({nick:profile.nick||'Fan',text});$('chatInput').value='';saveProfile();renderChat();});
+  renderApp();if(!profile.nick)openOnboarding();
+});
+// ── CUSTOM CURSOR (desktop only)
+if(window.matchMedia('(pointer: fine)').matches){
+  const cur=document.getElementById('cur');
+  const cur2=document.getElementById('cur2');
+  let mx=0,my=0,cx=0,cy=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX;my=e.clientY;
+    cur.style.left=mx+'px';cur.style.top=my+'px';
+  });
+  function animCur2(){
+    cx+=(mx-cx)*.14;cy+=(my-cy)*.14;
+    cur2.style.left=cx+'px';cur2.style.top=cy+'px';
+    requestAnimationFrame(animCur2);
+  }
+  animCur2();
+
+  // FIX: Use a stable set of elements that don't include pseudo-elements
+  // and use pointer-events:none on ::before/::after overlays.
+  // Attach hover listeners only to the actual element, not children,
+  // using relatedTarget check to avoid false leave events.
+  const hoverEls=document.querySelectorAll('a,button,.g-card,.gd,.tc,.act,.mode,.irlc,.mcd-item,.stat');
+  hoverEls.forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+    el.addEventListener('mouseleave',e=>{
+      // Only remove if we're not moving to another hover element
+      if(!e.relatedTarget||!e.relatedTarget.closest('a,button,.g-card,.gd,.tc,.act,.mode,.irlc,.mcd-item,.stat')){
+        document.body.classList.remove('hovering');
+      }
+    });
+  });
+}
+
+// ── HAMBURGER MENU
+const hamburger=document.getElementById('hamburger');
+const navDrawer=document.getElementById('navDrawer');
+hamburger.addEventListener('click',()=>{
+  const open=hamburger.classList.toggle('open');
+  navDrawer.classList.toggle('open',open);
+  navDrawer.style.display=open?'flex':'none';
+  // Force reflow for transition
+  if(open){ navDrawer.offsetHeight; navDrawer.style.opacity='1'; navDrawer.style.transform='translateY(0)'; }
+});
+// Close drawer on link click
+navDrawer.querySelectorAll('a').forEach(a=>{
+  a.addEventListener('click',()=>{
+    hamburger.classList.remove('open');
+    navDrawer.classList.remove('open');
+    navDrawer.style.display='none';
+  });
+});
+
+// ── GAME CARD GLOW (desktop only)
+if(window.matchMedia('(pointer: fine)').matches){
+  document.querySelectorAll('.g-card').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+      card.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+    });
+  });
+}
+
+// ── SPARKS
+const sc=document.getElementById('sparks');
+[
+  {l:'5%',d:'18s',dl:'0s',s:'2px'},{l:'14%',d:'24s',dl:'5s',s:'3px'},
+  {l:'28%',d:'16s',dl:'2s',s:'2px'},{l:'41%',d:'21s',dl:'9s',s:'2px'},
+  {l:'55%',d:'19s',dl:'4s',s:'3px'},{l:'68%',d:'15s',dl:'12s',s:'2px'},
+  {l:'79%',d:'22s',dl:'7s',s:'2px'},{l:'91%',d:'17s',dl:'14s',s:'3px'},
+].forEach(p=>{
+  const el=document.createElement('div');
+  el.className='spark';
+  el.style.cssText=`left:${p.l};width:${p.s};height:${p.s};animation-duration:${p.d};animation-delay:${p.dl}`;
+  sc.appendChild(el);
+});
+
+// ── SCROLL REVEAL
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')});
+},{threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ── STAGGER
+['.games-grid .g-card','.tiers-grid .tc','.guild-grid .gd',
+ '.acts-col .act','.modes-col .mode','.irl-cards .irlc'].forEach(sel=>{
+  document.querySelectorAll(sel).forEach((el,i)=>{
+    el.style.transitionDelay=(i*.055)+'s';
+  });
+});
+
+// ── HP BARS ANIMATE
+setTimeout(()=>{
+  document.querySelectorAll('.gd-hp').forEach(b=>{
+    const w=b.style.width;b.style.width='0%';
+    setTimeout(()=>{b.style.width=w},300);
+  });
+},600);
+
+// ── SMOOTH SCROLL
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+
+// ── INIT drawer display
+navDrawer.style.display='none';
+</script>
+</body>
+</html>

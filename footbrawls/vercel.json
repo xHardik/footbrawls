@@ -1,0 +1,14 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/midnight-reset",
+      "schedule": "0 0 * * *",
+      "comment": "Reset castle HP and expire curses at midnight UTC"
+    },
+    {
+      "path": "/api/cron/match-poller",
+      "schedule": "*/2 * * * *",
+      "comment": "Poll API-Football every 2 minutes. Internal logic decides idle/pre-match/live frequency."
+    }
+  ]
+}

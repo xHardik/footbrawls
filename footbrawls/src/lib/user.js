@@ -40,7 +40,7 @@ export function saveUserLocally(userData) {
 
 // ─── Create New User ──────────────────────────────────────────────────────────
 
-export async function createUser({ nickname, homeCountry, supportTeam }) {
+export async function createUser({ nickname, homeCountry, supportTeam , flag}) {
   const userId = generateUUID();
   const now = new Date().toISOString();
 
@@ -49,6 +49,7 @@ export async function createUser({ nickname, homeCountry, supportTeam }) {
     nickname,
     homeCountry,
     supportTeam,
+  flag,         
     totalXP: 0,
     dailyXP: 0,
     dailyXPDate: null,

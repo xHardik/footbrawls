@@ -63,6 +63,7 @@ export default function Onboarding() {
         nickname: nickname.trim(),
         homeCountry: homeCountry.code,
         supportTeam: supportTeam.code,
+          flag: homeCountry.flag,
       });
       navigate('/');
     } catch (err) {

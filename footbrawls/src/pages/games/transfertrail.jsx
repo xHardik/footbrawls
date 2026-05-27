@@ -15,8 +15,8 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { getDailyTrail, getActivePuzzleDate } from '../lib/dailySeed';
-import { awardXP } from '../lib/xpEngine';
+import { getDailyTrail, getActivePuzzleDate } from '../../lib/dailySeed.js';
+import { awardXP } from '../../lib/xpEngine.js';
 
 const MAX_STEPS = 6;
 const XP_BY_STEPS = { 1: 20, 2: 20, 3: 20, 4: 15, 5: 10, 6: 5 };

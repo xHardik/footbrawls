@@ -2,8 +2,8 @@
 // Football "Who Are Ya?" — guess the mystery WC 2026 player
 
 import { useState, useEffect, useRef } from 'react';
-import { getDailyPlayer } from '../../lib/dailySeed';
-import { awardXP } from '../../lib/xpEngine';
+import { getDailyPlayer } from '../../lib/dailySeed.js';
+import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 
 // ─── Player Database (WC 2026 players) ────────────────────────────────────────

@@ -13,11 +13,53 @@ export function getDailySeed(dateOverride = null) {
   return Math.max(0, seed); // Never negative (pre-tournament dates = day 0)
 }
 
-export function getDailyPlayer(playerList, dateOverride = null) {
+// ─── Per-game offsets ─────────────────────────────────────────────────────────
+// Prime-ish numbers so each game gets a different player every day.
+// Even if two games share the same pool, they'll never have the same answer.
+
+const GAME_OFFSETS = {
+  whoAreYa:       0,
+  wordle:         31,
+  higherLower:    67,
+  transferTrail:  113,
+  penaltyNerve:   149,
+  matchPredictor: 0,   // fixture-driven — offset unused
+};
+
+// ─── Player selection ─────────────────────────────────────────────────────────
+
+/**
+ * Returns today's player for a specific game.
+ * Pass gameId so each game gets a different answer on the same day.
+ *
+ * @param {Array}   playerList   - full players array
+ * @param {string}  gameId       - 'whoAreYa' | 'wordle' | 'higherLower' | 'transferTrail' | 'penaltyNerve'
+ * @param {string}  dateOverride - optional 'YYYY-MM-DD' for archive mode
+ */
+export function getDailyPlayer(playerList, gameId = 'whoAreYa', dateOverride = null) {
   if (!playerList?.length) return null;
   const seed = getDailySeed(dateOverride);
-  return playerList[seed % playerList.length];
+  const offset = GAME_OFFSETS[gameId] ?? 0;
+  return playerList[(seed + offset) % playerList.length];
 }
+
+/**
+ * Returns { start, end } players for Transfer Trail.
+ * 11 positions apart — prime gap ensures variety across all pool sizes.
+ *
+ * @param {Array}   playerList
+ * @param {string}  dateOverride - optional 'YYYY-MM-DD' for archive mode
+ */
+export function getDailyTrail(playerList, dateOverride = null) {
+  if (!playerList?.length) return null;
+  const seed = getDailySeed(dateOverride);
+  const offset = GAME_OFFSETS.transferTrail;
+  const start = playerList[(seed + offset) % playerList.length];
+  const end   = playerList[(seed + offset + 11) % playerList.length];
+  return { start, end };
+}
+
+// ─── Seeded random ────────────────────────────────────────────────────────────
 
 // Get a seeded random number between 0 and 1 (deterministic)
 // Use for anything that needs "random but same for everyone today"
@@ -47,14 +89,14 @@ export function getDailySelection(arr, count, dateOverride = null) {
 // ─── Score Normalisation (for Act 1 Raid fairness) ───────────────────────────
 
 const NORMALISATION_RULES = {
-  higherLower:  { fn: (s) => s,          desc: '/10 direct' },
-  rapidFire:    { fn: (s) => s / 2,      desc: '/20 → /10' },
-  squadNumber:  { fn: (s) => s * 2,      desc: '/5 → /10' },
-  passport:     { fn: (s) => s * 1.25,   desc: '/8 → /10' },
-  penaltyNerve: { fn: (s) => s * 2,      desc: '/5 → /10' },
-  whoareya:     { fn: (s) => 10 - (s * 2), desc: 'hints: 0=10, 4=2' },
-  silhouette:   { fn: (s) => 10 - (s * 2), desc: 'hints: 0=10, 4=2' },
-  dailyTrivia:  { fn: (s) => s,          desc: '/10 direct' },
+  higherLower:  { fn: (s) => s,              desc: '/10 direct' },
+  rapidFire:    { fn: (s) => s / 2,          desc: '/20 → /10' },
+  squadNumber:  { fn: (s) => s * 2,          desc: '/5 → /10' },
+  passport:     { fn: (s) => s * 1.25,       desc: '/8 → /10' },
+  penaltyNerve: { fn: (s) => s * 2,          desc: '/5 → /10' },
+  whoareya:     { fn: (s) => 10 - (s * 2),   desc: 'hints: 0=10, 4=2' },
+  silhouette:   { fn: (s) => 10 - (s * 2),   desc: 'hints: 0=10, 4=2' },
+  dailyTrivia:  { fn: (s) => s,              desc: '/10 direct' },
   wordle:       { fn: (s) => Math.max(0, 10 - s), desc: 'attempts: 1=9, 6=4' },
   firstTouch:   { fn: (s) => Math.min(10, s / 10), desc: 'reaction ms: lower=better' },
 };
@@ -91,11 +133,16 @@ export function getActivePuzzleDate() {
 
 // ─── Usage Examples ───────────────────────────────────────────────────────────
 /*
-  import { getDailyPlayer, getDailySelection, normaliseScore, getActivePuzzleDate } from './dailySeed.js';
+  import { getDailyPlayer, getDailyTrail, getDailySelection, normaliseScore, getActivePuzzleDate } from './dailySeed.js';
 
-  // Who Are Ya — today's mystery player
+  // Who Are Ya — today's mystery player (different from Wordle answer)
   const puzzleDate = getActivePuzzleDate();
-  const todaysPlayer = getDailyPlayer(allPlayers, puzzleDate);
+  const whoAreYaPlayer   = getDailyPlayer(allPlayers, 'whoAreYa', puzzleDate);
+  const wordlePlayer     = getDailyPlayer(allPlayers, 'wordle', puzzleDate);
+  const higherLowerStart = getDailyPlayer(allPlayers, 'higherLower', puzzleDate);
+
+  // Transfer Trail — start and end players guaranteed different
+  const { start, end } = getDailyTrail(allPlayers, puzzleDate);
 
   // Daily Trivia — 10 questions from pool of 500
   const todaysQuestions = getDailySelection(questionBank, 10, puzzleDate);

@@ -22,3 +22,5 @@ dist-ssr
 *.sw?
 
 serviceAccountKey.json
+.vercel
+.env*

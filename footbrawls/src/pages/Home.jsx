@@ -1,230 +1,360 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { getUser } from "../lib/user";
+import { COUNTRIES } from "../lib/countries";
+
+const DAILY_XP_CAP = 200;
+const CASTLE_HP_CAP = 10000;
 
 const C = {
-  pitch: "#060f1c", card: "#0d1a2d", card2: "#111f35",
-  border: "rgba(255,255,255,0.07)", borderHover: "rgba(255,255,255,0.14)",
-  gold: "#f0c040", goldBg: "rgba(240,192,64,0.12)", goldBorder: "rgba(240,192,64,0.28)",
-  green: "#00d48a", greenBg: "rgba(0,212,138,0.11)", greenBorder: "rgba(0,212,138,0.3)",
-  red: "#ff3d5c", blue: "#4a9eff", blueBg: "rgba(74,158,255,0.11)",
-  purple: "#8b5cf6", purpleBg: "rgba(139,92,246,0.13)", purpleBorder: "rgba(139,92,246,0.3)",
-  text: "#dde6f5", muted: "rgba(180,205,240,0.4)", muted2: "rgba(180,205,240,0.65)",
+  pitch: "#06111f",
+  panel: "#0b182a",
+  panel2: "#10223a",
+  stroke: "rgba(255,255,255,0.08)",
+  stroke2: "rgba(255,255,255,0.15)",
+  text: "#e8f1ff",
+  soft: "rgba(204,222,247,0.68)",
+  mute: "rgba(204,222,247,0.42)",
+  green: "#00d48a",
+  blue: "#4a9eff",
+  gold: "#f0c040",
+  red: "#ff4865",
+  violet: "#9a72ff",
 };
 
-const injectFonts = () => {
-  if (document.getElementById("fb-fonts")) return;
-  const link = document.createElement("link");
-  link.id = "fb-fonts"; link.rel = "stylesheet";
-  link.href = "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap";
-  document.head.appendChild(link);
-};
-
-const GAMES = [
-  { id: "whoAreYa", emoji: "👤", name: "Who Are Ya?", desc: "Silhouette + hints — guess the mystery player in 8 tries", xp: 25, done: true, color: "#8b5cf6", bg: "rgba(139,92,246,0.14)", border: "rgba(139,92,246,0.3)", route: "/games/whoareya" },
-  { id: "matchPredictor", emoji: "🔮", name: "Match Predictor", desc: "Predict result, scorer & exact scoreline before kickoff", xp: 100, done: true, color: "#4a9eff", bg: "rgba(74,158,255,0.13)", border: "rgba(74,158,255,0.3)", route: "/games/matchpredictor" },
-  { id: "penaltyNerve", emoji: "⚽", name: "Penalty Nerve", desc: "9-zone penalty vs AI keeper with today's personality", xp: 30, done: false, color: "#ff3d5c", bg: "rgba(255,61,92,0.14)", border: "rgba(255,61,92,0.3)", route: "/games/penaltynerve" },
-  { id: "wordle", emoji: "🟩", name: "Player Wordle", desc: "Guess the player from attribute colour feedback", xp: 20, done: false, color: "#4cb847", bg: "rgba(76,184,71,0.14)", border: "rgba(76,184,71,0.3)", route: "/games/wordle" },
-  { id: "higherLower", emoji: "📊", name: "Higher or Lower", desc: "Compare two players on age, caps, goals & market value", xp: 15, done: false, color: "#f5a623", bg: "rgba(245,166,35,0.14)", border: "rgba(245,166,35,0.3)", route: "/games/higherlower" },
-  { id: "transferTrail", emoji: "🔗", name: "Transfer Trail", desc: "Connect player A to B via shared clubs in fewest steps", xp: 20, done: false, color: "#00d48a", bg: "rgba(0,212,138,0.13)", border: "rgba(0,212,138,0.3)", route: "/games/transfertrail" },
+const GAME_META = [
+  {
+    id: "whoAreYa",
+    icon: "👤",
+    name: "Who Are Ya?",
+    desc: "Guess today's mystery player with position, country, and club clues.",
+    xp: 25,
+    route: "/games/whoareya",
+    color: "#9a72ff",
+    storageKey: "footbrawls_whoareya",
+  },
+  {
+    id: "matchPredictor",
+    icon: "🔮",
+    name: "Match Predictor",
+    desc: "Lock result and scorer picks before kickoff.",
+    xp: 100,
+    route: "/games/matchpredictor",
+    color: "#4a9eff",
+    storageKey: "footbrawls_matchpredictor",
+  },
+  {
+    id: "penaltyNerve",
+    icon: "⚽",
+    name: "Penalty Nerve",
+    desc: "Beat the keeper across five pressure kicks.",
+    xp: 30,
+    route: "/games/penaltynerve",
+    color: "#ff4865",
+    storageKey: "footbrawls_penaltynerve",
+  },
+  {
+    id: "wordle",
+    icon: "🟩",
+    name: "Player Wordle",
+    desc: "Use attribute colour feedback to find the footballer.",
+    xp: 20,
+    route: "/games/wordle",
+    color: "#20c96b",
+    storageKey: "footbrawls_wordle_history",
+  },
+  {
+    id: "higherLower",
+    icon: "📊",
+    name: "Higher or Lower",
+    desc: "Compare age, caps, goals, and market value.",
+    xp: 15,
+    route: "/games/higherlower",
+    color: "#f6a623",
+    storageKey: "footbrawls_higherlower",
+  },
+  {
+    id: "transferTrail",
+    icon: "🔗",
+    name: "Transfer Trail",
+    desc: "Connect two players through shared clubs.",
+    xp: 20,
+    route: "/games/transfertrail",
+    color: "#00d48a",
+    storageKey: "footbrawls_transfertrail",
+  },
 ];
 
-function pad(n) { return String(n).padStart(2, "0"); }
+const FEED = [
+  { icon: "⚽", user: "Priya_10", action: "held nerve from the spot", time: "2m" },
+  { icon: "👤", user: "Arjun_CF", action: "solved Who Are Ya in 2", time: "5m" },
+  { icon: "🔮", user: "Vikram_7", action: "locked a bold scoreline", time: "11m" },
+  { icon: "🔗", user: "Sneha_11", action: "finished Transfer Trail in 3", time: "18m" },
+];
+
+function injectFonts() {
+  if (document.getElementById("fb-fonts")) return;
+  const link = document.createElement("link");
+  link.id = "fb-fonts";
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap";
+  document.head.appendChild(link);
+}
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function isDoneToday(game) {
+  try {
+    const today = getTodayKey();
+    const raw = localStorage.getItem(game.storageKey);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    return data.date === today || Boolean(data[today]);
+  } catch {
+    return false;
+  }
+}
+
+function clampPct(value, max) {
+  if (!max) return 0;
+  return Math.max(0, Math.min(100, Math.round((value / max) * 100)));
+}
+
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+
 function fmtCountdown(secs) {
-  return `${pad(Math.floor(secs/3600))}:${pad(Math.floor((secs%3600)/60))}:${pad(secs%60)}`;
+  return `${pad(Math.floor(secs / 3600))}:${pad(Math.floor((secs % 3600) / 60))}:${pad(secs % 60)}`;
 }
 
 function Toast({ message }) {
   if (!message) return null;
-  return <div style={{ position:"fixed", bottom:80, left:"50%", transform:"translateX(-50%)", background:"#1a2f4a", color:C.text, fontSize:13, fontWeight:600, padding:"10px 20px", borderRadius:99, border:`1px solid ${C.borderHover}`, whiteSpace:"nowrap", zIndex:200, fontFamily:"'Outfit', sans-serif", pointerEvents:"none" }}>{message}</div>;
+  return (
+    <div style={s.toast}>
+      {message}
+    </div>
+  );
 }
 
-function TopNav({ xp, maxXp, nickname }) {
-  const pct = Math.round((xp/maxXp)*100);
+function Shell({ children }) {
+  return <div style={s.shell}>{children}</div>;
+}
+
+function TopNav({ user, xpPct }) {
   return (
-    <nav style={{ position:"sticky", top:0, zIndex:50, background:"rgba(6,15,28,0.95)", backdropFilter:"blur(16px)", borderBottom:`1px solid ${C.border}`, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-      <div style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:900, fontSize:24, letterSpacing:2, lineHeight:1, color:C.gold }}>
-        FOOT<span style={{color:C.green}}>BRAWLS</span><span style={{color:C.muted,fontSize:14,fontWeight:600,letterSpacing:0.5}}>.GG</span>
-      </div>
-      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
-          <div style={{ width:80, height:5, background:C.borderHover, borderRadius:99, overflow:"hidden" }}>
-            <div style={{ width:`${pct}%`, height:"100%", background:`linear-gradient(90deg,${C.green},#00ffaa)`, borderRadius:99 }} />
-          </div>
-          <span style={{ fontSize:10, color:C.muted2, fontWeight:500, fontFamily:"'Outfit', sans-serif" }}>{xp} / {maxXp} XP</span>
+    <nav style={s.topNav}>
+      <button style={s.brand} type="button">
+        FOOT<span style={{ color: C.green }}>BRAWLS</span>
+      </button>
+      <div style={s.profilePill}>
+        <div style={s.xpMiniTrack}>
+          <div style={{ ...s.xpMiniFill, width: `${xpPct}%` }} />
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:6, background:C.card, border:`1px solid ${C.border}`, borderRadius:99, padding:"5px 11px 5px 8px" }}>
-          <div style={{ width:7, height:7, borderRadius:"50%", background:C.blue, boxShadow:`0 0 8px ${C.blue}` }} />
-          <span style={{ fontSize:12, fontWeight:600, color:C.text, fontFamily:"'Outfit', sans-serif" }}>{nickname}</span>
-        </div>
+        <span style={s.profileName}>{user.nickname}</span>
       </div>
     </nav>
   );
 }
 
-function StreakBanner({ streak }) {
+function Hero({ user, guild, doneCount, totalGames }) {
+  const xp = user.dailyXP || 0;
+  const xpPct = clampPct(xp, DAILY_XP_CAP);
+  const next = Math.max(0, DAILY_XP_CAP - xp);
+
   return (
-    <div style={{ margin:"14px 16px 0", background:"linear-gradient(135deg,#1a0e00,#2a1800)", border:`1px solid rgba(240,192,64,0.3)`, borderRadius:14, padding:"12px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:28, lineHeight:1 }}>🔥</span>
+    <section style={s.hero}>
+      <div style={s.heroGlow} />
+      <div style={s.heroTop}>
         <div>
-          <div style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:20, color:C.gold, letterSpacing:0.5, lineHeight:1 }}>{streak} DAY STREAK</div>
-          <div style={{ fontSize:11, color:C.muted, marginTop:3, fontFamily:"'Outfit', sans-serif" }}>Play today to keep it alive!</div>
+          <div style={s.kicker}>Today&apos;s campaign</div>
+          <h1 style={s.heroTitle}>Win XP. Hold the castle.</h1>
         </div>
+        <div style={s.flagBox}>{guild.flag}</div>
       </div>
-      <div style={{ display:"flex", gap:4, alignItems:"center" }}>
-        {[...Array(7)].map((_,i) => <div key={i} style={{ width:8, height:8, borderRadius:"50%", background:i<streak%7?C.gold:C.borderHover, boxShadow:i<streak%7?`0 0 6px ${C.gold}`:"none" }} />)}
+
+      <div style={s.heroStats}>
+        <Stat label="Daily XP" value={`${xp}/${DAILY_XP_CAP}`} accent={C.green} />
+        <Stat label="Games Done" value={`${doneCount}/${totalGames}`} accent={C.gold} />
+        <Stat label="Tier" value={user.tier || "lurker"} accent={C.blue} />
       </div>
+
+      <div style={s.xpTrack}>
+        <div style={{ ...s.xpFill, width: `${xpPct}%` }} />
+      </div>
+      <div style={s.heroFoot}>
+        <span>{next} XP left today</span>
+        <span>{guild.name}</span>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ label, value, accent }) {
+  return (
+    <div style={s.stat}>
+      <span style={{ ...s.statValue, color: accent }}>{value}</span>
+      <span style={s.statLabel}>{label}</span>
     </div>
   );
 }
 
-function GuildHero({ flag, guildName, members, rank, blessed, navigate }) {
-  return (
-    <div style={{ padding:"14px 16px 0", cursor:"pointer" }} onClick={() => navigate("/guild")}>
-      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-        <div style={{ width:46, height:34, borderRadius:8, background:C.card2, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>{flag}</div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:700, fontSize:20, color:C.text, letterSpacing:0.3, lineHeight:1.1 }}>{guildName}</div>
-          <div style={{ fontSize:11, color:C.muted, marginTop:3, fontFamily:"'Outfit', sans-serif" }}>{members.toLocaleString()} members · #{rank} global</div>
-        </div>
-        {blessed && <div style={{ display:"inline-flex", alignItems:"center", gap:4, background:C.greenBg, border:`1px solid ${C.greenBorder}`, borderRadius:99, padding:"4px 10px", fontSize:10, color:C.green, fontWeight:700, letterSpacing:0.5, fontFamily:"'Outfit', sans-serif", whiteSpace:"nowrap" }}>✦ BLESSED +25%</div>}
-      </div>
-    </div>
-  );
-}
+function GuildCard({ guild, onOpen }) {
+  const hp = guild.castleHP ?? 0;
+  const maxHp = guild.castleHPCap ?? CASTLE_HP_CAP;
+  const pct = clampPct(hp, maxHp);
+  const status = pct >= 70 ? "Fortress" : pct >= 35 ? "Holding" : "Under pressure";
+  const color = pct >= 70 ? C.green : pct >= 35 ? C.gold : C.red;
 
-function CastleCard({ hp, maxHp }) {
-  const pct = Math.round((hp/maxHp)*100);
-  const status = pct>=70?"Fortress":pct>=30?"Standing":"Weakened";
-  const sc = pct>=70?C.green:pct>=30?C.gold:C.red;
   return (
-    <div style={{ margin:"12px 16px 0", background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:"14px 16px" }}>
-      <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", marginBottom:10 }}>
-        <div style={{ fontSize:10, color:C.muted, textTransform:"uppercase", letterSpacing:0.7, fontWeight:600, fontFamily:"'Outfit', sans-serif" }}>🏰 Castle HP</div>
-        <div><span style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:26, color:sc, letterSpacing:1 }}>{hp.toLocaleString()}</span><span style={{ fontSize:12, color:C.muted, marginLeft:3, fontFamily:"'Outfit', sans-serif" }}>/ {maxHp.toLocaleString()}</span></div>
-      </div>
-      <div style={{ background:C.borderHover, borderRadius:99, height:8, overflow:"hidden", marginBottom:8 }}>
-        <div style={{ width:`${pct}%`, height:"100%", borderRadius:99, background:`linear-gradient(90deg,#00a86b,${C.green})` }} />
-      </div>
-      <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:11, fontFamily:"'Outfit', sans-serif" }}>
-        <div style={{ width:6, height:6, borderRadius:"50%", background:sc, boxShadow:`0 0 6px ${sc}`, flexShrink:0 }} />
-        <span style={{ color:sc, fontWeight:600 }}>{status}</span>
-        <span style={{ color:C.muted }}>— raid defence holding</span>
-      </div>
-    </div>
-  );
-}
-
-function CountdownCard({ matchName, secondsLeft }) {
-  return (
-    <div style={{ margin:"10px 16px 0", background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:"13px 16px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-      <div>
-        <div style={{ fontSize:10, color:C.muted, textTransform:"uppercase", letterSpacing:0.7, marginBottom:3, fontWeight:600, fontFamily:"'Outfit', sans-serif" }}>Next match</div>
-        <div style={{ fontSize:14, fontWeight:600, color:C.text, fontFamily:"'Outfit', sans-serif" }}>{matchName}</div>
-      </div>
-      <div style={{ textAlign:"right" }}>
-        <div style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:28, color:C.text, letterSpacing:3, lineHeight:1 }}>{fmtCountdown(secondsLeft)}</div>
-        <div style={{ fontSize:10, color:C.muted, marginTop:3, fontFamily:"'Outfit', sans-serif" }}>locks in {Math.floor(secondsLeft/3600-1)}h {pad(Math.floor((secondsLeft%3600)/60))}m</div>
-      </div>
-    </div>
-  );
-}
-
-const FEED = [
-  { user:"Priya_10", action:"scored 3/3 on Penalty Nerve", emoji:"⚽", time:"2m ago" },
-  { user:"Arjun_CF", action:"guessed in 2 on Who Are Ya", emoji:"👤", time:"5m ago" },
-  { user:"Vikram_7", action:"predicted the exact scoreline", emoji:"🔮", time:"11m ago" },
-  { user:"Sneha_11", action:"completed Transfer Trail in 3 steps", emoji:"🔗", time:"18m ago" },
-];
-
-function ActivityFeed() {
-  return (
-    <div style={{ margin:"0 16px", background:C.card, border:`1px solid ${C.border}`, borderRadius:16, overflow:"hidden" }}>
-      {FEED.map((item,i) => (
-        <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderBottom:i<FEED.length-1?`1px solid ${C.border}`:"none" }}>
-          <span style={{ fontSize:16, flexShrink:0 }}>{item.emoji}</span>
-          <div style={{ flex:1, minWidth:0 }}>
-            <span style={{ fontSize:12, fontWeight:700, color:C.green, fontFamily:"'Outfit', sans-serif" }}>{item.user}</span>
-            <span style={{ fontSize:12, color:C.muted2, fontFamily:"'Outfit', sans-serif" }}> {item.action}</span>
+    <button style={s.guildCard} type="button" onClick={onOpen}>
+      <div style={s.guildHead}>
+        <div style={s.guildIdentity}>
+          <span style={s.guildFlag}>{guild.flag}</span>
+          <div>
+            <div style={s.guildName}>{guild.name}</div>
+            <div style={s.guildMeta}>
+              {(guild.memberCount || 0).toLocaleString()} members
+            </div>
           </div>
-          <span style={{ fontSize:10, color:C.muted, flexShrink:0, fontFamily:"'Outfit', sans-serif" }}>{item.time}</span>
         </div>
-      ))}
-    </div>
+        <span style={{ ...s.statusPill, color, borderColor: `${color}55`, background: `${color}16` }}>
+          {status}
+        </span>
+      </div>
+      <div style={s.hpRow}>
+        <span>Castle HP</span>
+        <strong>{hp.toLocaleString()} / {maxHp.toLocaleString()}</strong>
+      </div>
+      <div style={s.hpTrack}>
+        <div style={{ ...s.hpFill, width: `${pct}%`, background: color }} />
+      </div>
+    </button>
+  );
+}
+
+function MatchLock({ secondsLeft }) {
+  return (
+    <section style={s.matchCard}>
+      <div>
+        <div style={s.kicker}>Prediction lock</div>
+        <div style={s.matchName}>Argentina vs France</div>
+      </div>
+      <div style={s.timerBlock}>
+        <span style={s.timer}>{fmtCountdown(secondsLeft)}</span>
+        <span style={s.timerHint}>remaining</span>
+      </div>
+    </section>
   );
 }
 
 function SectionHeader({ title, right }) {
   return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 16px 10px" }}>
-      <span style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:17, letterSpacing:1, color:C.text }}>{title}</span>
-      {right && <span style={{ fontSize:11, color:C.gold, fontWeight:600, fontFamily:"'Outfit', sans-serif" }}>{right}</span>}
+    <div style={s.sectionHeader}>
+      <h2 style={s.sectionTitle}>{title}</h2>
+      {right && <span style={s.sectionRight}>{right}</span>}
     </div>
   );
 }
 
-function GameCard({ game, onPlay }) {
+function GameCard({ game, done, onPlay }) {
   const [pressed, setPressed] = useState(false);
+
   return (
-    <div onClick={() => onPlay(game)} onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)} onMouseLeave={() => setPressed(false)} onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)}
-      style={{ background:C.card, border:`1px solid ${pressed?game.border:C.border}`, borderRadius:14, padding:13, display:"flex", alignItems:"center", gap:12, cursor:"pointer", transform:pressed?"scale(0.975)":"scale(1)", transition:"all 0.12s ease", position:"relative", overflow:"hidden", WebkitUserSelect:"none", userSelect:"none" }}>
-      <div style={{ width:50, height:50, borderRadius:12, background:game.bg, border:`1px solid ${game.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, flexShrink:0, position:"relative" }}>
-        {game.emoji}
-        {game.done && <div style={{ position:"absolute", bottom:-4, right:-4, width:18, height:18, borderRadius:"50%", background:C.green, border:`2px solid ${C.card}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:"#060f1c", fontWeight:900, lineHeight:1 }}>✓</div>}
+    <button
+      type="button"
+      onClick={() => onPlay(game)}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      onMouseLeave={() => setPressed(false)}
+      onTouchStart={() => setPressed(true)}
+      onTouchEnd={() => setPressed(false)}
+      style={{
+        ...s.gameCard,
+        transform: pressed ? "scale(0.985)" : "scale(1)",
+        borderColor: done ? `${C.green}55` : C.stroke,
+      }}
+    >
+      <div style={{ ...s.gameIcon, color: game.color, background: `${game.color}18`, borderColor: `${game.color}44` }}>
+        {game.icon}
       </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontWeight:700, fontSize:14, color:C.text, marginBottom:2, fontFamily:"'Outfit', sans-serif", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{game.name}</div>
-        <div style={{ fontSize:11, color:C.muted, lineHeight:1.4, marginBottom:7, fontFamily:"'Outfit', sans-serif", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden" }}>{game.desc}</div>
-        <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-          <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:99, background:C.goldBg, color:C.gold, border:`1px solid ${C.goldBorder}`, fontFamily:"'Outfit', sans-serif" }}>+{game.xp} XP</span>
-          {game.done && <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:99, background:C.greenBg, color:C.green, border:`1px solid ${C.greenBorder}`, fontFamily:"'Outfit', sans-serif" }}>✓ Done</span>}
+      <div style={s.gameBody}>
+        <div style={s.gameTopLine}>
+          <span style={s.gameName}>{game.name}</span>
+          <span style={{ ...s.xpPill, color: game.color, background: `${game.color}16`, borderColor: `${game.color}44` }}>
+            +{game.xp}
+          </span>
         </div>
+        <p style={s.gameDesc}>{game.desc}</p>
       </div>
-      {game.done
-        ? <button onClick={(e)=>{e.stopPropagation();onPlay(game);}} style={{ borderRadius:10, padding:"8px 12px", fontSize:11, fontWeight:700, cursor:"pointer", flexShrink:0, fontFamily:"'Outfit', sans-serif", color:C.green, background:C.greenBg, border:`1px solid ${C.greenBorder}` }}>↺ Replay</button>
-        : <button onClick={(e)=>{e.stopPropagation();onPlay(game);}} style={{ background:game.color, color:"#fff", border:"none", borderRadius:10, padding:"9px 14px", fontSize:12, fontWeight:700, cursor:"pointer", flexShrink:0, fontFamily:"'Outfit', sans-serif", letterSpacing:0.3, lineHeight:1, boxShadow:`0 4px 16px ${game.color}44` }}>Play</button>
-      }
-    </div>
+      <div style={done ? s.doneButton : s.playButton}>
+        {done ? "Replay" : "Play"}
+      </div>
+    </button>
   );
 }
 
-function RaidBanner({ navigate }) {
-  const [pressed, setPressed] = useState(false);
+function ActivityFeed() {
   return (
-    <div onClick={() => navigate("/raid")} onMouseDown={() => setPressed(true)} onMouseUp={() => setPressed(false)} onMouseLeave={() => setPressed(false)} onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)}
-      style={{ margin:"0 16px 24px", background:"linear-gradient(135deg,#100623 0%,#0d1b36 55%,#0a1826 100%)", border:`1px solid ${C.purpleBorder}`, borderRadius:18, padding:16, display:"flex", alignItems:"center", gap:14, cursor:"pointer", transform:pressed?"scale(0.98)":"scale(1)", transition:"all 0.15s ease", position:"relative", overflow:"hidden" }}>
-      <div style={{ position:"absolute", right:-8, top:"50%", transform:"translateY(-50%)", fontSize:72, opacity:0.05, lineHeight:1, pointerEvents:"none", userSelect:"none" }}>⚔️</div>
-      <div style={{ width:52, height:52, borderRadius:13, background:C.purpleBg, border:`1px solid ${C.purpleBorder}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, flexShrink:0 }}>⚔️</div>
-      <div style={{ flex:1, position:"relative" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:4, fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:20, color:C.text, letterSpacing:0.5 }}>
-          CHALLENGE RAID
-          <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:99, background:C.goldBg, color:C.gold, border:`1px solid ${C.goldBorder}`, fontFamily:"'Outfit', sans-serif" }}>2x XP</span>
+    <section style={s.feed}>
+      {FEED.map((item, i) => (
+        <div key={`${item.user}-${item.time}`} style={{ ...s.feedRow, borderBottom: i < FEED.length - 1 ? `1px solid ${C.stroke}` : "none" }}>
+          <span style={s.feedIcon}>{item.icon}</span>
+          <div style={s.feedText}>
+            <strong>{item.user}</strong> {item.action}
+          </div>
+          <span style={s.feedTime}>{item.time}</span>
         </div>
-        <p style={{ fontSize:11, color:C.muted, lineHeight:1.45, fontFamily:"'Outfit', sans-serif" }}>Match day active · Find a buddy · Battle rival guilds</p>
-      </div>
-      <div style={{ color:C.purple, fontSize:24, flexShrink:0 }}>›</div>
-    </div>
+      ))}
+    </section>
   );
 }
 
-function BottomNav({ active, navigate }) {
+function RaidBanner({ onUnavailable }) {
+  return (
+    <button type="button" style={s.raidBanner} onClick={onUnavailable}>
+      <div style={s.raidIcon}>⚔️</div>
+      <div style={s.raidBody}>
+        <div style={s.raidTitle}>
+          Challenge Raid
+          <span style={s.raidPill}>Soon</span>
+        </div>
+        <p style={s.raidCopy}>Team up on match day to break curses and swing castle momentum.</p>
+      </div>
+      <span style={s.chevron}>›</span>
+    </button>
+  );
+}
+
+function BottomNav({ active, navigate, onUnavailable }) {
   const items = [
-    { id:"home",    label:"Games",  icon:"⚽", route:"/"            },
-    { id:"guild",   label:"Guild",  icon:"🏰", route:"/guild"       },
-    { id:"raids",   label:"Raids",  icon:"⚔️", route:"/raid"        },
-    { id:"ranks",   label:"Ranks",  icon:"🏆", route:"/leaderboard" },
-    { id:"profile", label:"Me",     icon:"👤", route:"/profile"     },
+    { id: "home", label: "Games", icon: "⚽", route: "/" },
+    { id: "guild", label: "Guild", icon: "🏰", route: "/guild" },
+    { id: "raids", label: "Raids", icon: "⚔️" },
+    { id: "ranks", label: "Ranks", icon: "🏆" },
+    { id: "profile", label: "Me", icon: "👤" },
   ];
+
   return (
-    <nav style={{ display:"flex", borderTop:`1px solid ${C.border}`, background:"rgba(6,15,28,0.98)", backdropFilter:"blur(16px)", position:"sticky", bottom:0, zIndex:50, paddingBottom:"env(safe-area-inset-bottom, 0px)" }}>
+    <nav style={s.bottomNav}>
       {items.map((item) => {
         const isActive = item.id === active;
         return (
-          <button key={item.id} onClick={() => navigate(item.route)}
-            style={{ flex:1, minWidth:0, display:"flex", flexDirection:"column", alignItems:"center", gap:3, padding:"10px 4px 9px", fontSize:9, fontWeight:600, color:isActive?C.green:C.muted, cursor:"pointer", border:"none", background:"transparent", fontFamily:"'Outfit', sans-serif", letterSpacing:0.4, textTransform:"uppercase", position:"relative", transition:"color 0.15s", WebkitTapHighlightColor:"transparent", touchAction:"manipulation" }}>
-            {isActive && <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:28, height:2, background:C.green, borderRadius:"0 0 99px 99px", boxShadow:`0 0 8px ${C.green}` }} />}
-            <span style={{ fontSize:20, lineHeight:1 }}>{item.icon}</span>
-            <span style={{ fontSize:9, letterSpacing:0.4 }}>{item.label}</span>
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => (item.route ? navigate(item.route) : onUnavailable())}
+            style={{ ...s.navItem, color: isActive ? C.green : C.mute }}
+          >
+            {isActive && <span style={s.navIndicator} />}
+            <span style={s.navIcon}>{item.icon}</span>
+            <span style={s.navLabel}>{item.label}</span>
           </button>
         );
       })}
@@ -235,39 +365,645 @@ function BottomNav({ active, navigate }) {
 export default function Home() {
   const navigate = useNavigate();
   const [toast, setToast] = useState("");
-  const [secondsLeft, setSecondsLeft] = useState(3*3600+42*60+19);
+  const [secondsLeft, setSecondsLeft] = useState(3 * 3600 + 42 * 60 + 19);
+  const [localUser, setLocalUser] = useState(() => getUser());
+  const [guildDoc, setGuildDoc] = useState(null);
 
-  useEffect(() => { injectFonts(); }, []);
   useEffect(() => {
-    const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s-1)), 1000);
+    injectFonts();
+    setLocalUser(getUser());
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setSecondsLeft((sLeft) => Math.max(0, sLeft - 1)), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const handlePlay = (game) => navigate(game.route);
+  useEffect(() => {
+    if (!localUser?.homeCountry) return undefined;
+    const unsub = onSnapshot(
+      doc(db, "guilds", localUser.homeCountry),
+      (snap) => setGuildDoc(snap.exists() ? snap.data() : null),
+      () => setGuildDoc(null),
+    );
+    return unsub;
+  }, [localUser?.homeCountry]);
 
-  const user = { nickname:"Rishi_7", xp:124, maxXp:200, tier:"Fan", streak:7 };
-  const guild = { flag:"🇮🇳", name:"India Fan Guild", members:3241, rank:47, blessed:true, castleHp:6302, castleHpMax:10000 };
-  const doneCount = GAMES.filter((g) => g.done).length;
+  const user = localUser || {
+    nickname: "Guest",
+    homeCountry: "IND",
+    supportTeam: "IND",
+    dailyXP: 0,
+    tier: "lurker",
+  };
+
+  const country = COUNTRIES.find((c) => c.code === user.homeCountry);
+  const guild = {
+    name: guildDoc?.name || `${country?.name || user.homeCountry} Fan Guild`,
+    flag: guildDoc?.flag || user.flag || country?.flag || "🏳️",
+    memberCount: guildDoc?.memberCount ?? 0,
+    castleHP: guildDoc?.castleHP ?? 0,
+    castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
+  };
+
+  const games = useMemo(
+    () => GAME_META.map((game) => ({ ...game, done: isDoneToday(game) })),
+    [],
+  );
+  const doneCount = games.filter((game) => game.done).length;
+  const xpPct = clampPct(user.dailyXP || 0, DAILY_XP_CAP);
+
+  function showSoon() {
+    setToast("That section is coming next.");
+    window.clearTimeout(showSoon.timeout);
+    showSoon.timeout = window.setTimeout(() => setToast(""), 1800);
+  }
 
   return (
-    <div style={{ background:C.pitch, minHeight:"100vh", maxWidth:430, margin:"0 auto", fontFamily:"'Outfit', sans-serif", display:"flex", flexDirection:"column" }}>
-      <TopNav xp={user.xp} maxXp={user.maxXp} nickname={user.nickname} />
-      <div style={{ flex:1, overflowY:"auto", paddingBottom:8 }}>
-        <StreakBanner streak={user.streak} />
-        <GuildHero flag={guild.flag} guildName={guild.name} members={guild.members} rank={guild.rank} blessed={guild.blessed} navigate={navigate} />
-        <CastleCard hp={guild.castleHp} maxHp={guild.castleHpMax} />
-        <CountdownCard matchName="Argentina vs France" secondsLeft={secondsLeft} />
-        <SectionHeader title="GUILD ACTIVITY" right="Live" />
-        <ActivityFeed />
-        <SectionHeader title="TODAY'S GAMES" right={`${doneCount}/${GAMES.length} done · ${user.maxXp - user.xp} XP left`} />
-        <div style={{ padding:"0 16px", display:"flex", flexDirection:"column", gap:10 }}>
-          {GAMES.map((game) => <GameCard key={game.id} game={game} onPlay={handlePlay} />)}
+    <Shell>
+      <TopNav user={user} xpPct={xpPct} />
+      <main style={s.main}>
+        <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length} />
+        <GuildCard guild={guild} onOpen={() => navigate("/guild")} />
+        <MatchLock secondsLeft={secondsLeft} />
+
+        <SectionHeader title="Today's Games" right={`${doneCount}/${games.length} complete`} />
+        <div style={s.gameList}>
+          {games.map((game) => (
+            <GameCard key={game.id} game={game} done={game.done} onPlay={() => navigate(game.route)} />
+          ))}
         </div>
-        <SectionHeader title="RAID BATTLES" />
-        <RaidBanner navigate={navigate} />
-      </div>
-      <BottomNav active="home" navigate={navigate} />
+
+        <SectionHeader title="Guild Pulse" right="Live" />
+        <ActivityFeed />
+
+        <SectionHeader title="Raid Battles" />
+        <RaidBanner onUnavailable={showSoon} />
+      </main>
+      <BottomNav active="home" navigate={navigate} onUnavailable={showSoon} />
       <Toast message={toast} />
-    </div>
+    </Shell>
   );
 }
+
+const s = {
+  shell: {
+    background:
+      "radial-gradient(circle at 50% -80px, rgba(0,212,138,0.18), transparent 260px), #06111f",
+    color: C.text,
+    minHeight: "100vh",
+    maxWidth: 430,
+    margin: "0 auto",
+    fontFamily: "'Outfit', sans-serif",
+    display: "flex",
+    flexDirection: "column",
+  },
+  topNav: {
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
+    height: 56,
+    padding: "0 16px",
+    background: "rgba(6,17,31,0.88)",
+    backdropFilter: "blur(18px)",
+    borderBottom: `1px solid ${C.stroke}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  brand: {
+    border: "none",
+    background: "transparent",
+    color: C.gold,
+    padding: 0,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 25,
+    fontWeight: 900,
+    letterSpacing: 1.4,
+    cursor: "pointer",
+  },
+  profilePill: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    minWidth: 0,
+    background: "rgba(255,255,255,0.045)",
+    border: `1px solid ${C.stroke}`,
+    borderRadius: 999,
+    padding: "7px 10px",
+  },
+  xpMiniTrack: {
+    width: 34,
+    height: 5,
+    borderRadius: 99,
+    background: "rgba(255,255,255,0.12)",
+    overflow: "hidden",
+  },
+  xpMiniFill: {
+    height: "100%",
+    background: C.green,
+    borderRadius: 99,
+  },
+  profileName: {
+    color: C.text,
+    fontSize: 12,
+    fontWeight: 700,
+    maxWidth: 92,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  main: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "14px 16px 18px",
+  },
+  hero: {
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(145deg, rgba(16,34,58,0.96), rgba(7,22,39,0.96))",
+    border: `1px solid ${C.stroke2}`,
+    borderRadius: 8,
+    padding: 16,
+    boxShadow: "0 18px 50px rgba(0,0,0,0.25)",
+  },
+  heroGlow: {
+    position: "absolute",
+    inset: "auto -40px -70px auto",
+    width: 170,
+    height: 170,
+    borderRadius: "50%",
+    background: "rgba(74,158,255,0.18)",
+    filter: "blur(34px)",
+  },
+  heroTop: {
+    position: "relative",
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  kicker: {
+    color: C.mute,
+    fontSize: 10,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    margin: "5px 0 0",
+    color: C.text,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 32,
+    lineHeight: 0.95,
+    letterSpacing: 0,
+  },
+  flagBox: {
+    width: 48,
+    height: 38,
+    borderRadius: 8,
+    background: "rgba(255,255,255,0.055)",
+    border: `1px solid ${C.stroke}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 25,
+    flexShrink: 0,
+  },
+  heroStats: {
+    position: "relative",
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: 8,
+    marginTop: 18,
+  },
+  stat: {
+    background: "rgba(255,255,255,0.045)",
+    border: `1px solid ${C.stroke}`,
+    borderRadius: 8,
+    padding: "10px 8px",
+    minWidth: 0,
+  },
+  statValue: {
+    display: "block",
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 21,
+    fontWeight: 900,
+    lineHeight: 1,
+    textTransform: "uppercase",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  statLabel: {
+    display: "block",
+    color: C.mute,
+    fontSize: 10,
+    fontWeight: 700,
+    marginTop: 5,
+  },
+  xpTrack: {
+    position: "relative",
+    height: 8,
+    marginTop: 16,
+    borderRadius: 99,
+    background: "rgba(255,255,255,0.1)",
+    overflow: "hidden",
+  },
+  xpFill: {
+    height: "100%",
+    borderRadius: 99,
+    background: `linear-gradient(90deg, ${C.green}, #67ffd0)`,
+  },
+  heroFoot: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 8,
+    color: C.soft,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  guildCard: {
+    width: "100%",
+    marginTop: 12,
+    background: C.panel,
+    border: `1px solid ${C.stroke}`,
+    borderRadius: 8,
+    padding: 14,
+    color: C.text,
+    textAlign: "left",
+    cursor: "pointer",
+  },
+  guildHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  guildIdentity: {
+    display: "flex",
+    alignItems: "center",
+    gap: 11,
+    minWidth: 0,
+  },
+  guildFlag: {
+    width: 38,
+    height: 30,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 7,
+    background: C.panel2,
+    border: `1px solid ${C.stroke}`,
+    fontSize: 20,
+  },
+  guildName: {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 20,
+    fontWeight: 800,
+    lineHeight: 1,
+  },
+  guildMeta: {
+    marginTop: 4,
+    color: C.mute,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  statusPill: {
+    border: "1px solid",
+    borderRadius: 999,
+    padding: "5px 9px",
+    fontSize: 10,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+  },
+  hpRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 14,
+    color: C.mute,
+    fontSize: 11,
+    fontWeight: 700,
+  },
+  hpTrack: {
+    height: 7,
+    marginTop: 8,
+    borderRadius: 99,
+    background: "rgba(255,255,255,0.1)",
+    overflow: "hidden",
+  },
+  hpFill: {
+    height: "100%",
+    borderRadius: 99,
+  },
+  matchCard: {
+    marginTop: 10,
+    background: "rgba(74,158,255,0.08)",
+    border: "1px solid rgba(74,158,255,0.22)",
+    borderRadius: 8,
+    padding: "13px 14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  matchName: {
+    marginTop: 4,
+    color: C.text,
+    fontSize: 14,
+    fontWeight: 800,
+  },
+  timerBlock: {
+    textAlign: "right",
+  },
+  timer: {
+    display: "block",
+    color: C.blue,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 29,
+    fontWeight: 900,
+    lineHeight: 0.9,
+    letterSpacing: 1,
+  },
+  timerHint: {
+    color: C.mute,
+    fontSize: 10,
+    fontWeight: 700,
+  },
+  sectionHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    padding: "20px 0 10px",
+  },
+  sectionTitle: {
+    margin: 0,
+    color: C.text,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 18,
+    fontWeight: 900,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+  },
+  sectionRight: {
+    color: C.gold,
+    fontSize: 11,
+    fontWeight: 800,
+  },
+  gameList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 9,
+  },
+  gameCard: {
+    width: "100%",
+    background: C.panel,
+    border: "1px solid",
+    borderRadius: 8,
+    padding: 12,
+    display: "flex",
+    alignItems: "center",
+    gap: 11,
+    color: C.text,
+    textAlign: "left",
+    cursor: "pointer",
+    transition: "transform 0.12s ease, border-color 0.12s ease",
+  },
+  gameIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 8,
+    border: "1px solid",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 22,
+    flexShrink: 0,
+  },
+  gameBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  gameTopLine: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  gameName: {
+    color: C.text,
+    fontSize: 14,
+    fontWeight: 800,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  xpPill: {
+    border: "1px solid",
+    borderRadius: 999,
+    padding: "2px 7px",
+    fontSize: 10,
+    fontWeight: 900,
+    flexShrink: 0,
+  },
+  gameDesc: {
+    margin: "5px 0 0",
+    color: C.mute,
+    fontSize: 11,
+    lineHeight: 1.35,
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  },
+  playButton: {
+    minWidth: 48,
+    height: 34,
+    borderRadius: 8,
+    background: C.green,
+    color: "#04131f",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    fontWeight: 900,
+    flexShrink: 0,
+  },
+  doneButton: {
+    minWidth: 56,
+    height: 34,
+    borderRadius: 8,
+    background: "rgba(0,212,138,0.12)",
+    border: "1px solid rgba(0,212,138,0.35)",
+    color: C.green,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 12,
+    fontWeight: 900,
+    flexShrink: 0,
+  },
+  feed: {
+    background: C.panel,
+    border: `1px solid ${C.stroke}`,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  feedRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 12px",
+  },
+  feedIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    background: C.panel2,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 15,
+    flexShrink: 0,
+  },
+  feedText: {
+    flex: 1,
+    minWidth: 0,
+    color: C.soft,
+    fontSize: 12,
+    lineHeight: 1.25,
+  },
+  feedTime: {
+    color: C.mute,
+    fontSize: 10,
+    fontWeight: 800,
+  },
+  raidBanner: {
+    width: "100%",
+    marginBottom: 14,
+    background: "linear-gradient(135deg, rgba(154,114,255,0.16), rgba(74,158,255,0.08))",
+    border: "1px solid rgba(154,114,255,0.32)",
+    borderRadius: 8,
+    padding: 14,
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    color: C.text,
+    textAlign: "left",
+    cursor: "pointer",
+  },
+  raidIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    background: "rgba(154,114,255,0.16)",
+    border: "1px solid rgba(154,114,255,0.34)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 23,
+    flexShrink: 0,
+  },
+  raidBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  raidTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    color: C.text,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontSize: 20,
+    fontWeight: 900,
+    textTransform: "uppercase",
+  },
+  raidPill: {
+    border: `1px solid ${C.gold}55`,
+    borderRadius: 999,
+    padding: "2px 7px",
+    color: C.gold,
+    background: "rgba(240,192,64,0.12)",
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: 10,
+    fontWeight: 900,
+  },
+  raidCopy: {
+    margin: "4px 0 0",
+    color: C.mute,
+    fontSize: 11,
+    lineHeight: 1.35,
+  },
+  chevron: {
+    color: C.violet,
+    fontSize: 26,
+    fontWeight: 900,
+  },
+  bottomNav: {
+    position: "sticky",
+    bottom: 0,
+    zIndex: 50,
+    display: "flex",
+    background: "rgba(6,17,31,0.94)",
+    backdropFilter: "blur(18px)",
+    borderTop: `1px solid ${C.stroke}`,
+    paddingBottom: "env(safe-area-inset-bottom, 0px)",
+  },
+  navItem: {
+    position: "relative",
+    flex: 1,
+    minWidth: 0,
+    border: "none",
+    background: "transparent",
+    padding: "9px 4px 8px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 3,
+    cursor: "pointer",
+    fontFamily: "'Outfit', sans-serif",
+  },
+  navIndicator: {
+    position: "absolute",
+    top: 0,
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: 26,
+    height: 2,
+    borderRadius: "0 0 999px 999px",
+    background: C.green,
+  },
+  navIcon: {
+    fontSize: 19,
+    lineHeight: 1,
+  },
+  navLabel: {
+    fontSize: 9,
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  toast: {
+    position: "fixed",
+    bottom: 76,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 200,
+    maxWidth: "calc(100vw - 32px)",
+    background: "#10223a",
+    border: `1px solid ${C.stroke2}`,
+    borderRadius: 999,
+    color: C.text,
+    padding: "10px 16px",
+    fontSize: 13,
+    fontWeight: 800,
+    whiteSpace: "nowrap",
+    boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
+    pointerEvents: "none",
+  },
+};

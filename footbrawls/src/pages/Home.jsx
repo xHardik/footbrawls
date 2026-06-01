@@ -368,6 +368,9 @@ export default function Home() {
   const [secondsLeft, setSecondsLeft] = useState(3 * 3600 + 42 * 60 + 19);
   const [localUser, setLocalUser] = useState(() => getUser());
   const [guildDoc, setGuildDoc] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window === "undefined" ? false : window.innerWidth >= 900,
+  );
 
   useEffect(() => {
     injectFonts();
@@ -377,6 +380,16 @@ export default function Home() {
   useEffect(() => {
     const t = setInterval(() => setSecondsLeft((sLeft) => Math.max(0, sLeft - 1)), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsDesktop(window.innerWidth >= 900);
+    }
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -422,23 +435,30 @@ export default function Home() {
   return (
     <Shell>
       <TopNav user={user} xpPct={xpPct} />
-      <main style={s.main}>
-        <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length} />
-        <GuildCard guild={guild} onOpen={() => navigate("/guild")} />
-        <MatchLock secondsLeft={secondsLeft} />
+      <main style={{ ...s.main, ...(isDesktop ? s.mainDesktop : null) }}>
+        <div style={isDesktop ? s.desktopGrid : s.mobileStack}>
+          <section style={s.primaryColumn}>
+            <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length} />
 
-        <SectionHeader title="Today's Games" right={`${doneCount}/${games.length} complete`} />
-        <div style={s.gameList}>
-          {games.map((game) => (
-            <GameCard key={game.id} game={game} done={game.done} onPlay={() => navigate(game.route)} />
-          ))}
+            <SectionHeader title="Today's Games" right={`${doneCount}/${games.length} complete`} />
+            <div style={{ ...s.gameList, ...(isDesktop ? s.gameListDesktop : null) }}>
+              {games.map((game) => (
+                <GameCard key={game.id} game={game} done={game.done} onPlay={() => navigate(game.route)} />
+              ))}
+            </div>
+          </section>
+
+          <aside style={isDesktop ? s.sideColumn : s.mobileStack}>
+            <GuildCard guild={guild} onOpen={() => navigate("/guild")} />
+            <MatchLock secondsLeft={secondsLeft} />
+
+            <SectionHeader title="Guild Pulse" right="Live" />
+            <ActivityFeed />
+
+            <SectionHeader title="Raid Battles" />
+            <RaidBanner onUnavailable={showSoon} />
+          </aside>
         </div>
-
-        <SectionHeader title="Guild Pulse" right="Live" />
-        <ActivityFeed />
-
-        <SectionHeader title="Raid Battles" />
-        <RaidBanner onUnavailable={showSoon} />
       </main>
       <BottomNav active="home" navigate={navigate} onUnavailable={showSoon} />
       <Toast message={toast} />
@@ -452,8 +472,7 @@ const s = {
       "radial-gradient(circle at 50% -80px, rgba(0,212,138,0.18), transparent 260px), #06111f",
     color: C.text,
     minHeight: "100vh",
-    maxWidth: 430,
-    margin: "0 auto",
+    width: "100%",
     fontFamily: "'Outfit', sans-serif",
     display: "flex",
     flexDirection: "column",
@@ -517,6 +536,30 @@ const s = {
     flex: 1,
     overflowY: "auto",
     padding: "14px 16px 18px",
+  },
+  mainDesktop: {
+    padding: "26px clamp(24px, 4vw, 56px) 28px",
+  },
+  mobileStack: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  desktopGrid: {
+    width: "100%",
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 400px)",
+    gap: 24,
+    alignItems: "start",
+  },
+  primaryColumn: {
+    minWidth: 0,
+  },
+  sideColumn: {
+    minWidth: 0,
+    position: "sticky",
+    top: 82,
+    display: "flex",
+    flexDirection: "column",
   },
   hero: {
     position: "relative",
@@ -759,6 +802,11 @@ const s = {
     display: "flex",
     flexDirection: "column",
     gap: 9,
+  },
+  gameListDesktop: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: 12,
   },
   gameCard: {
     width: "100%",

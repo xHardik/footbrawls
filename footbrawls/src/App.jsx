@@ -10,7 +10,7 @@ import Layout from './components/Layout';
 import TransferTrail from './pages/games/transfertrail';
 import HigherOrLower from './pages/games/higherlower';
 import MatchPredictor from './pages/games/matchpredictor';
-import PenaltyNerve from './pages/games/PenaltyNerve';
+import PenaltyNerve from './pages/games/penaltynerve';
 
 function RequireUser({ children }) {
   const user = getUser();

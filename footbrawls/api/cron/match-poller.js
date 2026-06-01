@@ -1,193 +1,138 @@
-
-
 // ============================================================
 // api/cron/match-poller.js
-// Vercel Cron — polls API-Football for live scores
-// Clients read from Firebase. This is the ONLY thing that calls API-Football.
+// Called by GitHub Actions every 5 mins (free).
+// Vercel cron removed — only midnight-reset.js stays on Vercel cron.
 //
-// Schedule:
-//   Idle (no match within 2hrs):  every 30 min → "*/30 * * * *"
-//   Pre-match (within 1hr):       every 10 min → "*/10 * * * *"
-//   Live (match in progress):     every 2 min  → "*/2 * * * *"
-//
-// Simplest approach: run every 2 minutes always, check internally.
-// At ~60 calls/day idle + ~60/match, well within Basic plan limits.
+// GitHub Actions hits: POST /api/cron/match-poller
+// with header: Authorization: Bearer <CRON_SECRET>
 // ============================================================
 
 import admin from 'firebase-admin';
+import { awardPredictionXP } from '../lib/xpEngine.js';
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+    credential: admin.credential.cert(
+      JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    ),
   });
 }
 const db = admin.firestore();
 
-const API_FOOTBALL_KEY = process.env.API_FOOTBALL_KEY;
-const WC_2026_LEAGUE_ID = 1; // Update with actual FIFA WC 2026 league ID from API-Football
+const API_FOOTBALL_KEY  = process.env.API_FOOTBALL_KEY;
+const WC_2026_LEAGUE_ID = 1; // ← update with real FIFA WC 2026 ID from API-Football
 
+// ─── Only run during tournament dates (saves GitHub Actions minutes) ──────────
+const TOURNAMENT_START = new Date('2026-06-11T00:00:00Z');
+const TOURNAMENT_END   = new Date('2026-07-20T00:00:00Z');
+function isTournamentActive() {
+  const now = new Date();
+  return now >= TOURNAMENT_START && now <= TOURNAMENT_END;
+}
+
+// ─── Team name → guild country code ──────────────────────────────────────────
+const TEAM_NAME_TO_CODE = {
+  'Brazil': 'BRA', 'Argentina': 'ARG', 'France': 'FRA', 'Germany': 'GER',
+  'England': 'ENG', 'Spain': 'ESP', 'Portugal': 'POR', 'Netherlands': 'NED',
+  'Belgium': 'BEL', 'Uruguay': 'URU', 'Croatia': 'CRO', 'Denmark': 'DEN',
+  'Switzerland': 'SUI', 'Mexico': 'MEX', 'United States': 'USA', 'Canada': 'CAN',
+  'Japan': 'JPN', 'South Korea': 'KOR', 'Australia': 'AUS', 'Senegal': 'SEN',
+  'Morocco': 'MAR', 'Ghana': 'GHA', 'Cameroon': 'CMR', 'Nigeria': 'NGA',
+  'Saudi Arabia': 'KSA', 'Iran': 'IRN', 'Qatar': 'QAT', 'South Africa': 'RSA',
+  'Ecuador': 'ECU', 'Colombia': 'COL', 'Chile': 'CHI', 'Peru': 'PER',
+  'Poland': 'POL', 'Serbia': 'SRB', 'Ukraine': 'UKR', 'Austria': 'AUT',
+  'Sweden': 'SWE', 'Norway': 'NOR', 'Turkey': 'TUR', 'Wales': 'WAL',
+  'Scotland': 'SCO', 'Czech Republic': 'CZE', 'Hungary': 'HUN',
+  'Costa Rica': 'CRC', 'Panama': 'PAN', 'Honduras': 'HON', 'Jamaica': 'JAM',
+  'India': 'IND',
+};
+
+// ─── API-Football fetch ───────────────────────────────────────────────────────
 async function fetchFixtures(live = false) {
   const url = live
     ? `https://v3.football.api-sports.io/fixtures?live=all&league=${WC_2026_LEAGUE_ID}&season=2026`
     : `https://v3.football.api-sports.io/fixtures?league=${WC_2026_LEAGUE_ID}&season=2026&next=10`;
 
   const res = await fetch(url, {
-    headers: {
-      'x-apisports-key': API_FOOTBALL_KEY,
-    },
+    headers: { 'x-apisports-key': API_FOOTBALL_KEY },
   });
+  if (!res.ok) throw new Error(`API-Football error ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return data.response || [];
 }
 
+// ─── Map API response to Firestore doc ───────────────────────────────────────
 function mapFixtureToDoc(fixture) {
-  const f = fixture.fixture;
-  const teams = fixture.teams;
-  const goals = fixture.goals;
+  const f      = fixture.fixture;
+  const teams  = fixture.teams;
+  const goals  = fixture.goals;
   const status = f.status.short; // NS, 1H, HT, 2H, FT, AET, PEN
 
   return {
-    fixtureId: String(f.id),
-    homeTeam: teams.home.name,        // You'll want to map to your country codes
-    awayTeam: teams.away.name,
-    homeTeamLogo: teams.home.logo,
-    awayTeamLogo: teams.away.logo,
-    kickoffAt: admin.firestore.Timestamp.fromMillis(f.timestamp * 1000),
-    stage: fixture.league.round,
+    fixtureId:     String(f.id),
+    homeTeam:      teams.home.name,
+    awayTeam:      teams.away.name,
+    homeTeamLogo:  teams.home.logo,
+    awayTeamLogo:  teams.away.logo,
+    kickoffAt:     admin.firestore.Timestamp.fromMillis(f.timestamp * 1000),
+    stage:         fixture.league.round,
     status,
-    homeScore: goals.home,
-    awayScore: goals.away,
-    isLive: ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT'].includes(status),
-    isComplete: ['FT', 'AET', 'PEN'].includes(status),
-    locksAt: admin.firestore.Timestamp.fromMillis((f.timestamp - 3600) * 1000),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    homeScore:     goals.home ?? 0,
+    awayScore:     goals.away ?? 0,
+    isLive:        ['1H','HT','2H','ET','BT','P','INT'].includes(status),
+    isComplete:    ['FT','AET','PEN'].includes(status),
+    locksAt:       admin.firestore.Timestamp.fromMillis((f.timestamp - 3600) * 1000),
+    updatedAt:     admin.firestore.FieldValue.serverTimestamp(),
   };
 }
 
-export default async function handler(req, res) {
-  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  try {
-    // Check if any matches are currently live
-    const liveFixtures = await fetchFixtures(true);
-    const hasLiveMatch = liveFixtures.length > 0;
-
-    // Also fetch upcoming fixtures
-    const upcomingFixtures = hasLiveMatch ? liveFixtures : await fetchFixtures(false);
-    const allFixtures = [...new Map(
-      [...liveFixtures, ...upcomingFixtures].map(f => [f.fixture.id, f])
-    ).values()];
-
-    const batch = db.batch();
-    const justCompleted = [];
-
-    for (const fixture of allFixtures) {
-      const mapped = mapFixtureToDoc(fixture);
-      const ref = db.collection('fixtures').doc(mapped.fixtureId);
-
-      // Check if this match just completed (was live, now FT)
-      const existing = await ref.get();
-      if (existing.exists() && existing.data().isLive && mapped.isComplete) {
-        justCompleted.push({ ...mapped, ...existing.data() });
-      }
-
-      batch.set(ref, mapped, { merge: true });
-    }
-
-    await batch.commit();
-
-    // Trigger curse/blessing for any just-completed matches
-    for (const match of justCompleted) {
-      await triggerCurseBlessing(match);
-      await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore);
-    }
-
-    return res.status(200).json({
-      ok: true,
-      fixturesUpdated: allFixtures.length,
-      liveMatches: liveFixtures.length,
-      justCompleted: justCompleted.length,
-    });
-  } catch (err) {
-    console.error('Match poller failed:', err);
-    return res.status(500).json({ error: err.message });
-  }
-}
-
-
-// ============================================================
-// Curse & Blessing trigger (called inside match poller)
-// ============================================================
-
-// Map API-Football team names to your country codes
-// You'll need to fill this out based on actual API-Football team names
-const TEAM_NAME_TO_CODE = {
-  'Brazil': 'BRA',
-  'Argentina': 'ARG',
-  'France': 'FRA',
-  'Germany': 'GER',
-  'England': 'ENG',
-  'Spain': 'ESP',
-  // ... add all 48 teams
-};
-
+// ─── Curse & Blessing ─────────────────────────────────────────────────────────
 async function triggerCurseBlessing(match) {
   const homeCode = TEAM_NAME_TO_CODE[match.homeTeam];
   const awayCode = TEAM_NAME_TO_CODE[match.awayTeam];
 
   if (!homeCode || !awayCode) {
-    console.warn(`Unknown team code for ${match.homeTeam} vs ${match.awayTeam}`);
+    console.warn(`No code for: ${match.homeTeam} vs ${match.awayTeam} — add to TEAM_NAME_TO_CODE`);
     return;
   }
 
   let winner = null, loser = null;
-  if (match.homeScore > match.awayScore) {
-    winner = homeCode; loser = awayCode;
-  } else if (match.awayScore > match.homeScore) {
-    winner = awayCode; loser = homeCode;
-  }
-  // Draw — no curse or blessing
+  if (match.homeScore > match.awayScore)      { winner = homeCode; loser = awayCode; }
+  else if (match.awayScore > match.homeScore) { winner = awayCode; loser = homeCode; }
+  // Draw → no curse, just clear blessings
 
   const expires24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const expiresTimestamp = admin.firestore.Timestamp.fromDate(expires24h);
-  const batch = db.batch();
+  const expiresTs  = admin.firestore.Timestamp.fromDate(expires24h);
+  const batch      = db.batch();
 
   if (winner) {
-    // Bless the winner
-    const winnerRef = db.collection('guilds').doc(winner);
-    batch.update(winnerRef, {
+    batch.update(db.collection('guilds').doc(winner), {
       currentBlessing: 'blessed',
-      currentCurse: null,
-      curseExpiresAt: expiresTimestamp,
+      currentCurse:    null,
+      curseExpiresAt:  expiresTs,
       lastMatchResult: 'win',
     });
 
-    // Curse the loser
-    const loserRef = db.collection('guilds').doc(loser);
-    const loserSnap = await loserRef.get();
-    const loserData = loserSnap.data();
-    const newCurse = loserData.currentCurse === 'cursed'
+    const loserSnap = await db.collection('guilds').doc(loser).get();
+    const loserData = loserSnap.exists ? loserSnap.data() : {}; // FIX: .exists not .exists()
+
+    const isKnockedOut = ['quarter-finals','semi-finals','final','3rd place']
+      .some(s => match.stage?.toLowerCase().includes(s));
+
+    const newCurse = isKnockedOut
+      ? 'death_curse'
+      : loserData.currentCurse === 'cursed'
       ? 'double_cursed'
-      : loserData.currentCurse === 'double_cursed'
-      ? 'double_cursed'  // stays double until manual lift
       : 'cursed';
 
-    // Check if team is knocked out (death curse)
-    const isKnockedOut = match.stage?.includes('Final') || match.stage?.includes('Quarter') || match.stage?.includes('Semi');
-    const finalCurse = isKnockedOut ? 'death_curse' : newCurse;
-    const deathCurseExpiry = isKnockedOut ? null : expiresTimestamp; // death curse = permanent
-
-    batch.update(loserRef, {
-      currentCurse: finalCurse,
+    batch.update(db.collection('guilds').doc(loser), {
+      currentCurse:    newCurse,
       currentBlessing: null,
-      curseExpiresAt: deathCurseExpiry,
-      curseWinsSoFar: 0,
+      curseExpiresAt:  isKnockedOut ? null : expiresTs,
+      curseWinsSoFar:  0,
       lastMatchResult: 'loss',
     });
   } else {
-    // Draw — clear blessings, don't apply curse
     [homeCode, awayCode].forEach(code => {
       batch.update(db.collection('guilds').doc(code), {
         currentBlessing: null,
@@ -197,35 +142,29 @@ async function triggerCurseBlessing(match) {
   }
 
   await batch.commit();
-  console.log(`✅ Curse/blessing applied: ${winner} blessed, ${loser} cursed (${match.homeScore}-${match.awayScore})`);
+  console.log(`✅ Curse/blessing: winner=${winner ?? 'draw'}, loser=${loser ?? 'draw'} (${match.homeScore}-${match.awayScore})`);
 }
 
-
-// ============================================================
-// Resolve predictions after match completes
-// ============================================================
-
+// ─── Resolve predictions ──────────────────────────────────────────────────────
 async function resolveMatchPredictions(fixtureId, homeScore, awayScore) {
   const actualResult = homeScore > awayScore ? 'home' : awayScore > homeScore ? 'away' : 'draw';
 
-  const unresolvedSnap = await db.collection('predictions')
+  const snap = await db.collection('predictions')
     .where('fixtureId', '==', fixtureId)
     .where('resolved', '==', false)
     .get();
 
-  if (unresolvedSnap.empty) return;
+  if (snap.empty) return;
 
-  const batch = db.batch();
+  const batch   = db.batch();
+  const toAward = [];
 
-  for (const predDoc of unresolvedSnap.docs) {
-    const pred = predDoc.data();
+  snap.docs.forEach(predDoc => {
+    const pred          = predDoc.data();
     const resultCorrect = pred.predictedResult === actualResult;
-    const scoreCorrect = pred.predictedScore?.home === homeScore && pred.predictedScore?.away === awayScore;
-    // Scorer correct requires live event data — skip for now, handle separately
-
-    let xpAwarded = 0;
-    if (resultCorrect) xpAwarded += 30;
-    if (scoreCorrect)  xpAwarded += 50;
+    const scoreCorrect  = pred.predictedScore?.home === homeScore &&
+                          pred.predictedScore?.away === awayScore;
+    const xpAwarded     = (resultCorrect ? 30 : 0) + (scoreCorrect ? 50 : 0);
 
     batch.update(predDoc.ref, {
       resolved: true,
@@ -234,22 +173,86 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore) {
       xpAwarded,
       resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-  }
+
+    if (xpAwarded > 0) {
+      toAward.push({ userId: pred.userId, resultCorrect, scoreCorrect });
+    }
+  });
 
   await batch.commit();
+  console.log(`✅ Resolved ${snap.size} predictions for fixture ${fixtureId}`);
 
-  // Award XP to each user (outside batch — each needs a transaction)
-  // In production, trigger a Cloud Function queue for this
-  // For V1: process inline (acceptable for small user counts)
-  const { awardPredictionXP } = await import('../lib/xpEngine.js');
-  for (const predDoc of unresolvedSnap.docs) {
-    const pred = predDoc.data();
-    await awardPredictionXP(pred.userId, {
-      resultCorrect: pred.predictedResult === actualResult,
+  // Award XP — FIX: static import at top, not dynamic import here
+  for (const p of toAward) {
+    await awardPredictionXP(p.userId, {
+      resultCorrect: p.resultCorrect,
       scorerCorrect: false,
-      scoreCorrect: pred.predictedScore?.home === homeScore && pred.predictedScore?.away === awayScore,
+      scoreCorrect:  p.scoreCorrect,
     });
   }
+}
 
-  console.log(`✅ Resolved ${unresolvedSnap.size} predictions for fixture ${fixtureId}`);
+// ─── Main handler ─────────────────────────────────────────────────────────────
+export default async function handler(req, res) {
+  // Auth check
+  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Skip outside tournament dates — saves API quota
+  if (!isTournamentActive()) {
+    return res.status(200).json({ ok: true, skipped: 'outside tournament window' });
+  }
+
+  try {
+    // 1. Check for live matches
+    const liveFixtures     = await fetchFixtures(true);
+    const hasLive          = liveFixtures.length > 0;
+
+    // 2. If nothing live, fetch upcoming to keep schedule fresh
+    const upcomingFixtures = hasLive ? [] : await fetchFixtures(false);
+
+    // 3. Merge + dedupe
+    const allFixtures = [...new Map(
+      [...liveFixtures, ...upcomingFixtures].map(f => [f.fixture.id, f])
+    ).values()];
+
+    if (allFixtures.length === 0) {
+      return res.status(200).json({ ok: true, message: 'No fixtures to update' });
+    }
+
+    const batch         = db.batch();
+    const justCompleted = [];
+
+    for (const fixture of allFixtures) {
+      const mapped = mapFixtureToDoc(fixture);
+      const ref    = db.collection('fixtures').doc(mapped.fixtureId);
+
+      // FIX: admin SDK uses .exists (property) not .exists() (method)
+      const existing = await ref.get();
+      if (existing.exists && existing.data().isLive && mapped.isComplete) {
+        justCompleted.push({ ...existing.data(), ...mapped });
+      }
+
+      batch.set(ref, mapped, { merge: true });
+    }
+
+    await batch.commit();
+
+    // 4. Trigger curse/blessing + resolve predictions
+    for (const match of justCompleted) {
+      await triggerCurseBlessing(match);
+      await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore);
+    }
+
+    return res.status(200).json({
+      ok:               true,
+      fixturesUpdated:  allFixtures.length,
+      liveMatches:      liveFixtures.length,
+      justCompleted:    justCompleted.length,
+    });
+  } catch (err) {
+    console.error('Match poller failed:', err);
+    return res.status(500).json({ error: err.message });
+  }
 }

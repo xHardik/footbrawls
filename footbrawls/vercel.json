@@ -1,14 +1,4 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/midnight-reset",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/match-poller",
-      "schedule": "*/2 * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",

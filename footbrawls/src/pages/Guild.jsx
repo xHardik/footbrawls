@@ -1,632 +1,485 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { db } from "../lib/firebase";
-import { getUser } from "../lib/user";
 import {
   collection, doc, onSnapshot, addDoc,
   query, where, orderBy, limit, serverTimestamp,
 } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { getUser } from "../lib/user";
+import { COUNTRIES } from "../lib/countries";
+import CastleHP from "../components/CastleHP";
+import CurseBanner from "../components/CurseBanner";
+import GuildChat from "../components/GuildChat";
 
-// ─── Stage 4 components ───────────────────────────────────────────────────────
-import CastleHP     from "../components/CastleHP";
-import CurseBanner  from "../components/CurseBanner";
-import GuildChat    from "../components/GuildChat";
+// ─── Same CSS vars / design tokens as Home.jsx ────────────────────────────────
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
-// ─── Tokens ───────────────────────────────────────────────────────────────────
-const C = {
-  pitch:"#060f1c", card:"#0d1a2d", card2:"#111f35",
-  border:"rgba(255,255,255,0.07)", borderHover:"rgba(255,255,255,0.14)",
-  gold:"#f0c040", goldBg:"rgba(240,192,64,0.12)", goldBorder:"rgba(240,192,64,0.28)",
-  green:"#00d48a", greenBg:"rgba(0,212,138,0.11)", greenBorder:"rgba(0,212,138,0.3)",
-  red:"#ff3d5c",  redBg:"rgba(255,61,92,0.12)",   redBorder:"rgba(255,61,92,0.3)",
-  blue:"#4a9eff", purple:"#8b5cf6",
-  purpleBg:"rgba(139,92,246,0.13)", purpleBorder:"rgba(139,92,246,0.3)",
-  text:"#dde6f5", muted:"rgba(180,205,240,0.4)", muted2:"rgba(180,205,240,0.65)",
-};
+  :root {
+    --bg:#060810; --bg2:#0c0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07); --surface3:rgba(255,255,255,0.11);
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13); --border3:rgba(255,255,255,0.2);
+    --accent:#F7C344; --accent-glow:rgba(247,195,68,0.35); --accent-dim:rgba(247,195,68,0.12);
+    --green:#3DD68C; --blue:#4F8EF7; --red:#E84040; --purple:#A855F7; --teal:#06B6D4; --orange:#F97316;
+    --text:#F2F2F4; --muted:rgba(242,242,244,0.5); --muted2:rgba(242,242,244,0.28); --muted3:rgba(242,242,244,0.15);
+  }
+  body { background:var(--bg) !important; font-family:'Syne',sans-serif; }
 
-const injectFonts = () => {
-  if (document.getElementById("fb-fonts")) return;
-  const link = document.createElement("link");
-  link.id = "fb-fonts"; link.rel = "stylesheet";
-  link.href = "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap";
-  document.head.appendChild(link);
-};
+  .fb-bg { position:fixed;inset:0;z-index:0;pointer-events:none; }
+  .fb-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);background-size:56px 56px;animation:fbGridPulse 6s ease-in-out infinite; }
+  .fb-grid::after { content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(247,195,68,0.18) 1px,transparent 1px);background-size:56px 56px;background-position:-0.5px -0.5px;animation:fbGridPulse 6s ease-in-out infinite reverse; }
+  .fb-blob { position:absolute;border-radius:50%;filter:blur(90px);opacity:0.45; }
+  .fb-blob1 { width:700px;height:500px;top:-200px;left:-100px;background:radial-gradient(ellipse,rgba(168,85,247,0.22) 0%,rgba(79,142,247,0.1) 40%,transparent 70%);animation:fbDrift 20s ease-in-out infinite alternate; }
+  .fb-blob2 { width:500px;height:400px;bottom:-80px;right:-100px;background:radial-gradient(ellipse,rgba(61,214,140,0.1) 0%,transparent 70%);animation:fbDrift 24s ease-in-out infinite alternate-reverse; }
+  .fb-noise { position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px; }
+
+  .fb-nav { position:sticky;top:0;z-index:200;height:64px;padding:0 max(20px,4vw);background:rgba(6,8,16,0.35);backdrop-filter:blur(16px) saturate(1.3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+  .fb-logo { font-family:'Bebas Neue',sans-serif;font-size:1.85rem;letter-spacing:3px;background:linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+  .fb-logo em { font-style:normal;-webkit-text-fill-color:#F2F2F4; }
+  .fb-logo small { font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:1px;-webkit-text-fill-color:rgba(242,242,244,0.35); }
+  .fb-nav-pill { display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-family:'Space Mono',monospace;font-size:0.66rem;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.22s; }
+  .fb-nav-pill:hover { background:var(--surface3);border-color:var(--border3);color:var(--text);transform:translateY(-1px); }
+
+  .fb-tab-bar { display:flex;border-bottom:1px solid var(--border);background:rgba(6,8,16,0.6);backdrop-filter:blur(8px);position:sticky;top:64px;z-index:100; }
+  .fb-tab { flex:1;padding:14px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.18s; }
+  .fb-tab.active { color:var(--accent);border-bottom-color:var(--accent); }
+  .fb-tab:hover:not(.active) { color:var(--text); }
+
+  .fb-section-hdr { display:flex;align-items:center;gap:14px;margin-bottom:18px; }
+  .fb-section-label { font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap; }
+  .fb-section-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
+
+  .fb-stat-row { display:flex;gap:0;border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:24px; }
+  .fb-stat-tile { display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 20px;background:var(--surface);border-right:1px solid var(--border2);flex:1; }
+  .fb-stat-tile:last-child { border-right:none; }
+  .fb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:1px;color:var(--accent);line-height:1; }
+  .fb-stat-lbl { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted); }
+
+  .fb-bottom-nav { position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(6,8,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px); }
+  .fb-nav-item { position:relative;flex:1;min-width:0;border:none;background:transparent;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation; }
+  .fb-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 8px var(--green); }
+
+  .fb-member-row { display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background 0.18s;cursor:default; }
+  .fb-member-row:last-child { border-bottom:none; }
+  .fb-member-row:hover { background:var(--surface2); }
+
+  .fb-raid-banner {
+    position:relative;overflow:hidden;
+    background:linear-gradient(135deg,rgba(168,85,247,0.13),rgba(79,142,247,0.06));
+    border:1px solid rgba(168,85,247,0.28);border-radius:16px;
+    padding:16px;display:flex;align-items:center;gap:14px;
+    cursor:pointer;transition:transform 0.22s,box-shadow 0.22s,border-color 0.22s;
+  }
+  .fb-raid-banner:hover { transform:translateY(-3px);border-color:rgba(168,85,247,0.5);box-shadow:0 14px 40px rgba(168,85,247,0.15); }
+  .fb-raid-icon { width:48px;height:48px;border-radius:14px;background:rgba(168,85,247,0.13);border:1px solid rgba(168,85,247,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+  .fb-raid-banner:hover .fb-raid-icon { transform:scale(1.1) rotate(-5deg); }
+
+  @keyframes fbDrift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(36px,28px) scale(1.1)} }
+  @keyframes fbGridPulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fbPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.6)} }
+
+  @media(max-width:640px){
+    .fb-nav { height:56px;padding:0 16px; }
+    .fb-tab { font-size:0.55rem;letter-spacing:1px; }
+    .fb-blob { filter:blur(40px);opacity:0.25; }
+    .fb-grid { display:none; }
+    .fb-stat-row { grid-template-columns:1fr 1fr;display:grid; }
+    .fb-stat-tile:nth-child(2){border-right:none;}
+    .fb-stat-tile:nth-child(3){border-top:1px solid var(--border2);}
+    .fb-stat-tile:last-child{border-top:1px solid var(--border2);}
+  }
+`;
 
 // ─── Tiers (PRD §7.1) ─────────────────────────────────────────────────────────
 const TIERS = [
-  { name:"lurker",  min:0,    color:"#555566", label:"LURKER",  canChat:false },
-  { name:"fan",     min:50,   color:"#60a5fa", label:"FAN",     canChat:"own" },
-  { name:"veteran", min:200,  color:"#00d48a", label:"VETERAN", canChat:true  },
-  { name:"ultra",   min:500,  color:"#f0c040", label:"ULTRA",   canChat:true  },
-  { name:"legend",  min:9999, color:"#8b5cf6", label:"LEGEND",  canChat:true  },
+  { name:"lurker",  min:0,    color:"#6b7a99", label:"LURKER",  canChat:false },
+  { name:"fan",     min:50,   color:"#4F8EF7", label:"FAN",     canChat:"own" },
+  { name:"veteran", min:200,  color:"#3DD68C", label:"VETERAN", canChat:true  },
+  { name:"ultra",   min:500,  color:"#F7C344", label:"ULTRA",   canChat:true  },
+  { name:"legend",  min:9999, color:"#A855F7", label:"LEGEND",  canChat:true  },
 ];
-function getTier(xp = 0) {
-  return [...TIERS].reverse().find((t) => xp >= t.min) || TIERS[0];
-}
+function getTier(xp=0) { return [...TIERS].reverse().find(t=>xp>=t.min)||TIERS[0]; }
 
-// ─── Fallback so page never gets stuck on spinner ────────────────────────────
 const FALLBACK_USER = {
   userId:"guest", nickname:"Guest", flag:"🏳️",
   homeCountry:"IND", supportTeam:"IND", totalXP:0, dailyXP:0,
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function timeAgo(ts) {
-  if (!ts) return "";
-  const d = Math.floor((Date.now() - ts.toMillis()) / 1000);
-  if (d < 60)   return d + "s";
-  if (d < 3600) return Math.floor(d / 60) + "m";
-  return Math.floor(d / 3600) + "h";
-}
-
-const BAD_WORDS = ["fuck","shit","bitch","asshole","cunt"];
-function containsProfanity(text) {
-  return BAD_WORDS.some((w) => text.toLowerCase().includes(w));
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function TopNav({ guildName, flag, navigate }) {
+function Spinner() {
   return (
-    <nav style={{
-      position:"sticky", top:0, zIndex:50,
-      background:"rgba(6,15,28,0.95)", backdropFilter:"blur(16px)",
-      borderBottom:"1px solid rgba(255,255,255,0.07)",
-      padding:"0 16px", height:52,
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-    }}>
-      <button onClick={() => navigate("/")} style={{
-        background:"none", border:"none", color:C.muted,
-        cursor:"pointer", fontSize:22, lineHeight:1,
-        padding:"0 8px 0 0", display:"flex", alignItems:"center",
-      }}>‹</button>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:60 }}>
+      <div style={{ width:28, height:28, borderRadius:"50%", border:"3px solid rgba(255,255,255,0.07)", borderTopColor:"#F7C344", animation:"spin 0.7s linear infinite" }} />
+      <style>{"@keyframes spin{to{transform:rotate(360deg)}}"}</style>
+    </div>
+  );
+}
 
-      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-        <span style={{ fontSize:20 }}>{flag}</span>
-        <span style={{
-          fontFamily:"'Barlow Condensed', sans-serif",
-          fontWeight:800, fontSize:18, color:C.text, letterSpacing:0.5,
-        }}>{guildName}</span>
+// ─── Top Nav ──────────────────────────────────────────────────────────────────
+function TopNav({ guildName, flag, members, navigate }) {
+  return (
+    <nav className="fb-nav">
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <button onClick={() => navigate("/")} style={{ background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:22, lineHeight:1, padding:0, display:"flex", alignItems:"center" }}>
+          ‹
+        </button>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:22 }}>{flag}</span>
+          <div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.3rem", letterSpacing:2, color:"var(--text)", lineHeight:1 }}>{guildName}</div>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.55rem", color:"var(--muted2)", letterSpacing:1 }}>{members?.toLocaleString()||"—"} members</div>
+          </div>
+        </div>
       </div>
-
-      <button onClick={() => navigate("/raid")} style={{
-        background:C.purpleBg, border:"1px solid rgba(139,92,246,0.3)",
-        borderRadius:99, padding:"5px 12px",
-        fontSize:11, fontWeight:700, color:C.purple,
-        cursor:"pointer", fontFamily:"'Outfit', sans-serif",
-      }}>⚔️ Raid</button>
+      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        <button onClick={() => navigate("/raid")} className="fb-nav-pill" style={{ background:"rgba(168,85,247,0.1)", borderColor:"rgba(168,85,247,0.3)", color:"#A855F7" }}>
+          ⚔️ Raid
+        </button>
+      </div>
     </nav>
   );
 }
 
+// ─── Tab Bar ──────────────────────────────────────────────────────────────────
 function TabBar({ active, onChange }) {
   const tabs = [
-    { id:"chat",   label:"💬 Chat"   },
-    { id:"castle", label:"🏰 Castle" },
-    { id:"ranks",  label:"🏆 Ranks"  },
+    { id:"chat",    label:"💬 Chat"    },
+    { id:"castle",  label:"🏰 Castle"  },
+    { id:"ranks",   label:"🏆 Ranks"   },
   ];
   return (
-    <div style={{
-      display:"flex", borderBottom:"1px solid rgba(255,255,255,0.07)",
-      background:C.card, padding:"0 16px", gap:4, flexShrink:0,
-    }}>
-      {tabs.map((t) => (
-        <button key={t.id} onClick={() => onChange(t.id)} style={{
-          flex:1, padding:"11px 4px", background:"none", border:"none",
-          borderBottom: active === t.id ? `2px solid ${C.green}` : "2px solid transparent",
-          color: active === t.id ? C.green : C.muted,
-          fontSize:12, fontWeight:600, cursor:"pointer",
-          fontFamily:"'Outfit', sans-serif",
-          marginBottom:-1, transition:"color 0.15s",
-        }}>{t.label}</button>
+    <div className="fb-tab-bar">
+      {tabs.map(t => (
+        <button key={t.id} className={`fb-tab${active===t.id?" active":""}`} onClick={() => onChange(t.id)}>
+          {t.label}
+        </button>
       ))}
     </div>
   );
 }
 
-// ─── Castle tab — uses CastleHP + CurseBanner components ─────────────────────
+// ─── Castle Tab ───────────────────────────────────────────────────────────────
 function CastleTab({ guild, user }) {
-  const hp       = guild?.castleHP    ?? 0;
-  const maxHp    = guild?.castleHPCap ?? 10000;
-  const warRecord = guild?.warRecord  ?? { wins:0, losses:0 };
-
-  // Derive curse/blessed status from Firestore guild doc
-  // guild.status: "blessed" | "cursed" | "neutral"
-  const curseStatus  = guild?.status     ?? "neutral";
+  const hp           = guild?.castleHP       ?? 0;
+  const maxHp        = guild?.castleHPCap    ?? 10000;
+  const curseStatus  = guild?.status         ?? "neutral";
   const blessedSecs  = guild?.blessedUntil
     ? Math.max(0, Math.floor((guild.blessedUntil.toMillis() - Date.now()) / 1000))
-    : 0;
-  const raidWins     = guild?.curseRaidWins    ?? 0;
+    : 18000;
+  const raidWins     = guild?.curseRaidWins       ?? 0;
   const raidWinsNeeded = guild?.curseRaidWinsNeeded ?? 3;
-
-  // Top 3 HP contributors from leaderboard data
   const contributors = (guild?.topContributors ?? []).slice(0, 3);
+  const warRecord    = guild?.warRecord ?? { wins:0, losses:0, draws:0 };
+  const country      = COUNTRIES?.find(c => c.code === user.homeCountry);
+  const teamName     = guild?.name || country?.name || user.homeCountry;
+  const lastMatch    = guild?.lastMatch ?? "—";
 
   return (
-    <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:14 }}>
+    <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
 
-      {/* ── CurseBanner (PRD §7.2) ── */}
+      {/* Curse / Blessing banner */}
       <CurseBanner
         status={curseStatus}
-        team={guild?.name ?? user.homeCountry}
-        match={guild?.lastMatch ?? "—"}
+        team={teamName}
+        match={lastMatch}
         blessedSecs={blessedSecs}
         raidWins={raidWins}
         raidWinsNeeded={raidWinsNeeded}
       />
 
-      {/* ── CastleHP (PRD §7.3) ── */}
+      {/* Castle HP */}
       <CastleHP
         hp={hp}
         maxHp={maxHp}
         contributors={contributors}
       />
 
-      {/* ── War record ── */}
-      <div style={{
-        background:C.card, border:"1px solid rgba(255,255,255,0.07)",
-        borderRadius:14, padding:"12px 16px",
-        display:"flex", gap:0,
-      }}>
+      {/* War record */}
+      <div className="fb-stat-row">
         {[
-          { label:"Wins",   value:warRecord.wins,   color:C.green },
-          { label:"Losses", value:warRecord.losses, color:C.red   },
-          { label:"Draws",  value:warRecord.draws ?? 0, color:C.muted2 },
-        ].map((s, i, arr) => (
-          <div key={s.label} style={{
-            flex:1, textAlign:"center",
-            borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
-          }}>
-            <div style={{
-              fontFamily:"'Barlow Condensed', sans-serif",
-              fontWeight:900, fontSize:28, color:s.color, letterSpacing:1,
-            }}>{s.value}</div>
-            <div style={{ fontSize:10, color:C.muted, fontFamily:"'Outfit', sans-serif", textTransform:"uppercase", letterSpacing:0.5 }}>
-              {s.label}
-            </div>
+          { val:warRecord.wins,         lbl:"Raid Wins",   color:"var(--green)" },
+          { val:warRecord.losses,       lbl:"Raid Losses", color:"var(--red)"   },
+          { val:warRecord.draws??0,     lbl:"Draws",       color:"var(--muted)" },
+        ].map(s => (
+          <div key={s.lbl} className="fb-stat-tile">
+            <span className="fb-stat-num" style={{ color:s.color }}>{s.val}</span>
+            <span className="fb-stat-lbl">{s.lbl}</span>
           </div>
         ))}
       </div>
 
-      {/* ── XP split info ── */}
-      <div style={{
-        background:C.card, border:"1px solid rgba(255,255,255,0.07)",
-        borderRadius:14, padding:"12px 16px",
-      }}>
-        <div style={{ fontSize:10, color:C.muted, textTransform:"uppercase", letterSpacing:0.7, fontWeight:600, fontFamily:"'Outfit', sans-serif", marginBottom:10 }}>
-          XP SPLIT
+      {/* XP split */}
+      <div>
+        <div className="fb-section-hdr">
+          <span className="fb-section-label">XP Split</span>
+          <div className="fb-section-line"/>
         </div>
-        <div style={{ display:"flex", gap:10 }}>
+        <div style={{ display:"flex", gap:12 }}>
           {[
-            { label:"Home country", pct:"80%", color:C.green },
-            { label:"Support team", pct:"20%", color:C.blue  },
-          ].map((x) => (
-            <div key={x.label} style={{
-              flex:1, background:C.card2,
-              border:"1px solid rgba(255,255,255,0.07)",
-              borderRadius:12, padding:"10px 12px", textAlign:"center",
-            }}>
-              <div style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:24, color:x.color }}>{x.pct}</div>
-              <div style={{ fontSize:11, color:C.muted, fontFamily:"'Outfit', sans-serif", marginTop:2 }}>{x.label}</div>
+            { label:"Home Country", pct:"80%", color:"var(--green)",  desc:"Your flag guild gets this" },
+            { label:"Support Team", pct:"20%", color:"var(--blue)",   desc:"Club you support" },
+          ].map(x => (
+            <div key={x.label} style={{ flex:1, background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:14, padding:"16px 14px", textAlign:"center" }}>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"2.2rem", color:x.color, lineHeight:1 }}>{x.pct}</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", fontWeight:700, letterSpacing:1, textTransform:"uppercase", color:"var(--muted2)", marginTop:4 }}>{x.label}</div>
+              <div style={{ fontSize:"0.7rem", color:"var(--muted)", marginTop:4 }}>{x.desc}</div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Raid Banner — Stage 5 teaser */}
+      <div>
+        <div className="fb-section-hdr">
+          <span className="fb-section-label">Raid Battles</span>
+          <div className="fb-section-line"/>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"var(--accent)", letterSpacing:1 }}>STAGE 5</span>
+        </div>
+        <div className="fb-raid-banner">
+          <div style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", fontSize:60, opacity:0.06, pointerEvents:"none", userSelect:"none" }}>⚔️</div>
+          <div className="fb-raid-icon">⚔️</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.2rem", letterSpacing:1.5, display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+              Challenge Raid
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.5rem", fontWeight:700, border:"1px solid rgba(247,195,68,0.28)", borderRadius:999, padding:"2px 8px", color:"#F7C344", background:"rgba(247,195,68,0.09)" }}>2x XP on match day</span>
+            </div>
+            <p style={{ margin:0, fontSize:"0.75rem", color:"var(--muted)", lineHeight:1.4 }}>Find a buddy · 3-act battle · Break curses · Swing castle HP</p>
+          </div>
+          <span style={{ color:"#A855F7", fontSize:24, fontWeight:900, flexShrink:0 }}>›</span>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Ranks tab ────────────────────────────────────────────────────────────────
+// ─── Ranks Tab ────────────────────────────────────────────────────────────────
 function RanksTab({ leaderboard, currentUserId }) {
+  const medals = ["🥇","🥈","🥉"];
   return (
-    <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:14 }}>
+    <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
 
       {/* Today's top earners */}
-      <div style={{
-        background:C.card, border:"1px solid rgba(255,255,255,0.07)",
-        borderRadius:16, overflow:"hidden",
-      }}>
-        <div style={{
-          padding:"11px 14px 9px", borderBottom:"1px solid rgba(255,255,255,0.07)",
-          fontFamily:"'Barlow Condensed', sans-serif",
-          fontWeight:800, fontSize:14, color:C.text, letterSpacing:1,
-        }}>TODAY'S TOP EARNERS</div>
-
-        {leaderboard.length === 0 && (
-          <div style={{ padding:"20px 14px", fontSize:12, color:C.muted, fontFamily:"'Outfit', sans-serif", textAlign:"center" }}>
-            No XP earned yet today. Be the first! 🚀
-          </div>
-        )}
-
-        {leaderboard.map((m, i) => {
-          const tier = getTier(m.totalXP);
-          const isMe = m.userId === currentUserId;
-          const medals = ["🥇","🥈","🥉"];
-          return (
-            <div key={m.userId || i} style={{
-              display:"flex", alignItems:"center", gap:10,
-              padding:"10px 14px",
-              borderBottom: i < leaderboard.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
-              background: isMe ? `${C.green}0a` : "transparent",
-            }}>
-              <span style={{ fontSize:i < 3 ? 16 : 11, width:22, textAlign:"center", flexShrink:0, color:C.gold, fontWeight:700, fontFamily:"'Barlow Condensed', sans-serif" }}>
-                {i < 3 ? medals[i] : i + 1}
-              </span>
-              <span style={{ fontSize:16, flexShrink:0 }}>{m.flag || "?"}</span>
-              <span style={{ flex:1, fontSize:13, fontWeight: isMe ? 700 : 600, color: isMe ? C.green : C.text, fontFamily:"'Outfit', sans-serif", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                {m.nickname}{isMe ? " (you)" : ""}
-              </span>
-              <span style={{ fontSize:9, fontWeight:700, padding:"2px 6px", borderRadius:99, color:tier.color, background:tier.color+"22", border:"1px solid "+tier.color+"44", fontFamily:"'Outfit', sans-serif", flexShrink:0 }}>
-                {tier.label}
-              </span>
-              <span style={{ fontFamily:"'Barlow Condensed', sans-serif", fontWeight:800, fontSize:16, color:C.gold, flexShrink:0 }}>
-                +{m.dailyXP ?? 0}
-              </span>
+      <div>
+        <div className="fb-section-hdr">
+          <span className="fb-section-label">Today's Top Earners</span>
+          <div className="fb-section-line"/>
+        </div>
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
+          {leaderboard.length===0 && (
+            <div style={{ padding:"32px 16px", textAlign:"center" }}>
+              <div style={{ fontSize:32, marginBottom:10 }}>🚀</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.65rem", color:"var(--muted)", letterSpacing:1 }}>No XP earned yet — be first!</div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Tier requirements */}
-      <div style={{
-        background:C.card, border:"1px solid rgba(255,255,255,0.07)",
-        borderRadius:16, overflow:"hidden",
-      }}>
-        <div style={{
-          padding:"11px 14px 9px", borderBottom:"1px solid rgba(255,255,255,0.07)",
-          fontFamily:"'Barlow Condensed', sans-serif",
-          fontWeight:800, fontSize:14, color:C.text, letterSpacing:1,
-        }}>TIER REQUIREMENTS</div>
-
-        {TIERS.map((t, i) => (
-          <div key={t.name} style={{
-            display:"flex", alignItems:"center", gap:10,
-            padding:"10px 14px",
-            borderBottom: i < TIERS.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
-          }}>
-            <div style={{ width:8, height:8, borderRadius:"50%", background:t.color, flexShrink:0 }} />
-            <span style={{ flex:1, fontSize:13, fontWeight:700, color:t.color, fontFamily:"'Outfit', sans-serif" }}>{t.label}</span>
-            <span style={{ fontSize:12, color:C.muted, fontFamily:"'Outfit', sans-serif" }}>
-              {t.min === 0 ? "0 XP" : t.min >= 9999 ? "Top 1%" : t.min + "+ XP"}
-            </span>
-            <span style={{ fontSize:11, color:C.muted2, fontFamily:"'Outfit', sans-serif" }}>
-              {t.canChat === false ? "Read only" : t.canChat === "own" ? "Own guild" : "All guilds"}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Chat tab — wraps GuildChat component ─────────────────────────────────────
-function ChatTab({ user, tier, canChat, messages, onSend }) {
-  const chatBottomRef = useRef(null);
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior:"smooth" });
-  }, [messages]);
-
-  return (
-    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0 }}>
-      {/* Message list */}
-      <div style={{ flex:1, overflowY:"auto", padding:"14px 16px 4px", display:"flex", flexDirection:"column" }}>
-        {messages.length === 0 && (
-          <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", padding:"60px 0" }}>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:36, marginBottom:10 }}>💬</div>
-              <div style={{ fontSize:13, color:C.muted, fontFamily:"'Outfit', sans-serif" }}>
-                No messages yet. Be the first!
+          )}
+          {leaderboard.map((m,i) => {
+            const tier = getTier(m.totalXP);
+            const isMe = m.userId===currentUserId;
+            return (
+              <div key={m.userId||i} className="fb-member-row" style={{ background:isMe?"rgba(61,214,140,0.05)":"transparent" }}>
+                <span style={{ fontSize:i<3?18:12, width:24, textAlign:"center", flexShrink:0, fontFamily:"'Bebas Neue',sans-serif", color:"var(--accent)", letterSpacing:1 }}>
+                  {i<3?medals[i]:i+1}
+                </span>
+                <span style={{ fontSize:18, flexShrink:0 }}>{m.flag||"🏳️"}</span>
+                <span style={{ flex:1, fontSize:"0.82rem", fontWeight:isMe?700:600, color:isMe?"var(--green)":"var(--text)", fontFamily:"'Syne',sans-serif", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {m.nickname}{isMe?" (you)":""}
+                </span>
+                <span style={{ fontSize:"0.58rem", fontWeight:700, padding:"2px 7px", borderRadius:99, color:tier.color, background:tier.color+"22", border:"1px solid "+tier.color+"44", fontFamily:"'Space Mono',monospace", flexShrink:0, letterSpacing:0.5 }}>{tier.label}</span>
+                <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.1rem", color:"var(--accent)", flexShrink:0, letterSpacing:1, marginLeft:8 }}>+{m.dailyXP??0}</span>
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tier breakdown */}
+      <div>
+        <div className="fb-section-hdr">
+          <span className="fb-section-label">Tier Requirements</span>
+          <div className="fb-section-line"/>
+        </div>
+        <div style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
+          {TIERS.map((t,i) => (
+            <div key={t.name} className="fb-member-row">
+              <div style={{ width:10, height:10, borderRadius:"50%", background:t.color, boxShadow:`0 0 6px ${t.color}`, flexShrink:0 }} />
+              <span style={{ flex:1, fontSize:"0.82rem", fontWeight:700, color:t.color, fontFamily:"'Syne',sans-serif" }}>{t.label}</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.62rem", color:"var(--muted)" }}>
+                {t.min===0?"0 XP":t.min>=9999?"Top 1% active":`${t.min}+ XP`}
+              </span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"var(--muted2)", marginLeft:12 }}>
+                {t.canChat===false?"Read only":t.canChat==="own"?"Own guild":"All guilds"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Daily XP cap reminder */}
+      <div style={{ background:"rgba(247,195,68,0.06)", border:"1px solid rgba(247,195,68,0.18)", borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", gap:12 }}>
+        <span style={{ fontSize:24, flexShrink:0 }}>⚡</span>
+        <div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1rem", letterSpacing:1.5, color:"var(--accent)", marginBottom:3 }}>Daily XP Cap: 200</div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"0.73rem", color:"var(--muted)", lineHeight:1.4 }}>
+            80% of your XP goes to your home country castle. 20% to your support team. Curses and blessings modify all XP earned.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Chat Tab — wraps GuildChat component with real Firebase ──────────────────
+function ChatTab({ user, guild, tier, canChat, messages, onSend }) {
+  const memberCount = guild?.memberCount ?? 0;
+  return (
+    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, padding:"16px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
+      {canChat ? (
+        <GuildChat
+          guildCode={user.homeCountry}
+          currentUid={user.userId}
+          nickname={user.nickname}
+          tier={tier.label}
+          memberCount={memberCount}
+        />
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", flex:1, gap:16, padding:"40px 0" }}>
+          <span style={{ fontSize:48 }}>🔒</span>
+          <div style={{ textAlign:"center" }}>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.4rem", letterSpacing:2, color:"var(--text)", marginBottom:8 }}>Chat Locked</div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"0.8rem", color:"var(--muted)", lineHeight:1.5, maxWidth:280 }}>
+              Earn <span style={{ color:"var(--accent)", fontWeight:700 }}>50 XP</span> to unlock guild chat. Play games to climb tiers.
             </div>
           </div>
-        )}
-
-        {messages.map((msg) => (
-          <ChatMessageBubble key={msg.id} msg={msg} isOwn={msg.userId === user.userId} />
-        ))}
-        <div ref={chatBottomRef} />
-      </div>
-
-      {/* Input */}
-      <ChatInputBar onSend={onSend} canChat={canChat} tier={tier} />
-    </div>
-  );
-}
-
-function ChatMessageBubble({ msg, isOwn }) {
-  const tier = getTier(msg.totalXP || 0);
-  return (
-    <div style={{
-      display:"flex", gap:8,
-      flexDirection: isOwn ? "row-reverse" : "row",
-      marginBottom:10, alignItems:"flex-end",
-    }}>
-      {/* Avatar */}
-      <div style={{
-        width:30, height:30, borderRadius:"50%",
-        background:C.card2, border:`2px solid ${tier.color}`,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        fontSize:15, flexShrink:0,
-      }}>{msg.flag || "?"}</div>
-
-      <div style={{
-        maxWidth:"72%", display:"flex", flexDirection:"column",
-        alignItems: isOwn ? "flex-end" : "flex-start", gap:3,
-      }}>
-        {/* Name + tier + time */}
-        {!isOwn && (
-          <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
-            <span style={{ fontSize:11, fontWeight:700, color:tier.color, fontFamily:"'Outfit', sans-serif" }}>
-              {msg.nickname}
-            </span>
-            <span style={{
-              fontSize:9, fontWeight:700, padding:"1px 6px", borderRadius:99,
-              color:tier.color, background:tier.color+"22", border:"1px solid "+tier.color+"44",
-              fontFamily:"'Outfit', sans-serif",
-            }}>{tier.label}</span>
-            <span style={{ fontSize:9, color:C.muted, fontFamily:"'Outfit', sans-serif" }}>
-              {timeAgo(msg.timestamp)}
-            </span>
+          <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 16px", borderRadius:99, background:"rgba(247,195,68,0.09)", border:"1px solid rgba(247,195,68,0.2)" }}>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.65rem", color:"var(--accent)", fontWeight:700, letterSpacing:1 }}>YOU ARE: {tier.label}</span>
           </div>
-        )}
-
-        {/* Bubble */}
-        <div style={{
-          background: isOwn ? C.greenBg : C.card2,
-          border: "1px solid " + (isOwn ? C.greenBorder : "rgba(255,255,255,0.07)"),
-          borderRadius: isOwn ? "14px 14px 4px 14px" : "4px 14px 14px 14px",
-          padding:"8px 12px", fontSize:13, color:C.text,
-          lineHeight:1.45, fontFamily:"'Outfit', sans-serif", wordBreak:"break-word",
-        }}>{msg.text}</div>
-
-        {isOwn && (
-          <span style={{ fontSize:9, color:C.muted, fontFamily:"'Outfit', sans-serif" }}>
-            {timeAgo(msg.timestamp)}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ChatInputBar({ onSend, canChat, tier }) {
-  const [text, setText] = useState("");
-  const [err,  setErr]  = useState("");
-
-  function handleSend() {
-    const t = text.trim();
-    if (!t) return;
-    if (containsProfanity(t)) {
-      setErr("Message blocked — keep it clean 🧹");
-      setTimeout(() => setErr(""), 2500);
-      return;
-    }
-    onSend(t);
-    setText("");
-    setErr("");
-  }
-
-  if (!canChat) return (
-    <div style={{
-      padding:"12px 16px",
-      background:C.card, borderTop:"1px solid rgba(255,255,255,0.07)",
-      textAlign:"center", fontSize:12, color:C.muted,
-      fontFamily:"'Outfit', sans-serif",
-    }}>
-      Earn <span style={{ color:C.gold, fontWeight:700 }}>50 XP</span> to unlock chat ·{" "}
-      You are <span style={{ color:tier.color, fontWeight:700 }}>{tier.label}</span>
-    </div>
-  );
-
-  return (
-    <div style={{ padding:"10px 16px 12px", background:C.card, borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
-      {err && (
-        <div style={{ marginBottom:6, fontSize:11, color:C.red, fontFamily:"'Outfit', sans-serif", fontWeight:600 }}>
-          {err}
         </div>
       )}
-      <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Say something to your guild…"
-          maxLength={200}
-          style={{
-            flex:1, background:C.card2,
-            border:`1px solid ${text ? C.borderHover : "rgba(255,255,255,0.07)"}`,
-            borderRadius:12, padding:"10px 14px",
-            fontSize:13, color:C.text, outline:"none",
-            fontFamily:"'Outfit', sans-serif", transition:"border-color 0.2s",
-          }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!text.trim()}
-          style={{
-            background: text.trim() ? C.green : "rgba(255,255,255,0.07)",
-            border:"none", borderRadius:12, width:42, height:42,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            fontSize:14, fontWeight:800, cursor: text.trim() ? "pointer" : "default",
-            flexShrink:0, color: text.trim() ? "#060f1c" : C.muted,
-            fontFamily:"'Outfit', sans-serif", transition:"all 0.15s",
-          }}
-        >➤</button>
-      </div>
     </div>
   );
 }
 
+// ─── Bottom Nav ───────────────────────────────────────────────────────────────
 function BottomNav({ navigate }) {
   const items = [
     { id:"home",    label:"Games", icon:"⚽", route:"/"            },
     { id:"guild",   label:"Guild", icon:"🏰", route:"/guild"       },
-    { id:"raids",   label:"Raids", icon:"⚔️", route:"/raid"        },
-    { id:"ranks",   label:"Ranks", icon:"🏆", route:"/leaderboard" },
-    { id:"profile", label:"Me",    icon:"👤", route:"/profile"     },
+    { id:"raids",   label:"Raids", icon:"⚔️", route:null           },
+    { id:"ranks",   label:"Ranks", icon:"🏆", route:null           },
+    { id:"me",      label:"Me",    icon:"👤", route:null           },
   ];
+  const [toast, setToast] = useState("");
+  function handleClick(item) {
+    if (item.route) navigate(item.route);
+    else { setToast("Coming soon ⚡"); setTimeout(()=>setToast(""),2000); }
+  }
   return (
-    <nav style={{
-      display:"flex", borderTop:"1px solid rgba(255,255,255,0.07)",
-      background:"rgba(6,15,28,0.98)", backdropFilter:"blur(16px)",
-      position:"sticky", bottom:0, zIndex:50,
-      paddingBottom:"env(safe-area-inset-bottom, 0px)",
-    }}>
-      {items.map((item) => {
-        const isActive = item.id === "guild";
-        return (
-          <button key={item.id} onClick={() => navigate(item.route)} style={{
-            flex:1, minWidth:0, display:"flex", flexDirection:"column",
-            alignItems:"center", gap:3, padding:"10px 4px 9px",
-            fontSize:9, fontWeight:600, color: isActive ? C.green : C.muted,
-            cursor:"pointer", border:"none", background:"transparent",
-            fontFamily:"'Outfit', sans-serif", letterSpacing:0.4,
-            textTransform:"uppercase", position:"relative",
-            transition:"color 0.15s",
-            WebkitTapHighlightColor:"transparent", touchAction:"manipulation",
-          }}>
-            {isActive && (
-              <div style={{
-                position:"absolute", top:0, left:"50%",
-                transform:"translateX(-50%)",
-                width:28, height:2, background:C.green,
-                borderRadius:"0 0 99px 99px", boxShadow:`0 0 8px ${C.green}`,
-              }} />
-            )}
-            <span style={{ fontSize:20, lineHeight:1 }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+    <>
+      <nav className="fb-bottom-nav">
+        {items.map(item => {
+          const active = item.id==="guild";
+          return (
+            <button key={item.id} className="fb-nav-item" onClick={()=>handleClick(item)}
+              style={{ color:active?"var(--green)":"rgba(242,242,244,0.38)" }}>
+              {active && <span className="fb-nav-indicator"/>}
+              <span style={{ fontSize:20, lineHeight:1 }}>{item.icon}</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      {toast && (
+        <div style={{ position:"fixed", bottom:76, left:"50%", transform:"translateX(-50%)", zIndex:300, background:"rgba(12,15,26,0.96)", border:"1px solid var(--border2)", borderRadius:999, color:"var(--text)", padding:"10px 18px", fontFamily:"'Space Mono',monospace", fontSize:"0.76rem", fontWeight:700, whiteSpace:"nowrap", pointerEvents:"none", animation:"fadeUp 0.22s ease" }}>
+          {toast}
+        </div>
+      )}
+    </>
   );
 }
 
-function Spinner() {
-  return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", padding:60 }}>
-      <div style={{ width:28, height:28, borderRadius:"50%", border:"3px solid #1e293b", borderTopColor:C.green, animation:"spin 0.7s linear infinite" }} />
-      <style>{"@keyframes spin{to{transform:rotate(360deg)}}"}</style>
-    </div>
-  );
-}
-
-// ─── Main Guild page ──────────────────────────────────────────────────────────
+// ─── Main Guild Page ──────────────────────────────────────────────────────────
 export default function Guild() {
   const navigate = useNavigate();
   const [user]          = useState(() => getUser() || FALLBACK_USER);
-  const [guild,          setGuild]          = useState(null);
-  const [guildLoading,   setGuildLoading]   = useState(true);
-  const [messages,       setMessages]       = useState([]);
-  const [leaderboard,    setLeaderboard]    = useState([]);
-  const [tab,            setTab]            = useState("chat");
+  const [guild,          setGuild]       = useState(null);
+  const [guildLoading,   setGuildLoading]= useState(true);
+  const [leaderboard,    setLeaderboard] = useState([]);
+  const [tab,            setTab]         = useState("chat");
 
-  useEffect(() => { injectFonts(); }, []);
+  // Inject CSS once
+  useEffect(() => {
+    if (!document.getElementById("fb-guild-css")) {
+      const s = document.createElement("style");
+      s.id = "fb-guild-css";
+      s.textContent = GLOBAL_CSS;
+      document.head.appendChild(s);
+    }
+  }, []);
 
-  // ── Guild doc listener ────────────────────────────────────────────────────
+  // Guild doc listener
   useEffect(() => {
     if (!user?.homeCountry) { setGuildLoading(false); return; }
     const unsub = onSnapshot(
       doc(db, "guilds", user.homeCountry),
-      (snap) => {
-        setGuild(snap.exists() ? { id:snap.id, ...snap.data() } : null);
-        setGuildLoading(false);
-      },
+      snap => { setGuild(snap.exists()?{id:snap.id,...snap.data()}:null); setGuildLoading(false); },
       () => setGuildLoading(false),
     );
     return unsub;
   }, [user.homeCountry]);
 
-  // ── Chat listener (PRD: one flat /chat collection, filtered by guildCode) ─
-  useEffect(() => {
-    if (!user?.homeCountry) return;
-    const q = query(
-      collection(db, "chat"),
-      where("guildCode", "==", user.homeCountry),
-      orderBy("timestamp", "desc"),
-      limit(50),
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map((d) => ({ id:d.id, ...d.data() })).reverse());
-    }, () => {});
-    return unsub;
-  }, [user.homeCountry]);
-
-  // ── Leaderboard listener ─────────────────────────────────────────────────
+  // Leaderboard listener — top 10 daily XP in guild
   useEffect(() => {
     if (!user?.homeCountry) return;
     const today = new Date().toISOString().split("T")[0];
     const q = query(
-      collection(db, "users"),
-      where("homeCountry", "==", user.homeCountry),
-      where("dailyXPDate", "==", today),
-      orderBy("dailyXP", "desc"),
+      collection(db,"users"),
+      where("homeCountry","==",user.homeCountry),
+      where("dailyXPDate","==",today),
+      orderBy("dailyXP","desc"),
       limit(10),
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setLeaderboard(snap.docs.map((d) => ({ id:d.id, ...d.data() })));
-    }, () => {});
+    const unsub = onSnapshot(q,
+      snap => setLeaderboard(snap.docs.map(d=>({id:d.id,...d.data()}))),
+      ()=>{},
+    );
     return unsub;
   }, [user.homeCountry]);
 
-  async function handleSend(text) {
-    if (!user || user.userId === "guest") return;
-    await addDoc(collection(db, "chat"), {
-      guildCode:   user.homeCountry,
-      userId:      user.userId,
-      nickname:    user.nickname,
-      flag:        user.flag || "?",
-      totalXP:     user.totalXP || 0,
-      text,
-      timestamp:   serverTimestamp(),
-      reportCount: 0,
-      reported:    false,
-    });
-  }
-
-  const tier      = getTier(user.totalXP);
-  const canChat   = tier.canChat === true || tier.canChat === "own";
-  const guildName = guild?.name  || user.homeCountry + " Guild";
-  const guildFlag = guild?.flag  || user.flag || "🏳️";
+  const tier    = getTier(user.totalXP);
+  const canChat = tier.canChat===true || tier.canChat==="own";
+  const country = COUNTRIES?.find(c=>c.code===user.homeCountry);
+  const guildName = guild?.name || country?.name+" Guild" || user.homeCountry+" Guild";
+  const guildFlag = guild?.flag || country?.flag || "🏳️";
+  const members   = guild?.memberCount ?? 0;
 
   return (
-    <div style={{
-      background:C.pitch, minHeight:"100vh",
-      maxWidth:430, margin:"0 auto",
-      fontFamily:"'Outfit', sans-serif",
-      display:"flex", flexDirection:"column",
-    }}>
-      <TopNav guildName={guildName} flag={guildFlag} navigate={navigate} />
+    <div style={{ fontFamily:"'Syne',sans-serif", background:"#060810", color:"#F2F2F4", minHeight:"100vh", position:"relative", paddingBottom:80 }}>
+
+      {/* Background — identical to Home */}
+      <div className="fb-bg">
+        <div className="fb-grid"/>
+        <div className="fb-blob fb-blob1"/>
+        <div className="fb-blob fb-blob2"/>
+      </div>
+      <div className="fb-noise"/>
+
+      {/* Nav */}
+      <TopNav guildName={guildName} flag={guildFlag} members={members} navigate={navigate} />
+
+      {/* Tab bar */}
       <TabBar active={tab} onChange={setTab} />
 
-      {/* ── CHAT tab ── */}
-      {tab === "chat" && (
-        guildLoading
-          ? <Spinner />
-          : <ChatTab
-              user={user}
-              tier={tier}
-              canChat={canChat}
-              messages={messages}
-              onSend={handleSend}
-            />
-      )}
+      {/* Content */}
+      <div style={{ position:"relative", zIndex:1 }}>
+        {guildLoading ? <Spinner /> : (
+          <>
+            {tab==="chat"   && <ChatTab   user={user} guild={guild} tier={tier} canChat={canChat} />}
+            {tab==="castle" && <CastleTab guild={guild} user={user} />}
+            {tab==="ranks"  && <RanksTab  leaderboard={leaderboard} currentUserId={user.userId} />}
+          </>
+        )}
+      </div>
 
-      {/* ── CASTLE tab — CurseBanner + CastleHP ── */}
-      {tab === "castle" && (
-        guildLoading
-          ? <Spinner />
-          : <CastleTab guild={guild} user={user} />
-      )}
-
-      {/* ── RANKS tab ── */}
-      {tab === "ranks" && (
-        guildLoading
-          ? <Spinner />
-          : <RanksTab leaderboard={leaderboard} currentUserId={user.userId} />
-      )}
-
+      {/* Bottom nav */}
       <BottomNav navigate={navigate} />
     </div>
   );

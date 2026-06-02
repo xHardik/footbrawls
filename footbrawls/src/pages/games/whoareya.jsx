@@ -1,5 +1,6 @@
 // src/pages/games/WhoAreYa.jsx
 // Football "Who Are Ya?" — guess the mystery WC 2026 player
+// UI updated to match Home.jsx / Guild.jsx design system
 
 import { useState, useEffect, useRef } from 'react';
 import { getDailyPlayer } from '../../lib/dailySeed.js';
@@ -80,26 +81,172 @@ const SCORES = [25, 23, 20, 17, 14, 11, 8, 5];
 
 const REGIONS = {
   ARG:'SouthAmerica', BRA:'SouthAmerica', URU:'SouthAmerica', COL:'SouthAmerica',
-  ECU:'SouthAmerica', PER:'SouthAmerica', VEN:'SouthAmerica', BOL:'SouthAmerica',
   FRA:'Europe', ESP:'Europe', GER:'Europe', ENG:'Europe', POR:'Europe',
   NED:'Europe', BEL:'Europe', CHE:'Europe', POL:'Europe', CRO:'Europe',
-  SRB:'Europe', UKR:'Europe', TUR:'Europe', SVK:'Europe', WAL:'Europe',
   USA:'NorthAmerica', CAN:'NorthAmerica', MEX:'NorthAmerica',
-  MAR:'Africa', NGA:'Africa', SEN:'Africa', GHA:'Africa', CMR:'Africa',
-  CIV:'Africa', TUN:'Africa',
-  JPN:'Asia', KOR:'Asia', IRN:'Asia', SAU:'Asia', QAT:'Asia', AUS:'Asia',
+  MAR:'Africa', NGA:'Africa', SEN:'Africa',
+  JPN:'Asia', KOR:'Asia', NOR:'Europe',
 };
-
 function getRegion(code) { return REGIONS[code] || 'Other'; }
 
-const POS_STYLE = {
-  Forward:    { bg: 'rgba(239,68,68,0.15)',  border: 'rgba(239,68,68,0.4)',  text: '#fca5a5' },
-  Midfielder: { bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.4)', text: '#93c5fd' },
-  Defender:   { bg: 'rgba(34,197,94,0.15)',  border: 'rgba(34,197,94,0.4)',  text: '#86efac' },
-  Goalkeeper: { bg: 'rgba(251,146,60,0.15)', border: 'rgba(251,146,60,0.4)', text: '#fdba74' },
+const POS_COLORS = {
+  Forward:    { bg:'rgba(232,64,64,0.12)',    border:'rgba(232,64,64,0.35)',    text:'#f87171' },
+  Midfielder: { bg:'rgba(79,142,247,0.12)',   border:'rgba(79,142,247,0.35)',   text:'#93c5fd' },
+  Defender:   { bg:'rgba(61,214,140,0.12)',   border:'rgba(61,214,140,0.35)',   text:'#6ee7b7' },
+  Goalkeeper: { bg:'rgba(247,195,68,0.12)',   border:'rgba(247,195,68,0.35)',   text:'#fcd34d' },
 };
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── Injected CSS (same design system as Home/Guild) ──────────────────────────
+const INJECTED_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg:#060810; --bg2:#0c0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07); --surface3:rgba(255,255,255,0.11);
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13); --border3:rgba(255,255,255,0.2);
+    --accent:#F7C344; --accent-glow:rgba(247,195,68,0.35); --accent-dim:rgba(247,195,68,0.12);
+    --green:#3DD68C; --blue:#4F8EF7; --red:#E84040; --purple:#A855F7; --teal:#06B6D4;
+    --text:#F2F2F4; --muted:rgba(242,242,244,0.5); --muted2:rgba(242,242,244,0.28); --muted3:rgba(242,242,244,0.15);
+  }
+
+  .wya-page { min-height:100vh; background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; padding:0 0 100px; position:relative; overflow-x:hidden; }
+
+  /* Background grid + blobs (identical to Home) */
+  .wya-bg { position:fixed;inset:0;z-index:0;pointer-events:none; }
+  .wya-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);background-size:56px 56px;animation:fbGridPulse 6s ease-in-out infinite; }
+  .wya-grid::after { content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(247,195,68,0.18) 1px,transparent 1px);background-size:56px 56px;background-position:-0.5px -0.5px;animation:fbGridPulse 6s ease-in-out infinite reverse; }
+  .wya-blob1 { position:absolute;width:700px;height:500px;top:-200px;left:-100px;border-radius:50%;filter:blur(90px);opacity:0.4;background:radial-gradient(ellipse,rgba(168,85,247,0.22) 0%,rgba(79,142,247,0.1) 40%,transparent 70%);animation:fbDrift 20s ease-in-out infinite alternate; }
+  .wya-blob2 { position:absolute;width:500px;height:400px;bottom:-80px;right:-100px;border-radius:50%;filter:blur(90px);opacity:0.3;background:radial-gradient(ellipse,rgba(61,214,140,0.1) 0%,transparent 70%);animation:fbDrift 24s ease-in-out infinite alternate-reverse; }
+  .wya-noise { position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px; }
+
+  /* Nav */
+  .wya-nav { position:sticky;top:0;z-index:200;height:56px;padding:0 16px;background:rgba(6,8,16,0.35);backdrop-filter:blur(16px) saturate(1.3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+  .wya-nav-back { background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;padding:0;display:flex;align-items:center;line-height:1; }
+  .wya-nav-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;background:linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+  .wya-nav-badge { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:1px;color:var(--accent);border:1px solid rgba(247,195,68,0.28);border-radius:999px;padding:3px 10px;background:rgba(247,195,68,0.09); }
+
+  /* Content wrapper */
+  .wya-content { position:relative;z-index:1;padding:20px 16px 0;max-width:520px;margin:0 auto; }
+
+  /* Header */
+  .wya-header { margin-bottom:20px;animation:fadeUp 0.3s ease both; }
+  .wya-eyebrow { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+  .wya-eyebrow-pill { display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:rgba(61,214,140,0.1);border:1px solid rgba(61,214,140,0.25);color:var(--green);font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:1px; }
+  .wya-eyebrow-sep { color:var(--border2);font-size:14px; }
+  .wya-eyebrow-status { font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted); }
+  .wya-title { font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;color:var(--text);margin:0 0 12px;line-height:1; }
+
+  /* Attempt track */
+  .wya-track { display:flex;gap:5px;align-items:center; }
+  .wya-dot { width:10px;height:10px;border-radius:50%;transition:background 0.35s,box-shadow 0.35s; }
+
+  /* Section label */
+  .wya-section-hdr { display:flex;align-items:center;gap:12px;margin-bottom:12px; }
+  .wya-section-label { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted2);white-space:nowrap; }
+  .wya-section-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
+
+  /* Hint strip */
+  .wya-hints { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;animation:fadeUp 0.3s 0.05s ease both; }
+  .wya-hint { display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);transition:all 0.3s; }
+  .wya-hint.revealed { background:rgba(61,214,140,0.07);border-color:rgba(61,214,140,0.25); }
+  .wya-hint-icon { font-size:16px;flex-shrink:0; }
+  .wya-hint-label { font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted2);margin-bottom:3px; }
+  .wya-hint-val { font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .wya-hint-lock { font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted3); }
+
+  /* Search */
+  .wya-search-wrap { position:relative;margin-bottom:20px;animation:fadeUp 0.3s 0.1s ease both; }
+  .wya-search-box { display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:0 14px;margin-bottom:10px;transition:border-color 0.2s; }
+  .wya-search-box:focus-within { border-color:rgba(247,195,68,0.4); }
+  .wya-search-glyph { font-size:15px;opacity:0.4;flex-shrink:0; }
+  .wya-search-input { flex:1;background:transparent;border:none;color:var(--text);font-size:15px;padding:13px 0;outline:none;font-family:'Syne',sans-serif; }
+  .wya-search-input::placeholder { color:var(--muted2); }
+  .wya-clear { background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:4px;flex-shrink:0; }
+
+  /* Dropdown */
+  .wya-dropdown { position:absolute;top:60px;left:0;right:0;background:#0c0f1a;border:1px solid var(--border2);border-radius:14px;z-index:999;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.8);animation:wyaDropIn 0.18s ease both; }
+  .wya-drop-row { display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid rgba(255,255,255,0.04); }
+  .wya-drop-row:last-child { border-bottom:none; }
+  .wya-drop-row:hover { background:var(--surface3); }
+  .wya-drop-flag { font-size:22px;flex-shrink:0; }
+  .wya-drop-name { font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text);display:block;margin-bottom:2px; }
+  .wya-drop-meta { display:flex;align-items:center;flex-wrap:wrap;gap:3px;font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted); }
+
+  /* Guess button */
+  .wya-btn { width:100%;padding:14px 20px;border-radius:14px;border:none;font-size:0.85rem;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all 0.2s; }
+  .wya-btn-active { background:var(--accent);color:#060810;box-shadow:0 8px 24px rgba(247,195,68,0.25); }
+  .wya-btn-active:hover { filter:brightness(1.08); }
+  .wya-btn-active:active { transform:scale(0.98); }
+  .wya-btn-inactive { background:var(--surface);color:var(--muted3);cursor:not-allowed;border:1px solid var(--border); }
+
+  /* Column labels */
+  .wya-col-labels { display:grid;grid-template-columns:2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr;gap:4px;margin-bottom:6px; }
+  .wya-col-label { font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);text-align:center;padding:3px 0; }
+
+  /* Guess grid */
+  .wya-grid-rows { display:flex;flex-direction:column;gap:4px; }
+  .wya-guess-row { display:grid;grid-template-columns:2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr;gap:4px; }
+  .wya-row-enter { animation:wyaRowIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  /* Cell */
+  .wya-cell { position:relative;border-radius:10px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;padding:8px 4px;text-align:center;word-break:break-word;gap:2px; }
+  .wya-cell-top { position:absolute;top:0;left:0;right:0;height:2px; }
+  .wya-cell-flag { font-size:18px; }
+  .wya-cell-name { font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;color:var(--text);line-height:1.3; }
+  .wya-cell-val { font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;color:var(--muted); }
+  .wya-cell-arrow { font-size:13px;font-weight:900; }
+
+  /* Legend */
+  .wya-legend { display:flex;gap:16px;margin-top:14px;flex-wrap:wrap; }
+  .wya-legend-item { display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted2); }
+  .wya-legend-swatch { width:8px;height:8px;border-radius:2px;flex-shrink:0; }
+
+  /* Result */
+  .wya-result { margin-top:24px;padding:28px 24px;border-radius:20px;border:1px solid;text-align:center;animation:wyaResultPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .wya-result-win { background:rgba(61,214,140,0.05);border-color:rgba(61,214,140,0.2); }
+  .wya-result-loss { background:rgba(232,64,64,0.04);border-color:rgba(232,64,64,0.15); }
+  .wya-result-emoji { font-size:40px;margin-bottom:10px; }
+  .wya-result-eyebrow { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);margin-bottom:10px; }
+  .wya-result-name { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--text);margin-bottom:6px; }
+  .wya-result-info { font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:20px;letter-spacing:0.5px; }
+  .wya-stats-row { display:inline-flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:14px 22px;margin-bottom:16px; }
+  .wya-stats-div { width:1px;height:30px;background:var(--border2); }
+  .wya-stat-chip { display:flex;flex-direction:column;align-items:center;gap:2px; }
+  .wya-stat-val { font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--text);line-height:1;letter-spacing:1px; }
+  .wya-stat-val.xp { color:var(--green); }
+  .wya-stat-label { font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--muted2);text-transform:uppercase;letter-spacing:1.2px; }
+  .wya-next-up { font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted3);margin:0;letter-spacing:0.5px; }
+
+  /* Pos badge */
+  .wya-pos-badge { display:inline-block;padding:1px 7px;border-radius:100px;font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;margin-right:4px; }
+
+  /* Spinner */
+  .wya-spinner { display:flex;align-items:center;justify-content:center;height:100vh; }
+  .wya-spinner-ring { width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,0.07);border-top-color:var(--accent);animation:spin 0.7s linear infinite; }
+
+  /* Bottom nav */
+  .wya-bottom-nav { position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(6,8,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px); }
+  .wya-nav-item { flex:1;min-width:0;border:none;background:transparent;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:rgba(242,242,244,0.38); }
+  .wya-nav-item.active { color:var(--green); }
+  .wya-nav-icon { font-size:20px;line-height:1; }
+  .wya-nav-label { font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px; }
+  .wya-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 8px var(--green); }
+
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes fbDrift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(36px,28px) scale(1.1)} }
+  @keyframes fbGridPulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes wyaRowIn { from{opacity:0;transform:translateY(-10px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes wyaDropIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes wyaResultPop { 0%{opacity:0;transform:scale(0.94) translateY(12px)} 60%{transform:scale(1.02) translateY(0)} 100%{opacity:1;transform:scale(1)} }
+
+  @media(max-width:640px){
+    .wya-blob1,.wya-blob2{filter:blur(40px);opacity:0.25;}
+    .wya-grid{display:none;}
+    .wya-title{font-size:2rem;}
+  }
+`;
+
 export default function WhoAreYa() {
   const [target, setTarget]             = useState(null);
   const [guesses, setGuesses]           = useState([]);
@@ -110,9 +257,18 @@ export default function WhoAreYa() {
   const [gameOver, setGameOver]         = useState(false);
   const [won, setWon]                   = useState(false);
   const [xpAwarded, setXpAwarded]       = useState(null);
-  const [hints, setHints]               = useState({ position: false, country: false, club: false });
+  const [hints, setHints]               = useState({ position:false, country:false, club:false });
   const [animKey, setAnimKey]           = useState(0);
   const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (!document.getElementById('wya-css')) {
+      const s = document.createElement('style');
+      s.id = 'wya-css';
+      s.textContent = INJECTED_CSS;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   useEffect(() => {
     const player = getDailyPlayer(PLAYER_DB);
@@ -130,15 +286,14 @@ export default function WhoAreYa() {
   useEffect(() => {
     if (!search.trim()) { setDropdown([]); return; }
     const q = search.toLowerCase();
-    const matches = PLAYER_DB
-      .filter(p => p.name.toLowerCase().includes(q) && !guessedNames.includes(p.name))
-      .slice(0, 8);
-    setDropdown(matches);
+    setDropdown(
+      PLAYER_DB.filter(p => p.name.toLowerCase().includes(q) && !guessedNames.includes(p.name)).slice(0, 8)
+    );
   }, [search, guessedNames]);
 
   useEffect(() => {
-    const count = guesses.length;
-    setHints({ position: count >= 2, country: count >= 5, club: count >= 7 });
+    const c = guesses.length;
+    setHints({ position:c>=2, country:c>=5, club:c>=7 });
   }, [guesses]);
 
   function evaluateGuess(guess) {
@@ -147,19 +302,14 @@ export default function WhoAreYa() {
     const sameRegion  = !sameCountry && getRegion(guess.countryCode) === getRegion(t.countryCode);
     return {
       cells: [
-        { type:'name',     name:guess.name, flag:guess.flag,
-          cls: guess.name === t.name ? 'correct' : 'wrong' },
-        { type:'country',  val:`${guess.flag} ${guess.country}`,
-          cls: sameCountry ? 'correct' : sameRegion ? 'partial' : 'wrong' },
-        { type:'position', val:guess.position,
-          cls: guess.position === t.position ? 'correct' : 'wrong' },
-        { type:'club',     val:guess.club,
-          cls: guess.club === t.club ? 'correct' : 'wrong' },
+        { type:'name',     name:guess.name, flag:guess.flag, cls:guess.name===t.name?'correct':'wrong' },
+        { type:'country',  val:`${guess.flag} ${guess.country}`, cls:sameCountry?'correct':sameRegion?'partial':'wrong' },
+        { type:'position', val:guess.position, cls:guess.position===t.position?'correct':'wrong' },
+        { type:'club',     val:guess.club, cls:guess.club===t.club?'correct':'wrong' },
         { type:'age',      val:guess.age,
-          cls: guess.age === t.age ? 'correct' : Math.abs(guess.age - t.age) <= 3 ? 'partial' : 'wrong',
-          arrow: guess.age < t.age ? '↑' : guess.age > t.age ? '↓' : '' },
-        { type:'foot',     val:guess.foot,
-          cls: guess.foot === t.foot ? 'correct' : 'wrong' },
+          cls:guess.age===t.age?'correct':Math.abs(guess.age-t.age)<=3?'partial':'wrong',
+          arrow:guess.age<t.age?'↑':guess.age>t.age?'↓':'' },
+        { type:'foot',     val:guess.foot, cls:guess.foot===t.foot?'correct':'wrong' },
       ],
     };
   }
@@ -169,26 +319,21 @@ export default function WhoAreYa() {
     const result = evaluateGuess(selected);
     const newGuesses = [...guesses, result];
     const newNames   = [...guessedNames, selected.name];
-    setAnimKey(k => k + 1);
+    setAnimKey(k => k+1);
     setGuesses(newGuesses);
     setGuessedNames(newNames);
-    setSelected(null);
-    setSearch('');
-    setDropdown([]);
+    setSelected(null); setSearch(''); setDropdown([]);
     const isWin  = selected.name === target.name;
     const isLoss = !isWin && newGuesses.length >= MAX_ATTEMPTS;
     if (isWin || isLoss) {
-      setGameOver(true);
-      setWon(isWin);
-      const score = isWin ? SCORES[newGuesses.length - 1] : 0;
+      setGameOver(true); setWon(isWin);
+      const score = isWin ? SCORES[newGuesses.length-1] : 0;
       const today = new Date().toISOString().split('T')[0];
-      localStorage.setItem('footbrawls_whoareya', JSON.stringify({
-        date: today, guesses: newGuesses, won: isWin, score,
-      }));
+      localStorage.setItem('footbrawls_whoareya', JSON.stringify({ date:today, guesses:newGuesses, won:isWin, score }));
       if (isWin) {
         const user = getUser();
         if (user) {
-          const r = await awardXP(user.userId, 'whoareya_correct', { rawXP: score });
+          const r = await awardXP(user.userId, 'whoareya_correct', { rawXP:score });
           setXpAwarded(r?.xpAwarded || score);
         }
       }
@@ -196,8 +341,8 @@ export default function WhoAreYa() {
   }
 
   if (!target) return (
-    <div style={s.loadingWrap}>
-      <div style={s.spinner} className="wya-spin" />
+    <div className="wya-spinner">
+      <div className="wya-spinner-ring" />
     </div>
   );
 
@@ -206,168 +351,173 @@ export default function WhoAreYa() {
 
   return (
     <>
-      <style>{INJECTED_CSS}</style>
-      <div style={s.page}>
+      <div className="wya-page">
+        {/* Background */}
+        <div className="wya-bg">
+          <div className="wya-grid" />
+          <div className="wya-blob1" />
+          <div className="wya-blob2" />
+        </div>
+        <div className="wya-noise" />
 
-        {/* ── Header ── */}
-        <header style={s.header}>
-          <div>
-            <div style={s.eyebrow}>
-              <span style={s.eyebrowBadge}>⚽ WC 2026</span>
-              <span style={s.eyebrowDivider}>·</span>
-              <span style={s.eyebrowSub}>
+        {/* Nav */}
+        <nav className="wya-nav">
+          <button className="wya-nav-back" onClick={() => window.history.back()}>‹</button>
+          <span className="wya-nav-title">Who Are Ya?</span>
+          <span className="wya-nav-badge">WC 2026</span>
+        </nav>
+
+        {/* Content */}
+        <div className="wya-content">
+
+          {/* Header */}
+          <header className="wya-header">
+            <div className="wya-eyebrow">
+              <span className="wya-eyebrow-pill">⚽ Daily Puzzle</span>
+              <span className="wya-eyebrow-sep">·</span>
+              <span className="wya-eyebrow-status">
                 {gameOver
-                  ? won ? `Solved in ${attempts} ${attempts === 1 ? 'guess' : 'guesses'}` : 'Better luck tomorrow'
-                  : `${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} left`}
+                  ? won ? `Solved in ${attempts} ${attempts===1?'guess':'guesses'}` : 'Better luck tomorrow'
+                  : `${attemptsLeft} attempt${attemptsLeft!==1?'s':''} left`}
               </span>
             </div>
-            <h1 style={s.title}>Who Are Ya?</h1>
-          </div>
-
-          {/* Attempt track */}
-          <div style={s.track}>
-            {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => {
-              const filled    = i < attempts;
-              const isWinLast = won && i === attempts - 1;
-              return (
-                <div key={i} style={{
-                  ...s.trackDot,
-                  background: filled
-                    ? isWinLast ? 'var(--c-green)' : 'var(--c-red)'
-                    : 'rgba(255,255,255,0.07)',
-                  boxShadow: filled
-                    ? isWinLast ? '0 0 10px rgba(34,197,94,0.6)' : '0 0 6px rgba(239,68,68,0.35)'
-                    : 'none',
-                }} />
-              );
-            })}
-          </div>
-        </header>
-
-        {/* ── Hint strip ── */}
-        <div style={s.hintRow}>
-          <HintCard icon="🎽" label="Position" value={target.position} revealed={hints.position} unlockAt={2} />
-          <HintCard icon="🌍" label="Country"  value={`${target.flag} ${target.country}`} revealed={hints.country}  unlockAt={5} />
-          <HintCard icon="🏟️" label="Club"     value={target.club}     revealed={hints.club}     unlockAt={7} />
-        </div>
-
-        {/* ── Search ── */}
-        {!gameOver && (
-          <div style={s.searchWrap}>
-            <div style={s.searchInner} className="wya-search-box">
-              <span style={s.searchGlyph}>⚽</span>
-              <input
-                ref={searchRef}
-                style={s.searchInput}
-                placeholder="Type a player name…"
-                value={search}
-                onChange={e => { setSearch(e.target.value); setSelected(null); }}
-                onKeyDown={e => e.key === 'Enter' && selected && submitGuess()}
-                autoComplete="off"
-              />
-              {search && (
-                <button style={s.clearX} onClick={() => { setSearch(''); setSelected(null); setDropdown([]); }}>✕</button>
-              )}
+            <div className="wya-track">
+              {Array.from({ length:MAX_ATTEMPTS }).map((_,i) => {
+                const filled    = i < attempts;
+                const isWinLast = won && i === attempts-1;
+                return (
+                  <div key={i} className="wya-dot" style={{
+                    background: filled
+                      ? isWinLast ? 'var(--green)' : 'var(--red)'
+                      : 'rgba(255,255,255,0.07)',
+                    boxShadow: filled
+                      ? isWinLast ? '0 0 10px rgba(61,214,140,0.6)' : '0 0 6px rgba(232,64,64,0.35)'
+                      : 'none',
+                  }} />
+                );
+              })}
             </div>
+          </header>
 
-            {dropdown.length > 0 && (
-              <div style={s.dropdown} className="wya-dropdown">
-                {dropdown.map((p, i) => (
-                  <div
-                    key={p.name}
-                    style={{ ...s.dropRow, ...(i < dropdown.length - 1 ? s.dropBorder : {}) }}
-                    className="wya-drop-row"
-                    onClick={() => { setSelected(p); setSearch(p.name); setDropdown([]); }}
-                  >
-                    <span style={s.dropFlag}>{p.flag}</span>
-                    <div style={s.dropInfo}>
-                      <span style={s.dropName}>{p.name}</span>
-                      <span style={s.dropMeta}>
-                        <PosBadge pos={p.position} />
-                        {p.country} · {p.club}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <button
-              style={s.guessBtn}
-              className={selected ? 'wya-guess-active' : 'wya-guess-inactive'}
-              disabled={!selected}
-              onClick={submitGuess}
-            >
-              Confirm Guess →
-            </button>
+          {/* Hints */}
+          <div className="wya-hints">
+            <HintCard icon="🎽" label="Position" value={target.position} revealed={hints.position} unlockAt={2} />
+            <HintCard icon="🌍" label="Country"  value={`${target.flag} ${target.country}`} revealed={hints.country}  unlockAt={5} />
+            <HintCard icon="🏟️" label="Club"     value={target.club}     revealed={hints.club}     unlockAt={7} />
           </div>
-        )}
 
-        {/* ── Column labels ── */}
-        {guesses.length > 0 && (
-          <div style={s.colLabels}>
-            {['Player','Country','Position','Club','Age','Foot'].map(h => (
-              <div key={h} style={s.colLabel}>{h}</div>
-            ))}
-          </div>
-        )}
-
-        {/* ── Guess grid ── */}
-        <div style={s.guessGrid}>
-          {[...guesses].reverse().map((g, rowI) => (
-            <div
-              key={`${animKey}-${rowI}`}
-              style={s.guessRow}
-              className={rowI === 0 ? 'wya-row-enter' : ''}
-            >
-              {g.cells.map((cell, j) => (
-                <Cell key={j} cell={cell} />
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Legend ── */}
-        {guesses.length > 0 && (
-          <div style={s.legend}>
-            {[
-              ['#22c55e', 'Correct'],
-              ['#f59e0b', 'Same region / ±3 yrs'],
-              ['#334155', 'Wrong'],
-            ].map(([color, label]) => (
-              <span key={label} style={s.legendItem}>
-                <span style={{ ...s.legendSwatch, background: color }} />
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* ── Result ── */}
-        {gameOver && (
-          <div style={{ ...s.result, ...(won ? s.resultWin : s.resultLoss) }} className="wya-result-enter">
-            <div style={s.resultEmoji}>{won ? '🏆' : '💔'}</div>
-            <div style={s.resultHead}>{won ? 'Nailed it!' : 'Not this time'}</div>
-            <div style={s.resultName}>{target.flag} {target.name}</div>
-            <div style={s.resultInfo}>{target.country} · {target.position} · {target.club} · Age {target.age}</div>
-
-            {won && (
-              <div style={s.statsRow}>
-                <StatChip value={attempts} label={attempts === 1 ? 'guess' : 'guesses'} />
-                <div style={s.statsDivider} />
-                <StatChip value={SCORES[attempts - 1]} label="points" />
-                {xpAwarded != null && (
-                  <>
-                    <div style={s.statsDivider} />
-                    <StatChip value={`+${xpAwarded}`} label="XP" accent />
-                  </>
+          {/* Search */}
+          {!gameOver && (
+            <div className="wya-search-wrap">
+              <div className="wya-search-box">
+                <span className="wya-search-glyph">⚽</span>
+                <input
+                  ref={searchRef}
+                  className="wya-search-input"
+                  placeholder="Type a player name…"
+                  value={search}
+                  onChange={e => { setSearch(e.target.value); setSelected(null); }}
+                  onKeyDown={e => e.key==='Enter' && selected && submitGuess()}
+                  autoComplete="off"
+                />
+                {search && (
+                  <button className="wya-clear" onClick={() => { setSearch(''); setSelected(null); setDropdown([]); }}>✕</button>
                 )}
               </div>
-            )}
 
-            <p style={s.nextUp}>New puzzle tomorrow ⏳</p>
+              {dropdown.length > 0 && (
+                <div className="wya-dropdown">
+                  {dropdown.map(p => (
+                    <div key={p.name} className="wya-drop-row" onClick={() => { setSelected(p); setSearch(p.name); setDropdown([]); }}>
+                      <span className="wya-drop-flag">{p.flag}</span>
+                      <div>
+                        <span className="wya-drop-name">{p.name}</span>
+                        <span className="wya-drop-meta">
+                          <PosBadge pos={p.position} />
+                          {p.country} · {p.club}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                className={`wya-btn ${selected ? 'wya-btn-active' : 'wya-btn-inactive'}`}
+                disabled={!selected}
+                onClick={submitGuess}
+              >
+                Confirm Guess →
+              </button>
+            </div>
+          )}
+
+          {/* Column labels */}
+          {guesses.length > 0 && (
+            <div className="wya-col-labels">
+              {['Player','Country','Position','Club','Age','Foot'].map(h => (
+                <div key={h} className="wya-col-label">{h}</div>
+              ))}
+            </div>
+          )}
+
+          {/* Guess grid */}
+          <div className="wya-grid-rows">
+            {[...guesses].reverse().map((g, rowI) => (
+              <div key={`${animKey}-${rowI}`} className={`wya-guess-row${rowI===0?' wya-row-enter':''}`}>
+                {g.cells.map((cell, j) => <Cell key={j} cell={cell} />)}
+              </div>
+            ))}
           </div>
-        )}
+
+          {/* Legend */}
+          {guesses.length > 0 && (
+            <div className="wya-legend">
+              {[['var(--green)','Correct'],['var(--accent)','Same region / ±3 yrs'],['rgba(255,255,255,0.08)','Wrong']].map(([color,label]) => (
+                <span key={label} className="wya-legend-item">
+                  <span className="wya-legend-swatch" style={{ background:color }} />
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Result */}
+          {gameOver && (
+            <div className={`wya-result ${won?'wya-result-win':'wya-result-loss'}`}>
+              <div className="wya-result-emoji">{won?'🏆':'💔'}</div>
+              <div className="wya-result-eyebrow">{won?'Nailed it!':'Not this time'}</div>
+              <div className="wya-result-name">{target.flag} {target.name}</div>
+              <div className="wya-result-info">{target.country} · {target.position} · {target.club} · Age {target.age}</div>
+              {won && (
+                <div className="wya-stats-row">
+                  <div className="wya-stat-chip">
+                    <span className="wya-stat-val">{attempts}</span>
+                    <span className="wya-stat-label">{attempts===1?'guess':'guesses'}</span>
+                  </div>
+                  <div className="wya-stats-div" />
+                  <div className="wya-stat-chip">
+                    <span className="wya-stat-val">{SCORES[attempts-1]}</span>
+                    <span className="wya-stat-label">points</span>
+                  </div>
+                  {xpAwarded != null && (
+                    <>
+                      <div className="wya-stats-div" />
+                      <div className="wya-stat-chip">
+                        <span className="wya-stat-val xp">+{xpAwarded}</span>
+                        <span className="wya-stat-label">XP</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <p className="wya-next-up">New puzzle tomorrow ⏳</p>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom Nav */}
+        <BottomNav />
       </div>
     </>
   );
@@ -375,313 +525,73 @@ export default function WhoAreYa() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 function HintCard({ icon, label, value, revealed, unlockAt }) {
-  const posC = POS_STYLE[value];
+  const posC = POS_COLORS[value];
   return (
-    <div style={{
-      ...s.hint,
-      ...(revealed
-        ? { ...s.hintRevealed, ...(posC ? { background: posC.bg, borderColor: posC.border } : {}) }
-        : {}),
-    }}>
-      <span style={s.hintIcon}>{icon}</span>
-      <div style={s.hintBody}>
-        <div style={s.hintLabel}>{label}</div>
+    <div className={`wya-hint${revealed?' revealed':''}`}
+      style={revealed && posC ? { background:posC.bg, borderColor:posC.border } : {}}>
+      <span className="wya-hint-icon">{icon}</span>
+      <div>
+        <div className="wya-hint-label">{label}</div>
         {revealed
-          ? <div style={{ ...s.hintVal, ...(posC ? { color: posC.text } : {}) }}>{value}</div>
-          : <div style={s.hintLock}>Unlocks @ guess {unlockAt}</div>}
+          ? <div className="wya-hint-val" style={posC?{color:posC.text}:{}}>{value}</div>
+          : <div className="wya-hint-lock">@ guess {unlockAt}</div>}
       </div>
     </div>
   );
 }
 
 function PosBadge({ pos }) {
-  const c = POS_STYLE[pos] || {};
+  const c = POS_COLORS[pos] || {};
   return (
-    <span style={{
-      display: 'inline-block', padding: '1px 6px', borderRadius: 100,
-      fontSize: 10, fontWeight: 700, marginRight: 4,
-      background: c.bg, border: `1px solid ${c.border}`, color: c.text,
-    }}>{pos}</span>
+    <span className="wya-pos-badge" style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text }}>
+      {pos}
+    </span>
   );
 }
 
 function Cell({ cell }) {
   const { cls, type, name, flag, val, arrow } = cell;
-  const bg    = cls === 'correct' ? 'rgba(34,197,94,0.1)'   : cls === 'partial' ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.025)';
-  const brd   = cls === 'correct' ? 'rgba(34,197,94,0.35)'  : cls === 'partial' ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.06)';
-  const topC  = cls === 'correct' ? '#22c55e'               : cls === 'partial' ? '#f59e0b' : 'transparent';
-  const arrowC= cls === 'partial' ? '#f59e0b' : '#64748b';
-
+  const bg   = cls==='correct'?'rgba(61,214,140,0.1)' :cls==='partial'?'rgba(247,195,68,0.1)' :'rgba(255,255,255,0.025)';
+  const brd  = cls==='correct'?'rgba(61,214,140,0.35)':cls==='partial'?'rgba(247,195,68,0.35)':'rgba(255,255,255,0.06)';
+  const topC = cls==='correct'?'var(--green)'          :cls==='partial'?'var(--accent)'         :'transparent';
+  const arrC = cls==='partial'?'var(--accent)':'rgba(255,255,255,0.2)';
   return (
-    <div style={{ ...s.cell, background: bg, borderColor: brd }}>
-      <div style={{ ...s.cellTop, background: topC }} />
-      {type === 'name' ? (
+    <div className="wya-cell" style={{ background:bg, borderColor:brd }}>
+      <div className="wya-cell-top" style={{ background:topC }} />
+      {type==='name' ? (
         <>
-          <span style={s.cellFlag}>{flag}</span>
-          <span style={s.cellName}>{name}</span>
+          <span className="wya-cell-flag">{flag}</span>
+          <span className="wya-cell-name">{name}</span>
         </>
       ) : (
         <>
-          <span style={s.cellVal}>{val}</span>
-          {arrow && <span style={{ ...s.cellArrow, color: arrowC }}>{arrow}</span>}
+          <span className="wya-cell-val">{val}</span>
+          {arrow && <span className="wya-cell-arrow" style={{ color:arrC }}>{arrow}</span>}
         </>
       )}
     </div>
   );
 }
 
-function StatChip({ value, label, accent }) {
+function BottomNav() {
+  const items = [
+    { id:'home',  label:'Games', icon:'⚽' },
+    { id:'guild', label:'Guild', icon:'🏰' },
+    { id:'raids', label:'Raids', icon:'⚔️' },
+    { id:'ranks', label:'Ranks', icon:'🏆' },
+    { id:'me',    label:'Me',    icon:'👤' },
+  ];
   return (
-    <div style={s.statChip}>
-      <span style={{ ...s.statVal, ...(accent ? { color: '#4ade80' } : {}) }}>{value}</span>
-      <span style={s.statLabel}>{label}</span>
-    </div>
+    <nav className="wya-bottom-nav">
+      {items.map(item => (
+        <button key={item.id} className={`wya-nav-item${item.id==='home'?' active':''}`}
+          onClick={() => item.id==='home' && window.history.back()}
+          style={{ position:'relative' }}>
+          {item.id==='home' && <span className="wya-nav-indicator" />}
+          <span className="wya-nav-icon">{item.icon}</span>
+          <span className="wya-nav-label">{item.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
-
-// ─── Styles ────────────────────────────────────────────────────────────────────
-const s = {
-  page: {
-    minHeight: '100vh',
-    background: '#06090e',
-    color: '#cbd5e1',
-    fontFamily: "'DM Sans', 'Segoe UI', system-ui, sans-serif",
-    padding: '24px 16px 80px',
-    maxWidth: '100%',
-    margin: '0 auto',
-  },
-  loadingWrap: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh',
-  },
-  spinner: {
-    width: 24, height: 24, borderRadius: '50%',
-    border: '2.5px solid #1e293b', borderTopColor: '#22c55e',
-  },
-
-  // Header
-  header: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-    marginBottom: 24, gap: 16,
-  },
-  eyebrow: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 },
-  eyebrowBadge: {
-    display: 'inline-flex', alignItems: 'center',
-    padding: '2px 9px', borderRadius: 100,
-    background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
-    color: '#4ade80', fontSize: 11, fontWeight: 700, letterSpacing: 1,
-  },
-  eyebrowDivider: { color: '#1e293b', fontSize: 14 },
-  eyebrowSub: { fontSize: 12, color: '#475569' },
-  title: {
-    fontSize: 32, fontWeight: 800, margin: 0,
-    color: '#f8fafc', letterSpacing: '-0.6px',
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  track: { display: 'flex', gap: 5, alignItems: 'center', paddingTop: 6, flexShrink: 0 },
-  trackDot: {
-    width: 10, height: 10, borderRadius: '50%',
-    transition: 'background 0.35s, box-shadow 0.35s',
-  },
-
-  // Hints
-  hintRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 22 },
-  hint: {
-    display: 'flex', alignItems: 'center', gap: 9,
-    padding: '10px 12px', borderRadius: 12,
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    transition: 'all 0.3s',
-  },
-  hintRevealed: {
-    background: 'rgba(34,197,94,0.08)',
-    border: '1px solid rgba(34,197,94,0.25)',
-  },
-  hintIcon: { fontSize: 17, flexShrink: 0 },
-  hintBody: { minWidth: 0 },
-  hintLabel: {
-    fontSize: 9, fontWeight: 800, textTransform: 'uppercase',
-    letterSpacing: 1.3, color: '#334155', marginBottom: 2,
-  },
-  hintVal: {
-    fontSize: 12, fontWeight: 700, color: '#4ade80',
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-  },
-  hintLock: { fontSize: 11, color: '#1e293b' },
-
-  // Search
-  searchWrap: { position: 'relative', marginBottom: 22 },
-  searchInner: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    background: '#0d1520', border: '1px solid #1a2332',
-    borderRadius: 14, padding: '0 14px',
-    marginBottom: 10, transition: 'border-color 0.2s',
-  },
-  searchGlyph: { fontSize: 15, opacity: 0.4, flexShrink: 0 },
-  searchInput: {
-    flex: 1, background: 'transparent', border: 'none',
-    color: '#f1f5f9', fontSize: 15, padding: '13px 0',
-    outline: 'none', fontFamily: 'inherit',
-  },
-  clearX: {
-    background: 'none', border: 'none', color: '#334155',
-    cursor: 'pointer', fontSize: 13, padding: 4, flexShrink: 0,
-  },
-
-  // Dropdown
-  dropdown: {
-    position: 'absolute', top: 58, left: 0, right: 0,
-    background: '#0d1520', border: '1px solid #1a2332',
-    borderRadius: 14, zIndex: 999, overflow: 'hidden',
-    boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-  },
-  dropRow: {
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '11px 14px', cursor: 'pointer',
-    transition: 'background 0.12s',
-  },
-  dropBorder: { borderBottom: '1px solid rgba(255,255,255,0.04)' },
-  dropFlag: { fontSize: 22, flexShrink: 0 },
-  dropInfo: { flex: 1, minWidth: 0 },
-  dropName: { fontSize: 14, fontWeight: 700, color: '#f1f5f9', display: 'block', marginBottom: 2 },
-  dropMeta: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 3, fontSize: 11, color: '#475569' },
-
-  // Guess button
-  guessBtn: {
-    width: '100%', padding: '14px 20px', borderRadius: 14, border: 'none',
-    fontSize: 15, fontWeight: 700, cursor: 'pointer',
-    fontFamily: 'inherit', transition: 'all 0.2s',
-  },
-
-  // Grid
-  colLabels: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr',
-    gap: 4, marginBottom: 6,
-  },
-  colLabel: {
-    fontSize: 9, fontWeight: 800, textTransform: 'uppercase',
-    letterSpacing: 1.5, color: '#1e3a5f', textAlign: 'center', padding: '3px 0',
-  },
-  guessGrid: { display: 'flex', flexDirection: 'column', gap: 4 },
-  guessRow: {
-    display: 'grid',
-    gridTemplateColumns: '2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr',
-    gap: 4,
-  },
-  cell: {
-    position: 'relative', borderRadius: 10, overflow: 'hidden',
-    border: '1px solid transparent',
-    display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-    minHeight: 64, padding: '8px 4px',
-    textAlign: 'center', wordBreak: 'break-word',
-    gap: 2,
-  },
-  cellTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 2 },
-  cellFlag: { fontSize: 18 },
-  cellName: { fontSize: 11, fontWeight: 700, color: '#cbd5e1', lineHeight: 1.3 },
-  cellVal:  { fontSize: 12, fontWeight: 700, color: '#94a3b8' },
-  cellArrow: { fontSize: 13, fontWeight: 900 },
-
-  // Legend
-  legend: { display: 'flex', gap: 18, marginTop: 14, flexWrap: 'wrap' },
-  legendItem: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#334155' },
-  legendSwatch: { width: 8, height: 8, borderRadius: 2 },
-
-  // Result
-  result: {
-    marginTop: 28, padding: '28px 24px',
-    borderRadius: 20, border: '1px solid',
-    textAlign: 'center',
-  },
-  resultWin:  { background: 'rgba(34,197,94,0.05)',  borderColor: 'rgba(34,197,94,0.2)' },
-  resultLoss: { background: 'rgba(239,68,68,0.04)',  borderColor: 'rgba(239,68,68,0.15)' },
-  resultEmoji: { fontSize: 38, marginBottom: 10 },
-  resultHead: {
-    fontSize: 11, fontWeight: 800, textTransform: 'uppercase',
-    letterSpacing: 2.5, color: '#475569', marginBottom: 10,
-  },
-  resultName: {
-    fontSize: 26, fontWeight: 800, color: '#f8fafc',
-    letterSpacing: '-0.3px', marginBottom: 6,
-  },
-  resultInfo: { fontSize: 13, color: '#475569', marginBottom: 20 },
-  statsRow: {
-    display: 'inline-flex', alignItems: 'center', gap: 16,
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.07)',
-    borderRadius: 14, padding: '14px 22px', marginBottom: 16,
-  },
-  statsDivider: { width: 1, height: 30, background: 'rgba(255,255,255,0.07)' },
-  statChip: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 },
-  statVal: { fontSize: 22, fontWeight: 800, color: '#f1f5f9', lineHeight: 1 },
-  statLabel: { fontSize: 9, color: '#334155', textTransform: 'uppercase', letterSpacing: 1.2 },
-  nextUp: { fontSize: 12, color: '#1e293b', margin: 0 },
-};
-
-const INJECTED_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;0,9..40,800&display=swap');
-
-:root {
-  --c-green: #22c55e;
-  --c-red:   #ef4444;
-}
-
-@keyframes wyaSpin {
-  to { transform: rotate(360deg); }
-}
-.wya-spin {
-  animation: wyaSpin 0.75s linear infinite;
-}
-
-@keyframes wyaRowIn {
-  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.wya-row-enter {
-  animation: wyaRowIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-@keyframes wyaDropIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.wya-dropdown {
-  animation: wyaDropIn 0.18s ease both;
-}
-
-@keyframes wyaResultPop {
-  0%   { opacity: 0; transform: scale(0.94) translateY(12px); }
-  60%  { transform: scale(1.02) translateY(0); }
-  100% { opacity: 1; transform: scale(1); }
-}
-.wya-result-enter {
-  animation: wyaResultPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.wya-drop-row:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.wya-guess-active {
-  background: #22c55e !important;
-  color: #052e16 !important;
-  cursor: pointer !important;
-  box-shadow: 0 8px 24px rgba(34,197,94,0.25) !important;
-}
-.wya-guess-active:hover {
-  filter: brightness(1.06);
-}
-.wya-guess-active:active {
-  transform: scale(0.98);
-}
-.wya-guess-inactive {
-  background: #0f172a;
-  color: #1e3a5f;
-  cursor: not-allowed;
-}
-
-.wya-search-box:focus-within {
-  border-color: rgba(34,197,94,0.3) !important;
-}
-`;

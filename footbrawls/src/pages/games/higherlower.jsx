@@ -12,6 +12,7 @@
 import { useState, useEffect } from "react";
 import { getDailySeed, getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from '../../lib/xpEngine.js';
+import { getUser } from '../../lib/user';
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 15;

@@ -1,1057 +1,518 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getUser } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
 
-const DAILY_XP_CAP = 200;
+const DAILY_XP_CAP  = 200;
 const CASTLE_HP_CAP = 10000;
 
-const C = {
-  pitch: "#06111f",
-  panel: "#0b182a",
-  panel2: "#10223a",
-  stroke: "rgba(255,255,255,0.08)",
-  stroke2: "rgba(255,255,255,0.15)",
-  text: "#e8f1ff",
-  soft: "rgba(204,222,247,0.68)",
-  mute: "rgba(204,222,247,0.42)",
-  green: "#00d48a",
-  blue: "#4a9eff",
-  gold: "#f0c040",
-  red: "#ff4865",
-  violet: "#9a72ff",
-};
-
+// accent colours map exactly to Crickingo gc-* CSS vars
 const GAME_META = [
-  {
-    id: "whoAreYa",
-    icon: "👤",
-    name: "Who Are Ya?",
-    desc: "Guess today's mystery player with position, country, and club clues.",
-    xp: 25,
-    route: "/games/whoareya",
-    color: "#9a72ff",
-    storageKey: "footbrawls_whoareya",
-  },
-  {
-    id: "matchPredictor",
-    icon: "🔮",
-    name: "Match Predictor",
-    desc: "Lock result and scorer picks before kickoff.",
-    xp: 100,
-    route: "/games/matchpredictor",
-    color: "#4a9eff",
-    storageKey: "footbrawls_matchpredictor",
-  },
-  {
-    id: "penaltyNerve",
-    icon: "⚽",
-    name: "Penalty Nerve",
-    desc: "Beat the keeper across five pressure kicks.",
-    xp: 30,
-    route: "/games/penaltynerve",
-    color: "#ff4865",
-    storageKey: "footbrawls_penaltynerve",
-  },
-  {
-    id: "wordle",
-    icon: "🟩",
-    name: "Player Wordle",
-    desc: "Use attribute colour feedback to find the footballer.",
-    xp: 20,
-    route: "/games/wordle",
-    color: "#20c96b",
-    storageKey: "footbrawls_wordle_history",
-  },
-  {
-    id: "higherLower",
-    icon: "📊",
-    name: "Higher or Lower",
-    desc: "Compare age, caps, goals, and market value.",
-    xp: 15,
-    route: "/games/higherlower",
-    color: "#f6a623",
-    storageKey: "footbrawls_higherlower",
-  },
-  {
-    id: "transferTrail",
-    icon: "🔗",
-    name: "Transfer Trail",
-    desc: "Connect two players through shared clubs.",
-    xp: 20,
-    route: "/games/transfertrail",
-    color: "#00d48a",
-    storageKey: "footbrawls_transfertrail",
-  },
+  { id:"whoAreYa",      icon:"👤", name:"Who Are Ya?",     desc:"Guess the mystery player from silhouette and hints.",      xp:25,  route:"/games/whoareya",      storageKey:"footbrawls_whoareya",       gc:"gc-purple", accent:"#A855F7" },
+  { id:"matchPredictor",icon:"🔮", name:"Match Predictor", desc:"Lock result and scorer picks before kickoff.",             xp:100, route:"/games/matchpredictor", storageKey:"footbrawls_matchpredictor", gc:"gc-blue",   accent:"#4F8EF7" },
+  { id:"penaltyNerve",  icon:"⚽", name:"Penalty Nerve",   desc:"Beat the keeper across five pressure kicks.",              xp:30,  route:"/games/penaltynerve",   storageKey:"footbrawls_penaltynerve",   gc:"gc-red",    accent:"#E84040" },
+  { id:"wordle",        icon:"🟩", name:"Player Wordle",   desc:"Use attribute colour feedback to find the footballer.",    xp:20,  route:"/games/wordle",         storageKey:"footbrawls_wordle_history", gc:"gc-green",  accent:"#3DD68C" },
+  { id:"higherLower",   icon:"📊", name:"Higher or Lower", desc:"Compare age, caps, goals, and market value.",              xp:15,  route:"/games/higherlower",    storageKey:"footbrawls_higherlower",    gc:"gc-orange", accent:"#F97316" },
+  { id:"transferTrail", icon:"🔗", name:"Transfer Trail",  desc:"Connect two players through shared clubs in fewest hops.", xp:20,  route:"/games/transfertrail",  storageKey:"footbrawls_transfertrail",  gc:"gc-teal",   accent:"#06B6D4" },
 ];
-
-const FEED = [
-  { icon: "⚽", user: "Priya_10", action: "held nerve from the spot", time: "2m" },
-  { icon: "👤", user: "Arjun_CF", action: "solved Who Are Ya in 2", time: "5m" },
-  { icon: "🔮", user: "Vikram_7", action: "locked a bold scoreline", time: "11m" },
-  { icon: "🔗", user: "Sneha_11", action: "finished Transfer Trail in 3", time: "18m" },
-];
-
-function injectFonts() {
-  if (document.getElementById("fb-fonts")) return;
-  const link = document.createElement("link");
-  link.id = "fb-fonts";
-  link.rel = "stylesheet";
-  link.href =
-    "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Outfit:wght@400;500;600;700&display=swap";
-  document.head.appendChild(link);
-}
 
 function getTodayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
-
 function isDoneToday(game) {
   try {
-    const today = getTodayKey();
-    const raw = localStorage.getItem(game.storageKey);
+    const today = getTodayKey(), raw = localStorage.getItem(game.storageKey);
     if (!raw) return false;
     const data = JSON.parse(raw);
     return data.date === today || Boolean(data[today]);
-  } catch {
-    return false;
+  } catch { return false; }
+}
+function pad(n) { return String(n).padStart(2,"0"); }
+function fmtCountdown(s) { return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`; }
+function clampPct(v, max) { return !max ? 0 : Math.max(0, Math.min(100, Math.round((v/max)*100))); }
+
+function useNextFixture() {
+  const [fixture, setFixture] = useState(null);
+  useEffect(() => {
+    const q = query(collection(db,"fixtures"), where("kickoffAt",">=",new Date()), where("isComplete","==",false), orderBy("kickoffAt","asc"), limit(1));
+    return onSnapshot(q, snap => setFixture(snap.empty ? null : { id:snap.docs[0].id, ...snap.docs[0].data() }), () => setFixture(null));
+  },[]);
+  return fixture;
+}
+
+function useGuildActivity(guildCode) {
+  const [feed, setFeed] = useState([]);
+  useEffect(() => {
+    if (!guildCode) return;
+    const q = query(collection(db,"activity"), where("guildCode","==",guildCode), orderBy("createdAt","desc"), limit(4));
+    return onSnapshot(q, snap => setFeed(snap.docs.map(d => ({id:d.id,...d.data()}))), () => setFeed([]));
+  },[guildCode]);
+  return feed;
+}
+
+const STATIC_FEED = [
+  { icon:"⚽", user:"Priya_10",  action:"held nerve from the spot",    time:"2m"  },
+  { icon:"👤", user:"Arjun_CF",  action:"solved Who Are Ya in 2",       time:"5m"  },
+  { icon:"🔮", user:"Vikram_7",  action:"locked a bold scoreline",      time:"11m" },
+  { icon:"🔗", user:"Sneha_11",  action:"finished Transfer Trail in 3", time:"18m" },
+];
+
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg:#060810; --bg2:#0c0f1a;
+    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07); --surface3:rgba(255,255,255,0.11);
+    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13); --border3:rgba(255,255,255,0.2);
+    --accent:#F7C344; --accent-glow:rgba(247,195,68,0.35); --accent-dim:rgba(247,195,68,0.12);
+    --green:#3DD68C; --blue:#4F8EF7; --red:#E84040; --purple:#A855F7; --teal:#06B6D4; --orange:#F97316;
+    --text:#F2F2F4; --muted:rgba(242,242,244,0.5); --muted2:rgba(242,242,244,0.28); --muted3:rgba(242,242,244,0.15);
   }
-}
+  body { background:var(--bg) !important; font-family:'Syne',sans-serif; }
 
-function clampPct(value, max) {
-  if (!max) return 0;
-  return Math.max(0, Math.min(100, Math.round((value / max) * 100)));
-}
+  /* ── BACKGROUND ── */
+  .fb-bg { position:fixed;inset:0;z-index:0;pointer-events:none; }
+  .fb-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);background-size:56px 56px;animation:fbGridPulse 6s ease-in-out infinite; }
+  .fb-grid::after { content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(247,195,68,0.18) 1px,transparent 1px);background-size:56px 56px;background-position:-0.5px -0.5px;animation:fbGridPulse 6s ease-in-out infinite reverse; }
+  .fb-blob { position:absolute;border-radius:50%;filter:blur(90px);opacity:0.55; }
+  .fb-blob1 { width:900px;height:700px;top:-320px;left:-160px;background:radial-gradient(ellipse,rgba(247,195,68,0.38) 0%,rgba(247,195,68,0.14) 35%,transparent 70%);animation:fbDrift 18s ease-in-out infinite alternate; }
+  .fb-blob2 { width:500px;height:400px;bottom:-80px;right:-120px;background:radial-gradient(ellipse,rgba(232,64,64,0.11) 0%,transparent 70%);animation:fbDrift 22s ease-in-out infinite alternate-reverse; }
+  .fb-blob3 { width:420px;height:340px;top:40%;left:42%;background:radial-gradient(ellipse,rgba(79,142,247,0.07) 0%,transparent 70%);animation:fbDrift 16s ease-in-out infinite alternate; }
+  .fb-noise { position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px; }
 
-function pad(n) {
-  return String(n).padStart(2, "0");
-}
+  /* ── GAME CARD — exact Crickingo pattern ── */
+  .gc-fire{--ca:#F7C344;--cag:rgba(247,195,68,0.09);--cag2:rgba(247,195,68,0.18);--cas:rgba(247,195,68,0.25)}
+  .gc-orange{--ca:#F97316;--cag:rgba(249,115,22,0.09);--cag2:rgba(249,115,22,0.18);--cas:rgba(249,115,22,0.25)}
+  .gc-blue{--ca:#4F8EF7;--cag:rgba(79,142,247,0.09);--cag2:rgba(79,142,247,0.18);--cas:rgba(79,142,247,0.25)}
+  .gc-purple{--ca:#A855F7;--cag:rgba(168,85,247,0.09);--cag2:rgba(168,85,247,0.18);--cas:rgba(168,85,247,0.25)}
+  .gc-amber{--ca:#F59E0B;--cag:rgba(245,158,11,0.09);--cag2:rgba(245,158,11,0.18);--cas:rgba(245,158,11,0.25)}
+  .gc-red{--ca:#E84040;--cag:rgba(232,64,64,0.09);--cag2:rgba(232,64,64,0.18);--cas:rgba(232,64,64,0.25)}
+  .gc-green{--ca:#3DD68C;--cag:rgba(61,214,140,0.09);--cag2:rgba(61,214,140,0.18);--cas:rgba(61,214,140,0.25)}
+  .gc-teal{--ca:#06B6D4;--cag:rgba(6,182,212,0.09);--cag2:rgba(6,182,212,0.18);--cas:rgba(6,182,212,0.25)}
 
-function fmtCountdown(secs) {
-  return `${pad(Math.floor(secs / 3600))}:${pad(Math.floor((secs % 3600) / 60))}:${pad(secs % 60)}`;
-}
+  .game-card {
+    position:relative; display:flex; align-items:center; gap:16px;
+    color:var(--text); background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:16px 18px; overflow:hidden;
+    cursor:pointer; width:100%;
+    transition:transform 0.28s cubic-bezier(0.22,1,0.36,1), box-shadow 0.28s, border-color 0.28s, background 0.28s;
+  }
+  .game-card::before {
+    content:''; position:absolute; left:0; top:10%; bottom:10%;
+    width:3px; border-radius:0 3px 3px 0;
+    background:var(--ca,var(--accent)); opacity:0.55;
+    transition:opacity 0.25s, top 0.25s, bottom 0.25s;
+  }
+  .card-glow {
+    position:absolute; inset:0; pointer-events:none; border-radius:16px;
+    background:linear-gradient(110deg,var(--cag,rgba(247,195,68,0.07)),transparent 60%);
+    opacity:0; transition:opacity 0.28s;
+  }
+  .card-shimmer { position:absolute;inset:0;border-radius:16px;overflow:hidden;pointer-events:none; }
+  .card-shimmer::before { content:'';position:absolute;top:0;left:-130%;width:65%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.05),transparent);animation:shimmer 4s ease-in-out infinite; }
 
-function Toast({ message }) {
-  if (!message) return null;
-  return (
-    <div style={s.toast}>
-      {message}
-    </div>
-  );
-}
+  .game-card:hover {
+    transform:translateX(4px) translateY(-3px);
+    border-color:color-mix(in srgb,var(--ca,var(--accent)) 40%,transparent);
+    box-shadow:0 14px 40px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb,var(--ca,var(--accent)) 18%,transparent), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .game-card:hover::before { opacity:1; top:0; bottom:0; border-radius:0; }
+  .game-card:hover .card-glow { opacity:1; }
+  .game-card:active { transform:translateX(2px) translateY(-1px) scale(0.99); }
 
-function Shell({ children }) {
-  return <div style={s.shell}>{children}</div>;
-}
+  .card-icon {
+    position:relative; z-index:2; flex-shrink:0;
+    width:54px; height:54px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--cag,rgba(247,195,68,0.08));
+    border:1px solid color-mix(in srgb,var(--ca,var(--accent)) 22%,transparent);
+    border-radius:14px; font-size:1.65rem;
+    transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s;
+  }
+  .game-card:hover .card-icon { transform:scale(1.12) rotate(-5deg); box-shadow:0 0 22px var(--cas,rgba(247,195,68,0.22)); }
 
-function TopNav({ user, xpPct }) {
-  return (
-    <nav style={s.topNav}>
-      <button style={s.brand} type="button">
-        FOOT<span style={{ color: C.green }}>BRAWLS</span>
-      </button>
-      <div style={s.profilePill}>
-        <div style={s.xpMiniTrack}>
-          <div style={{ ...s.xpMiniFill, width: `${xpPct}%` }} />
-        </div>
-        <span style={s.profileName}>{user.nickname}</span>
-      </div>
-    </nav>
-  );
-}
+  .card-arrow {
+    position:relative; z-index:2; flex-shrink:0;
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--surface2); border:1px solid var(--border2);
+    border-radius:50%; color:var(--ca,var(--accent)); font-size:1rem;
+    transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .game-card:hover .card-arrow { background:var(--ca,var(--accent)); border-color:var(--ca,var(--accent)); color:#000; transform:translateX(4px) scale(1.12); }
 
-function Hero({ user, guild, doneCount, totalGames }) {
-  const xp = user.dailyXP || 0;
-  const xpPct = clampPct(xp, DAILY_XP_CAP);
-  const next = Math.max(0, DAILY_XP_CAP - xp);
+  .card-done-badge {
+    position:absolute; top:10px; right:50px; z-index:3;
+    font-family:'Space Mono',monospace; font-size:0.54rem; font-weight:700;
+    letter-spacing:1.5px; text-transform:uppercase;
+    padding:3px 9px; border-radius:100px;
+    color:var(--green); background:rgba(61,214,140,0.1); border:1px solid rgba(61,214,140,0.25);
+  }
 
-  return (
-    <section style={s.hero}>
-      <div style={s.heroGlow} />
-      <div style={s.heroTop}>
-        <div>
-          <div style={s.kicker}>Today&apos;s campaign</div>
-          <h1 style={s.heroTitle}>Win XP. Hold the castle.</h1>
-        </div>
-        <div style={s.flagBox}>{guild.flag}</div>
-      </div>
+  /* ── NAV ── */
+  .fb-nav { position:sticky;top:0;z-index:200;height:64px;padding:0 max(20px,4vw);background:rgba(6,8,16,0.35);backdrop-filter:blur(16px) saturate(1.3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+  .fb-nav::after { content:'';position:absolute;top:100%;left:0;right:0;height:80px;pointer-events:none;background:linear-gradient(to bottom,rgba(247,195,68,0.05) 0%,transparent 100%);z-index:199; }
+  .fb-logo { font-family:'Bebas Neue',sans-serif;font-size:1.85rem;letter-spacing:3px;background:linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+  .fb-logo em { font-style:normal;-webkit-text-fill-color:#F2F2F4; }
+  .fb-logo small { font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:1px;-webkit-text-fill-color:rgba(242,242,244,0.35); }
+  .fb-live-badge { display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;background:rgba(61,214,140,0.1);border:1px solid rgba(61,214,140,0.3);font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green); }
+  .fb-live-dot { width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:fbPulse 1.8s ease infinite;display:inline-block; }
+  .fb-nav-pill { display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-family:'Space Mono',monospace;font-size:0.66rem;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.22s; }
+  .fb-nav-pill:hover { background:var(--surface3);border-color:var(--border3);color:var(--text);transform:translateY(-1px); }
+  .fb-xp-bar { display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:100px;background:rgba(247,195,68,0.08);border:1px solid rgba(247,195,68,0.2); }
+  .fb-xp-track { width:60px;height:4px;border-radius:99px;background:rgba(255,255,255,0.1);overflow:hidden; }
+  .fb-xp-fill { height:100%;border-radius:99px;background:linear-gradient(90deg,#F7C344,#ffe680);transition:width 0.4s ease; }
 
-      <div style={s.heroStats}>
-        <Stat label="Daily XP" value={`${xp}/${DAILY_XP_CAP}`} accent={C.green} />
-        <Stat label="Games Done" value={`${doneCount}/${totalGames}`} accent={C.gold} />
-        <Stat label="Tier" value={user.tier || "lurker"} accent={C.blue} />
-      </div>
+  /* ── HERO EYEBROW ── */
+  .fb-eyebrow { display:inline-flex;align-items:center;gap:8px;background:rgba(247,195,68,0.09);border:1px solid rgba(247,195,68,0.25);color:var(--accent);font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:5px 14px 5px 10px;border-radius:100px;margin-bottom:22px; }
+  .fb-eyebrow-dot { width:6px;height:6px;border-radius:50%;background:var(--accent);animation:fbPulse 1.8s ease infinite;display:inline-block; }
 
-      <div style={s.xpTrack}>
-        <div style={{ ...s.xpFill, width: `${xpPct}%` }} />
-      </div>
-      <div style={s.heroFoot}>
-        <span>{next} XP left today</span>
-        <span>{guild.name}</span>
-      </div>
-    </section>
-  );
-}
+  /* ── SECTION HDR ── */
+  .fb-section-hdr { display:flex;align-items:center;gap:14px;margin-bottom:18px; }
+  .fb-section-label { font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap; }
+  .fb-section-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
+  .fb-section-right { font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--accent);letter-spacing:1px; }
 
-function Stat({ label, value, accent }) {
-  return (
-    <div style={s.stat}>
-      <span style={{ ...s.statValue, color: accent }}>{value}</span>
-      <span style={s.statLabel}>{label}</span>
-    </div>
-  );
-}
+  /* ── SIDEBAR CARDS ── */
+  .fb-match-card { background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.22);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;transition:border-color 0.22s,box-shadow 0.22s; }
+  .fb-match-card:hover { border-color:rgba(79,142,247,0.4);box-shadow:0 8px 28px rgba(0,0,0,0.3); }
+  .fb-pulse-feed { background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden; }
+  .fb-feed-row { display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);transition:background 0.18s; }
+  .fb-feed-row:last-child { border-bottom:none; }
+  .fb-feed-row:hover { background:var(--surface2); }
+  .fb-feed-icon { width:30px;height:30px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0; }
 
-function GuildCard({ guild, onOpen }) {
-  const hp = guild.castleHP ?? 0;
-  const maxHp = guild.castleHPCap ?? CASTLE_HP_CAP;
-  const pct = clampPct(hp, maxHp);
-  const status = pct >= 70 ? "Fortress" : pct >= 35 ? "Holding" : "Under pressure";
-  const color = pct >= 70 ? C.green : pct >= 35 ? C.gold : C.red;
+  /* ── RAID BANNER ── */
+  .fb-raid {
+    position:relative; overflow:hidden; width:100%;
+    background:linear-gradient(135deg,rgba(168,85,247,0.13),rgba(79,142,247,0.06));
+    border:1px solid rgba(168,85,247,0.28); border-radius:16px;
+    padding:16px; display:flex; align-items:center; gap:14px;
+    color:var(--text); text-align:left; cursor:pointer;
+    transition:transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+  .fb-raid:hover { transform:translateY(-3px); border-color:rgba(168,85,247,0.5); box-shadow:0 14px 40px rgba(168,85,247,0.15),0 0 0 1px rgba(168,85,247,0.15); }
+  .fb-raid:hover .fb-raid-icon { transform:scale(1.1) rotate(-5deg); box-shadow:0 0 20px rgba(168,85,247,0.35); }
+  .fb-raid-icon { width:48px;height:48px;border-radius:14px;background:rgba(168,85,247,0.13);border:1px solid rgba(168,85,247,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.28s; }
+  .fb-raid-arrow { color:var(--purple);font-size:24px;font-weight:900;flex-shrink:0;transition:transform 0.22s; }
+  .fb-raid:hover .fb-raid-arrow { transform:translateX(4px); }
 
-  return (
-    <button style={s.guildCard} type="button" onClick={onOpen}>
-      <div style={s.guildHead}>
-        <div style={s.guildIdentity}>
-          <span style={s.guildFlag}>{guild.flag}</span>
-          <div>
-            <div style={s.guildName}>{guild.name}</div>
-            <div style={s.guildMeta}>
-              {(guild.memberCount || 0).toLocaleString()} members
-            </div>
-          </div>
-        </div>
-        <span style={{ ...s.statusPill, color, borderColor: `${color}55`, background: `${color}16` }}>
-          {status}
-        </span>
-      </div>
-      <div style={s.hpRow}>
-        <span>Castle HP</span>
-        <strong>{hp.toLocaleString()} / {maxHp.toLocaleString()}</strong>
-      </div>
-      <div style={s.hpTrack}>
-        <div style={{ ...s.hpFill, width: `${pct}%`, background: color }} />
-      </div>
-    </button>
-  );
-}
+  /* ── STAT TILES ── */
+  .fb-stat-row { display:flex;gap:0;border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:24px; }
+  .fb-stat-tile { display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 20px;background:var(--surface);border-right:1px solid var(--border2);flex:1; }
+  .fb-stat-tile:last-child { border-right:none; }
+  .fb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:1px;color:var(--accent);line-height:1; }
+  .fb-stat-lbl { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted); }
 
-function MatchLock({ secondsLeft }) {
-  return (
-    <section style={s.matchCard}>
-      <div>
-        <div style={s.kicker}>Prediction lock</div>
-        <div style={s.matchName}>Argentina vs France</div>
-      </div>
-      <div style={s.timerBlock}>
-        <span style={s.timer}>{fmtCountdown(secondsLeft)}</span>
-        <span style={s.timerHint}>remaining</span>
-      </div>
-    </section>
-  );
-}
+  /* ── BOTTOM NAV ── */
+  .fb-bottom-nav { position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(6,8,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px); }
+  .fb-nav-item { position:relative;flex:1;min-width:0;border:none;background:transparent;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation; }
+  .fb-nav-item:hover { color:#F2F2F4 !important; }
+  .fb-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 8px var(--green); }
 
-function SectionHeader({ title, right }) {
-  return (
-    <div style={s.sectionHeader}>
-      <h2 style={s.sectionTitle}>{title}</h2>
-      {right && <span style={s.sectionRight}>{right}</span>}
-    </div>
-  );
-}
+  /* ── CASTLE HP ── */
+  .fb-castle-wrap { display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:6px; }
 
-function GameCard({ game, done, onPlay }) {
-  const [pressed, setPressed] = useState(false);
+  /* ── TOAST ── */
+  .fb-toast { position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:300;max-width:calc(100vw - 32px);background:rgba(12,15,26,0.96);border:1px solid var(--border2);border-radius:999px;color:var(--text);padding:10px 18px;font-family:'Space Mono',monospace;font-size:0.76rem;font-weight:700;white-space:nowrap;box-shadow:0 12px 30px rgba(0,0,0,0.4);pointer-events:none;animation:fbFadeUp 0.22s ease; }
 
-  return (
-    <button
-      type="button"
-      onClick={() => onPlay(game)}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      onMouseLeave={() => setPressed(false)}
-      onTouchStart={() => setPressed(true)}
-      onTouchEnd={() => setPressed(false)}
-      style={{
-        ...s.gameCard,
-        transform: pressed ? "scale(0.985)" : "scale(1)",
-        borderColor: done ? `${C.green}55` : C.stroke,
-      }}
-    >
-      <div style={{ ...s.gameIcon, color: game.color, background: `${game.color}18`, borderColor: `${game.color}44` }}>
-        {game.icon}
-      </div>
-      <div style={s.gameBody}>
-        <div style={s.gameTopLine}>
-          <span style={s.gameName}>{game.name}</span>
-          <span style={{ ...s.xpPill, color: game.color, background: `${game.color}16`, borderColor: `${game.color}44` }}>
-            +{game.xp}
-          </span>
-        </div>
-        <p style={s.gameDesc}>{game.desc}</p>
-      </div>
-      <div style={done ? s.doneButton : s.playButton}>
-        {done ? "Replay" : "Play"}
-      </div>
-    </button>
-  );
-}
+  /* ── KEYFRAMES ── */
+  @keyframes fbDrift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(36px,28px) scale(1.1)} }
+  @keyframes fbGridPulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  @keyframes fbFadeUp { from{opacity:0;transform:translateX(-50%) translateY(14px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes fbPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.6)} }
+  @keyframes shimmer { 0%{left:-130%} 100%{left:210%} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
 
-function ActivityFeed() {
-  return (
-    <section style={s.feed}>
-      {FEED.map((item, i) => (
-        <div key={`${item.user}-${item.time}`} style={{ ...s.feedRow, borderBottom: i < FEED.length - 1 ? `1px solid ${C.stroke}` : "none" }}>
-          <span style={s.feedIcon}>{item.icon}</span>
-          <div style={s.feedText}>
-            <strong>{item.user}</strong> {item.action}
-          </div>
-          <span style={s.feedTime}>{item.time}</span>
-        </div>
-      ))}
-    </section>
-  );
-}
-
-function RaidBanner({ onUnavailable }) {
-  return (
-    <button type="button" style={s.raidBanner} onClick={onUnavailable}>
-      <div style={s.raidIcon}>⚔️</div>
-      <div style={s.raidBody}>
-        <div style={s.raidTitle}>
-          Challenge Raid
-          <span style={s.raidPill}>Soon</span>
-        </div>
-        <p style={s.raidCopy}>Team up on match day to break curses and swing castle momentum.</p>
-      </div>
-      <span style={s.chevron}>›</span>
-    </button>
-  );
-}
-
-function BottomNav({ active, navigate, onUnavailable }) {
-  const items = [
-    { id: "home", label: "Games", icon: "⚽", route: "/" },
-    { id: "guild", label: "Guild", icon: "🏰", route: "/guild" },
-    { id: "raids", label: "Raids", icon: "⚔️" },
-    { id: "ranks", label: "Ranks", icon: "🏆" },
-    { id: "profile", label: "Me", icon: "👤" },
-  ];
-
-  return (
-    <nav style={s.bottomNav}>
-      {items.map((item) => {
-        const isActive = item.id === active;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => (item.route ? navigate(item.route) : onUnavailable())}
-            style={{ ...s.navItem, color: isActive ? C.green : C.mute }}
-          >
-            {isActive && <span style={s.navIndicator} />}
-            <span style={s.navIcon}>{item.icon}</span>
-            <span style={s.navLabel}>{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
+  /* ── RESPONSIVE ── */
+  @media(max-width:900px){
+    .fb-sidebar { display:none; }
+    .fb-main-grid { grid-template-columns:1fr !important; }
+  }
+  @media(max-width:640px){
+    .fb-nav { height:56px; padding:0 16px; }
+    .fb-live-badge,.fb-xp-bar { display:none; }
+    .fb-stat-row { display:grid; grid-template-columns:1fr 1fr; }
+    .fb-stat-tile:nth-child(2) { border-right:none; }
+    .fb-stat-tile:nth-child(3) { border-top:1px solid var(--border2); }
+    .fb-stat-tile:nth-child(4) { border-top:1px solid var(--border2); border-right:none; }
+    .fb-blob { filter:blur(40px); opacity:0.3; }
+    .fb-grid { display:none; }
+  }
+`;
 
 export default function Home() {
   const navigate = useNavigate();
-  const [toast, setToast] = useState("");
-  const [secondsLeft, setSecondsLeft] = useState(3 * 3600 + 42 * 60 + 19);
+  const [toast, setToast]         = useState("");
+  const [mockSecs, setMockSecs]   = useState(3*3600+42*60+19);
   const [localUser, setLocalUser] = useState(() => getUser());
-  const [guildDoc, setGuildDoc] = useState(null);
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === "undefined" ? false : window.innerWidth >= 900,
-  );
+  const [guildDoc, setGuildDoc]   = useState(null);
 
   useEffect(() => {
-    injectFonts();
-    setLocalUser(getUser());
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => setSecondsLeft((sLeft) => Math.max(0, sLeft - 1)), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    function handleResize() {
-      setIsDesktop(window.innerWidth >= 900);
+    if (!document.getElementById("fb-global-css")) {
+      const s = document.createElement("style");
+      s.id = "fb-global-css";
+      s.textContent = GLOBAL_CSS;
+      document.head.appendChild(s);
     }
+  },[]);
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  useEffect(() => { setLocalUser(getUser()); },[]);
   useEffect(() => {
-    if (!localUser?.homeCountry) return undefined;
-    const unsub = onSnapshot(
-      doc(db, "guilds", localUser.homeCountry),
-      (snap) => setGuildDoc(snap.exists() ? snap.data() : null),
-      () => setGuildDoc(null),
-    );
-    return unsub;
-  }, [localUser?.homeCountry]);
+    const t = setInterval(() => setMockSecs(s => Math.max(0, s-1)), 1000);
+    return () => clearInterval(t);
+  },[]);
+  useEffect(() => {
+    if (!localUser?.homeCountry) return;
+    return onSnapshot(doc(db,"guilds",localUser.homeCountry), snap => setGuildDoc(snap.exists() ? snap.data() : null), () => setGuildDoc(null));
+  },[localUser?.homeCountry]);
 
-  const user = localUser || {
-    nickname: "Guest",
-    homeCountry: "IND",
-    supportTeam: "IND",
-    dailyXP: 0,
-    tier: "lurker",
-  };
+  const nextFixture  = useNextFixture();
+  const activityFeed = useGuildActivity(localUser?.homeCountry);
 
-  const country = COUNTRIES.find((c) => c.code === user.homeCountry);
-  const guild = {
-    name: guildDoc?.name || `${country?.name || user.homeCountry} Fan Guild`,
-    flag: guildDoc?.flag || user.flag || country?.flag || "🏳️",
-    memberCount: guildDoc?.memberCount ?? 0,
-    castleHP: guildDoc?.castleHP ?? 0,
+  const user    = localUser || { nickname:"Guest", homeCountry:"IND", dailyXP:0 };
+  const country = COUNTRIES?.find(c => c.code === user.homeCountry);
+  const guild   = {
+    name:        guildDoc?.name        || `${country?.name || user.homeCountry} Guild`,
+    flag:        guildDoc?.flag        || country?.flag || "🏳️",
+    castleHP:    guildDoc?.castleHP    ?? 0,
     castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
   };
 
-  const games = useMemo(
-    () => GAME_META.map((game) => ({ ...game, done: isDoneToday(game) })),
-    [],
-  );
-  const doneCount = games.filter((game) => game.done).length;
-  const xpPct = clampPct(user.dailyXP || 0, DAILY_XP_CAP);
+  const games     = useMemo(() => GAME_META.map(g => ({...g, done: isDoneToday(g)})),[]);
+  const doneCount = games.filter(g => g.done).length;
+  const xp        = user.dailyXP || 0;
+  const xpPct     = clampPct(xp, DAILY_XP_CAP);
+  const hpPct     = clampPct(guild.castleHP, guild.castleHPCap);
+  const hpColor   = hpPct >= 70 ? "#3DD68C" : hpPct >= 35 ? "#F7C344" : "#E84040";
+  const hpLabel   = hpPct >= 70 ? "Fortress" : hpPct >= 35 ? "Holding" : "Under Pressure";
 
-  function showSoon() {
-    setToast("That section is coming next.");
-    window.clearTimeout(showSoon.timeout);
-    showSoon.timeout = window.setTimeout(() => setToast(""), 1800);
-  }
+  const isLive    = nextFixture?.isLive;
+  const matchName = nextFixture ? `${nextFixture.homeTeam} vs ${nextFixture.awayTeam}` : "Argentina vs France";
+  const feedItems = activityFeed.length > 0 ? activityFeed : STATIC_FEED;
+
+  const showSoon = useCallback(() => {
+    setToast("Coming soon — stay tuned ⚡");
+    setTimeout(() => setToast(""), 2200);
+  },[]);
 
   return (
-    <Shell>
-      <TopNav user={user} xpPct={xpPct} />
-      <main style={{ ...s.main, ...(isDesktop ? s.mainDesktop : null) }}>
-        <div style={isDesktop ? s.desktopGrid : s.mobileStack}>
-          <section style={s.primaryColumn}>
-            <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length} />
+    <div style={{ fontFamily:"'Syne',sans-serif", background:"#060810", color:"#F2F2F4", minHeight:"100vh", position:"relative" }}>
 
-            <SectionHeader title="Today's Games" right={`${doneCount}/${games.length} complete`} />
-            <div style={{ ...s.gameList, ...(isDesktop ? s.gameListDesktop : null) }}>
-              {games.map((game) => (
-                <GameCard key={game.id} game={game} done={game.done} onPlay={() => navigate(game.route)} />
-              ))}
+      {/* BG */}
+      <div className="fb-bg">
+        <div className="fb-grid"/>
+        <div className="fb-blob fb-blob1"/>
+        <div className="fb-blob fb-blob2"/>
+        <div className="fb-blob fb-blob3"/>
+      </div>
+      <div className="fb-noise"/>
+
+      {/* NAV */}
+      <nav className="fb-nav">
+        <div className="fb-logo">FOOT<em>BRAWLS</em><small>.GG</small></div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div className="fb-live-badge"><span className="fb-live-dot"/>Live</div>
+          <button onClick={() => navigate("/guild")} className="fb-nav-pill">🏰 Guild</button>
+          <div className="fb-xp-bar">
+            <div className="fb-xp-track"><div className="fb-xp-fill" style={{ width:`${xpPct}%` }}/></div>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.62rem", fontWeight:700, color:"#F7C344", whiteSpace:"nowrap" }}>{xp}/{DAILY_XP_CAP} XP</span>
+          </div>
+          <div className="fb-nav-pill" style={{ gap:6, cursor:"default" }}>
+            <span>{guild.flag}</span>
+            <span style={{ maxWidth:80, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{user.nickname}</span>
+          </div>
+        </div>
+      </nav>
+
+      {/* MAIN */}
+      <div style={{ position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:"56px max(20px,4vw) 100px" }}>
+
+        {/* Eyebrow */}
+        <div className="fb-eyebrow" style={{ animation:"fadeUp 0.5s ease both" }}>
+          <span className="fb-eyebrow-dot"/>⚡ Today's Campaign
+        </div>
+
+        {/* Hero title */}
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:20, marginBottom:28, animation:"fadeUp 0.5s 0.07s ease both" }}>
+          <h1 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(3.6rem,7vw,6rem)", lineHeight:0.9, letterSpacing:2, margin:0 }}>
+            <span style={{ display:"block", WebkitTextStroke:"2px #F7C344", color:"transparent" }}>Win XP.</span>
+            <span style={{ display:"block" }}>Hold the Castle.</span>
+          </h1>
+          {/* Castle HP orb */}
+          <div style={{ flexShrink:0, textAlign:"center" }}>
+            <div style={{ position:"relative", width:88, height:88 }}>
+              <svg width={88} height={88} viewBox="0 0 88 88">
+                <circle cx={44} cy={44} r={36} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={6}/>
+                <circle cx={44} cy={44} r={36} fill="none" stroke={hpColor} strokeWidth={6} strokeLinecap="round"
+                  strokeDasharray={`${2*Math.PI*36*hpPct/100} ${2*Math.PI*36}`}
+                  transform="rotate(-90 44 44)" style={{ transition:"stroke-dasharray 0.6s ease" }}/>
+              </svg>
+              <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+                <span style={{ fontSize:"1.4rem" }}>🏰</span>
+              </div>
             </div>
-          </section>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", fontWeight:700, color:hpColor, letterSpacing:1.5, textTransform:"uppercase", marginTop:6 }}>{hpLabel}</div>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.54rem", color:"rgba(242,242,244,0.3)", marginTop:2 }}>{guild.castleHP.toLocaleString()} HP</div>
+          </div>
+        </div>
 
-          <aside style={isDesktop ? s.sideColumn : s.mobileStack}>
-            <GuildCard guild={guild} onOpen={() => navigate("/guild")} />
-            <MatchLock secondsLeft={secondsLeft} />
+        {/* Stats row — exact Crickingo hero-stats pattern */}
+        <div className="fb-stat-row" style={{ animation:"fadeUp 0.5s 0.12s ease both" }}>
+          {[
+            { val:`${xp}`,        lbl:"Daily XP"    },
+            { val:`${DAILY_XP_CAP-xp}`, lbl:"XP Left" },
+            { val:`${doneCount}/${games.length}`, lbl:"Done Today" },
+            { val:guild.name,     lbl:"Your Guild",  small:true },
+          ].map(({val,lbl,small}) => (
+            <div key={lbl} className="fb-stat-tile">
+              <span className="fb-stat-num" style={{ fontSize:small?14:undefined, letterSpacing:small?0:undefined }}>{val}</span>
+              <span className="fb-stat-lbl">{lbl}</span>
+            </div>
+          ))}
+        </div>
 
-            <SectionHeader title="Guild Pulse" right="Live" />
-            <ActivityFeed />
+        {/* Section header */}
+        <div className="fb-section-hdr">
+          <span className="fb-section-label">Today's Games</span>
+          <div className="fb-section-line"/>
+          <span className="fb-section-right">{doneCount}/{games.length} complete</span>
+        </div>
 
-            <SectionHeader title="Raid Battles" />
-            <RaidBanner onUnavailable={showSoon} />
+        {/* Two col layout */}
+        <div className="fb-main-grid" style={{ display:"grid", gridTemplateColumns:"minmax(0,1fr) 300px", gap:20, alignItems:"start" }}>
+
+          {/* Games list */}
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            {games.map((game, i) => (
+              <button key={game.id} onClick={() => navigate(game.route)}
+                className={`game-card ${game.gc}`}
+                style={{ animation:`fadeUp 0.5s ${0.18 + i*0.07}s ease both`, textAlign:"left", border:"none" }}
+              >
+                <div className="card-glow"/>
+                <div className="card-shimmer"/>
+                {game.done && <div className="card-done-badge">✓ Done</div>}
+                <div className="card-icon">{game.icon}</div>
+                <div style={{ flex:1, minWidth:0, position:"relative", zIndex:2 }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:9, marginBottom:4 }}>
+                    <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.22rem", letterSpacing:1.5, lineHeight:1 }}>{game.name}</span>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.54rem", fontWeight:700, textTransform:"uppercase", letterSpacing:1.5, padding:"2px 9px", borderRadius:100, color:`var(--ca,${game.accent})`, background:`var(--cag)`, border:`1px solid color-mix(in srgb,var(--ca,${game.accent}) 32%,transparent)`, flexShrink:0, whiteSpace:"nowrap" }}>+{game.xp} XP</span>
+                  </div>
+                  <p style={{ margin:0, fontSize:"0.8rem", color:"rgba(242,242,244,0.5)", lineHeight:1.45, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{game.desc}</p>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:9, flexWrap:"wrap" }}>
+                    <span style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:999, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", fontWeight:700, letterSpacing:0.6, textTransform:"uppercase", color:"var(--muted)" }}>
+                      ⏱ Daily
+                    </span>
+                    <span style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"4px 8px", borderRadius:999, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", fontWeight:700, letterSpacing:0.6, textTransform:"uppercase", color:"var(--muted)" }}>
+                      {game.done ? "↺ Replay" : "▶ Play now"}
+                    </span>
+                  </div>
+                </div>
+                <div className="card-arrow">›</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="fb-sidebar" style={{ display:"flex", flexDirection:"column", gap:16, position:"sticky", top:76 }}>
+
+            {/* Match countdown */}
+            <div className="fb-match-card">
+              <div>
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", fontWeight:700, color:"rgba(242,242,244,0.38)", textTransform:"uppercase", letterSpacing:1.5, marginBottom:5 }}>
+                  {isLive ? "🔴 Live Now" : "⏱ Prediction Lock"}
+                </div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.1rem", letterSpacing:1 }}>{matchName}</div>
+              </div>
+              <div style={{ textAlign:"right", flexShrink:0 }}>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"2rem", color: isLive ? "#E84040" : "#4F8EF7", letterSpacing:2, lineHeight:0.9 }}>
+                  {isLive ? `${nextFixture?.homeScore??0}–${nextFixture?.awayScore??0}` : fmtCountdown(mockSecs)}
+                </div>
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"rgba(242,242,244,0.35)", marginTop:4 }}>{isLive ? "live score" : "until lock"}</div>
+              </div>
+            </div>
+
+            {/* Guild Pulse */}
+            <div>
+              <div className="fb-section-hdr">
+                <span className="fb-section-label">Guild Pulse</span>
+                <div className="fb-section-line"/>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color: activityFeed.length > 0 ? "#E84040" : "var(--muted2)", letterSpacing:1 }}>{activityFeed.length > 0 ? "🔴 Live" : "Sample"}</span>
+              </div>
+              <div className="fb-pulse-feed">
+                {feedItems.map((item, i) => (
+                  <div key={item.id||`feed-${i}`} className="fb-feed-row">
+                    <div className="fb-feed-icon">{item.icon||"⚽"}</div>
+                    <div style={{ flex:1, minWidth:0, fontSize:"0.76rem", color:"rgba(242,242,244,0.62)", lineHeight:1.3 }}>
+                      <strong style={{ color:"#3DD68C" }}>{item.user||item.nickname}</strong>{" "}{item.action}
+                    </div>
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", color:"rgba(242,242,244,0.28)", flexShrink:0 }}>{item.time}</span>
+                  </div>
+                ))}
+                {activityFeed.length === 0 && <div style={{ padding:"6px 14px 10px", fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", color:"rgba(242,242,244,0.28)", fontStyle:"italic" }}>Sample — yours appears live</div>}
+              </div>
+            </div>
+
+            {/* Raid Banner */}
+            <div>
+              <div className="fb-section-hdr">
+                <span className="fb-section-label">Raid Battles</span>
+                <div className="fb-section-line"/>
+              </div>
+              <button onClick={showSoon} className="fb-raid">
+                <div style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", fontSize:54, opacity:0.06, pointerEvents:"none", userSelect:"none" }}>⚔️</div>
+                <div className="fb-raid-icon">⚔️</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.15rem", letterSpacing:1.5, display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+                    Challenge Raid
+                    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.5rem", fontWeight:700, border:"1px solid rgba(247,195,68,0.28)", borderRadius:999, padding:"2px 8px", color:"#F7C344", background:"rgba(247,195,68,0.09)" }}>STAGE 5</span>
+                  </div>
+                  <p style={{ margin:0, fontSize:"0.73rem", color:"rgba(242,242,244,0.45)", lineHeight:1.35 }}>Team up on match day. Break curses. Swing castle HP.</p>
+                </div>
+                <div className="fb-raid-arrow">›</div>
+              </button>
+            </div>
+
+            {/* Castle bar */}
+            <div className="fb-castle-wrap">
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", fontWeight:700, color:"rgba(242,242,244,0.38)", textTransform:"uppercase", letterSpacing:1.5, whiteSpace:"nowrap" }}>🏰 Castle HP</span>
+              <div style={{ flex:1, height:5, borderRadius:99, background:"rgba(255,255,255,0.07)", overflow:"hidden" }}>
+                <div style={{ width:`${hpPct}%`, height:"100%", borderRadius:99, background:hpColor, transition:"width 0.5s ease" }}/>
+              </div>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", fontWeight:700, color:hpColor, whiteSpace:"nowrap" }}>{hpLabel}</span>
+            </div>
           </aside>
         </div>
-      </main>
-      <BottomNav active="home" navigate={navigate} onUnavailable={showSoon} />
-      <Toast message={toast} />
-    </Shell>
+      </div>
+
+      {/* BOTTOM NAV */}
+      <nav className="fb-bottom-nav">
+        {[
+          { id:"home",    label:"Games", icon:"⚽", route:"/"      },
+          { id:"guild",   label:"Guild", icon:"🏰", route:"/guild" },
+          { id:"raids",   label:"Raids", icon:"⚔️"                },
+          { id:"ranks",   label:"Ranks", icon:"🏆"                },
+          { id:"me",      label:"Me",    icon:"👤"                },
+        ].map(item => {
+          const active = item.id === "home";
+          return (
+            <button key={item.id} className="fb-nav-item"
+              onClick={() => item.route ? navigate(item.route) : showSoon()}
+              style={{ color: active ? "#3DD68C" : "rgba(242,242,244,0.38)" }}
+            >
+              {active && <span className="fb-nav-indicator"/>}
+              <span style={{ fontSize:20, lineHeight:1 }}>{item.icon}</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* TOAST */}
+      {toast && <div className="fb-toast">{toast}</div>}
+    </div>
   );
 }
-
-const s = {
-  shell: {
-    background:
-      "radial-gradient(circle at 50% -80px, rgba(0,212,138,0.18), transparent 260px), #06111f",
-    color: C.text,
-    minHeight: "100vh",
-    width: "100%",
-    fontFamily: "'Outfit', sans-serif",
-    display: "flex",
-    flexDirection: "column",
-  },
-  topNav: {
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
-    height: 56,
-    padding: "0 16px",
-    background: "rgba(6,17,31,0.88)",
-    backdropFilter: "blur(18px)",
-    borderBottom: `1px solid ${C.stroke}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  brand: {
-    border: "none",
-    background: "transparent",
-    color: C.gold,
-    padding: 0,
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 25,
-    fontWeight: 900,
-    letterSpacing: 1.4,
-    cursor: "pointer",
-  },
-  profilePill: {
-    display: "flex",
-    alignItems: "center",
-    gap: 9,
-    minWidth: 0,
-    background: "rgba(255,255,255,0.045)",
-    border: `1px solid ${C.stroke}`,
-    borderRadius: 999,
-    padding: "7px 10px",
-  },
-  xpMiniTrack: {
-    width: 34,
-    height: 5,
-    borderRadius: 99,
-    background: "rgba(255,255,255,0.12)",
-    overflow: "hidden",
-  },
-  xpMiniFill: {
-    height: "100%",
-    background: C.green,
-    borderRadius: 99,
-  },
-  profileName: {
-    color: C.text,
-    fontSize: 12,
-    fontWeight: 700,
-    maxWidth: 92,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  main: {
-    flex: 1,
-    overflowY: "auto",
-    padding: "14px 16px 18px",
-  },
-  mainDesktop: {
-    padding: "26px clamp(24px, 4vw, 56px) 28px",
-  },
-  mobileStack: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  desktopGrid: {
-    width: "100%",
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 400px)",
-    gap: 24,
-    alignItems: "start",
-  },
-  primaryColumn: {
-    minWidth: 0,
-  },
-  sideColumn: {
-    minWidth: 0,
-    position: "sticky",
-    top: 82,
-    display: "flex",
-    flexDirection: "column",
-  },
-  hero: {
-    position: "relative",
-    overflow: "hidden",
-    background: "linear-gradient(145deg, rgba(16,34,58,0.96), rgba(7,22,39,0.96))",
-    border: `1px solid ${C.stroke2}`,
-    borderRadius: 8,
-    padding: 16,
-    boxShadow: "0 18px 50px rgba(0,0,0,0.25)",
-  },
-  heroGlow: {
-    position: "absolute",
-    inset: "auto -40px -70px auto",
-    width: 170,
-    height: 170,
-    borderRadius: "50%",
-    background: "rgba(74,158,255,0.18)",
-    filter: "blur(34px)",
-  },
-  heroTop: {
-    position: "relative",
-    display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  kicker: {
-    color: C.mute,
-    fontSize: 10,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    margin: "5px 0 0",
-    color: C.text,
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 32,
-    lineHeight: 0.95,
-    letterSpacing: 0,
-  },
-  flagBox: {
-    width: 48,
-    height: 38,
-    borderRadius: 8,
-    background: "rgba(255,255,255,0.055)",
-    border: `1px solid ${C.stroke}`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 25,
-    flexShrink: 0,
-  },
-  heroStats: {
-    position: "relative",
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: 8,
-    marginTop: 18,
-  },
-  stat: {
-    background: "rgba(255,255,255,0.045)",
-    border: `1px solid ${C.stroke}`,
-    borderRadius: 8,
-    padding: "10px 8px",
-    minWidth: 0,
-  },
-  statValue: {
-    display: "block",
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 21,
-    fontWeight: 900,
-    lineHeight: 1,
-    textTransform: "uppercase",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  statLabel: {
-    display: "block",
-    color: C.mute,
-    fontSize: 10,
-    fontWeight: 700,
-    marginTop: 5,
-  },
-  xpTrack: {
-    position: "relative",
-    height: 8,
-    marginTop: 16,
-    borderRadius: 99,
-    background: "rgba(255,255,255,0.1)",
-    overflow: "hidden",
-  },
-  xpFill: {
-    height: "100%",
-    borderRadius: 99,
-    background: `linear-gradient(90deg, ${C.green}, #67ffd0)`,
-  },
-  heroFoot: {
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 8,
-    color: C.soft,
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  guildCard: {
-    width: "100%",
-    marginTop: 12,
-    background: C.panel,
-    border: `1px solid ${C.stroke}`,
-    borderRadius: 8,
-    padding: 14,
-    color: C.text,
-    textAlign: "left",
-    cursor: "pointer",
-  },
-  guildHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  guildIdentity: {
-    display: "flex",
-    alignItems: "center",
-    gap: 11,
-    minWidth: 0,
-  },
-  guildFlag: {
-    width: 38,
-    height: 30,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 7,
-    background: C.panel2,
-    border: `1px solid ${C.stroke}`,
-    fontSize: 20,
-  },
-  guildName: {
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 20,
-    fontWeight: 800,
-    lineHeight: 1,
-  },
-  guildMeta: {
-    marginTop: 4,
-    color: C.mute,
-    fontSize: 11,
-    fontWeight: 600,
-  },
-  statusPill: {
-    border: "1px solid",
-    borderRadius: 999,
-    padding: "5px 9px",
-    fontSize: 10,
-    fontWeight: 800,
-    whiteSpace: "nowrap",
-  },
-  hpRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 14,
-    color: C.mute,
-    fontSize: 11,
-    fontWeight: 700,
-  },
-  hpTrack: {
-    height: 7,
-    marginTop: 8,
-    borderRadius: 99,
-    background: "rgba(255,255,255,0.1)",
-    overflow: "hidden",
-  },
-  hpFill: {
-    height: "100%",
-    borderRadius: 99,
-  },
-  matchCard: {
-    marginTop: 10,
-    background: "rgba(74,158,255,0.08)",
-    border: "1px solid rgba(74,158,255,0.22)",
-    borderRadius: 8,
-    padding: "13px 14px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  matchName: {
-    marginTop: 4,
-    color: C.text,
-    fontSize: 14,
-    fontWeight: 800,
-  },
-  timerBlock: {
-    textAlign: "right",
-  },
-  timer: {
-    display: "block",
-    color: C.blue,
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 29,
-    fontWeight: 900,
-    lineHeight: 0.9,
-    letterSpacing: 1,
-  },
-  timerHint: {
-    color: C.mute,
-    fontSize: 10,
-    fontWeight: 700,
-  },
-  sectionHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-    padding: "20px 0 10px",
-  },
-  sectionTitle: {
-    margin: 0,
-    color: C.text,
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 18,
-    fontWeight: 900,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-  },
-  sectionRight: {
-    color: C.gold,
-    fontSize: 11,
-    fontWeight: 800,
-  },
-  gameList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 9,
-  },
-  gameListDesktop: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: 12,
-  },
-  gameCard: {
-    width: "100%",
-    background: C.panel,
-    border: "1px solid",
-    borderRadius: 8,
-    padding: 12,
-    display: "flex",
-    alignItems: "center",
-    gap: 11,
-    color: C.text,
-    textAlign: "left",
-    cursor: "pointer",
-    transition: "transform 0.12s ease, border-color 0.12s ease",
-  },
-  gameIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 8,
-    border: "1px solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 22,
-    flexShrink: 0,
-  },
-  gameBody: {
-    flex: 1,
-    minWidth: 0,
-  },
-  gameTopLine: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  gameName: {
-    color: C.text,
-    fontSize: 14,
-    fontWeight: 800,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  xpPill: {
-    border: "1px solid",
-    borderRadius: 999,
-    padding: "2px 7px",
-    fontSize: 10,
-    fontWeight: 900,
-    flexShrink: 0,
-  },
-  gameDesc: {
-    margin: "5px 0 0",
-    color: C.mute,
-    fontSize: 11,
-    lineHeight: 1.35,
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-  },
-  playButton: {
-    minWidth: 48,
-    height: 34,
-    borderRadius: 8,
-    background: C.green,
-    color: "#04131f",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 12,
-    fontWeight: 900,
-    flexShrink: 0,
-  },
-  doneButton: {
-    minWidth: 56,
-    height: 34,
-    borderRadius: 8,
-    background: "rgba(0,212,138,0.12)",
-    border: "1px solid rgba(0,212,138,0.35)",
-    color: C.green,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 12,
-    fontWeight: 900,
-    flexShrink: 0,
-  },
-  feed: {
-    background: C.panel,
-    border: `1px solid ${C.stroke}`,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  feedRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 12px",
-  },
-  feedIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    background: C.panel2,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 15,
-    flexShrink: 0,
-  },
-  feedText: {
-    flex: 1,
-    minWidth: 0,
-    color: C.soft,
-    fontSize: 12,
-    lineHeight: 1.25,
-  },
-  feedTime: {
-    color: C.mute,
-    fontSize: 10,
-    fontWeight: 800,
-  },
-  raidBanner: {
-    width: "100%",
-    marginBottom: 14,
-    background: "linear-gradient(135deg, rgba(154,114,255,0.16), rgba(74,158,255,0.08))",
-    border: "1px solid rgba(154,114,255,0.32)",
-    borderRadius: 8,
-    padding: 14,
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    color: C.text,
-    textAlign: "left",
-    cursor: "pointer",
-  },
-  raidIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    background: "rgba(154,114,255,0.16)",
-    border: "1px solid rgba(154,114,255,0.34)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 23,
-    flexShrink: 0,
-  },
-  raidBody: {
-    flex: 1,
-    minWidth: 0,
-  },
-  raidTitle: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    color: C.text,
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontSize: 20,
-    fontWeight: 900,
-    textTransform: "uppercase",
-  },
-  raidPill: {
-    border: `1px solid ${C.gold}55`,
-    borderRadius: 999,
-    padding: "2px 7px",
-    color: C.gold,
-    background: "rgba(240,192,64,0.12)",
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: 10,
-    fontWeight: 900,
-  },
-  raidCopy: {
-    margin: "4px 0 0",
-    color: C.mute,
-    fontSize: 11,
-    lineHeight: 1.35,
-  },
-  chevron: {
-    color: C.violet,
-    fontSize: 26,
-    fontWeight: 900,
-  },
-  bottomNav: {
-    position: "sticky",
-    bottom: 0,
-    zIndex: 50,
-    display: "flex",
-    background: "rgba(6,17,31,0.94)",
-    backdropFilter: "blur(18px)",
-    borderTop: `1px solid ${C.stroke}`,
-    paddingBottom: "env(safe-area-inset-bottom, 0px)",
-  },
-  navItem: {
-    position: "relative",
-    flex: 1,
-    minWidth: 0,
-    border: "none",
-    background: "transparent",
-    padding: "9px 4px 8px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 3,
-    cursor: "pointer",
-    fontFamily: "'Outfit', sans-serif",
-  },
-  navIndicator: {
-    position: "absolute",
-    top: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: 26,
-    height: 2,
-    borderRadius: "0 0 999px 999px",
-    background: C.green,
-  },
-  navIcon: {
-    fontSize: 19,
-    lineHeight: 1,
-  },
-  navLabel: {
-    fontSize: 9,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  toast: {
-    position: "fixed",
-    bottom: 76,
-    left: "50%",
-    transform: "translateX(-50%)",
-    zIndex: 200,
-    maxWidth: "calc(100vw - 32px)",
-    background: "#10223a",
-    border: `1px solid ${C.stroke2}`,
-    borderRadius: 999,
-    color: C.text,
-    padding: "10px 16px",
-    fontSize: 13,
-    fontWeight: 800,
-    whiteSpace: "nowrap",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
-    pointerEvents: "none",
-  },
-};

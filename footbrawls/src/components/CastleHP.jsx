@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { getGuildLevel, getLevelProgress, getHPDisplay, checkUpgrade } from "../lib/guildLevels";
 
+const C = {
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+};
+
 // ── Per-level castle configs ──────────────────────────────────────────────────
 const CASTLE_THEMES = {
   1: { // Grassroots — wood + dirt, rough, barely a fort
@@ -405,7 +411,7 @@ function CastleSVG({ level, hpPct, accent }) {
 export default function CastleHP({ hp = 0, maxHp = 10000, contributors = [], guildLevel = 1 }) {
   const levelConfig = getGuildLevel(guildLevel);
   const hpPct       = Math.min(100, Math.round((hp / maxHp) * 100));
-  const hpColor     = hpPct >= 70 ? "#3DD68C" : hpPct >= 35 ? "#F7C344" : "#E84040";
+  const hpColor     = hpPct >= 70 ? C.green : hpPct >= 35 ? C.accent : C.red;
   const hpLabel     = hpPct >= 70 ? "Fortress" : hpPct >= 35 ? "Holding" : "Under Pressure";
   const hpDisplay   = getHPDisplay(hp, guildLevel);
 

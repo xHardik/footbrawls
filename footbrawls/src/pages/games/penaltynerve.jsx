@@ -10,6 +10,22 @@ const HISTORY_KEY = 'footbrawls_penaltynerve';
 const MAX_KICKS   = 5;
 const XP_PER_GOAL = 6; // 5 goals = 30 XP max
 
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  border3: "rgba(255,255,255,0.2)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
 const GK_PATTERNS = [
   [0.15, 0.35, 0.25, 0.20, 0.40],
   [0.25, 0.20, 0.35, 0.30, 0.45],
@@ -187,7 +203,7 @@ export default function PenaltyNerve() {
           return (
             <div key={i} style={{
               ...s.progressDot,
-              background: k ? (k.saved ? '#ff4444' : '#00ff87') : i === kicks.length ? '#fff' : '#222',
+              background: k ? (k.saved ? C.red : C.green) : i === kicks.length ? C.text : C.surface2,
               transform: i === kicks.length ? 'scale(1.2)' : 'scale(1)',
             }}>
               {k ? (k.saved ? '🧤' : '⚽') : i === kicks.length ? '🎯' : ''}
@@ -234,14 +250,11 @@ export default function PenaltyNerve() {
                 return (
                   <div key={zone.id} style={{
                     ...s.goalZone,
-                    background: isSelected && phase === 'aiming'
-                      ? 'rgba(0,255,135,0.15)'
-                      : isGkZone && phase === 'result'
-                      ? 'rgba(255,68,68,0.2)'
-                      : 'rgba(255,255,255,0.02)',
-                    border: isSelected && phase === 'aiming'
-                      ? '2px solid rgba(0,255,135,0.5)'
-                      : '1px solid rgba(255,255,255,0.06)',
+                    background: isSelected && phase === 'aiming' ? `${C.green}26`
+                      : isGkZone && phase === 'result' ? `${C.red}33`
+                      : C.surface,
+                    border: isSelected && phase === 'aiming' ? `2px solid ${C.green}80`
+                      : `1px solid ${C.border}`,
                     cursor: phase === 'aiming' && zone.id !== 'bottomCenter' ? 'pointer' : 'default',
                   }}
                     onClick={() => { if (phase === 'aiming' && zone.id !== 'bottomCenter') setSelected(zone.id); }}
@@ -259,9 +272,9 @@ export default function PenaltyNerve() {
           {phase === 'result' && lastResult && (
             <div style={{
               ...s.feedback,
-              background: lastResult.saved ? 'rgba(255,68,68,0.1)' : 'rgba(0,255,135,0.1)',
-              borderColor: lastResult.saved ? 'rgba(255,68,68,0.4)' : 'rgba(0,255,135,0.4)',
-              color: lastResult.saved ? '#ff6666' : '#00ff87',
+              background: lastResult.saved ? `${C.red}1A` : `${C.green}1A`,
+              borderColor: lastResult.saved ? `${C.red}66` : `${C.green}66`,
+              color: lastResult.saved ? C.red : C.green,
             }}>
               {lastResult.saved
                 ? `🧤 SAVED! Keeper ${GK_DIVES[lastResult.gkDive]}`
@@ -277,9 +290,9 @@ export default function PenaltyNerve() {
                 {CORNERS.map(corner => (
                   <button key={corner.id} style={{
                     ...s.cornerBtn,
-                    borderColor: selected === corner.id ? '#00ff87' : '#1a1a1a',
-                    background:  selected === corner.id ? 'rgba(0,255,135,0.1)' : 'rgba(255,255,255,0.02)',
-                    color:       selected === corner.id ? '#00ff87' : '#888',
+                    borderColor: selected === corner.id ? C.green : C.border2,
+                    background:  selected === corner.id ? `${C.green}1A` : C.surface,
+                    color:       selected === corner.id ? C.green : C.muted,
                   }} onClick={() => setSelected(corner.id)}>
                     <span style={{ fontSize: 20 }}>{corner.emoji}</span>
                     <span style={{ fontSize: 11 }}>{corner.label}</span>
@@ -308,7 +321,7 @@ export default function PenaltyNerve() {
             {kicks.map((k, i) => (
               <div key={i} style={s.kickReplayItem}>
                 <span style={{ fontSize: 20 }}>{k.saved ? '🧤' : '⚽'}</span>
-                <span style={{ fontSize: 12, color: k.saved ? '#ff6666' : '#00ff87' }}>
+                <span style={{ fontSize: 12, color: k.saved ? C.red : C.green }}>
                   {k.saved ? `Saved (${k.corner})` : `Goal (${k.corner})`}
                 </span>
               </div>
@@ -337,36 +350,36 @@ function Header() {
 }
 
 const s = {
-  container:    { minHeight:'100vh', background:'#0a0a0a', color:'#fff', fontFamily:"'Segoe UI', sans-serif", padding:'20px 20px 60px', maxWidth:600, margin:'0 auto' },
+  container:    { minHeight:'100vh', background:C.bg, color:C.text, fontFamily:"'Syne', sans-serif", padding:'20px 20px 60px', maxWidth:600, margin:'0 auto' },
   header:       { marginBottom:20 },
   title:        { fontSize:28, fontWeight:800, margin:0 },
-  subtitle:     { fontSize:13, color:'#888', margin:'4px 0 0' },
+  subtitle:     { fontSize:13, color:C.muted, margin:'4px 0 0' },
   progressRow:  { display:'flex', gap:10, justifyContent:'center', marginBottom:20 },
   progressDot:  { width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, transition:'all 0.3s ease' },
   scoreRow:     { display:'flex', gap:12, marginBottom:24 },
-  scoreItem:    { flex:1, textAlign:'center', padding:12, background:'rgba(255,255,255,0.03)', border:'1px solid #1a1a1a', borderRadius:12 },
-  scoreVal:     { fontSize:24, fontWeight:800, color:'#00ff87' },
-  scoreLabel:   { fontSize:10, color:'#555', textTransform:'uppercase', letterSpacing:1, marginTop:3 },
-  goalFrame:    { position:'relative', width:'100%', aspectRatio:'2/1', background:'rgba(255,255,255,0.02)', border:'3px solid #333', borderRadius:4, marginBottom:16, overflow:'hidden' },
-  crossbar:     { position:'absolute', top:0, left:0, right:0, height:3, background:'#555', zIndex:2 },
-  postLeft:     { position:'absolute', top:0, left:0, bottom:0, width:3, background:'#555', zIndex:2 },
-  postRight:    { position:'absolute', top:0, right:0, bottom:0, width:3, background:'#555', zIndex:2 },
+  scoreItem:    { flex:1, textAlign:'center', padding:12, background:C.surface, border:`1px solid ${C.border2}`, borderRadius:12 },
+  scoreVal:     { fontSize:24, fontWeight:800, color:C.green },
+  scoreLabel:   { fontSize:10, color:C.muted2, textTransform:'uppercase', letterSpacing:1, marginTop:3 },
+  goalFrame:    { position:'relative', width:'100%', aspectRatio:'2/1', background:C.surface, border:`3px solid ${C.border3}`, borderRadius:4, marginBottom:16, overflow:'hidden' },
+  crossbar:     { position:'absolute', top:0, left:0, right:0, height:3, background:C.muted2, zIndex:2 },
+  postLeft:     { position:'absolute', top:0, left:0, bottom:0, width:3, background:C.muted2, zIndex:2 },
+  postRight:    { position:'absolute', top:0, right:0, bottom:0, width:3, background:C.muted2, zIndex:2 },
   goalGrid:     { position:'absolute', inset:3, display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gridTemplateRows:'1fr 1fr', gap:2 },
   goalZone:     { borderRadius:4, display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', position:'relative' },
   gkEmoji:      { fontSize:28, position:'absolute' },
   ballEmoji:    { fontSize:24, position:'absolute' },
   gkStanding:   { position:'absolute', bottom:'10%', left:'50%', transform:'translateX(-50%)', fontSize:32, zIndex:3 },
   feedback:     { padding:'12px 16px', borderRadius:12, border:'1px solid', fontSize:14, fontWeight:700, textAlign:'center', marginBottom:16 },
-  instruction:  { textAlign:'center', color:'#555', fontSize:12, textTransform:'uppercase', letterSpacing:1, marginBottom:12 },
+  instruction:  { textAlign:'center', color:C.muted2, fontSize:12, textTransform:'uppercase', letterSpacing:1, marginBottom:12 },
   cornerGrid:   { display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:16 },
   cornerBtn:    { padding:'10px 6px', display:'flex', flexDirection:'column', alignItems:'center', gap:4, border:'1px solid', borderRadius:12, cursor:'pointer', transition:'all 0.15s', background:'transparent' },
-  kickBtn:      { width:'100%', padding:16, background:'linear-gradient(135deg,#00ff87,#00cc6a)', color:'#000', border:'none', borderRadius:14, fontSize:18, fontWeight:900, cursor:'pointer', letterSpacing:2, transition:'opacity 0.2s' },
-  result:       { marginTop:28, padding:28, background:'rgba(255,255,255,0.03)', border:'1px solid #1a1a1a', borderRadius:20, textAlign:'center' },
+  kickBtn:      { width:'100%', padding:16, background:`linear-gradient(135deg,${C.green},#00cc6a)`, color:C.bg, border:'none', borderRadius:14, fontSize:18, fontWeight:900, cursor:'pointer', letterSpacing:2, transition:'opacity 0.2s' },
+  result:       { marginTop:28, padding:28, background:C.surface, border:`1px solid ${C.border2}`, borderRadius:20, textAlign:'center' },
   resultTitle:  { fontSize:24, fontWeight:800, marginBottom:12 },
-  resultScore:  { fontSize:52, fontWeight:800, color:'#00ff87', marginBottom:8 },
-  resultInfo:   { fontSize:16, color:'#888', marginBottom:20 },
+  resultScore:  { fontSize:52, fontWeight:800, color:C.green, marginBottom:8 },
+  resultInfo:   { fontSize:16, color:C.muted, marginBottom:20 },
   kickReplay:   { display:'flex', flexDirection:'column', gap:8, marginBottom:16, textAlign:'left' },
-  kickReplayItem:{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:'rgba(255,255,255,0.02)', border:'1px solid #1a1a1a', borderRadius:8 },
-  xpBadge:      { display:'inline-block', padding:'6px 16px', marginBottom:12, background:'rgba(0,255,135,0.1)', border:'1px solid rgba(0,255,135,0.4)', borderRadius:100, color:'#00ff87', fontWeight:700, fontSize:14 },
-  nextPuzzle:   { fontSize:12, color:'#555', margin:0 },
+  kickReplayItem:{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:C.surface, border:`1px solid ${C.border2}`, borderRadius:8 },
+  xpBadge:      { display:'inline-block', padding:'6px 16px', marginBottom:12, background:`${C.green}1A`, border:`1px solid ${C.green}66`, borderRadius:100, color:C.green, fontWeight:700, fontSize:14 },
+  nextPuzzle:   { fontSize:12, color:C.muted2, margin:0 },
 };

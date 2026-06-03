@@ -60,6 +60,23 @@ function getTodayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  blue:    "#4F8EF7",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
 // ─── Demo fixtures for when no live data available ────────────────────────────
 const DEMO_FIXTURES = [
   {
@@ -231,15 +248,15 @@ export default function MatchPredictor() {
                   key={f.id}
                   style={{
                     ...s.fixtureTab,
-                    borderColor: selected?.id === f.id ? '#00ff87' : '#1a1a1a',
-                    background: selected?.id === f.id ? 'rgba(0,255,135,0.06)' : 'rgba(255,255,255,0.02)',
+              borderColor: selected?.id === f.id ? C.green : C.border2,
+              background: selected?.id === f.id ? `${C.green}0F` : C.surface,
                   }}
                   onClick={() => setSelected(f)}
                 >
                   <div style={s.fixtureTabTeams}>
                     {TEAM_FLAGS[f.homeTeam]} vs {TEAM_FLAGS[f.awayTeam]}
                   </div>
-                  <div style={s.fixtureTabStage}>{f.stage}</div>
+            <div style={{...s.fixtureTabStage, color: C.muted2}}>{f.stage}</div>
                 </div>
               ))}
             </div>
@@ -253,7 +270,7 @@ export default function MatchPredictor() {
                 <div style={s.team}>
                   <div style={s.teamFlag}>{TEAM_FLAGS[selected.homeTeam] || '🏳️'}</div>
                   <div style={s.teamName}>{TEAM_NAMES[selected.homeTeam] || selected.homeTeam}</div>
-                  <div style={s.teamLabel}>Home</div>
+                <div style={{...s.teamLabel, color: C.muted2}}>Home</div>
                 </div>
                 <div style={s.vsBox}>
                   {selected.isComplete ? (
@@ -263,12 +280,12 @@ export default function MatchPredictor() {
                   ) : (
                     <div style={s.vs}>VS</div>
                   )}
-                  <div style={s.stage}>{selected.stage}</div>
+                  <div style={{...s.stage, color: C.muted2}}>{selected.stage}</div>
                 </div>
                 <div style={s.team}>
                   <div style={s.teamFlag}>{TEAM_FLAGS[selected.awayTeam] || '🏳️'}</div>
                   <div style={s.teamName}>{TEAM_NAMES[selected.awayTeam] || selected.awayTeam}</div>
-                  <div style={s.teamLabel}>Away</div>
+                  <div style={{...s.teamLabel, color: C.muted2}}>Away</div>
                 </div>
               </div>
 
@@ -294,8 +311,8 @@ export default function MatchPredictor() {
                       key={opt.value}
                       style={{
                         ...s.pickBtn,
-                        borderColor: pickedWinner === opt.value ? '#00ff87' : '#1a1a1a',
-                        background: pickedWinner === opt.value ? 'rgba(0,255,135,0.1)' : 'rgba(255,255,255,0.02)',
+                        borderColor: pickedWinner === opt.value ? C.green : C.border2,
+                        background: pickedWinner === opt.value ? `${C.green}1A` : C.surface,
                         opacity: isLocked && pickedWinner !== opt.value ? 0.4 : 1,
                       }}
                       onClick={() => !isLocked && setPickedWinner(opt.value)}
@@ -373,7 +390,7 @@ export default function MatchPredictor() {
         <div>
           <div style={s.card}>
             <div style={s.leaderTitle}>🏆 Guild Leaderboard</div>
-            <div style={s.leaderSub}>Top predictors this tournament</div>
+            <div style={{...s.leaderSub, color: C.muted2}}>Top predictors this tournament</div>
 
             {leaderboard.length === 0 ? (
               <div style={s.leaderEmpty}>
@@ -383,8 +400,8 @@ export default function MatchPredictor() {
               leaderboard.slice(0, 10).map((entry, i) => (
                 <div key={entry.userId} style={{
                   ...s.leaderRow,
-                  borderColor: entry.userId === user?.userId ? 'rgba(0,255,135,0.3)' : '#1a1a1a',
-                  background: entry.userId === user?.userId ? 'rgba(0,255,135,0.04)' : 'transparent',
+                  borderColor: entry.userId === user?.userId ? `${C.green}4D` : C.border2,
+                  background: entry.userId === user?.userId ? `${C.green}0A` : 'transparent',
                 }}>
                   <div style={s.leaderPos}>#{i + 1}</div>
                   <div style={s.leaderName}>{entry.nickname}</div>
@@ -405,8 +422,8 @@ export default function MatchPredictor() {
               { rule: 'Max per match',        pts: '150 XP' },
             ].map(r => (
               <div key={r.rule} style={s.ruleRow}>
-                <span style={{ color: '#888', fontSize: 13 }}>{r.rule}</span>
-                <span style={{ color: '#00ff87', fontWeight: 700, fontSize: 13 }}>{r.pts}</span>
+                <span style={{ color: C.muted, fontSize: 13 }}>{r.rule}</span>
+                <span style={{ color: C.green, fontWeight: 700, fontSize: 13 }}>{r.pts}</span>
               </div>
             ))}
           </div>
@@ -421,24 +438,24 @@ export default function MatchPredictor() {
 const s = {
   container: {
     minHeight: '100vh',
-    background: '#0a0a0a',
-    color: '#fff',
-    fontFamily: "'Segoe UI', sans-serif",
+    background: C.bg,
+    color: C.text,
+    fontFamily: "'Syne', sans-serif",
     padding: '20px 20px 60px',
   },
-  loading: { color: '#888', padding: 40, textAlign: 'center' },
+  loading: { color: C.muted, padding: 40, textAlign: 'center' },
   header: { marginBottom: 16 },
   title: { fontSize: 28, fontWeight: 800, margin: 0 },
-  subtitle: { fontSize: 13, color: '#888', margin: '4px 0 0' },
+  subtitle: { fontSize: 13, color: C.muted, margin: '4px 0 0' },
   rulesRow: { display: 'flex', gap: 10, marginBottom: 20 },
   ruleCard: {
     flex: 1, padding: '12px', textAlign: 'center',
-    background: 'rgba(0,255,135,0.04)',
-    border: '1px solid rgba(0,255,135,0.15)',
+    background: `${C.green}0A`,
+    border: `1px solid ${C.green}26`,
     borderRadius: 12,
   },
-  rulePts:   { fontSize: 16, fontWeight: 800, color: '#00ff87' },
-  ruleLabel: { fontSize: 11, color: '#555', marginTop: 3 },
+  rulePts:   { fontSize: 16, fontWeight: 800, color: C.green },
+  ruleLabel: { fontSize: 11, color: C.muted2, marginTop: 3 },
   layout: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0,1fr) 300px',
@@ -450,10 +467,10 @@ const s = {
     borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s',
   },
   fixtureTabTeams: { fontSize: 16, fontWeight: 700 },
-  fixtureTabStage: { fontSize: 11, color: '#555', marginTop: 2 },
+  fixtureTabStage: { fontSize: 11, color: C.muted2, marginTop: 2 },
   card: {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid #1a1a1a',
+    background: C.surface,
+    border: `1px solid ${C.border2}`,
     borderRadius: 20, padding: 24,
     marginBottom: 0,
   },
@@ -465,27 +482,27 @@ const s = {
   team: { flex: 1, textAlign: 'center' },
   teamFlag: { fontSize: 44, marginBottom: 8 },
   teamName: { fontSize: 15, fontWeight: 800, lineHeight: 1.2 },
-  teamLabel: { fontSize: 11, color: '#555', marginTop: 3 },
+  teamLabel: { fontSize: 11, color: C.muted2, marginTop: 3 },
   vsBox: { textAlign: 'center', padding: '0 8px' },
-  vs: { fontSize: 20, fontWeight: 800, color: '#333', letterSpacing: 2 },
-  score: { fontSize: 28, fontWeight: 800, color: '#f7c344' },
-  stage: { fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 },
+  vs: { fontSize: 20, fontWeight: 800, color: C.muted3, letterSpacing: 2 },
+  score: { fontSize: 28, fontWeight: 800, color: C.accent },
+  stage: { fontSize: 10, color: C.muted2, textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 },
   liveBadge: {
     textAlign: 'center', padding: '6px', marginBottom: 16,
-    background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)',
-    borderRadius: 8, color: '#ff4444', fontWeight: 700, fontSize: 13,
+    background: `${C.red}1A`, border: `1px solid ${C.red}4D`,
+    borderRadius: 8, color: C.red, fontWeight: 700, fontSize: 13,
   },
   completeBadge: {
     textAlign: 'center', padding: '6px', marginBottom: 16,
-    background: 'rgba(0,255,135,0.08)', border: '1px solid rgba(0,255,135,0.2)',
-    borderRadius: 8, color: '#00ff87', fontWeight: 700, fontSize: 13,
+    background: `${C.green}14`, border: `1px solid ${C.green}33`,
+    borderRadius: 8, color: C.green, fontWeight: 700, fontSize: 13,
   },
   section: { marginBottom: 20 },
   sectionTitle: { fontSize: 15, fontWeight: 800, marginBottom: 10 },
   pts: {
     display: 'inline-block', marginLeft: 8,
-    fontSize: 11, fontWeight: 800, color: '#00ff87',
-    background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.2)',
+    fontSize: 11, fontWeight: 800, color: C.green,
+    background: `${C.green}1A`, border: `1px solid ${C.green}33`,
     borderRadius: 100, padding: '2px 8px',
   },
   pickGrid: { display: 'flex', gap: 8 },
@@ -497,53 +514,53 @@ const s = {
     cursor: 'pointer', transition: 'all 0.2s',
     background: 'transparent',
   },
-  pickLabel: { fontSize: 12, fontWeight: 700, color: '#ccc', textAlign: 'center' },
+  pickLabel: { fontSize: 12, fontWeight: 700, color: C.text, textAlign: 'center' },
   select: {
     width: '100%', padding: '13px 14px',
-    background: '#111', border: '1px solid #222',
-    borderRadius: 12, color: '#fff',
+    background: C.bg2, border: `1px solid ${C.border3}`,
+    borderRadius: 12, color: C.text,
     fontSize: 14, outline: 'none',
   },
   submitBtn: {
     width: '100%', padding: '15px',
-    background: 'linear-gradient(135deg, #f7c344, #e6a800)',
-    color: '#000', border: 'none', borderRadius: 14,
+    background: `linear-gradient(135deg, ${C.accent}, #e6a800)`,
+    color: C.bg, border: 'none', borderRadius: 14,
     fontSize: 15, fontWeight: 900, cursor: 'pointer',
     transition: 'all 0.2s', marginTop: 4,
   },
   submittedBanner: {
     padding: '13px 16px', borderRadius: 12, marginTop: 8,
-    background: 'rgba(0,255,135,0.08)', border: '1px solid rgba(0,255,135,0.2)',
-    color: '#00ff87', fontWeight: 700, fontSize: 13, textAlign: 'center',
+    background: `${C.green}14`, border: `1px solid ${C.green}33`,
+    color: C.green, fontWeight: 700, fontSize: 13, textAlign: 'center',
   },
   xpBadge: {
     marginTop: 10, padding: '8px 16px',
-    background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.3)',
-    borderRadius: 100, color: '#00ff87', fontWeight: 700,
+    background: `${C.green}1A`, border: `1px solid ${C.green}4D`,
+    borderRadius: 100, color: C.green, fontWeight: 700,
     fontSize: 13, textAlign: 'center',
   },
   resultCard: {
     marginTop: 16, padding: 20, textAlign: 'center',
-    background: 'rgba(247,195,68,0.06)', border: '1px solid rgba(247,195,68,0.2)',
+    background: C.accentDim, border: `1px solid ${C.accent}33`,
     borderRadius: 14,
   },
-  resultTitle: { fontSize: 12, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
-  resultScore: { fontSize: 36, fontWeight: 800, color: '#f7c344', marginBottom: 6 },
-  resultTeams: { fontSize: 13, color: '#888' },
+  resultTitle: { fontSize: 12, color: C.muted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+  resultScore: { fontSize: 36, fontWeight: 800, color: C.accent, marginBottom: 6 },
+  resultTeams: { fontSize: 13, color: C.muted },
   leaderTitle: { fontSize: 16, fontWeight: 800, marginBottom: 4 },
-  leaderSub:   { fontSize: 12, color: '#555', marginBottom: 14 },
-  leaderEmpty: { color: '#555', fontSize: 13, textAlign: 'center', padding: '20px 0' },
+  leaderSub:   { fontSize: 12, color: C.muted2, marginBottom: 14 },
+  leaderEmpty: { color: C.muted2, fontSize: 13, textAlign: 'center', padding: '20px 0' },
   leaderRow: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 12px', borderRadius: 10,
     border: '1px solid', marginBottom: 6,
     transition: 'all 0.2s',
   },
-  leaderPos:  { fontSize: 14, fontWeight: 800, color: '#555', width: 28 },
+  leaderPos:  { fontSize: 14, fontWeight: 800, color: C.muted2, width: 28 },
   leaderName: { flex: 1, fontSize: 13, fontWeight: 700 },
-  leaderPts:  { fontSize: 14, fontWeight: 800, color: '#4F8EF7' },
+  leaderPts:  { fontSize: 14, fontWeight: 800, color: C.blue },
   ruleRow: {
     display: 'flex', justifyContent: 'space-between',
-    padding: '8px 0', borderBottom: '1px solid #1a1a1a',
+    padding: '8px 0', borderBottom: `1px solid ${C.border2}`,
   },
 };

@@ -4,7 +4,17 @@
 import { useState } from 'react';
 import DribbleGauntlet from '../pages/games/DribbleGauntlet';
 import { simulateBotAct2Scores, determineActWinner, sumAct2Duo } from '../lib/raidEngine';
-import { R } from '../lib/raidConstants';
+
+const C = {
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
+  border:  "rgba(255,255,255,0.07)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+};
 
 export default function RaidAct2({ raidSeed, onComplete }) {
   const [phase, setPhase]       = useState('play');
@@ -51,17 +61,17 @@ export default function RaidAct2({ raidSeed, onComplete }) {
         <div style={s.summary}>
           <div style={s.row}>
             <span>Your rounds</span>
-            <strong style={{ color: R.green }}>{playerWins}</strong>
+            <strong style={{ color: C.green }}>{playerWins}</strong>
           </div>
           <div style={s.row}>
             <span>Buddy bot</span>
             <strong>{botScores.buddyWins}</strong>
           </div>
-          <div style={{ ...s.row, borderTop: `1px solid ${R.border}`, paddingTop: 12, marginTop: 8 }}>
+          <div style={{ ...s.row, borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8 }}>
             <span>Duo total</span>
-            <strong style={{ color: R.accent, fontSize: '1.4rem' }}>{yourTotal}</strong>
+            <strong style={{ color: C.accent, fontSize: '1.4rem' }}>{yourTotal}</strong>
           </div>
-          <div style={{ ...s.verdict, color: winner === 'you' ? R.green : winner === 'rival' ? R.red : R.muted }}>
+          <div style={{ ...s.verdict, color: winner === 'you' ? C.green : winner === 'rival' ? C.red : C.muted }}>
             {winner === 'you' ? '✓ Act 2 Won' : winner === 'rival' ? '✗ Act 2 Lost' : '— Draw'}
           </div>
         </div>
@@ -84,11 +94,11 @@ export default function RaidAct2({ raidSeed, onComplete }) {
 }
 
 const s = {
-  wrap:     { color: R.text },
+  wrap:     { color: C.text },
   header:   { display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 },
-  actLabel: { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: R.muted, textTransform: 'uppercase' },
+  actLabel: { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: C.muted, textTransform: 'uppercase' },
   gameName: { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.4rem', letterSpacing: 1.5 },
-  summary:  { padding: 20, background: R.surface, border: `1px solid ${R.border}`, borderRadius: 16 },
-  row:      { display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.85rem', color: R.muted },
+  summary:  { padding: 20, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16 },
+  row:      { display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.85rem', color: C.muted },
   verdict:  { textAlign: 'center', marginTop: 16, fontWeight: 800, fontSize: '1.1rem', letterSpacing: 1 },
 };

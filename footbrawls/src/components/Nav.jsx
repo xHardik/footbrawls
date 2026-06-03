@@ -4,13 +4,27 @@
 import { useState, useEffect } from "react";
 import { getUser } from "../lib/user";
 
+const C = {
+  bg:      "rgba(6,8,16,0.92)",
+  surface: "rgba(255,255,255,0.04)",
+  border:  "rgba(255,255,255,0.06)",
+  border2: "rgba(255,255,255,0.07)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  blue:    "#4F8EF7",
+  purple:  "#A855F7",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
 // ─── Tier config ──────────────────────────────────────────────────────────────
 const TIERS = [
-  { name: "lurker",  min: 0,   color: "#555566", bg: "rgba(85,85,102,0.15)",  label: "LURKER"  },
-  { name: "fan",     min: 50,  color: "#60a5fa", bg: "rgba(96,165,250,0.15)", label: "FAN"     },
-  { name: "veteran", min: 200, color: "#00e5a0", bg: "rgba(0,229,160,0.15)",  label: "VETERAN" },
-  { name: "ultra",   min: 500, color: "#ffd166", bg: "rgba(255,209,102,0.15)",label: "ULTRA"   },
-  { name: "legend",  min: 9999,color: "#a78bfa", bg: "rgba(167,139,250,0.15)",label: "LEGEND"  },
+  { name: "lurker",  min: 0,   color: C.muted,   bg: "rgba(242,242,244,0.05)", label: "LURKER"  },
+  { name: "fan",     min: 50,  color: C.blue,    bg: "rgba(79,142,247,0.15)",  label: "FAN"     },
+  { name: "veteran", min: 200, color: C.green,   bg: "rgba(61,214,140,0.15)",  label: "VETERAN" },
+  { name: "ultra",   min: 500, color: C.accent,  bg: "rgba(247,195,68,0.15)",  label: "ULTRA"   },
+  { name: "legend",  min: 9999,color: C.purple,  bg: "rgba(168,85,247,0.15)",  label: "LEGEND"  },
 ];
 
 function getTier(totalXP = 0) {
@@ -153,10 +167,10 @@ const s = {
     justifyContent: "space-between",
     padding: "0 16px",
     height: 56,
-    background: "rgba(6,9,14,0.92)",
+    background: C.bg,
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    borderBottom: `1px solid ${C.border}`,
   },
 
   // Logo
@@ -172,12 +186,12 @@ const s = {
     fontFamily: "'Barlow Condensed', 'DM Sans', sans-serif",
     fontWeight: 800,
     fontSize: 18,
-    color: "#e8edf5",
+    color: C.text,
     letterSpacing: 0.5,
     lineHeight: 1,
   },
-  logoBrawls: { color: "#00e5a0" },
-  logoGg: { color: "#4a6080", fontSize: 14 },
+  logoBrawls: { color: C.green },
+  logoGg: { color: C.muted, fontSize: 14 },
 
   // Right cluster
   right: {
@@ -191,8 +205,8 @@ const s = {
     display: "flex",
     alignItems: "center",
     gap: 5,
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.07)",
+    background: C.surface,
+    border: `1px solid ${C.border2}`,
     borderRadius: 99,
     padding: "4px 10px",
     cursor: "default",
@@ -202,7 +216,7 @@ const s = {
     fontFamily: "'Barlow Condensed', monospace",
     fontWeight: 700,
     fontSize: 13,
-    color: "#7b96b8",
+    color: C.muted,
     letterSpacing: 1,
   },
 
@@ -211,8 +225,8 @@ const s = {
     display: "flex",
     flexDirection: "column",
     gap: 3,
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.07)",
+    background: C.surface,
+    border: `1px solid ${C.border2}`,
     borderRadius: 12,
     padding: "6px 10px",
     minWidth: 140,
@@ -229,7 +243,7 @@ const s = {
     flex: 1,
     height: 4,
     borderRadius: 99,
-    background: "rgba(255,255,255,0.07)",
+    background: C.border2,
     overflow: "hidden",
   },
   xpFill: {
@@ -258,7 +272,7 @@ const s = {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: 12,
     fontWeight: 700,
-    color: "#c8d8e8",
+    color: C.text,
     maxWidth: 80,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -280,8 +294,8 @@ const s = {
     fontWeight: 700,
     fontSize: 13,
     letterSpacing: 0.5,
-    color: "#07111f",
-    background: "#00e5a0",
+    color: "#111",
+    background: C.green,
     padding: "7px 14px",
     borderRadius: 99,
     textDecoration: "none",

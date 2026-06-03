@@ -1,24 +1,17 @@
 import { useState, useEffect } from "react";
 
 const C = {
-  pitch: "#060f1c",
-  card: "#0d1a2d",
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
   border: "rgba(255,255,255,0.07)",
-  gold: "#f0c040",
-  goldBg: "rgba(240,192,64,0.12)",
-  goldBorder: "rgba(240,192,64,0.28)",
-  green: "#00d48a",
-  greenBg: "rgba(0,212,138,0.11)",
-  greenBorder: "rgba(0,212,138,0.3)",
-  red: "#ff3d5c",
-  redBg: "rgba(255,61,92,0.13)",
-  redBorder: "rgba(255,61,92,0.3)",
-  purple: "#8b5cf6",
-  purpleBg: "rgba(139,92,246,0.13)",
-  purpleBorder: "rgba(139,92,246,0.3)",
-  text: "#dde6f5",
-  muted: "rgba(180,205,240,0.4)",
-  muted2: "rgba(180,205,240,0.65)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
 };
 
 // ─── State config per PRD §7.2 ────────────────────────────────────────────────
@@ -33,10 +26,10 @@ const STATE_CONFIG = {
     modifierColor: C.green,
     desc: (team) => `${team} won their match — your guild is blessed for 24 hours!`,
     bg: "linear-gradient(135deg,#00200f,#001a2a)",
-    border: "rgba(0,212,138,0.4)",
-    glow: "rgba(0,212,138,0.15)",
-    badgeBg: C.greenBg,
-    badgeBorder: C.greenBorder,
+    border: "rgba(61,214,140,0.4)",
+    glow: "rgba(61,214,140,0.15)",
+    badgeBg: "rgba(61,214,140,0.11)",
+    badgeBorder: "rgba(61,214,140,0.3)",
     badgeColor: C.green,
     timerLabel: "Blessing expires in",
     raidNote: null,
@@ -48,10 +41,10 @@ const STATE_CONFIG = {
     modifierColor: C.red,
     desc: (team) => `${team} lost their match — your guild is cursed until 3 raid wins`,
     bg: "linear-gradient(135deg,#1a0008,#100614)",
-    border: "rgba(255,61,92,0.4)",
-    glow: "rgba(255,61,92,0.12)",
-    badgeBg: C.redBg,
-    badgeBorder: C.redBorder,
+    border: "rgba(232,64,64,0.4)",
+    glow: "rgba(232,64,64,0.12)",
+    badgeBg: "rgba(232,64,64,0.13)",
+    badgeBorder: "rgba(232,64,64,0.3)",
     badgeColor: C.red,
     timerLabel: "Curse lifts after",
     raidNote: "Win raids to lift the curse",
@@ -116,8 +109,8 @@ function RaidWinsProgress({ winsNeeded = 3, winsEarned = 0 }) {
         alignItems: "center",
         gap: 8,
         marginTop: 10,
-        background: C.redBg,
-        border: `1px solid ${C.redBorder}`,
+        background: "rgba(232,64,64,0.13)",
+        border: `1px solid rgba(232,64,64,0.3)`,
         borderRadius: 10,
         padding: "8px 12px",
       }}
@@ -321,7 +314,7 @@ export function CurseBannerPreview() {
   const [status, setStatus] = useState("blessed");
 
   return (
-    <div style={{ background: C.pitch, minHeight: "100vh", padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ background: C.bg, minHeight: "100vh", padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
       <CurseBanner status="blessed" team="Argentina" match="Argentina vs France" blessedSecs={18000} />
       <CurseBanner status="cursed" team="India" match="India vs Brazil" raidWins={1} raidWinsNeeded={3} />
       <CurseBanner status="neutral" team="Japan" match="—" />
@@ -337,7 +330,7 @@ export function CurseBannerPreview() {
               padding: "10px 0",
               borderRadius: 10,
               border: `1px solid ${status === s ? C.green : C.border}`,
-              background: status === s ? C.greenBg : "transparent",
+              background: status === s ? "rgba(61,214,140,0.11)" : "transparent",
               color: status === s ? C.green : C.muted2,
               fontWeight: 700,
               fontSize: 12,

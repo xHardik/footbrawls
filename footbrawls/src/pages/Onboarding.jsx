@@ -1,10 +1,33 @@
 // src/pages/Onboarding.jsx
 // 3-step onboarding: Nickname → Home Country → Support Team
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUser, getUser } from '../lib/user';
 import { COUNTRIES, WC_2026_TEAMS } from '../lib/countries';
+
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
+function injectFonts() {
+  if (document.getElementById("fb-fonts")) return;
+  const l = document.createElement("link"); l.id="fb-fonts"; l.rel="stylesheet";
+  l.href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap";
+  document.head.appendChild(l);
+}
 
 const WC_COUNTRIES = COUNTRIES.filter((c) => WC_2026_TEAMS.includes(c.code));
 
@@ -17,6 +40,8 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+
+  useEffect(() => { injectFonts(); }, []);
 
   // If user already exists skip onboarding
   if (getUser()) {
@@ -87,8 +112,9 @@ export default function Onboarding() {
           <div key={label} style={styles.stepItem}>
             <div style={{
               ...styles.stepDot,
-              background: step > i + 1 ? '#00ff87' : step === i + 1 ? '#fff' : '#333',
-              color: step === i + 1 ? '#000' : step > i + 1 ? '#000' : '#666',
+              background: step > i + 1 ? C.green : step === i + 1 ? C.accent : C.surface2,
+              color: step === i + 1 ? C.bg : step > i + 1 ? C.bg : C.muted,
+              border: `2px solid ${step > i + 1 ? C.green : step === i + 1 ? C.accent : C.border2}`
             }}>
               {step > i + 1 ? '✓' : i + 1}
             </div>
@@ -181,15 +207,15 @@ export default function Onboarding() {
                 key={c.code}
                 style={{
                   ...styles.countryItem,
-                  background: supportTeam?.code === c.code ? '#00ff8722' : 'transparent',
-                  borderColor: supportTeam?.code === c.code ? '#00ff87' : '#222',
+                  background: supportTeam?.code === c.code ? C.accentDim : 'transparent',
+                  borderColor: supportTeam?.code === c.code ? C.accent : C.border2,
                 }}
                 onClick={() => handleSupportSelect(c)}
               >
                 <span style={styles.flag}>{c.flag}</span>
                 <span style={styles.countryName}>{c.name}</span>
                 {supportTeam?.code === c.code && (
-                  <span style={{ marginLeft: 'auto', color: '#00ff87' }}>✓</span>
+                  <span style={{ marginLeft: 'auto', color: C.accent }}>✓</span>
                 )}
               </button>
             ))}
@@ -223,9 +249,9 @@ export default function Onboarding() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#0a0a0a',
-    color: '#fff',
-    fontFamily: "'Segoe UI', sans-serif",
+    background: C.bg,
+    color: C.text,
+    fontFamily: "'Syne', sans-serif",
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -235,14 +261,14 @@ const styles = {
     width: '100%',
     maxWidth: 480,
     height: 4,
-    background: '#1a1a1a',
+    background: C.surface,
     borderRadius: 2,
     marginBottom: 24,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    background: '#00ff87',
+    background: C.accent,
     borderRadius: 2,
     transition: 'width 0.4s ease',
   },
@@ -269,9 +295,11 @@ const styles = {
     transition: 'all 0.3s ease',
   },
   stepLabel: {
-    fontSize: 11,
-    fontWeight: 500,
+    fontFamily: "'Space Mono', monospace",
+    fontSize: 10,
+    fontWeight: 700,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   card: {
     width: '100%',
@@ -287,28 +315,30 @@ const styles = {
   },
   title: {
     fontSize: 26,
-    fontWeight: 800,
+    fontWeight: 700,
     margin: 0,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
+    color: C.muted,
     margin: 0,
     textAlign: 'center',
+    maxWidth: 320,
+    lineHeight: 1.6,
   },
   hint: {
     fontSize: 13,
-    color: '#00ff87',
+    color: C.accent,
     margin: 0,
   },
   input: {
     width: '100%',
     padding: '14px 16px',
-    background: '#111',
-    border: '1px solid #222',
+    background: C.surface2,
+    border: `1px solid ${C.border2}`,
     borderRadius: 12,
-    color: '#fff',
+    color: C.text,
     fontSize: 16,
     outline: 'none',
     boxSizing: 'border-box',
@@ -317,8 +347,8 @@ const styles = {
   btn: {
     width: '100%',
     padding: '16px',
-    background: '#00ff87',
-    color: '#000',
+    background: C.accent,
+    color: C.bg,
     border: 'none',
     borderRadius: 12,
     fontSize: 16,
@@ -330,7 +360,7 @@ const styles = {
   backBtn: {
     background: 'none',
     border: 'none',
-    color: '#555',
+    color: C.muted,
     fontSize: 14,
     cursor: 'pointer',
     padding: 8,
@@ -350,9 +380,9 @@ const styles = {
     gap: 12,
     padding: '12px 14px',
     background: 'transparent',
-    border: '1px solid #222',
+    border: `1px solid ${C.border2}`,
     borderRadius: 10,
-    color: '#fff',
+    color: C.text,
     cursor: 'pointer',
     fontSize: 15,
     textAlign: 'left',
@@ -365,12 +395,12 @@ const styles = {
     fontSize: 15,
   },
   error: {
-    color: '#ff4444',
+    color: C.red,
     fontSize: 13,
     margin: 0,
   },
   noResults: {
-    color: '#555',
+    color: C.muted,
     fontSize: 14,
     textAlign: 'center',
     padding: 20,

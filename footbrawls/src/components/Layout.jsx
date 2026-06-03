@@ -8,6 +8,24 @@ import { getUser } from '../lib/user';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  surface3:"rgba(255,255,255,0.11)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  border3: "rgba(255,255,255,0.2)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  red:     "#E84040",
+  green:   "#3DD68C",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
 const GAMES = [
   { name: 'Who Are Ya?',    path: '/games/whoareya',      icon: '🔍', xp: 25,  key: 'footbrawls_whoareya' },
   { name: 'Player Wordle',  path: '/games/wordle',        icon: '🔤', xp: 20,  key: 'footbrawls_wordle_history' },
@@ -20,12 +38,19 @@ const GAMES = [
 ];
 
 const CURSE_COLORS = {
-  null:          { color: '#00ff87', label: 'No Curse',     icon: '✨' },
-  blessed:       { color: '#00ff87', label: 'Blessed +25%', icon: '🌟' },
-  cursed:        { color: '#f7c344', label: 'Cursed -25%',  icon: '💀' },
-  double_cursed: { color: '#ff4444', label: 'Double Curse', icon: '💀💀' },
-  death_curse:   { color: '#ff0000', label: 'Death Curse',  icon: '☠️' },
+  null:          { color: C.green, label: 'No Curse',     icon: '✨' },
+  blessed:       { color: C.green, label: 'Blessed +25%', icon: '🌟' },
+  cursed:        { color: C.accent, label: 'Cursed -25%',  icon: '💀' },
+  double_cursed: { color: C.red, label: 'Double Curse', icon: '💀💀' },
+  death_curse:   { color: C.red, label: 'Death Curse',  icon: '☠️' },
 };
+
+function injectFonts() {
+  if (document.getElementById("fb-fonts")) return;
+  const l = document.createElement("link"); l.id="fb-fonts"; l.rel="stylesheet";
+  l.href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap";
+  document.head.appendChild(l);
+}
 
 function getTodayKey() {
   const d = new Date();
@@ -53,6 +78,7 @@ export default function Layout({ children }) {
 
   // ── Live guild data ──
   useEffect(() => {
+    injectFonts();
     if (!user?.homeCountry) return;
     const ref = doc(db, 'guilds', user.homeCountry);
     const unsub = onSnapshot(ref, snap => {
@@ -124,7 +150,7 @@ export default function Layout({ children }) {
               <div style={{
                 ...s.barFill,
                 width: `${hpPercent}%`,
-                background: hpPercent > 60 ? '#00ff87' : hpPercent > 30 ? '#f7c344' : '#ff4444',
+            background: hpPercent > 60 ? C.green : hpPercent > 30 ? C.accent : C.red,
               }} />
             </div>
             <div style={s.hpLabel}>{guild.castleHP?.toLocaleString()} / {guild.castleHPCap?.toLocaleString()} HP</div>
@@ -148,13 +174,13 @@ export default function Layout({ children }) {
                   key={game.path}
                   style={{
                     ...s.gameItem,
-                    background: active ? 'rgba(0,255,135,0.08)' : 'transparent',
-                    borderColor: active ? 'rgba(0,255,135,0.3)' : 'rgba(255,255,255,0.05)',
+                background: active ? C.accentDim : 'transparent',
+                borderColor: active ? C.accent : C.border,
                   }}
                   onClick={() => { navigate(game.path); setSidebar(false); }}
                 >
                   <span style={s.gameIcon}>{game.icon}</span>
-                  <span style={{ ...s.gameName, color: active ? '#00ff87' : done ? '#555' : '#ccc' }}>
+              <span style={{ ...s.gameName, color: active ? C.accent : done ? C.muted2 : C.text }}>
                     {game.name}
                   </span>
                   <span style={s.gameXP}>
@@ -195,15 +221,15 @@ const s = {
   root: {
     display: 'flex',
     minHeight: '100vh',
-    background: '#0a0a0a',
-    color: '#fff',
-    fontFamily: "'Segoe UI', sans-serif",
+    background: C.bg,
+    color: C.text,
+    fontFamily: "'Syne', sans-serif",
   },
   sidebar: {
-    width: 240,
+    width: 260,
     minHeight: '100vh',
-    background: '#0d0d0d',
-    borderRight: '1px solid #1a1a1a',
+    background: C.bg2,
+    borderRight: `1px solid ${C.border}`,
     padding: '20px 14px',
     display: 'flex',
     flexDirection: 'column',
@@ -225,65 +251,70 @@ const s = {
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '8px 4px 16px',
     cursor: 'pointer',
-    borderBottom: '1px solid #1a1a1a',
+    fontFamily:"'Bebas Neue',sans-serif",
+    fontSize:"1.7rem",
+    letterSpacing:3,
     marginBottom: 8,
   },
   logoText: {
-    fontSize: 18, fontWeight: 800, color: '#00ff87', letterSpacing: 1,
+    background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",
+    WebkitBackgroundClip:"text",
+    WebkitTextFillColor:"transparent",
+    backgroundClip:"text",
   },
   userCard: {
     padding: '10px 12px',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid #1a1a1a',
+    background: C.surface,
+    border: `1px solid ${C.border2}`,
     borderRadius: 10,
     marginBottom: 8,
   },
-  userName: { fontSize: 14, fontWeight: 700, marginBottom: 4 },
+  userName: { fontSize: 14, fontWeight: 700, marginBottom: 4, color: C.text },
   userMeta: { display: 'flex', alignItems: 'center', gap: 6 },
   tier: {
     fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-    letterSpacing: 1, color: '#f7c344',
-    background: 'rgba(247,195,68,0.1)', padding: '2px 8px', borderRadius: 100,
+    letterSpacing: 1, color: C.accent,
+    background: C.accentDim, padding: '2px 8px', borderRadius: 100,
   },
   section: {
     padding: '12px 0',
-    borderBottom: '1px solid #1a1a1a',
+    borderTop: `1px solid ${C.border}`,
     marginBottom: 4,
   },
   sectionLabel: {
-    fontSize: 10, fontWeight: 800, textTransform: 'uppercase',
-    letterSpacing: 1.5, color: '#444', marginBottom: 8,
+    fontFamily:"'Space Mono',monospace", fontSize:"0.62rem", fontWeight:700,
+    letterSpacing:3.5, textTransform:"uppercase", color:C.muted2, marginBottom: 12,
   },
   xpRow: { display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 },
-  xpVal: { fontSize: 22, fontWeight: 800, color: '#00ff87' },
-  xpMax: { fontSize: 12, color: '#444' },
+  xpVal: { fontFamily:"'Bebas Neue',sans-serif", fontSize: 22, fontWeight: 800, color: C.green, letterSpacing: 1 },
+  xpMax: { fontSize: 12, color: C.muted2 },
   barBg: {
-    height: 6, background: '#1a1a1a', borderRadius: 3,
+    height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3,
     overflow: 'hidden', marginBottom: 4,
   },
   barFill: { height: '100%', borderRadius: 3, transition: 'width 0.5s ease' },
-  guildName: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: '#ccc' },
-  hpLabel: { fontSize: 10, color: '#444', marginTop: 4, marginBottom: 8 },
+  guildName: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: C.muted },
+  hpLabel: { fontFamily:"'Space Mono',monospace", fontSize: 10, color: C.muted2, marginTop: 4, marginBottom: 8 },
   curseBadge: {
     display: 'inline-flex', alignItems: 'center', gap: 5,
     padding: '4px 10px', borderRadius: 100, border: '1px solid',
-    fontSize: 11, fontWeight: 700,
+    fontSize: 11, fontWeight: 700, fontFamily:"'Space Mono',monospace",
   },
   gameList: { display: 'flex', flexDirection: 'column', gap: 3 },
   gameItem: {
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-    border: '1px solid', transition: 'all 0.15s',
+    border: '1px solid', transition: 'all 0.2s ease',
   },
   gameIcon: { fontSize: 14, width: 20, textAlign: 'center' },
-  gameName: { flex: 1, fontSize: 12, fontWeight: 600 },
-  gameXP:   { fontSize: 10, color: '#00ff87', fontWeight: 700 },
+  gameName: { flex: 1, fontSize: 13, fontWeight: 600 },
+  gameXP:   { fontFamily:"'Space Mono',monospace", fontSize: 10, color: C.green, fontWeight: 700 },
   guildBtn: {
-    marginTop: 8, padding: '10px 14px',
-    background: 'rgba(0,255,135,0.06)',
-    border: '1px solid rgba(0,255,135,0.2)',
+    marginTop: 'auto', padding: '12px 14px',
+    background: C.surface,
+    border: `1px solid ${C.border2}`,
     borderRadius: 10, fontSize: 13, fontWeight: 700,
-    color: '#00ff87', cursor: 'pointer', textAlign: 'center',
+    color: C.text, cursor: 'pointer', textAlign: 'center',
   },
   main: {
     flex: 1,
@@ -292,9 +323,9 @@ const s = {
   },
   hamburger: {
     display: 'none',
-    position: 'fixed', top: 12, left: 12, zIndex: 200,
-    background: '#111', border: '1px solid #222',
-    color: '#fff', width: 38, height: 38,
+    position: 'fixed', top: 10, left: 10, zIndex: 200,
+    background: C.surface, border: `1px solid ${C.border2}`,
+    color: C.text, width: 40, height: 40,
     borderRadius: 8, fontSize: 16, cursor: 'pointer',
     alignItems: 'center', justifyContent: 'center',
     '@media(max-width:768px)': { display: 'flex' },

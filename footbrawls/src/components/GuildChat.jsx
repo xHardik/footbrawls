@@ -5,23 +5,18 @@ import { useState, useEffect, useRef } from "react";
 //   import { db } from "../firebase";
 
 const C = {
-  pitch: "#060f1c",
-  card: "#0d1a2d",
-  card2: "#111f35",
-  border: "rgba(255,255,255,0.07)",
-  borderHover: "rgba(255,255,255,0.14)",
-  gold: "#f0c040",
-  goldBg: "rgba(240,192,64,0.12)",
-  goldBorder: "rgba(240,192,64,0.28)",
-  green: "#00d48a",
-  greenBg: "rgba(0,212,138,0.11)",
-  greenBorder: "rgba(0,212,138,0.3)",
-  red: "#ff3d5c",
-  blue: "#4a9eff",
-  purple: "#8b5cf6",
-  text: "#dde6f5",
-  muted: "rgba(180,205,240,0.4)",
-  muted2: "rgba(180,205,240,0.65)",
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  blue:    "#4F8EF7",
+  green:   "#3DD68C",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
 };
 
 // ─── Tier colours (PRD §7.1) ──────────────────────────────────────────────────
@@ -29,7 +24,7 @@ const TIER_COLOR = {
   Lurker:  C.muted2,
   Fan:     C.blue,
   Veteran: C.green,
-  Ultra:   C.gold,
+  Ultra:   C.accent,
   Legend:  "#a78bfa",
 };
 
@@ -87,7 +82,7 @@ function MessageBubble({ msg, isSelf }) {
             width: 30,
             height: 30,
             borderRadius: "50%",
-            background: C.card2,
+            background: C.surface2,
             border: `2px solid ${tierColor}`,
             display: "flex",
             alignItems: "center",
@@ -138,7 +133,7 @@ function MessageBubble({ msg, isSelf }) {
         {/* Bubble */}
         <div
           style={{
-            background: isSelf ? C.green : C.card2,
+            background: isSelf ? C.green : C.surface2,
             color: isSelf ? "#060f1c" : C.text,
             padding: "8px 12px",
             borderRadius: isSelf ? "14px 14px 4px 14px" : "4px 14px 14px 14px",
@@ -173,12 +168,12 @@ function SystemMessage({ text }) {
     >
       <div
         style={{
-          background: C.goldBg,
-          border: `1px solid ${C.goldBorder}`,
+          background: C.accentDim,
+          border: `1px solid ${C.border2}`,
           borderRadius: 99,
           padding: "3px 12px",
           fontSize: 11,
-          color: C.gold,
+          color: C.accent,
           fontWeight: 600,
           fontFamily: "'Outfit', sans-serif",
         }}
@@ -280,7 +275,7 @@ export default function GuildChat({
   return (
     <div
       style={{
-        background: C.card,
+        background: C.surface,
         border: `1px solid ${C.border}`,
         borderRadius: 18,
         display: "flex",
@@ -328,8 +323,8 @@ export default function GuildChat({
             display: "flex",
             alignItems: "center",
             gap: 5,
-            background: C.greenBg,
-            border: `1px solid ${C.greenBorder}`,
+            background: "rgba(61,214,140,0.11)",
+            border: "1px solid rgba(61,214,140,0.3)",
             borderRadius: 99,
             padding: "4px 10px",
           }}
@@ -387,8 +382,8 @@ export default function GuildChat({
           maxLength={200}
           style={{
             flex: 1,
-            background: C.card2,
-            border: `1px solid ${draft ? C.borderHover : C.border}`,
+            background: C.surface2,
+            border: `1px solid ${draft ? C.border2 : C.border}`,
             borderRadius: 12,
             padding: "10px 14px",
             fontSize: 13,
@@ -433,7 +428,7 @@ export default function GuildChat({
 // ─── Dev preview ─────────────────────────────────────────────────────────────
 export function GuildChatPreview() {
   return (
-    <div style={{ background: C.pitch, minHeight: "100vh", padding: 16 }}>
+    <div style={{ background: C.bg, minHeight: "100vh", padding: 16 }}>
       <GuildChat
         guildCode="IND"
         currentUid="u1"

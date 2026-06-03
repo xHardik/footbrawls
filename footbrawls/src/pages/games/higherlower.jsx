@@ -17,6 +17,23 @@ import { getUser } from '../../lib/user';
 const GAME_ID = "higherLower";
 const MAX_XP   = 15;
 
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  surface3:"rgba(255,255,255,0.11)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  blue:    "#4F8EF7",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
 // Attributes to compare — shown one at a time, randomly selected per round
 const ATTRIBUTES = [
   { key: "age",         label: "Age",          unit: "yrs",  format: (v) => v },
@@ -45,15 +62,11 @@ function formatValue(attr, player) {
 
 function PlayerCard({ player, attr, revealed, isRight, answer, animState }) {
   const bgColor = revealed
-    ? animState === "correct"
-      ? "rgba(0,229,160,0.12)"
-      : "rgba(255,77,106,0.12)"
-    : "#101f35";
+    ? animState === "correct" ? `${C.green}1F` : `${C.red}1F`
+    : C.surface2;
   const borderColor = revealed
-    ? animState === "correct"
-      ? "rgba(0,229,160,0.35)"
-      : "rgba(255,77,106,0.35)"
-    : "#1a2f4a";
+    ? animState === "correct" ? `${C.green}59` : `${C.red}59`
+    : C.border2;
 
   return (
     <div
@@ -80,7 +93,7 @@ function PlayerCard({ player, attr, revealed, isRight, answer, animState }) {
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 700,
           fontSize: 15,
-          color: "#e8edf5",
+          color: C.text,
           letterSpacing: 0.3,
           lineHeight: 1.2,
           textAlign: "center",
@@ -88,19 +101,19 @@ function PlayerCard({ player, attr, revealed, isRight, answer, animState }) {
       >
         {player?.name}
       </div>
-      <div style={{ fontSize: 11, color: "#5a7090" }}>{player?.club}</div>
-      <div style={{ fontSize: 11, color: "#7b96b8" }}>{player?.position}</div>
+      <div style={{ fontSize: 11, color: C.muted2 }}>{player?.club}</div>
+      <div style={{ fontSize: 11, color: C.muted }}>{player?.position}</div>
 
       {/* Value */}
       <div
         style={{
           marginTop: 8,
-          background: "#0c1a2e",
+          background: C.bg2,
           borderRadius: 8,
           padding: "6px 14px",
           fontSize: 13,
           fontWeight: 700,
-          color: revealed ? "#e8edf5" : "#5a7090",
+          color: revealed ? C.text : C.muted2,
           fontFamily: "'Barlow Condensed', sans-serif",
           letterSpacing: 1,
           minWidth: 80,
@@ -120,11 +133,11 @@ function ChoiceButtons({ onHigher, onLower, disabled }) {
         disabled={disabled}
         style={{
           flex: 1,
-          background: "rgba(0,229,160,0.1)",
-          border: "1px solid rgba(0,229,160,0.3)",
+          background: `${C.green}1A`,
+          border: `1px solid ${C.green}4D`,
           borderRadius: 12,
           padding: "14px",
-          color: "#00e5a0",
+          color: C.green,
           fontSize: 15,
           fontWeight: 700,
           cursor: disabled ? "default" : "pointer",
@@ -144,11 +157,11 @@ function ChoiceButtons({ onHigher, onLower, disabled }) {
         disabled={disabled}
         style={{
           flex: 1,
-          background: "rgba(255,77,106,0.1)",
-          border: "1px solid rgba(255,77,106,0.3)",
+          background: `${C.red}1A`,
+          border: `1px solid ${C.red}4D`,
           borderRadius: 12,
           padding: "14px",
-          color: "#ff4d6a",
+          color: C.red,
           fontSize: 15,
           fontWeight: 700,
           cursor: disabled ? "default" : "pointer",
@@ -177,7 +190,7 @@ function StreakBar({ streak }) {
         justifyContent: "center",
         fontFamily: "'DM Sans', sans-serif",
         fontSize: 13,
-        color: "#7b96b8",
+        color: C.muted,
       }}
     >
       {Array.from({ length: Math.max(5, streak + 1) }).map((_, i) => (
@@ -187,9 +200,9 @@ function StreakBar({ streak }) {
             width: i < streak ? 18 : 14,
             height: i < streak ? 18 : 14,
             borderRadius: "50%",
-            background: i < streak ? "#f5c842" : "#1a2f4a",
-            border: `2px solid ${i < streak ? "#f5c842" : "#1a2f4a"}`,
-            boxShadow: i < streak ? "0 0 6px rgba(245,200,66,0.5)" : "none",
+            background: i < streak ? C.accent : C.surface2,
+            border: `2px solid ${i < streak ? C.accent : C.surface2}`,
+            boxShadow: i < streak ? `0 0 6px ${C.accent}80` : "none",
             transition: "all 0.2s",
           }}
         />
@@ -280,7 +293,7 @@ export default function HigherLower({ players = [], userId, onComplete }) {
 
   if (!playerA || !playerB) {
     return (
-      <div style={{ padding: 32, textAlign: "center", color: "#5a7090" }}>
+      <div style={{ padding: 32, textAlign: "center", color: C.muted2 }}>
         Loading…
       </div>
     );
@@ -289,7 +302,7 @@ export default function HigherLower({ players = [], userId, onComplete }) {
   return (
     <div
       style={{
-        background: "#07111f",
+        background: C.bg,
         minHeight: "100vh",
         maxWidth: 430,
         margin: "0 auto",
@@ -301,7 +314,7 @@ export default function HigherLower({ players = [], userId, onComplete }) {
       <div
         style={{
           padding: "16px 16px 12px",
-          borderBottom: "1px solid #1a2f4a",
+          borderBottom: `1px solid ${C.border2}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -313,24 +326,24 @@ export default function HigherLower({ players = [], userId, onComplete }) {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
               fontSize: 20,
-              color: "#e8edf5",
+              color: C.text,
             }}
           >
             📊 HIGHER OR LOWER
           </div>
-          <div style={{ fontSize: 11, color: "#5a7090", marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: C.muted2, marginTop: 2 }}>
             {gameOver ? `Final streak: ${streak}` : `Round ${round + 1} · Streak ${streak}`}
           </div>
         </div>
         <div
           style={{
-            background: "rgba(245,200,66,0.12)",
-            border: "1px solid rgba(245,200,66,0.25)",
+            background: C.accentDim,
+            border: `1px solid ${C.accent}40`,
             borderRadius: 99,
             padding: "3px 10px",
             fontSize: 11,
             fontWeight: 700,
-            color: "#f5c842",
+            color: C.accent,
           }}
         >
           Max 15 XP
@@ -343,18 +356,18 @@ export default function HigherLower({ players = [], userId, onComplete }) {
           textAlign: "center",
           padding: "16px 16px 10px",
           fontSize: 13,
-          color: "#7b96b8",
+          color: C.muted,
           fontWeight: 500,
         }}
       >
         Does{" "}
-        <strong style={{ color: "#e8edf5" }}>{playerB?.name}</strong>
+        <strong style={{ color: C.text }}>{playerB?.name}</strong>
         {" "}have a{" "}
         <span
           style={{
-            color: "#4fa3ff",
+            color: C.blue,
             fontWeight: 700,
-            background: "rgba(79,163,255,0.12)",
+            background: `${C.blue}1F`,
             padding: "1px 7px",
             borderRadius: 6,
           }}
@@ -362,7 +375,7 @@ export default function HigherLower({ players = [], userId, onComplete }) {
           {attr.label}
         </span>{" "}
         higher or lower than{" "}
-        <strong style={{ color: "#e8edf5" }}>{playerA?.name}</strong>?
+        <strong style={{ color: C.text }}>{playerA?.name}</strong>?
       </div>
 
       {/* Cards */}
@@ -384,7 +397,7 @@ export default function HigherLower({ players = [], userId, onComplete }) {
             fontFamily: "'Barlow Condensed', sans-serif",
             fontWeight: 800,
             fontSize: 18,
-            color: "#1a2f4a",
+            color: C.surface2,
           }}
         >
           VS
@@ -414,8 +427,8 @@ export default function HigherLower({ players = [], userId, onComplete }) {
         <div
           style={{
             margin: "0 16px",
-            background: "rgba(255,77,106,0.08)",
-            border: "1px solid rgba(255,77,106,0.3)",
+            background: `${C.red}14`,
+            border: `1px solid ${C.red}4D`,
             borderRadius: 14,
             padding: "20px 16px",
             textAlign: "center",
@@ -429,13 +442,13 @@ export default function HigherLower({ players = [], userId, onComplete }) {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontSize: 22,
               fontWeight: 700,
-              color: "#e8edf5",
+              color: C.text,
               marginBottom: 4,
             }}
           >
             Streak of {streak}
           </div>
-          <div style={{ fontSize: 13, color: "#7b96b8", marginBottom: 12 }}>
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
             {playerB?.[attr.key]} vs {playerA?.[attr.key]} {attr.unit}
           </div>
           {xpAwarded > 0 && (
@@ -444,13 +457,13 @@ export default function HigherLower({ players = [], userId, onComplete }) {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                background: "rgba(245,200,66,0.15)",
-                border: "1px solid rgba(245,200,66,0.3)",
+                background: C.accentDim,
+                border: `1px solid ${C.accent}4D`,
                 borderRadius: 99,
                 padding: "4px 14px",
                 fontSize: 13,
                 fontWeight: 700,
-                color: "#f5c842",
+                color: C.accent,
               }}
             >
               +{xpAwarded} XP earned

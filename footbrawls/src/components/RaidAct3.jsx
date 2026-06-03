@@ -5,7 +5,17 @@ import { useState } from 'react';
 import { PENALTY_ZONES } from '../lib/raidConstants';
 import { seededRandom } from '../lib/dailySeed';
 import { simulateBotAct3Scores, determineActWinner, sumAct3Duo } from '../lib/raidEngine';
-import { R } from '../lib/raidConstants';
+
+const C = {
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
+  border:  "rgba(255,255,255,0.07)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+};
 
 const KICKS = 5;
 
@@ -111,13 +121,13 @@ export default function RaidAct3({ raidSeed, onComplete }) {
         <div style={s.summary}>
           <div style={s.scoreLine}>
             <span>Your duo</span>
-            <strong style={{ color: R.green, fontSize: '1.6rem' }}>{yourTotal}</strong>
+            <strong style={{ color: C.green, fontSize: '1.6rem' }}>{yourTotal}</strong>
           </div>
           <div style={s.scoreLine}>
             <span>Rival duo</span>
-            <strong style={{ color: R.red, fontSize: '1.6rem' }}>{rivalTotal}</strong>
+            <strong style={{ color: C.red, fontSize: '1.6rem' }}>{rivalTotal}</strong>
           </div>
-          <div style={{ ...s.verdict, color: winner === 'you' ? R.green : winner === 'rival' ? R.red : R.muted }}>
+          <div style={{ ...s.verdict, color: winner === 'you' ? C.green : winner === 'rival' ? C.red : C.muted }}>
             {winner === 'you' ? '✓ Act 3 Won' : winner === 'rival' ? '✗ Act 3 Lost' : '— Draw'}
           </div>
         </div>
@@ -150,7 +160,7 @@ export default function RaidAct3({ raidSeed, onComplete }) {
         {PENALTY_ZONES.map(z => (
           <button key={z.id} type="button" style={{
             ...s.zone,
-            borderColor: selected === z.id ? R.green : 'rgba(255,255,255,0.08)',
+            borderColor: selected === z.id ? C.green : 'rgba(255,255,255,0.08)',
             background:  selected === z.id ? 'rgba(61,214,140,0.12)' : 'rgba(255,255,255,0.02)',
           }} onClick={() => isStriker ? handleStrikerShot(z.id) : handleGkSave(z.id)}>
             {z.label}
@@ -161,7 +171,7 @@ export default function RaidAct3({ raidSeed, onComplete }) {
       {feedback && (
         <div style={{
           ...s.feedback,
-          color: feedback.includes('GOAL') || feedback.includes('CONCEDED') ? R.red : R.green,
+          color: feedback.includes('GOAL') || feedback.includes('CONCEDED') ? C.red : C.green,
         }}>
           {feedback}
         </div>
@@ -171,16 +181,16 @@ export default function RaidAct3({ raidSeed, onComplete }) {
 }
 
 const s = {
-  wrap:        { color: R.text },
+  wrap:        { color: C.text },
   header:      { display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 },
-  actLabel:    { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: R.muted, textTransform: 'uppercase' },
+  actLabel:    { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: C.muted, textTransform: 'uppercase' },
   gameName:    { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.4rem', letterSpacing: 1.5 },
-  stats:       { display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 16, fontSize: '0.8rem', color: R.muted },
-  instruction: { textAlign: 'center', fontSize: '0.72rem', color: R.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 },
+  stats:       { display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 16, fontSize: '0.8rem', color: C.muted },
+  instruction: { textAlign: 'center', fontSize: '0.72rem', color: C.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 },
   grid:        { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, maxWidth: 340, margin: '0 auto' },
-  zone:        { padding: '18px 6px', border: '1px solid', borderRadius: 8, cursor: 'pointer', color: R.muted, fontSize: '0.68rem', fontWeight: 700 },
+  zone:        { padding: '18px 6px', border: '1px solid', borderRadius: 8, cursor: 'pointer', color: C.muted, fontSize: '0.68rem', fontWeight: 700 },
   feedback:    { marginTop: 16, textAlign: 'center', fontWeight: 800, fontSize: '1rem' },
-  summary:     { padding: 24, background: R.surface, border: `1px solid ${R.border}`, borderRadius: 16, textAlign: 'center' },
-  scoreLine:   { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, fontSize: '0.85rem', color: R.muted },
+  summary:     { padding: 24, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, textAlign: 'center' },
+  scoreLine:   { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, fontSize: '0.85rem', color: C.muted },
   verdict:     { marginTop: 16, fontWeight: 800, fontSize: '1.1rem', letterSpacing: 1 },
 };

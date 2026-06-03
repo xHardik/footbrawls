@@ -2,8 +2,20 @@
 // Dribble past L/C/R defender, then pick a 6-zone shot.
 
 import { useState, useCallback } from 'react';
-import { DRIBBLE_DEFENDERS, DRIBBLE_SHOT_ZONES, R } from '../../lib/raidConstants';
+import { DRIBBLE_DEFENDERS, DRIBBLE_SHOT_ZONES } from '../../lib/raidConstants';
 import { seededRandom } from '../../lib/dailySeed';
+
+const C = {
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+};
 
 function pickDefender(seed, round) {
   const r = seededRandom(seed, round * 13);
@@ -107,7 +119,7 @@ export default function DribbleGauntlet({
         {Array.from({ length: roundsTotal }).map((_, i) => (
           <div key={i} style={{
             ...s.dot,
-            background: roundLog[i] ? (roundLog[i].won ? R.green : R.red) : i === round ? R.accent : '#222',
+            background: roundLog[i] ? (roundLog[i].won ? C.green : C.red) : i === round ? C.accent : C.surface2,
           }} />
         ))}
       </div>
@@ -119,8 +131,8 @@ export default function DribbleGauntlet({
             {DRIBBLE_DEFENDERS.map(d => (
               <button key={d.id} type="button" style={{
                 ...s.defBtn,
-                borderColor: dribblePick === d.id ? R.green : R.border,
-                background:  dribblePick === d.id ? 'rgba(61,214,140,0.12)' : R.surface,
+                borderColor: dribblePick === d.id ? C.green : C.border,
+                background:  dribblePick === d.id ? `${C.green}1F` : C.surface,
               }} onClick={() => tryDribble(d.id)}>
                 <span style={{ fontSize: 28 }}>{d.emoji}</span>
                 <span>{d.label}</span>
@@ -137,8 +149,8 @@ export default function DribbleGauntlet({
             {DRIBBLE_SHOT_ZONES.map(z => (
               <button key={z.id} type="button" style={{
                 ...s.shotZone,
-                borderColor: shotPick === z.id ? R.green : 'rgba(255,255,255,0.08)',
-                background:  shotPick === z.id ? 'rgba(61,214,140,0.15)' : 'rgba(255,255,255,0.02)',
+                borderColor: shotPick === z.id ? C.green : C.border,
+                background:  shotPick === z.id ? `${C.green}26` : C.surface,
               }} onClick={() => takeShot(z.id)}>
                 {z.label}
               </button>
@@ -150,8 +162,8 @@ export default function DribbleGauntlet({
       {phase === 'result' && feedback && (
         <div style={{
           ...s.feedback,
-          color: feedback.includes('GOAL') ? R.green : R.red,
-          borderColor: feedback.includes('GOAL') ? `${R.green}66` : `${R.red}66`,
+          color: feedback.includes('GOAL') ? C.green : C.red,
+          borderColor: feedback.includes('GOAL') ? `${C.green}66` : `${C.red}66`,
         }}>
           {feedback}
         </div>
@@ -161,20 +173,20 @@ export default function DribbleGauntlet({
 }
 
 const s = {
-  wrap:        { color: R.text, fontFamily: "'Syne', sans-serif" },
+  wrap:        { color: C.text, fontFamily: "'Syne', sans-serif" },
   header:      { marginBottom: 16 },
   title:       { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: 2, margin: 0 },
-  sub:         { fontSize: '0.75rem', color: R.muted, margin: '4px 0 0' },
+  sub:         { fontSize: '0.75rem', color: C.muted, margin: '4px 0 0' },
   progressRow: { display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 20 },
   dot:         { width: 12, height: 12, borderRadius: '50%', transition: 'background 0.3s' },
-  instruction: { textAlign: 'center', fontSize: '0.72rem', color: R.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 },
+  instruction: { textAlign: 'center', fontSize: '0.72rem', color: C.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 14 },
   defRow:      { display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 16 },
-  defBtn:      { flex: 1, maxWidth: 110, padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, border: '1px solid', borderRadius: 14, cursor: 'pointer', color: R.text, fontSize: '0.75rem', fontWeight: 700 },
+  defBtn:      { flex: 1, maxWidth: 110, padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, border: '1px solid', borderRadius: 14, cursor: 'pointer', color: C.text, fontSize: '0.75rem', fontWeight: 700 },
   shotGrid:    { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 8, maxWidth: 320, margin: '0 auto' },
-  shotZone:    { padding: '20px 8px', border: '1px solid', borderRadius: 10, cursor: 'pointer', color: R.muted, fontSize: '0.7rem', fontWeight: 700 },
+  shotZone:    { padding: '20px 8px', border: '1px solid', borderRadius: 10, cursor: 'pointer', color: C.muted, fontSize: '0.7rem', fontWeight: 700 },
   feedback:    { marginTop: 16, padding: '12px 16px', borderRadius: 12, border: '1px solid', textAlign: 'center', fontWeight: 800, fontSize: '1rem' },
-  doneBox:     { textAlign: 'center', padding: 24, background: R.surface, border: `1px solid ${R.border}`, borderRadius: 16 },
+  doneBox:     { textAlign: 'center', padding: 24, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16 },
   doneTitle:   { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.8rem', letterSpacing: 2, marginBottom: 8 },
-  doneScore:   { fontSize: '2rem', fontWeight: 800, color: R.green },
-  muted:       { fontSize: '0.75rem', color: R.muted, marginTop: 12 },
+  doneScore:   { fontSize: '2rem', fontWeight: 800, color: C.green },
+  muted:       { fontSize: '0.75rem', color: C.muted, marginTop: 12 },
 };

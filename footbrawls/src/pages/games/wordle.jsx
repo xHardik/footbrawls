@@ -18,12 +18,29 @@ import { awardXP } from '../../lib/xpEngine.js';
 const XP_BY_GUESS = { 1: 20, 2: 20, 3: 20, 4: 15, 5: 10, 6: 5 };
 const MAX_GUESSES = 6;
 
-// ─── Colour tokens ────────────────────────────────────────────────────────────
+const C = {
+  bg:      "#060810",
+  bg2:     "#0c0f1a",
+  surface: "rgba(255,255,255,0.04)",
+  surface2:"rgba(255,255,255,0.07)",
+  surface3:"rgba(255,255,255,0.11)",
+  border:  "rgba(255,255,255,0.07)",
+  border2: "rgba(255,255,255,0.13)",
+  accent:  "#F7C344",
+  accentDim: "rgba(247,195,68,0.12)",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  blue:    "#4F8EF7",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+  muted2:  "rgba(242,242,244,0.28)",
+};
+
 const CLR = {
-  correct:  { bg: "#00e5a0", text: "#07111f" },
-  close:    { bg: "#f5c842", text: "#07111f" },
-  wrong:    { bg: "#1a2f4a", text: "#7b96b8" },
-  empty:    { bg: "#101f35", text: "#5a7090" },
+  correct:  { bg: C.green, text: C.bg },
+  close:    { bg: C.accent, text: C.bg },
+  wrong:    { bg: C.surface2, text: C.muted },
+  empty:    { bg: C.surface, text: C.muted2 },
 };
 
 // ─── Attribute comparison helpers ────────────────────────────────────────────
@@ -142,7 +159,7 @@ function HeaderRow() {
           style={{
             flex: i === 0 ? 2 : 1,
             fontSize: 9,
-            color: "#5a7090",
+            color: C.muted2,
             textAlign: "center",
             textTransform: "uppercase",
             letterSpacing: 0.5,
@@ -231,8 +248,8 @@ function PlayerSearch({ players, usedIds, onSelect }) {
       <div
         style={{
           display: "flex",
-          background: "#101f35",
-          border: "1px solid #1a2f4a",
+          background: C.surface2,
+          border: `1px solid ${C.border2}`,
           borderRadius: 12,
           overflow: "hidden",
         }}
@@ -249,7 +266,7 @@ function PlayerSearch({ players, usedIds, onSelect }) {
             outline: "none",
             padding: "12px 14px",
             fontSize: 14,
-            color: "#e8edf5",
+            color: C.text,
             fontFamily: "'DM Sans', sans-serif",
           }}
         />
@@ -258,7 +275,7 @@ function PlayerSearch({ players, usedIds, onSelect }) {
             if (results.length > 0) pick(results[0]);
           }}
           style={{
-            background: "#4fa3ff",
+            background: C.blue,
             color: "#fff",
             border: "none",
             padding: "0 18px",
@@ -279,8 +296,8 @@ function PlayerSearch({ players, usedIds, onSelect }) {
             left: 16,
             right: 16,
             top: "calc(100% + 4px)",
-            background: "#0c1a2e",
-            border: "1px solid #1a2f4a",
+            background: C.bg2,
+            border: `1px solid ${C.border2}`,
             borderRadius: 10,
             overflow: "hidden",
             zIndex: 20,
@@ -295,20 +312,20 @@ function PlayerSearch({ players, usedIds, onSelect }) {
                 padding: "10px 14px",
                 cursor: "pointer",
                 fontSize: 13,
-                color: "#e8edf5",
+                color: C.text,
                 fontFamily: "'DM Sans', sans-serif",
-                borderBottom: "1px solid #1a2f4a",
+                borderBottom: `1px solid ${C.border}`,
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#162340")}
+              onMouseEnter={(e) => (e.currentTarget.style.background = C.surface3)}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               <span style={{ fontSize: 16 }}>{p.flag || "🏳️"}</span>
               <div>
                 <div style={{ fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: "#5a7090" }}>
+                <div style={{ fontSize: 11, color: C.muted2 }}>
                   {p.club} · {p.position}
                 </div>
               </div>
@@ -327,8 +344,8 @@ function ResultScreen({ solved, answer, guessCount, xpAwarded, onShare }) {
     <div
       style={{
         margin: "16px 16px 0",
-        background: solved ? "rgba(0,229,160,0.08)" : "rgba(255,77,106,0.08)",
-        border: `1px solid ${solved ? "rgba(0,229,160,0.3)" : "rgba(255,77,106,0.3)"}`,
+        background: solved ? `${C.green}14` : `${C.red}14`,
+        border: `1px solid ${solved ? `${C.green}4D` : `${C.red}4D`}`,
         borderRadius: 14,
         padding: "18px 16px",
         textAlign: "center",
@@ -343,16 +360,16 @@ function ResultScreen({ solved, answer, guessCount, xpAwarded, onShare }) {
           fontFamily: "'Barlow Condensed', sans-serif",
           fontSize: 22,
           fontWeight: 700,
-          color: solved ? "#00e5a0" : "#ff4d6a",
+          color: solved ? C.green : C.red,
           letterSpacing: 0.5,
           marginBottom: 4,
         }}
       >
         {solved ? `Solved in ${guessCount}!` : "Better luck tomorrow"}
       </div>
-      <div style={{ fontSize: 13, color: "#7b96b8", marginBottom: 12 }}>
+      <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
         The answer was{" "}
-        <strong style={{ color: "#e8edf5" }}>{answer.name}</strong>
+        <strong style={{ color: C.text }}>{answer.name}</strong>
       </div>
       {solved && (
         <div
@@ -360,13 +377,13 @@ function ResultScreen({ solved, answer, guessCount, xpAwarded, onShare }) {
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            background: "rgba(245,200,66,0.15)",
-            border: "1px solid rgba(245,200,66,0.3)",
+            background: C.accentDim,
+            border: `1px solid ${C.accent}4D`,
             borderRadius: 99,
             padding: "4px 14px",
             fontSize: 13,
             fontWeight: 700,
-            color: "#f5c842",
+            color: C.accent,
             marginBottom: 14,
           }}
         >
@@ -378,11 +395,11 @@ function ResultScreen({ solved, answer, guessCount, xpAwarded, onShare }) {
         style={{
           display: "block",
           width: "100%",
-          background: "#1a2f4a",
-          border: "1px solid #254268",
+          background: C.surface2,
+          border: `1px solid ${C.border2}`,
           borderRadius: 10,
           padding: "10px",
-          color: "#e8edf5",
+          color: C.text,
           fontSize: 13,
           fontWeight: 600,
           cursor: "pointer",
@@ -489,7 +506,7 @@ export default function Wordle({ players = [], userId, onComplete }) {
 
   if (!answer) {
     return (
-      <div style={{ padding: 32, textAlign: "center", color: "#5a7090", fontFamily: "'DM Sans',sans-serif" }}>
+      <div style={{ padding: 32, textAlign: "center", color: C.muted2, fontFamily: "'DM Sans',sans-serif" }}>
         Loading today's player…
       </div>
     );
@@ -500,7 +517,7 @@ export default function Wordle({ players = [], userId, onComplete }) {
   return (
     <div
       style={{
-        background: "#07111f",
+        background: C.bg,
         minHeight: "100vh",
         maxWidth: 430,
         margin: "0 auto",
@@ -512,7 +529,7 @@ export default function Wordle({ players = [], userId, onComplete }) {
       <div
         style={{
           padding: "16px 16px 12px",
-          borderBottom: "1px solid #1a2f4a",
+          borderBottom: `1px solid ${C.border2}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -524,13 +541,13 @@ export default function Wordle({ players = [], userId, onComplete }) {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
               fontSize: 20,
-              color: "#e8edf5",
+              color: C.text,
               letterSpacing: 0.5,
             }}
           >
             🟩 PLAYER WORDLE
           </div>
-          <div style={{ fontSize: 11, color: "#5a7090", marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: C.muted2, marginTop: 2 }}>
             {gameOver
               ? solved
                 ? "Solved!"
@@ -540,13 +557,13 @@ export default function Wordle({ players = [], userId, onComplete }) {
         </div>
         <div
           style={{
-            background: "rgba(245,200,66,0.12)",
-            border: "1px solid rgba(245,200,66,0.25)",
+            background: C.accentDim,
+            border: `1px solid ${C.accent}40`,
             borderRadius: 99,
             padding: "3px 10px",
             fontSize: 11,
             fontWeight: 700,
-            color: "#f5c842",
+            color: C.accent,
             fontFamily: "'DM Sans', sans-serif",
           }}
         >
@@ -560,7 +577,7 @@ export default function Wordle({ players = [], userId, onComplete }) {
           display: "flex",
           gap: 14,
           padding: "10px 16px",
-          borderBottom: "1px solid #1a2f4a",
+          borderBottom: `1px solid ${C.border2}`,
         }}
       >
         {[
@@ -581,7 +598,7 @@ export default function Wordle({ players = [], userId, onComplete }) {
                 flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: 11, color: "#7b96b8" }}>{label}</span>
+            <span style={{ fontSize: 11, color: C.muted }}>{label}</span>
           </div>
         ))}
       </div>

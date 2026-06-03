@@ -473,7 +473,7 @@ export default function WhoAreYa() {
           {/* Legend */}
           {guesses.length > 0 && (
             <div className="wya-legend">
-              {[['var(--green)','Correct'],['var(--accent)','Same region / ±3 yrs'],['rgba(255,255,255,0.08)','Wrong']].map(([color,label]) => (
+              {[['var(--green)','Correct'],['var(--accent)','Same region / ±3 yrs'],['var(--surface)','Wrong']].map(([color,label]) => (
                 <span key={label} className="wya-legend-item">
                   <span className="wya-legend-swatch" style={{ background:color }} />
                   {label}
@@ -551,8 +551,8 @@ function PosBadge({ pos }) {
 
 function Cell({ cell }) {
   const { cls, type, name, flag, val, arrow } = cell;
-  const bg   = cls==='correct'?'rgba(61,214,140,0.1)' :cls==='partial'?'rgba(247,195,68,0.1)' :'rgba(255,255,255,0.025)';
-  const brd  = cls==='correct'?'rgba(61,214,140,0.35)':cls==='partial'?'rgba(247,195,68,0.35)':'rgba(255,255,255,0.06)';
+  const bg   = cls==='correct'?'var(--accent-dim)' :cls==='partial'?'var(--accent-dim)' :'var(--surface)';
+  const brd  = cls==='correct'?'var(--border2)':cls==='partial'?'var(--border2)':'var(--border)';
   const topC = cls==='correct'?'var(--green)'          :cls==='partial'?'var(--accent)'         :'transparent';
   const arrC = cls==='partial'?'var(--accent)':'rgba(255,255,255,0.2)';
   return (

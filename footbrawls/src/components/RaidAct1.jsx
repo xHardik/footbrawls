@@ -4,7 +4,17 @@
 import { useState, useMemo } from 'react';
 import { normScore } from '../lib/scoreNorm';
 import { seededRandom, getDailySeed } from '../lib/dailySeed';
-import { R } from '../lib/raidConstants';
+
+const C = {
+  bg:      "#060810",
+  surface: "rgba(255,255,255,0.04)",
+  border:  "rgba(255,255,255,0.07)",
+  accent:  "#F7C344",
+  green:   "#3DD68C",
+  red:     "#E84040",
+  text:    "#F2F2F4",
+  muted:   "rgba(242,242,244,0.5)",
+};
 
 const MINI_DATA = {
   whoAreYa: {
@@ -134,7 +144,7 @@ export default function RaidAct1({ game, raidSeed, onComplete }) {
             {[['a', mini.a], ['b', mini.b]].map(([key, p]) => (
               <button key={key} type="button" style={{
                 ...s.hlCard,
-                borderColor: hlChoice === key ? R.green : R.border,
+            borderColor: hlChoice === key ? C.green : C.border,
               }} onClick={() => handleHigherLower(key)}>
                 <div style={s.hlName}>{p.name}</div>
                 <div style={s.hlCaps}>{p.caps} caps</div>
@@ -173,7 +183,7 @@ export default function RaidAct1({ game, raidSeed, onComplete }) {
                 {['↖️ TL', '↗️ TR', '↙️ BL', '↘️ BR', '⬆️ C'].map((lbl, i) => (
                   <button key={lbl} type="button" style={{
                     ...s.penZone,
-                    borderColor: selected === mini.zones[i] ? R.green : R.border,
+                borderColor: selected === mini.zones[i] ? C.green : C.border,
                   }} onClick={() => setSelected(mini.zones[i])}>
                     {lbl}
                   </button>
@@ -192,23 +202,23 @@ export default function RaidAct1({ game, raidSeed, onComplete }) {
 }
 
 const s = {
-  wrap:      { color: R.text },
+  wrap:      { color: C.text },
   header:    { display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 },
-  actLabel:  { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: R.muted, textTransform: 'uppercase' },
+  actLabel:  { fontFamily: "'Space Mono', monospace", fontSize: '0.58rem', fontWeight: 700, letterSpacing: 2, color: C.muted, textTransform: 'uppercase' },
   gameName:  { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.4rem', letterSpacing: 1.5 },
-  prompt:    { fontSize: '0.85rem', color: R.muted, marginBottom: 16, lineHeight: 1.5 },
+  prompt:    { fontSize: '0.85rem', color: C.muted, marginBottom: 16, lineHeight: 1.5 },
   playerName:{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', letterSpacing: 1, marginBottom: 16, textAlign: 'center' },
   optGrid:   { display: 'flex', flexDirection: 'column', gap: 8 },
-  optBtn:    { padding: '14px 16px', background: R.surface, border: `1px solid ${R.border}`, borderRadius: 12, color: R.text, cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', textAlign: 'left' },
+  optBtn:    { padding: '14px 16px', background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, color: C.text, cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', textAlign: 'left' },
   hlRow:     { display: 'flex', gap: 12 },
-  hlCard:    { flex: 1, padding: 20, background: R.surface, border: '1px solid', borderRadius: 14, cursor: 'pointer', color: R.text },
+  hlCard:    { flex: 1, padding: 20, background: C.surface, border: '1px solid', borderRadius: 14, cursor: 'pointer', color: C.text },
   hlName:    { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.3rem', letterSpacing: 1 },
-  hlCaps:    { fontSize: '0.75rem', color: R.muted, marginTop: 6 },
+  hlCaps:    { fontSize: '0.75rem', color: C.muted, marginTop: 6 },
   penRow:    { display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 },
   penZones:  { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 },
-  penZone:   { padding: 14, background: R.surface, border: '1px solid', borderRadius: 10, cursor: 'pointer', fontSize: '0.75rem' },
-  shootBtn:  { width: '100%', padding: 14, background: `linear-gradient(135deg, ${R.green}, #2bb872)`, color: '#000', border: 'none', borderRadius: 12, fontWeight: 900, cursor: 'pointer', letterSpacing: 2 },
-  scoreBox:  { textAlign: 'center', padding: 28, background: R.surface, border: `1px solid ${R.border}`, borderRadius: 16 },
-  scoreVal:  { fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: R.green, letterSpacing: 2 },
-  scoreLbl:  { fontSize: '0.7rem', color: R.muted, textTransform: 'uppercase', letterSpacing: 2, marginTop: 4 },
+  penZone:   { padding: 14, background: C.surface, border: '1px solid', borderRadius: 10, cursor: 'pointer', fontSize: '0.75rem' },
+  shootBtn:  { width: '100%', padding: 14, background: `linear-gradient(135deg, ${C.green}, #2bb872)`, color: '#000', border: 'none', borderRadius: 12, fontWeight: 900, cursor: 'pointer', letterSpacing: 2 },
+  scoreBox:  { textAlign: 'center', padding: 28, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16 },
+  scoreVal:  { fontFamily: "'Bebas Neue', sans-serif", fontSize: '3rem', color: C.green, letterSpacing: 2 },
+  scoreLbl:  { fontSize: '0.7rem', color: C.muted, textTransform: 'uppercase', letterSpacing: 2, marginTop: 4 },
 };

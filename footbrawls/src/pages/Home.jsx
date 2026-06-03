@@ -143,25 +143,25 @@ function Hero({ user, guild, doneCount, totalGames }) {
   const hp=guild.castleHP??0, maxHp=guild.castleHPCap??CASTLE_HP_CAP, hpPct=clampPct(hp,maxHp);
   const hpColor=hpPct>=70?C.green:hpPct>=35?C.accent:C.red;
   return (
-    <section style={{position:"relative",zIndex:1,maxWidth:820,margin:"0 auto",padding:"52px max(20px,4vw) 28px"}}>
+    <section style={{position:"relative",zIndex:1,maxWidth:820,margin:"0 auto",padding:"32px max(20px,4vw) 20px"}}>
       {/* eyebrow */}
-      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(247,195,68,0.09)",border:"1px solid rgba(247,195,68,0.25)",color:C.accent,fontSize:"0.68rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",padding:"5px 14px 5px 10px",borderRadius:100,marginBottom:22,fontFamily:"'Space Mono',monospace"}}>
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(247,195,68,0.09)",border:"1px solid rgba(247,195,68,0.25)",color:C.accent,fontSize:"0.68rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",padding:"5px 14px 5px 10px",borderRadius:100,marginBottom:16,fontFamily:"'Space Mono',monospace"}}>
         <div style={{width:6,height:6,borderRadius:"50%",background:C.accent,animation:"fbPulse 1.8s ease infinite",flexShrink:0}}/>
         Daily Games Active
       </div>
 
       {/* title */}
-      <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(3.2rem,8vw,6rem)",lineHeight:0.9,letterSpacing:2,marginBottom:20}}>
+      <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.8rem,7vw,5rem)",lineHeight:0.92,letterSpacing:2,marginBottom:20}}>
         <span style={{display:"block"}}>YOUR DAILY</span>
         <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL HOME</span>
       </h1>
 
-      <p style={{color:C.muted,fontSize:"0.98rem",lineHeight:1.75,maxWidth:520,marginBottom:28,fontFamily:"'Syne',sans-serif"}}>
+      <p style={{color:C.muted,fontSize:"0.98rem",lineHeight:1.75,maxWidth:520,marginBottom:18,fontFamily:"'Syne',sans-serif"}}>
         Six fast football games, one daily ritual. Chase the XP, hold your guild's castle, and brag when your football brain carries you.
       </p>
 
       {/* trust pills */}
-      <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:28}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:18}}>
         {[["No login","needed"],["Quick rounds","built for breaks"],["Fresh daily","puzzles"]].map(([bold,rest])=>(
           <div key={bold} style={{display:"inline-flex",alignItems:"center",gap:6,padding:"7px 12px",borderRadius:999,border:`1px solid ${C.border}`,background:"rgba(255,255,255,0.03)",fontFamily:"'Space Mono',monospace",fontSize:"0.65rem",letterSpacing:1,textTransform:"uppercase",color:C.muted}}>
             <strong style={{color:C.text,fontFamily:"'Syne',sans-serif",fontSize:"0.75rem",letterSpacing:0,textTransform:"none"}}>{bold}</strong> {rest}
@@ -170,7 +170,7 @@ function Hero({ user, guild, doneCount, totalGames }) {
       </div>
 
       {/* stat bar */}
-      <div style={{display:"flex",border:`1px solid ${C.border2}`,borderRadius:14,overflow:"hidden",width:"fit-content",marginBottom:32}}>
+      <div style={{display:"flex",border:`1px solid ${C.border2}`,borderRadius:14,overflow:"hidden",width:"fit-content",marginBottom:20}}>
         {[
           {num:doneCount+"/"+totalGames,  lbl:"Today Done"},
           {num:xp+"/"+DAILY_XP_CAP,       lbl:"Daily XP"},
@@ -241,7 +241,7 @@ function MatchCard({ fixture, fallbackSecs }) {
 // ── Section header (Crickingo style with line) ─────────────────────────────────
 function SectionHdr({ label, count }) {
   return (
-    <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16,marginTop:28}}>
+    <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:12,marginTop:20}}>
       <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.62rem",fontWeight:700,letterSpacing:3.5,textTransform:"uppercase",color:C.muted2,whiteSpace:"nowrap"}}>{label}</span>
       <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.border2},transparent)`}}/>
       {count&&<span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.58rem",color:C.muted3,letterSpacing:1}}>{count}</span>}
@@ -442,27 +442,55 @@ export default function Home() {
   useEffect(()=>{ const t=setInterval(()=>setMockSecs(s=>Math.max(0,s-1)),1000); return()=>clearInterval(t); },[]);
   useEffect(()=>{ const fn=()=>setIsDesktop(window.innerWidth>=900); window.addEventListener("resize",fn); return()=>window.removeEventListener("resize",fn); },[]);
 
-  // FIX 2 — subscribe to guild using user's actual homeCountry from Firestore
+  // FIX 2 — subscribe to guild doc, extract only safe fields
   useEffect(()=>{
     if (!localUser?.homeCountry) return;
     return onSnapshot(
       doc(db,"guilds",localUser.homeCountry),
-      snap=>setGuildDoc(snap.exists()?snap.data():null),
+      snap=>{
+        if (!snap.exists()) { setGuildDoc(null); return; }
+        const d=snap.data();
+        // Extract only serialisable fields — avoids Timestamp objects crashing state
+        setGuildDoc({
+          name:            d.name            ?? null,
+          flag:            d.flag            ?? null,
+          memberCount:     d.memberCount     ?? 0,
+          castleHP:        d.castleHP        ?? 0,
+          castleHPCap:     d.castleHPCap     ?? CASTLE_HP_CAP,
+          currentCurse:    d.currentCurse    ?? null,
+          currentBlessing: d.currentBlessing ?? null,
+          warRecord:       d.warRecord       ?? { wins:0, losses:0 },
+          lastMatchResult: d.lastMatchResult ?? null,
+        });
+      },
       ()=>setGuildDoc(null)
     );
   },[localUser?.homeCountry]);
 
-  // FIX 3 — sync user XP/tier from Firestore back to localStorage in real time
-  // so XP bar updates immediately after any game completes
+  // FIX 3 — sync ONLY safe scalar fields from Firestore user doc back to state
+  // Spreads snap.data() directly was breaking things because Firestore Timestamps
+  // would overwrite localStorage with non-serialisable objects.
+  // Only pull the fields that actually affect the UI.
   useEffect(()=>{
     if (!localUser?.userId) return;
     return onSnapshot(
       doc(db,"users",localUser.userId),
       snap=>{
         if (!snap.exists()) return;
-        const fresh={...localUser,...snap.data()};
-        saveUserLocally(fresh);   // keep localStorage in sync
-        setLocalUser(fresh);      // re-render with live XP/tier
+        const d=snap.data();
+        const today=new Date().toISOString().split("T")[0];
+        // Only sync fields that are safe to store in localStorage
+        const updates={
+          totalXP:    d.totalXP    ?? localUser.totalXP    ?? 0,
+          dailyXP:    d.dailyXPDate===today ? (d.dailyXP ?? 0) : 0, // reset if stale date
+          dailyXPDate:d.dailyXPDate ?? null,
+          tier:       d.tier       ?? localUser.tier       ?? "lurker",
+          predictionStreak:    d.predictionStreak    ?? 0,
+          loginStreakDays:     d.loginStreakDays     ?? 0,
+        };
+        const fresh={ ...localUser, ...updates };
+        saveUserLocally(fresh);
+        setLocalUser(fresh);
       },
       ()=>{}
     );
@@ -496,40 +524,40 @@ export default function Home() {
 
       <div style={{position:"relative",zIndex:1,flex:1,overflowY:"auto"}}>
         {isDesktop ? (
-          <div style={{maxWidth:1120,margin:"0 auto",padding:"0 max(20px,4vw)",display:"grid",gridTemplateColumns:"minmax(0,1.15fr) minmax(300px,360px)",gap:24,alignItems:"start"}}>
+          <div style={{maxWidth:1120,margin:"0 auto",padding:"0",display:"grid",gridTemplateColumns:"minmax(0,1.15fr) minmax(300px,360px)",gap:24,alignItems:"start"}}>
             {/* left */}
             <div>
               <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length}/>
-              <div style={{padding:"0 max(20px,4vw) 80px",maxWidth:820}}>
+              <div style={{padding:"0 0 80px"}}>
                 <SectionHdr label="Choose Your Challenge" count={`0${games.length} Games`}/>
                 <p style={{color:C.muted,fontSize:"0.9rem",lineHeight:1.7,maxWidth:560,marginBottom:20,fontFamily:"'Syne',sans-serif"}}>Each game scratches a different football itch. Go for the full daily clean sweep.</p>
-                <div style={{display:"flex",flexDirection:"column",gap:18}}>
+                <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}
                 </div>
               </div>
             </div>
             {/* right sidebar */}
-            <div style={{position:"sticky",top:70,paddingTop:52,display:"flex",flexDirection:"column",gap:0}}>
+            <div style={{position:"sticky",top:70,paddingTop:28,display:"flex",flexDirection:"column",gap:12}}>
               <GuildCard guild={guild} navigate={navigate}/>
-              <div style={{marginTop:10}}><MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/></div>
+              <div style={{marginTop:0}}><MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/></div>
               <SectionHdr label="Guild Pulse" count={activityFeed.length>0?"LIVE":"SAMPLE"}/>
               <ActivityFeed feed={activityFeed}/>
-              <div style={{marginTop:16}}><RaidBanner onPress={showSoon}/></div>
+              <div style={{marginTop:4}}><RaidBanner onPress={showSoon}/></div>
             </div>
           </div>
         ) : (
           <div>
             <Hero user={user} guild={guild} doneCount={doneCount} totalGames={games.length}/>
-            <div style={{padding:"0 max(16px,4vw) 80px",maxWidth:820,margin:"0 auto"}}>
+            <div style={{padding:"0 max(16px,4vw) 80px",margin:"0 auto"}}>
               <div style={{marginBottom:16}}><MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/></div>
               <GuildCard guild={guild} navigate={navigate}/>
               <SectionHdr label="Choose Your Challenge" count={`0${games.length} Games`}/>
-              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}
               </div>
               <SectionHdr label="Guild Pulse" count={activityFeed.length>0?"LIVE":"SAMPLE"}/>
               <ActivityFeed feed={activityFeed}/>
-              <div style={{marginTop:16,marginBottom:8}}><RaidBanner onPress={showSoon}/></div>
+              <div style={{marginTop:4,marginBottom:8}}><RaidBanner onPress={showSoon}/></div>
             </div>
           </div>
         )}

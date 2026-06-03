@@ -18,6 +18,10 @@ const db = admin.firestore();
 const DEFAULT_GUILD = {
   castleHP: 0,
   castleHPCap: 10000,
+  guildLevel: 1,           // ← add this
+  levelUpPending: false,   // ← add this
+  levelUpTo: null,         // ← add this
+  lastLevelUpAt: null, 
   lastResetAt: admin.firestore.FieldValue.serverTimestamp(),
   currentCurse: null,
   currentBlessing: null,

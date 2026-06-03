@@ -1,10 +1,9 @@
-// ============================================================
 // api/cron/midnight-reset.js
 // Vercel Cron — runs at 00:00 UTC every day
-// Resets castle HP and daily XP caps for all guilds
-// ============================================================
-// vercel.json config:
-// { "crons": [{ "path": "/api/cron/midnight-reset", "schedule": "0 0 * * *" }] }
+// NO LONGER resets castleHP — guilds now accumulate HP until level up.
+// Only expires curses/blessings and resets daily XP tracking.
+//
+// vercel.json: { "crons": [{ "path": "/api/cron/midnight-reset", "schedule": "0 0 * * *" }] }
 
 import admin from 'firebase-admin';
 
@@ -16,44 +15,48 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 export default async function handler(req, res) {
-  // Protect: only Vercel cron can call this
   if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
     const guildsSnap = await db.collection('guilds').get();
-    const today = new Date().toISOString().split('T')[0];
 
-    // Batch reset all castle HPs (max 500 per batch — ~200 guilds is fine)
-    const batch = db.batch();
-    guildsSnap.docs.forEach((guildDoc) => {
-      batch.update(guildDoc.ref, {
-        castleHP: 0,
-        lastResetAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+    // ── 1. Expire curses/blessings that have run out ──────────────────────────
+    const now          = admin.firestore.Timestamp.now();
+    const expireBatch  = db.batch();
+    let   cursesExpired = 0;
+
+    guildsSnap.docs.forEach(guildDoc => {
+      const data = guildDoc.data();
+      if (
+        data.curseExpiresAt &&
+        data.curseExpiresAt.toMillis() <= now.toMillis() &&
+        data.currentCurse !== 'death_curse' // death curse never auto-expires
+      ) {
+        expireBatch.update(guildDoc.ref, {
+          currentCurse:    null,
+          currentBlessing: null,
+          curseExpiresAt:  null,
+          curseWinsSoFar:  0,
+        });
+        cursesExpired++;
+      }
     });
-    await batch.commit();
 
-    // Also expire any curses/blessings that have run out
-    const expiredCurses = await db.collection('guilds')
-      .where('curseExpiresAt', '<=', admin.firestore.Timestamp.now())
-      .where('currentCurse', '!=', null)
-      .get();
+    if (cursesExpired > 0) await expireBatch.commit();
 
-    const expireBatch = db.batch();
-    expiredCurses.docs.forEach((d) => {
-      expireBatch.update(d.ref, {
-        currentCurse: null,
-        currentBlessing: null,
-        curseExpiresAt: null,
-        curseWinsSoFar: 0,
-      });
+    // ── 2. NOTE: castleHP is NOT reset ────────────────────────────────────────
+    // Guilds accumulate HP permanently until they level up (5 levels).
+    // HP only resets to overflow when a level-up occurs in xpEngine.js.
+
+    console.log(`✅ Midnight reset: ${cursesExpired} curses expired. Castle HP preserved.`);
+    return res.status(200).json({
+      ok: true,
+      cursesExpired,
+      castleHPReset: false, // explicitly confirm HP was NOT reset
     });
-    if (!expiredCurses.empty) await expireBatch.commit();
 
-    console.log(`✅ Midnight reset done. ${guildsSnap.size} guilds reset. ${expiredCurses.size} curses expired.`);
-    return res.status(200).json({ ok: true, guildsReset: guildsSnap.size, cursesExpired: expiredCurses.size });
   } catch (err) {
     console.error('Midnight reset failed:', err);
     return res.status(500).json({ error: err.message });

@@ -9,7 +9,6 @@ import { collection, query, where, getDocs, doc, setDoc, getDoc, orderBy, limit 
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine';
 
-// ─── WC 2026 Teams ────────────────────────────────────────────────────────────
 const TEAM_PLAYERS = {
   ARG: ['Messi', 'Lautaro Martinez', 'Di Maria', 'De Paul', 'Mac Allister', 'Dybala', 'Julian Alvarez'],
   FRA: ['Mbappe', 'Griezmann', 'Dembele', 'Tchouameni', 'Camavinga', 'Giroud', 'Rabiot'],

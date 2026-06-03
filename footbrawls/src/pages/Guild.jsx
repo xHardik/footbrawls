@@ -404,13 +404,23 @@ function BottomNav({ navigate, toast, setToast }) {
 // ─── Main Guild Page ──────────────────────────────────────────────────────────
 export default function Guild() {
   const navigate = useNavigate();
-  const [user]                        = useState(() => getUser() || FALLBACK_USER);
+const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
   const [guild,          setGuild]    = useState(null);
   const [guildLoading,   setGuildLoading] = useState(true);
   const [leaderboard,    setLeaderboard]  = useState([]);
   const [tab,            setTab]          = useState("chat");
   const [toast,          setToast]        = useState(""); // ← lifted from BottomNav
 
+  useEffect(() => {
+  const localUser = getUser();
+  if (!localUser?.userId || localUser.userId === "guest") return;
+  const unsub = onSnapshot(
+    doc(db, "users", localUser.userId),
+    snap => { if (snap.exists()) setUser({ ...localUser, ...snap.data() }); },
+    () => {},
+  );
+  return unsub;
+}, []);
   // Inject CSS once
   useEffect(() => {
     if (!document.getElementById("fb-guild-css")) {

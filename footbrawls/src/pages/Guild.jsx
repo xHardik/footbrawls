@@ -273,7 +273,7 @@ function CastleTab({ guild, user }) {
           <div className="fb-section-line"/>
           <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"var(--accent)", letterSpacing:1 }}>STAGE 5</span>
         </div>
-        <div className="fb-raid-banner">
+        <div className="fb-raid-banner" onClick={() => navigate('/raid')} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && navigate('/raid')}>
           <div style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", fontSize:60, opacity:0.06, pointerEvents:"none", userSelect:"none" }}>⚔️</div>
           <div className="fb-raid-icon">⚔️</div>
           <div style={{ flex:1, minWidth:0 }}>
@@ -369,7 +369,7 @@ function BottomNav({ navigate, toast, setToast }) {
   const items = [
     { id:"home",  label:"Games", icon:"⚽", route:"/"      },
     { id:"guild", label:"Guild", icon:"🏰", route:"/guild" },
-    { id:"raids", label:"Raids", icon:"⚔️", route:null     },
+    { id:"raids", label:"Raids", icon:"⚔️", route:"/raid"  },
     { id:"ranks", label:"Ranks", icon:"🏆", route:null     },
     { id:"me",    label:"Me",    icon:"👤", route:null     },
   ];

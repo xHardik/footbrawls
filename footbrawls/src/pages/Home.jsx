@@ -394,7 +394,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
   const items=[
     {id:"home",   label:"Games",  icon:"⚽",route:"/"},
     {id:"guild",  label:"Guild",  icon:"🏰",route:"/guild"},
-    {id:"raids",  label:"Raids",  icon:"⚔️"},
+    {id:"raids",  label:"Raids",  icon:"⚔️", route:"/raid"},
     {id:"ranks",  label:"Ranks",  icon:"🏆"},
     {id:"profile",label:"Me",     icon:"👤"},
   ];
@@ -542,7 +542,7 @@ export default function Home() {
               <div style={{marginTop:0}}><MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/></div>
               <SectionHdr label="Guild Pulse" count={activityFeed.length>0?"LIVE":"SAMPLE"}/>
               <ActivityFeed feed={activityFeed}/>
-              <div style={{marginTop:4}}><RaidBanner onPress={showSoon}/></div>
+              <div style={{marginTop:4}}><RaidBanner onPress={() => navigate('/raid')}/></div>
             </div>
           </div>
         ) : (
@@ -557,7 +557,7 @@ export default function Home() {
               </div>
               <SectionHdr label="Guild Pulse" count={activityFeed.length>0?"LIVE":"SAMPLE"}/>
               <ActivityFeed feed={activityFeed}/>
-              <div style={{marginTop:4,marginBottom:8}}><RaidBanner onPress={showSoon}/></div>
+              <div style={{marginTop:4,marginBottom:8}}><RaidBanner onPress={() => navigate('/raid')}/></div>
             </div>
           </div>
         )}

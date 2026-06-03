@@ -11,6 +11,7 @@ import TransferTrail from './pages/games/transfertrail';
 import HigherOrLower from './pages/games/higherlower';
 import MatchPredictor from './pages/games/matchpredictor';
 import PenaltyNerve from './pages/games/penaltynerve';
+import Raid from './pages/Raid';
 
 function RequireUser({ children }) {
   const user = getUser();
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/" element={<RequireUser><Home /></RequireUser>} />
         <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
+        <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
         <Route path="/games/whoareya" element={<RequireUser><Layout><WhoAreYa /></Layout></RequireUser>} />
         <Route path="/games/wordle" element={<RequireUser><Layout><Wordle /></Layout></RequireUser>} />
         <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />

@@ -61,12 +61,19 @@ function fmtCountdown(s){ return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s
 function useNextFixture() {
   const [fixture,setFixture]=useState(null);
   useEffect(()=>{
-    const q=query(collection(db,"fixtures"),where("kickoffAt",">=",new Date()),where("isComplete","==",false),orderBy("kickoffAt","asc"),limit(1));
-    return onSnapshot(q,snap=>{ setFixture(snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()}); },()=>setFixture(null));
+    // No time filter — just get the next incomplete match regardless of how far away
+    const q=query(
+      collection(db,"fixtures"),
+      where("isComplete","==",false),
+      orderBy("kickoffAt","asc"),
+      limit(1)
+    );
+    return onSnapshot(q,snap=>{ 
+      setFixture(snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()}); 
+    },()=>setFixture(null));
   },[]);
   return fixture;
 }
-
 // ── Guild Pulse: listens to "chat" collection as activity proxy ──────────────
 // NOTE: You need to also write to an "activity" collection from xpEngine.js
 // when XP is awarded. Until then this shows recent chat as a fallback.

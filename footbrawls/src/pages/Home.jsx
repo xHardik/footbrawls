@@ -407,27 +407,26 @@ export default function Home() {
   // Using a ref so the effect dep array stays [] while still reading the userId.
   const userIdRef = useRef(localUser?.userId);
   useEffect(()=>{ userIdRef.current = localUser?.userId; }, [localUser?.userId]);
-
-  useEffect(()=>{
-    const uid = userIdRef.current;
-    if (!uid) return;
-    return onSnapshot(doc(db,"users",uid), snap=>{
-      if (!snap.exists()) return;
-      const d=snap.data();
-      const today=getTodayKey();
-      setLocalUser(prev=>{
-        const fresh={
-          ...prev,
-          totalXP:     d.totalXP     ?? prev.totalXP     ?? 0,
-          dailyXP:     d.dailyXPDate===today ? (d.dailyXP??0) : 0,
-          dailyXPDate: d.dailyXPDate ?? null,
-          tier:        d.tier        ?? prev.tier         ?? "lurker",
-        };
-        saveUserLocally(fresh);
-        return fresh;
-      });
-    },()=>{});
-  },[]); // ← empty: listener created once, stable forever
+useEffect(()=>{
+  const uid = localUser?.userId;
+  if (!uid || uid === "guest") return;
+  return onSnapshot(doc(db,"users",uid), snap=>{
+    if (!snap.exists()) return;
+    const d = snap.data();
+    const today = new Date().toISOString().split("T")[0];
+    setLocalUser(prev => {
+      const fresh = {
+        ...prev,
+        totalXP:     d.totalXP     ?? prev?.totalXP  ?? 0,
+        dailyXP:     d.dailyXPDate === today ? (d.dailyXP ?? 0) : 0,
+        dailyXPDate: d.dailyXPDate ?? null,
+        tier:        d.tier        ?? prev?.tier      ?? "lurker",
+      };
+      saveUserLocally(fresh);
+      return fresh;
+    });
+  },()=>{});
+},[localUser?.userId]); // ← empty: listener created once, stable forever
 
   const nextFixture=useNextFixture();
   const activityFeed=useGuildActivity(localUser?.homeCountry);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, onSnapshot, collection, query, where, orderBy, limit } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
@@ -26,6 +26,13 @@ const GAMES = [
   { id:"transferTrail", icon:"🔗", name:"Transfer Trail",  tag:"Journey",     desc:"Connect two players through shared clubs in the fewest possible hops.",          xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Career Trail","Fewest Steps","Mid Difficulty"], storageKey:"footbrawls_transfertrail"   },
 ];
 
+// ── Profanity filter (extend as needed) ──────────────────────────────────────
+const BAD_WORDS = ["spam","fuck","shit","ass","bitch","dick","cunt"];
+function containsBadWord(text) {
+  const lower = text.toLowerCase();
+  return BAD_WORDS.some(w => lower.includes(w));
+}
+
 function injectFonts() {
   if (document.getElementById("fb-fonts")) return;
   const l = document.createElement("link"); l.id="fb-fonts"; l.rel="stylesheet";
@@ -33,18 +40,13 @@ function injectFonts() {
   document.head.appendChild(l);
 }
 
-function getTodayKey() {
-
-// WITH this
-function getTodayKey() {
-  return new Date().toISOString().split("T")[0]; // always UTC, matches xpEngine
-}}
+function getTodayKey() { return new Date().toISOString().split("T")[0]; }
 
 function isDoneToday(game) {
   try {
-    const raw=localStorage.getItem(game.storageKey); if (!raw) return false;
-    const data=JSON.parse(raw); const today=getTodayKey();
-    return data.date===today||Boolean(data[today]);
+    const raw = localStorage.getItem(game.storageKey); if (!raw) return false;
+    const data = JSON.parse(raw); const today = getTodayKey();
+    return data.date === today || Boolean(data[today]);
   } catch { return false; }
 }
 
@@ -58,56 +60,30 @@ function clampPct(v,max){ return !max?0:Math.max(0,Math.min(100,Math.round((v/ma
 function pad(n){ return String(n).padStart(2,"0"); }
 function fmtCountdown(s){ return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`; }
 
+// ── Hooks ─────────────────────────────────────────────────────────────────────
 function useNextFixture() {
   const [fixture,setFixture]=useState(null);
   useEffect(()=>{
-    // No time filter — just get the next incomplete match regardless of how far away
-    const q=query(
-      collection(db,"fixtures"),
-      where("isComplete","==",false),
-      orderBy("kickoffAt","asc"),
-      limit(1)
-    );
-    return onSnapshot(q,snap=>{ 
-      setFixture(snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()}); 
-    },()=>setFixture(null));
+    const q=query(collection(db,"fixtures"),where("isComplete","==",false),orderBy("kickoffAt","asc"),limit(1));
+    return onSnapshot(q,snap=>{
+      setFixture(snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()});
+    },(err)=>{ console.error("Fixture query failed:",err); setFixture(null); });
   },[]);
   return fixture;
 }
-// ── Guild Pulse: listens to "chat" collection as activity proxy ──────────────
-// NOTE: You need to also write to an "activity" collection from xpEngine.js
-// when XP is awarded. Until then this shows recent chat as a fallback.
-function useGuildActivity(guildCode) {
-  const [feed,setFeed]=useState([]);
+
+function useWorldChat() {
+  const [messages,setMessages]=useState([]);
   useEffect(()=>{
-    if (!guildCode) return;
-    // Try "activity" collection first
-    const q=query(
-      collection(db,"activity"),
-      where("guildCode","==",guildCode),
-      orderBy("createdAt","desc"),
-      limit(4)
-    );
-    return onSnapshot(q,
-      snap=>{
-        if (!snap.empty) {
-          setFeed(snap.docs.map(d=>({id:d.id,...d.data()})));
-        }
-        // If empty, fall through to static (handled in component)
-      },
-      ()=>setFeed([])
-    );
-  },[guildCode]);
-  return feed;
+    const q=query(collection(db,"chat"),where("guildCode","==","__world__"),orderBy("timestamp","asc"),limit(40));
+    return onSnapshot(q,snap=>{
+      setMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
+    },()=>setMessages([]));
+  },[]);
+  return messages;
 }
 
-const STATIC_FEED=[
-  {icon:"⚽",user:"Priya_10", action:"held nerve from the spot",     time:"2m"},
-  {icon:"👤",user:"Arjun_CF", action:"solved Who Are Ya in 2",        time:"5m"},
-  {icon:"🔮",user:"Vikram_7", action:"locked the exact scoreline",    time:"11m"},
-  {icon:"🔗",user:"Sneha_11", action:"Transfer Trail done in 3 hops", time:"18m"},
-];
-
+// ── Background ────────────────────────────────────────────────────────────────
 function BgCanvas() {
   return (
     <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
@@ -119,30 +95,14 @@ function BgCanvas() {
   );
 }
 
-// ── Full-width top nav (no XP bar, no "Live" pill) ────────────────────────────
+// ── Top Nav ───────────────────────────────────────────────────────────────────
 function TopNav({ user, dailyXP, xpPct, navigate }) {
   return (
-    <nav style={{
-      position:"sticky", top:0, zIndex:200,
-      width:"100%",
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-      padding:"0 max(20px,4vw)", height:58,
-      background:"rgba(6,8,16,0.55)",
-      backdropFilter:"blur(18px) saturate(1.3)",
-      borderBottom:`1px solid ${C.border}`,
-      boxSizing:"border-box",
-    }}>
-      {/* Logo */}
-      <div
-        onClick={()=>navigate("/")}
-        style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.75rem",letterSpacing:3,background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",cursor:"pointer",flexShrink:0}}
-      >
+    <nav style={{position:"sticky",top:0,zIndex:200,width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 max(20px,4vw)",height:58,background:"rgba(6,8,16,0.55)",backdropFilter:"blur(18px) saturate(1.3)",borderBottom:`1px solid ${C.border}`,boxSizing:"border-box"}}>
+      <div onClick={()=>navigate("/")} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.75rem",letterSpacing:3,background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",cursor:"pointer",flexShrink:0}}>
         FOOTBRAWLS
       </div>
-
-      {/* Right side — XP pill + avatar */}
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {/* Mini XP bar */}
         <div style={{display:"flex",alignItems:"center",gap:7,padding:"5px 12px",borderRadius:100,border:`1px solid ${C.border2}`,background:C.surface,fontFamily:"'Space Mono',monospace",fontSize:"0.62rem",fontWeight:700,letterSpacing:1,color:C.muted}}>
           <div style={{width:44,height:4,borderRadius:99,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
             <div style={{width:`${xpPct}%`,height:"100%",background:`linear-gradient(90deg,${C.green},#7fffcc)`,borderRadius:99,transition:"width 0.6s ease"}}/>
@@ -150,7 +110,6 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
           <span style={{color:C.accent,fontWeight:800}}>{dailyXP}</span>
           <span style={{color:C.muted2}}>/{DAILY_XP_CAP}</span>
         </div>
-        {/* Avatar */}
         <div style={{display:"flex",alignItems:"center",gap:7,padding:"5px 12px",borderRadius:100,border:`1px solid ${C.border2}`,background:C.surface,fontSize:"0.74rem",fontWeight:700,color:C.text,fontFamily:"'Syne',sans-serif",letterSpacing:0.5,flexShrink:0}}>
           {user.flag||"🏳️"} {user.nickname}
         </div>
@@ -160,6 +119,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
   );
 }
 
+// ── Section Header ────────────────────────────────────────────────────────────
 function SectionHdr({ label, count, right }) {
   return (
     <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16,marginTop:32}}>
@@ -170,36 +130,19 @@ function SectionHdr({ label, count, right }) {
   );
 }
 
+// ── Game Card ─────────────────────────────────────────────────────────────────
 function GameCard({ game, done, onPlay }) {
   const [hovered,setHovered]=useState(false);
   const ca=game.color;
   return (
-    <div
-      onClick={()=>onPlay(game)}
-      onMouseEnter={()=>setHovered(true)}
-      onMouseLeave={()=>setHovered(false)}
-      style={{
-        position:"relative",display:"flex",alignItems:"center",gap:16,
-        color:C.text,background:C.surface,
-        border:`1px solid ${hovered?`color-mix(in srgb,${ca} 40%,transparent)`:C.border}`,
-        borderRadius:18,padding:"18px 20px",overflow:"hidden",cursor:"pointer",
-        transform:hovered?"translateX(4px) translateY(-2px)":"none",
-        boxShadow:hovered?`0 14px 40px rgba(0,0,0,0.45),0 0 0 1px ${ca}28`:"none",
-        transition:"all 0.28s cubic-bezier(0.22,1,0.36,1)",
-      }}
-    >
+    <div onClick={()=>onPlay(game)} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
+      style={{position:"relative",display:"flex",alignItems:"center",gap:16,color:C.text,background:C.surface,border:`1px solid ${hovered?`color-mix(in srgb,${ca} 40%,transparent)`:C.border}`,borderRadius:18,padding:"18px 20px",overflow:"hidden",cursor:"pointer",transform:hovered?"translateX(4px) translateY(-2px)":"none",boxShadow:hovered?`0 14px 40px rgba(0,0,0,0.45),0 0 0 1px ${ca}28`:"none",transition:"all 0.28s cubic-bezier(0.22,1,0.36,1)"}}>
       <div style={{position:"absolute",left:0,top:hovered?"0%":"10%",bottom:hovered?"0%":"10%",width:3,borderRadius:hovered?"0":"0 3px 3px 0",background:ca,opacity:hovered?1:0.55,transition:"all 0.25s"}}/>
       <div style={{position:"absolute",inset:0,borderRadius:18,background:`linear-gradient(110deg,${ca}10,transparent 60%)`,opacity:hovered?1:0,transition:"opacity 0.28s",pointerEvents:"none"}}/>
       <div style={{position:"absolute",inset:0,borderRadius:18,overflow:"hidden",pointerEvents:"none"}}>
         <div style={{position:"absolute",top:0,left:"-130%",width:"65%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(255,255,255,0.045),transparent)",animation:"fbShimmer 4s ease-in-out infinite"}}/>
       </div>
-      <div style={{
-        position:"relative",zIndex:2,flexShrink:0,width:56,height:56,display:"flex",alignItems:"center",justifyContent:"center",
-        background:`${ca}14`,border:`1px solid ${ca}38`,borderRadius:15,fontSize:"1.65rem",
-        transform:hovered?"scale(1.12) rotate(-5deg)":"scale(1)",
-        boxShadow:hovered?`0 0 22px ${ca}40`:"none",
-        transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
+      <div style={{position:"relative",zIndex:2,flexShrink:0,width:56,height:56,display:"flex",alignItems:"center",justifyContent:"center",background:`${ca}14`,border:`1px solid ${ca}38`,borderRadius:15,fontSize:"1.65rem",transform:hovered?"scale(1.12) rotate(-5deg)":"scale(1)",boxShadow:hovered?`0 0 22px ${ca}40`:"none",transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)"}}>
         {game.icon}
         {done&&<div style={{position:"absolute",inset:0,borderRadius:15,background:"rgba(61,214,140,0.35)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",color:C.green}}>✓</div>}
       </div>
@@ -216,17 +159,12 @@ function GameCard({ game, done, onPlay }) {
           <span style={{display:"inline-flex",padding:"3px 8px",borderRadius:999,background:`${C.accent}14`,border:`1px solid ${C.accent}44`,fontSize:"0.58rem",fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",color:C.accent,fontFamily:"'Space Mono',monospace"}}>+{game.xp} XP</span>
         </div>
       </div>
-      <div style={{
-        position:"relative",zIndex:2,flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",
-        background:hovered?ca:C.surface2,border:`1px solid ${hovered?ca:C.border2}`,borderRadius:"50%",
-        color:hovered?"#000":ca,fontSize:"1rem",
-        transform:hovered?"translateX(4px) scale(1.12)":"none",
-        transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>→</div>
+      <div style={{position:"relative",zIndex:2,flexShrink:0,width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",background:hovered?ca:C.surface2,border:`1px solid ${hovered?ca:C.border2}`,borderRadius:"50%",color:hovered?"#000":ca,fontSize:"1rem",transform:hovered?"translateX(4px) scale(1.12)":"none",transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)"}}>→</div>
     </div>
   );
 }
 
+// ── Match Card ────────────────────────────────────────────────────────────────
 function MatchCard({ fixture, fallbackSecs }) {
   const [secs,setSecs]=useState(fallbackSecs);
   useEffect(()=>{
@@ -246,6 +184,7 @@ function MatchCard({ fixture, fallbackSecs }) {
           {isLive?"Live Now":hasFixture?"Prediction Lock":"Daily Reset"}
         </div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.35rem",letterSpacing:1,color:C.text,lineHeight:1}}>{name}</div>
+        {fixture?.stage&&<div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.54rem",color:C.muted2,marginTop:4,letterSpacing:0.5}}>{fixture.stage}</div>}
       </div>
       <div style={{textAlign:"right"}}>
         {isLive
@@ -258,6 +197,7 @@ function MatchCard({ fixture, fallbackSecs }) {
   );
 }
 
+// ── Guild Card ────────────────────────────────────────────────────────────────
 function GuildCard({ guild, navigate }) {
   const [hovered,setHovered]=useState(false);
   const hp=guild.castleHP??0, maxHp=guild.castleHPCap??CASTLE_HP_CAP, hpPct=clampPct(hp,maxHp);
@@ -284,29 +224,115 @@ function GuildCard({ guild, navigate }) {
   );
 }
 
-function ActivityFeed({ feed }) {
-  const items=feed.length>0?feed:STATIC_FEED;
-  const isStatic=feed.length===0;
+// ── World Chat ────────────────────────────────────────────────────────────────
+function WorldChat({ messages, user, navigate }) {
+  const [input,setInput]     = useState("");
+  const [sending,setSending] = useState(false);
+  const [err,setErr]         = useState("");
+  const bottomRef            = useRef(null);
+
+  useEffect(()=>{
+    bottomRef.current?.scrollIntoView({ behavior:"smooth" });
+  },[messages]);
+
+  async function handleSend() {
+    const text = input.trim();
+    if (!text || sending) return;
+    if (containsBadWord(text)) { setErr("Message contains inappropriate content."); setTimeout(()=>setErr(""),2500); return; }
+    if (text.length > 120) { setErr("Max 120 characters."); setTimeout(()=>setErr(""),2000); return; }
+    setSending(true);
+    try {
+      await addDoc(collection(db,"chat"),{
+        guildCode: "__world__",
+        userId:    user.userId,
+        nickname:  user.nickname,
+        flag:      user.flag || "🏳️",
+        tier:      user.tier || "lurker",
+        text,
+        timestamp: serverTimestamp(),
+      });
+      setInput("");
+    } catch(e) { console.error(e); setErr("Failed to send."); setTimeout(()=>setErr(""),2000); }
+    setSending(false);
+  }
+
+  function handleKey(e) {
+    if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  }
+
+  const TIER_COLORS = { lurker:"#6b7a99", fan:"#4F8EF7", veteran:"#3DD68C", ultra:"#F7C344", legend:"#A855F7" };
+
   return (
-    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden"}}>
-      {items.map((item,i)=>(
-        <div key={item.id||`${item.user}-${i}`} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:i<items.length-1?`1px solid ${C.border}`:"none"}}>
-          <div style={{width:32,height:32,borderRadius:9,background:C.surface2,border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.95rem",flexShrink:0}}>{item.icon||"⚽"}</div>
-          <div style={{flex:1,minWidth:0,fontSize:"0.8rem",color:C.muted,lineHeight:1.4,fontFamily:"'Syne',sans-serif"}}>
-            <strong style={{color:C.green}}>{item.user||item.nickname}</strong>{" "}{item.action}
-          </div>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.56rem",color:C.muted2,flexShrink:0,letterSpacing:0.5}}>{item.time||""}</span>
+    <div style={{background:"rgba(255,255,255,0.03)",border:`1px solid ${C.border2}`,borderRadius:18,overflow:"hidden"}}>
+
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:`1px solid ${C.border}`,background:"rgba(255,255,255,0.02)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:C.green,boxShadow:`0 0 8px ${C.green}`,animation:"fbPulse 1.8s ease infinite",flexShrink:0}}/>
+          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:2,color:C.text}}>World Chat</span>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.muted2,letterSpacing:1}}>🌍 All guilds</span>
         </div>
-      ))}
-      {isStatic&&(
-        <div style={{padding:"8px 16px 10px",fontSize:"0.58rem",color:C.muted3,fontFamily:"'Space Mono',monospace",letterSpacing:0.5,textAlign:"center",borderTop:`1px solid ${C.border}`}}>
-          Sample feed — activity populates as guild members play
+        <button onClick={()=>navigate("/guild")}
+          style={{fontFamily:"'Space Mono',monospace",fontSize:"0.54rem",fontWeight:700,letterSpacing:1,color:C.teal,background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:99,padding:"3px 10px",cursor:"pointer",textTransform:"uppercase"}}>
+          Guild Chat →
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div style={{height:240,overflowY:"auto",padding:"8px 0",scrollbarWidth:"thin",scrollbarColor:`${C.border2} transparent`}}>
+        {messages.length===0 && (
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:8}}>
+            <span style={{fontSize:28}}>🌍</span>
+            <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.6rem",color:C.muted2,letterSpacing:1,textAlign:"center"}}>No messages yet — start the banter</span>
+          </div>
+        )}
+        {messages.map((m,i)=>{
+          const isMe = m.userId===user.userId;
+          const tierColor = TIER_COLORS[m.tier||"lurker"] || C.muted2;
+          return (
+            <div key={m.id||i} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"5px 14px",background:isMe?"rgba(61,214,140,0.03)":"transparent"}}>
+              <span style={{fontSize:13,flexShrink:0,lineHeight:1.8}}>{m.flag||"🏳️"}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.56rem",fontWeight:700,color:isMe?C.green:tierColor,marginRight:6}}>
+                  {m.nickname}{isMe?" (you)":""}
+                </span>
+                <span style={{fontSize:"0.78rem",color:isMe?C.text:C.muted,lineHeight:1.5,wordBreak:"break-word"}}>{m.text}</span>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef}/>
+      </div>
+
+      {/* Error */}
+      {err && (
+        <div style={{padding:"6px 14px",fontFamily:"'Space Mono',monospace",fontSize:"0.58rem",color:C.red,background:"rgba(232,64,64,0.08)",borderTop:`1px solid rgba(232,64,64,0.15)`}}>
+          {err}
         </div>
       )}
+
+      {/* Input */}
+      <div style={{display:"flex",gap:8,padding:"10px 12px",borderTop:`1px solid ${C.border}`}}>
+        <input
+          value={input}
+          onChange={e=>setInput(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="Say something to the world… 🌍"
+          maxLength={120}
+          style={{flex:1,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border2}`,borderRadius:10,padding:"9px 12px",color:C.text,fontSize:"0.8rem",fontFamily:"'Syne',sans-serif",outline:"none",caretColor:C.accent}}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!input.trim()||sending}
+          style={{padding:"9px 16px",borderRadius:10,background:input.trim()?C.accent:"rgba(255,255,255,0.06)",border:"none",color:input.trim()?"#000":C.muted2,fontFamily:"'Space Mono',monospace",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,cursor:input.trim()?"pointer":"default",transition:"all 0.18s",flexShrink:0,textTransform:"uppercase"}}>
+          {sending?"…":"Send"}
+        </button>
+      </div>
     </div>
   );
 }
 
+// ── Raid Banner ───────────────────────────────────────────────────────────────
 function RaidBanner({ onPress }) {
   const [hovered,setHovered]=useState(false);
   return (
@@ -326,7 +352,7 @@ function RaidBanner({ onPress }) {
   );
 }
 
-// ── Fixed bottom nav ──────────────────────────────────────────────────────────
+// ── Bottom Nav ────────────────────────────────────────────────────────────────
 function BottomNav({ active, navigate, onUnavailable }) {
   const items=[
     {id:"home",    label:"Games",  icon:"⚽", route:"/"},
@@ -336,30 +362,12 @@ function BottomNav({ active, navigate, onUnavailable }) {
     {id:"profile", label:"Me",     icon:"👤"},
   ];
   return (
-    <nav style={{
-      position:"fixed", bottom:0, left:0, right:0, zIndex:200,
-      display:"flex",
-      background:"rgba(6,8,16,0.97)",
-      backdropFilter:"blur(20px) saturate(1.3)",
-      borderTop:`1px solid ${C.border}`,
-      paddingBottom:"env(safe-area-inset-bottom,0px)",
-      boxShadow:"0 -8px 32px rgba(0,0,0,0.4)",
-    }}>
+    <nav style={{position:"fixed",bottom:0,left:0,right:0,zIndex:200,display:"flex",background:"rgba(6,8,16,0.97)",backdropFilter:"blur(20px) saturate(1.3)",borderTop:`1px solid ${C.border}`,paddingBottom:"env(safe-area-inset-bottom,0px)",boxShadow:"0 -8px 32px rgba(0,0,0,0.4)"}}>
       {items.map(item=>{
         const isActive=item.id===active;
         return (
-          <button key={item.id} type="button"
-            onClick={()=>item.route?navigate(item.route):onUnavailable()}
-            style={{
-              flex:1, minWidth:0, border:"none", background:"transparent",
-              padding:"10px 4px 10px", display:"flex", flexDirection:"column",
-              alignItems:"center", gap:4, cursor:"pointer",
-              fontFamily:"'Space Mono',monospace", fontSize:"0.5rem", fontWeight:700,
-              letterSpacing:1, textTransform:"uppercase",
-              color:isActive?C.accent:C.muted2,
-              position:"relative", transition:"color 0.15s",
-              WebkitTapHighlightColor:"transparent", touchAction:"manipulation",
-            }}>
+          <button key={item.id} type="button" onClick={()=>item.route?navigate(item.route):onUnavailable()}
+            style={{flex:1,minWidth:0,border:"none",background:"transparent",padding:"10px 4px 10px",display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer",fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,letterSpacing:1,textTransform:"uppercase",color:isActive?C.accent:C.muted2,position:"relative",transition:"color 0.15s",WebkitTapHighlightColor:"transparent",touchAction:"manipulation"}}>
             {isActive&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:24,height:2,borderRadius:"0 0 99px 99px",background:C.accent,boxShadow:`0 0 8px ${C.accentGlow}`}}/>}
             <span style={{fontSize:"1.25rem",lineHeight:1}}>{item.icon}</span>
             {item.label}
@@ -370,6 +378,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
   );
 }
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
 function Toast({ message }) {
   if (!message) return null;
   return (
@@ -380,6 +389,7 @@ function Toast({ message }) {
   );
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate=useNavigate();
   const [toast,setToast]=useState("");
@@ -400,7 +410,6 @@ export default function Home() {
 
   useEffect(()=>{ const t=setInterval(()=>setMockSecs(s=>Math.max(0,s-1)),1000); return()=>clearInterval(t); },[]);
 
-  // Guild doc listener
   useEffect(()=>{
     if (!localUser?.homeCountry) return;
     return onSnapshot(doc(db,"guilds",localUser.homeCountry), snap=>{
@@ -410,50 +419,42 @@ export default function Home() {
     },()=>setGuildDoc(null));
   },[localUser?.homeCountry]);
 
-  // ── Stable user XP listener — runs ONCE, never re-subscribes on state change ─
-  // Using a ref so the effect dep array stays [] while still reading the userId.
   const userIdRef = useRef(localUser?.userId);
   useEffect(()=>{ userIdRef.current = localUser?.userId; }, [localUser?.userId]);
-useEffect(()=>{
-  const uid = localUser?.userId;
-  if (!uid || uid === "guest") return;
-  return onSnapshot(doc(db,"users",uid), snap=>{
-    if (!snap.exists()) return;
-    const d = snap.data();
-    const today = new Date().toISOString().split("T")[0];
-    setLocalUser(prev => {
-      const fresh = {
-        ...prev,
-        totalXP:     d.totalXP     ?? prev?.totalXP  ?? 0,
-        dailyXP:     d.dailyXPDate === today ? (d.dailyXP ?? 0) : 0,
-        dailyXPDate: d.dailyXPDate ?? null,
-        tier:        d.tier        ?? prev?.tier      ?? "lurker",
-      };
-      saveUserLocally(fresh);
-      return fresh;
-    });
-  },()=>{});
-},[localUser?.userId]); // ← empty: listener created once, stable forever
+  useEffect(()=>{
+    const uid = localUser?.userId;
+    if (!uid || uid==="guest") return;
+    return onSnapshot(doc(db,"users",uid), snap=>{
+      if (!snap.exists()) return;
+      const d=snap.data();
+      const today=new Date().toISOString().split("T")[0];
+      setLocalUser(prev=>{
+        const fresh={...prev,totalXP:d.totalXP??prev?.totalXP??0,dailyXP:d.dailyXPDate===today?(d.dailyXP??0):0,dailyXPDate:d.dailyXPDate??null,tier:d.tier??prev?.tier??"lurker"};
+        saveUserLocally(fresh);
+        return fresh;
+      });
+    },()=>{});
+  },[localUser?.userId]);
 
-  const nextFixture=useNextFixture();
-  const activityFeed=useGuildActivity(localUser?.homeCountry);
+  const nextFixture = useNextFixture();
+  const worldChat   = useWorldChat();
 
   if (!localUser) return null;
 
-  const user=localUser;
-  const country=COUNTRIES?.find(c=>c.code===user.homeCountry);
-  const guild={
-    name:guildDoc?.name||`${country?.name||user.homeCountry} Fan Guild`,
-    flag:guildDoc?.flag||user.flag||country?.flag||"🏳️",
-    memberCount:guildDoc?.memberCount??0,
-    castleHP:guildDoc?.castleHP??0,
-    castleHPCap:guildDoc?.castleHPCap??CASTLE_HP_CAP,
+  const user    = localUser;
+  const country = COUNTRIES?.find(c=>c.code===user.homeCountry);
+  const guild   = {
+    name:        guildDoc?.name        || `${country?.name||user.homeCountry} Fan Guild`,
+    flag:        guildDoc?.flag        || user.flag || country?.flag || "🏳️",
+    memberCount: guildDoc?.memberCount ?? 0,
+    castleHP:    guildDoc?.castleHP    ?? 0,
+    castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
   };
 
-  const games=useMemo(()=>GAMES.map(g=>({...g,done:isDoneToday(g)})),[]);
-  const doneCount=games.filter(g=>g.done).length;
-  const dailyXP=getDailyXP(user);
-  const xpPct=clampPct(dailyXP,DAILY_XP_CAP);
+  const games     = useMemo(()=>GAMES.map(g=>({...g,done:isDoneToday(g)})),[]);
+  const doneCount = games.filter(g=>g.done).length;
+  const dailyXP   = getDailyXP(user);
+  const xpPct     = clampPct(dailyXP,DAILY_XP_CAP);
 
   const showSoon=useCallback(()=>{
     setToast("Coming soon — stay tuned 🎮");
@@ -466,7 +467,6 @@ useEffect(()=>{
       <BgCanvas/>
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
-      {/* Scrollable content — padded bottom for fixed nav */}
       <div style={{position:"relative",zIndex:1,flex:1,maxWidth:720,margin:"0 auto",width:"100%",padding:"28px max(16px,4vw) 100px"}}>
 
         {/* Eyebrow */}
@@ -513,19 +513,17 @@ useEffect(()=>{
         <SectionHdr label="Your Guild"/>
         <GuildCard guild={guild} navigate={navigate}/>
 
-        {/* Guild Pulse */}
-        <SectionHdr label="Guild Pulse" right={activityFeed.length>0?"LIVE":"SAMPLE"}/>
-        <ActivityFeed feed={activityFeed}/>
+        {/* World Chat */}
+        <SectionHdr label="World Chat" right={worldChat.length>0?"🟢 LIVE":"🌍 ALL GUILDS"}/>
+        <WorldChat messages={worldChat} user={user} navigate={navigate}/>
 
         {/* Raid */}
         <SectionHdr label="Raid Battles"/>
         <RaidBanner onPress={showSoon}/>
 
-        {/* Bottom spacing so content clears fixed nav */}
         <div style={{height:8}}/>
       </div>
 
-      {/* Fixed bottom nav */}
       <BottomNav active="home" navigate={navigate} onUnavailable={showSoon}/>
       <Toast message={toast}/>
     </div>

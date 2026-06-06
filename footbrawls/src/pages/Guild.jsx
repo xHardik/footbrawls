@@ -401,7 +401,6 @@ function BottomNav({ navigate, toast, setToast }) {
   );
 }
 
-// ─── Main Guild Page ──────────────────────────────────────────────────────────
 export default function Guild() {
   const navigate = useNavigate();
 const [user, setUser] = useState(() => getUser() || FALLBACK_USER);

@@ -411,9 +411,11 @@ export default function TransferTrail({ players = [], userId, onComplete }) {
     let xp = 0;
     if (won) {
       const raw = XP_BY_STEPS[newTrail.length] ?? 5;
-      if (userId) {
-        const result = await awardXP(userId, "transferTrail", raw);
-        xp = result.awarded;
+      const currentUser = getUser();
+      const uid = userId || currentUser?.userId;
+      if (uid) {
+        const result = await awardXP(uid, "transferTrail", { rawXP: raw });
+        xp = result?.xpAwarded ?? raw;
       } else {
         xp = raw;
       }

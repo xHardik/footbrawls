@@ -276,9 +276,11 @@ export default function HigherLower({ players = [], userId, onComplete }) {
       // Game over
       const raw = Math.min(MAX_XP, Math.round((streak / 10) * MAX_XP));
       let xp = 0;
-      if (userId && raw > 0) {
-        const result = await awardXP(userId, "higherLower", raw);
-        xp = result.awarded;
+      const currentUser = getUser();
+      const uid = userId || currentUser?.userId;
+      if (uid && raw > 0) {
+        const result = await awardXP(uid, "higherLower", { rawXP: raw });
+        xp = result?.xpAwarded ?? raw;
       } else {
         xp = raw;
       }

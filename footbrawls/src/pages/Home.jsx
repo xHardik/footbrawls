@@ -558,25 +558,23 @@ export default function Home() {
 
       <div style={{position:"relative",zIndex:1,flex:1,width:"100%",boxSizing:"border-box"}}>
 
-        {/* Trophy fixed to top-right of viewport, outside content flow */}
-        <div style={{position:"fixed",top:58,right:0,zIndex:10,pointerEvents:"none"}}>
+        {/* Hero: text left + 24px, trophy in-flow right */}
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",paddingTop:28,paddingLeft:24,paddingRight:16}}>
+          <div style={{flex:1,minWidth:0}}>
+            <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.6rem,8vw,4.5rem)",lineHeight:0.88,letterSpacing:2,margin:0}}>
+              <span style={{display:"block"}}>YOUR</span>
+              <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
+              <span style={{display:"block"}}>HOME</span>
+            </h1>
+            <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 0 0",maxWidth:360}}>
+              Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
+            </p>
+          </div>
           <FifaTrophy/>
         </div>
 
-        {/* Hero text — left padded only */}
-        <div style={{paddingTop:24,paddingLeft:16,paddingRight:16}}>
-          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(3.2rem,11vw,6rem)",lineHeight:0.88,letterSpacing:2,margin:0}}>
-            <span style={{display:"block"}}>YOUR</span>
-            <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
-            <span style={{display:"block"}}>HOME</span>
-          </h1>
-          <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 0 24px"}}>
-            Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
-          </p>
-        </div>
-
         {/* ── STAT BAR ── */}
-        <div style={{padding:"0 16px",boxSizing:"border-box",marginBottom:28}}>
+        <div style={{padding:"0 24px",boxSizing:"border-box",marginBottom:28}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",border:`1px solid ${C.border2}`,borderRadius:16,overflow:"hidden"}}>
             {[
               {num:`${doneCount}/${games.length}`, lbl:"Done"},
@@ -593,7 +591,7 @@ export default function Home() {
         </div>
 
         {/* ── REST OF CONTENT ── */}
-        <div style={{padding:"0 16px 100px",boxSizing:"border-box"}}>
+        <div style={{padding:"0 24px 100px",boxSizing:"border-box"}}>
           <MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/>
           <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>

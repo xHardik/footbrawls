@@ -558,19 +558,22 @@ export default function Home() {
 
       <div style={{position:"relative",zIndex:1,flex:1,width:"100%",boxSizing:"border-box"}}>
 
-        {/* ── HERO: text bleeds from left edge, trophy flush right ── */}
-        <div style={{display:"flex",flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",paddingTop:24,overflow:"hidden",width:"100%"}}>
-          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(4.5rem,18vw,10rem)",lineHeight:0.88,letterSpacing:2,margin:0,paddingLeft:16,flex:1,minWidth:0}}>
-            <span style={{display:"block"}}>YOUR</span>
-            <span style={{display:"block",WebkitTextStroke:`3px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
-            <span style={{display:"block"}}>HOME</span>
-          </h1>
+        {/* Trophy fixed to top-right of viewport, outside content flow */}
+        <div style={{position:"fixed",top:58,right:0,zIndex:10,pointerEvents:"none"}}>
           <FifaTrophy/>
         </div>
 
-        <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 16px 24px"}}>
-          Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
-        </p>
+        {/* Hero text — left padded only */}
+        <div style={{paddingTop:24,paddingLeft:16,paddingRight:16}}>
+          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(3.2rem,11vw,6rem)",lineHeight:0.88,letterSpacing:2,margin:0}}>
+            <span style={{display:"block"}}>YOUR</span>
+            <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
+            <span style={{display:"block"}}>HOME</span>
+          </h1>
+          <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 0 24px"}}>
+            Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
+          </p>
+        </div>
 
         {/* ── STAT BAR ── */}
         <div style={{padding:"0 16px",boxSizing:"border-box",marginBottom:28}}>

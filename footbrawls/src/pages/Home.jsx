@@ -556,58 +556,53 @@ export default function Home() {
       <BgCanvas/>
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
-      <div style={{position:"relative",zIndex:1,flex:1,width:"100%",padding:"24px 16px 100px",boxSizing:"border-box"}}>
+      <div style={{position:"relative",zIndex:1,flex:1,width:"100%",boxSizing:"border-box"}}>
 
-        {/* Hero */}
-        <div style={{display:"flex",alignItems:"center",gap:0,marginBottom:16,flexWrap:"wrap"}}>
-          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.4rem,8vw,5rem)",lineHeight:0.88,letterSpacing:2,marginTop:0,flex:1,minWidth:180,textAlign:"left"}}>
+        {/* ── HERO: text bleeds from left edge, trophy flush right ── */}
+        <div style={{display:"flex",flexDirection:"row",alignItems:"flex-start",justifyContent:"space-between",paddingTop:24,overflow:"hidden",width:"100%"}}>
+          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(4.5rem,18vw,10rem)",lineHeight:0.88,letterSpacing:2,margin:0,paddingLeft:16,flex:1,minWidth:0}}>
             <span style={{display:"block"}}>YOUR</span>
-            <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
+            <span style={{display:"block",WebkitTextStroke:`3px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
             <span style={{display:"block"}}>HOME</span>
           </h1>
           <FifaTrophy/>
         </div>
 
-        <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,marginBottom:24,marginTop:0}}>
+        <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 16px 24px"}}>
           Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
         </p>
 
-        {/* Stat bar — grid so all 4 cells are equal and don't overflow */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",border:`1px solid ${C.border2}`,borderRadius:16,overflow:"hidden",marginBottom:28}}>
-          {[
-            {num:`${doneCount}/${games.length}`, lbl:"Done"},
-            {num:`${dailyXP}/${DAILY_XP_CAP}`,  lbl:"Daily XP"},
-            {num:(user.tier||"lurker").toUpperCase(), lbl:"Tier"},
-            {num:guild.flag, lbl:guild.name, small:true},
-          ].map(({num,lbl,small},i)=>(
-            <div key={lbl} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"12px 6px",background:C.surface,borderRight:i<3?`1px solid ${C.border2}`:"none",minWidth:0}}>
-              <span style={{fontFamily:small?"'Syne',sans-serif":"'Bebas Neue',sans-serif",fontSize:small?"1.35rem":"1.6rem",letterSpacing:small?0:1,color:C.accent,lineHeight:1}}>{num}</span>
-              <span style={{fontSize:"0.5rem",fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",color:C.muted,fontFamily:"'Space Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",textAlign:"center"}}>{lbl}</span>
-            </div>
-          ))}
+        {/* ── STAT BAR ── */}
+        <div style={{padding:"0 16px",boxSizing:"border-box",marginBottom:28}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",border:`1px solid ${C.border2}`,borderRadius:16,overflow:"hidden"}}>
+            {[
+              {num:`${doneCount}/${games.length}`, lbl:"Done"},
+              {num:`${dailyXP}/${DAILY_XP_CAP}`,  lbl:"Daily XP"},
+              {num:(user.tier||"lurker").toUpperCase(), lbl:"Tier"},
+              {num:guild.flag, lbl:guild.name, small:true},
+            ].map(({num,lbl,small},i)=>(
+              <div key={lbl} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"12px 6px",background:C.surface,borderRight:i<3?`1px solid ${C.border2}`:"none",minWidth:0}}>
+                <span style={{fontFamily:small?"'Syne',sans-serif":"'Bebas Neue',sans-serif",fontSize:small?"1.35rem":"1.6rem",letterSpacing:small?0:1,color:C.accent,lineHeight:1}}>{num}</span>
+                <span style={{fontSize:"0.5rem",fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",color:C.muted,fontFamily:"'Space Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",textAlign:"center"}}>{lbl}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Match countdown */}
-        <MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/>
-
-        {/* Games */}
-        <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}
+        {/* ── REST OF CONTENT ── */}
+        <div style={{padding:"0 16px 100px",boxSizing:"border-box"}}>
+          <MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/>
+          <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}
+          </div>
+          <RaidBanner onPress={showSoon}/>
+          <SectionHdr label="Your Guild"/>
+          <GuildCard guild={guild} navigate={navigate}/>
+          <SectionHdr label="World Chat" right={worldChat.length>0?"🟢 LIVE":"🌍 ALL GUILDS"}/>
+          <WorldChat messages={worldChat} user={user} navigate={navigate}/>
+          <div style={{height:8}}/>
         </div>
-
-        {/* Raid */}
-        <RaidBanner onPress={showSoon}/>
-
-        {/* Guild */}
-        <SectionHdr label="Your Guild"/>
-        <GuildCard guild={guild} navigate={navigate}/>
-
-        {/* World Chat */}
-        <SectionHdr label="World Chat" right={worldChat.length>0?"🟢 LIVE":"🌍 ALL GUILDS"}/>
-        <WorldChat messages={worldChat} user={user} navigate={navigate}/>
-
-        <div style={{height:8}}/>
       </div>
 
       <BottomNav active="home" navigate={navigate} onUnavailable={showSoon}/>

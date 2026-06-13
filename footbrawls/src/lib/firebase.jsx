@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { collection, doc, writeBatch, Timestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db } from "./firebase";
 
 // All times UTC. Results filled in for completed matches.
 const FIXTURES = [

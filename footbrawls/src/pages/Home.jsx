@@ -556,7 +556,7 @@ export default function Home() {
       <BgCanvas/>
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
-      <div style={{position:"relative",zIndex:1,flex:1,width:"100%",boxSizing:"border-box"}}>
+<div style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:900,margin:"0 auto",boxSizing:"border-box"}}>
 
         {/* Hero: text left + 24px, trophy in-flow right */}
         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",paddingTop:28,paddingLeft:24,paddingRight:16}}>

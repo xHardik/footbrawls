@@ -59,15 +59,22 @@ function clampPct(v,max){ return !max?0:Math.max(0,Math.min(100,Math.round((v/ma
 function pad(n){ return String(n).padStart(2,"0"); }
 function fmtCountdown(s){ return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`; }
 
-function useNextFixture() {
-  const [fixture,setFixture]=useState(null);
+function useNextFixtures() {
+  const [fixtures,setFixtures]=useState([]);
   useEffect(()=>{
-    const q=query(collection(db,"fixtures"),where("isComplete","==",false),orderBy("kickoffAt","asc"),limit(1));
+    const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const q=query(
+      collection(db,"fixtures"),
+      where("isComplete","==",false),
+      where("kickoffAt",">=",threeHoursAgo),
+      orderBy("kickoffAt","asc"),
+      limit(2)
+    );
     return onSnapshot(q,snap=>{
-      setFixture(snap.empty?null:{id:snap.docs[0].id,...snap.docs[0].data()});
-    },(err)=>{ console.error("Fixture query failed:",err); setFixture(null); });
+      setFixtures(snap.empty?[]:snap.docs.map(d=>({id:d.id,...d.data()})));
+    },(err)=>{ console.error("Fixtures query failed:",err); setFixtures([]); });
   },[]);
-  return fixture;
+  return fixtures;
 }
 
 function useWorldChat() {
@@ -95,12 +102,12 @@ function BgCanvas() {
 /* ── BOUNCING FOOTBALL ── */
 function BouncingFootball() {
   return (
-    <div style={{position:"relative",width:100,height:160,flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
+    <div style={{position:"relative",width:100,height:"auto",alignSelf:"stretch",flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
       {/* Ambient glow behind ball */}
-      <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",width:80,height:80,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(247,195,68,0.18) 0%,transparent 70%)",filter:"blur(14px)",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",width:80,height:80,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(247,195,68,0.18) 0%,transparent 70%)",filter:"blur(14px)",pointerEvents:"none"}}/>
 
       {/* The ball — bouncing animation */}
-      <div style={{position:"absolute",bottom:20,left:"50%",transform:"translateX(-50%)",animation:"fbBounce 1.1s cubic-bezier(0.36,0,0.66,-0.56) infinite"}}>
+      <div style={{position:"absolute",bottom:12,left:"50%",transform:"translateX(-50%)",animation:"fbBounce 1.2s linear infinite"}}>
         <svg viewBox="0 0 80 80" width="72" height="72" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(247,195,68,0.2))"}}>
           <defs>
             <radialGradient id="ballGrad" cx="38%" cy="32%">
@@ -143,7 +150,7 @@ function BouncingFootball() {
       {/* Shadow under ball — squishes on bounce */}
       <div style={{
         position:"absolute",
-        bottom:6,
+        bottom:2,
         left:"50%",
         transform:"translateX(-50%)",
         width:44,
@@ -151,21 +158,33 @@ function BouncingFootball() {
         borderRadius:"50%",
         background:"rgba(0,0,0,0.45)",
         filter:"blur(4px)",
-        animation:"fbShadow 1.1s cubic-bezier(0.36,0,0.66,-0.56) infinite",
+        animation:"fbShadow 1.2s linear infinite",
       }}/>
 
       <style>{`
         @keyframes fbBounce {
-          0%   { transform: translateX(-50%) translateY(0px) scaleY(1) scaleX(1); animation-timing-function: cubic-bezier(0.33,0,0.66,0); }
-          45%  { transform: translateX(-50%) translateY(-110px) scaleY(1) scaleX(1); animation-timing-function: cubic-bezier(0.33,1,0.66,1); }
-          90%  { transform: translateX(-50%) translateY(-4px) scaleY(1) scaleX(1); }
-          95%  { transform: translateX(-50%) translateY(0px) scaleY(0.72) scaleX(1.22); }
-          100% { transform: translateX(-50%) translateY(0px) scaleY(1) scaleX(1); }
+          0%, 100% {
+            bottom: 12px;
+            transform: translateX(-50%) scaleY(0.78) scaleX(1.22);
+            animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+          }
+          50% {
+            bottom: calc(100% - 76px);
+            transform: translateX(-50%) scaleY(1.04) scaleX(0.96);
+            animation-timing-function: cubic-bezier(0.7, 0, 0.9, 0.2);
+          }
         }
         @keyframes fbShadow {
-          0%,100% { transform: translateX(-50%) scale(1);   opacity: 0.45; }
-          45%     { transform: translateX(-50%) scale(0.4); opacity: 0.12; }
-          95%     { transform: translateX(-50%) scale(1.3); opacity: 0.6;  }
+          0%, 100% {
+            transform: translateX(-50%) scale(1.22);
+            opacity: 0.5;
+            animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+          }
+          50% {
+            transform: translateX(-50%) scale(0.32);
+            opacity: 0.04;
+            animation-timing-function: cubic-bezier(0.7, 0, 0.9, 0.2);
+          }
         }
       `}</style>
     </div>
@@ -342,7 +361,8 @@ function MatchCard({ fixture, fallbackSecs }) {
     tick(); const t=setInterval(tick,1000); return ()=>clearInterval(t);
   },[fixture,fallbackSecs]);
   const name=fixture?`${fixture.homeTeam} vs ${fixture.awayTeam}`:"No match scheduled today";
-  const isLive=fixture?.isLive;
+  const kickoffMs = fixture?.kickoffAt?.toMillis ? fixture.kickoffAt.toMillis() : (fixture?.kickoffAt ? fixture.kickoffAt * 1000 : 0);
+  const isLive = fixture?.isLive || (fixture && !fixture.isComplete && kickoffMs < Date.now() && kickoffMs >= Date.now() - 3 * 60 * 60 * 1000);
   const hasFixture=!!fixture;
   return (
     <div style={{background:"radial-gradient(circle at top right,rgba(247,195,68,0.12),transparent 35%),rgba(255,255,255,0.03)",border:`1px solid ${C.border2}`,borderRadius:18,padding:"16px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
@@ -640,7 +660,7 @@ export default function Home() {
     },()=>{});
   },[localUser?.userId]);
 
-  const nextFixture = useNextFixture();
+  const nextFixtures = useNextFixtures();
   const worldChat   = useWorldChat();
 
   if (!localUser) return null;
@@ -675,7 +695,7 @@ export default function Home() {
 
         {/* ── HERO ── generous horizontal padding, ball right-aligned */}
         <div style={{
-          display:"flex", alignItems:"flex-start", justifyContent:"space-between",
+          display:"flex", alignItems:"stretch", justifyContent:"space-between",
           paddingTop:32, paddingLeft:32, paddingRight:28, gap:16,
         }}>
           <div style={{flex:1,minWidth:0,paddingRight:8}}>
@@ -719,7 +739,15 @@ export default function Home() {
 
         {/* ── REST OF CONTENT ── */}
         <div style={{padding:"0 32px 100px",boxSizing:"border-box"}}>
-          <MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/>
+          {nextFixtures.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {nextFixtures.map(f => (
+                <MatchCard key={f.id} fixture={f} fallbackSecs={mockSecs}/>
+              ))}
+            </div>
+          ) : (
+            <MatchCard fixture={null} fallbackSecs={mockSecs}/>
+          )}
           <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}

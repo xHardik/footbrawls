@@ -9,7 +9,7 @@ const path  = require("path");
 const fs    = require("fs");
 
 // Auto-load service account if file exists next to script
-const saPath = path.join(__dirname, "serviceAccount.json");
+const saPath = path.join(__dirname, "..", "serviceAccountKey.json");
 if (fs.existsSync(saPath)) {
   const serviceAccount = require(saPath);
   initializeApp({
@@ -129,7 +129,7 @@ async function seed() {
   for (const chunk of chunks) {
     const batch = db.batch();
     for (const f of chunk) {
-      const ko  = new Date(f.kickoff);
+      const ko  = new Date(new Date(f.kickoff).getTime() - 3600000);
       const ref = db.collection("fixtures").doc(f.id);
       batch.set(ref, {
         fixtureId:  f.id,

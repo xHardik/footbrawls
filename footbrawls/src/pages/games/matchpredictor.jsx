@@ -110,9 +110,11 @@ export default function MatchPredictor() {
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
 
+        const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
         const q = query(
           collection(db, 'fixtures'),
           where('isComplete', '==', false),
+          where('kickoffAt', '>=', threeHoursAgo),
           orderBy('kickoffAt'),
           limit(5)
         );
@@ -209,7 +211,10 @@ export default function MatchPredictor() {
   const awayPlayers = selected ? (TEAM_PLAYERS[selected.awayTeam] || []) : [];
   const allPlayers  = [...homePlayers, ...awayPlayers];
 
-  const isLocked = submitted || selected?.isLive || selected?.isComplete;
+  const kickoffMs = selected?.kickoffAt?.toMillis ? selected.kickoffAt.toMillis() : (selected?.kickoffAt ? selected.kickoffAt * 1000 : 0);
+  const locksAtMs = selected?.locksAt?.toMillis ? selected.locksAt.toMillis() : (kickoffMs - 3600000);
+  const isMatchLive = selected?.isLive || (selected && !selected.isComplete && kickoffMs < Date.now() && kickoffMs >= Date.now() - 3 * 60 * 60 * 1000);
+  const isLocked = submitted || isMatchLive || selected?.isComplete || Date.now() > locksAtMs;
 
   if (loading) return <div style={s.loading}>Loading fixtures...</div>;
 

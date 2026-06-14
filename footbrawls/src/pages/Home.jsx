@@ -92,85 +92,200 @@ function BgCanvas() {
   );
 }
 
-function FifaTrophy() {
+/* ── BOUNCING FOOTBALL ── */
+function BouncingFootball() {
   return (
-    <div style={{position:"relative",width:110,height:160,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"visible"}}>
-      <div style={{position:"absolute",inset:0,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(247,195,68,0.38) 0%,rgba(247,195,68,0.14) 45%,transparent 70%)",filter:"blur(18px)",animation:"trophyGlow 3s ease-in-out infinite"}}/>
-      <div style={{position:"absolute",width:140,height:140,borderRadius:"50%",border:"1px solid rgba(247,195,68,0.15)",animation:"trophyOrbit1 9s linear infinite",pointerEvents:"none"}}>
-        <div style={{position:"absolute",top:-4,left:"50%",marginLeft:-4,width:8,height:8,borderRadius:"50%",background:"rgba(247,195,68,0.7)",boxShadow:"0 0 8px rgba(247,195,68,0.9)"}}/>
+    <div style={{position:"relative",width:100,height:160,flexShrink:0,display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
+      {/* Ambient glow behind ball */}
+      <div style={{position:"absolute",bottom:16,left:"50%",transform:"translateX(-50%)",width:80,height:80,borderRadius:"50%",background:"radial-gradient(ellipse,rgba(247,195,68,0.18) 0%,transparent 70%)",filter:"blur(14px)",pointerEvents:"none"}}/>
+
+      {/* The ball — bouncing animation */}
+      <div style={{position:"absolute",bottom:20,left:"50%",transform:"translateX(-50%)",animation:"fbBounce 1.1s cubic-bezier(0.36,0,0.66,-0.56) infinite"}}>
+        <svg viewBox="0 0 80 80" width="72" height="72" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 6px 18px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(247,195,68,0.2))"}}>
+          <defs>
+            <radialGradient id="ballGrad" cx="38%" cy="32%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95"/>
+              <stop offset="40%" stopColor="#e8e8e8"/>
+              <stop offset="100%" stopColor="#aaaaaa"/>
+            </radialGradient>
+            <radialGradient id="ballShine" cx="30%" cy="28%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.85)"/>
+              <stop offset="60%" stopColor="rgba(255,255,255,0)"/>
+            </radialGradient>
+            <clipPath id="ballClip">
+              <circle cx="40" cy="40" r="36"/>
+            </clipPath>
+          </defs>
+          {/* Base sphere */}
+          <circle cx="40" cy="40" r="36" fill="url(#ballGrad)"/>
+          {/* Pentagon patches — classic football pattern */}
+          <g clipPath="url(#ballClip)" fill="#111" opacity="0.85">
+            {/* Center pentagon */}
+            <polygon points="40,20 51,28 47,41 33,41 29,28"/>
+            {/* Top-left patch */}
+            <polygon points="22,18 29,28 20,35 10,28 12,17"/>
+            {/* Top-right patch */}
+            <polygon points="58,18 68,17 70,28 60,35 51,28"/>
+            {/* Left patch */}
+            <polygon points="10,42 20,35 24,47 16,55 6,50"/>
+            {/* Right patch */}
+            <polygon points="70,42 74,50 64,55 56,47 60,35"/>
+            {/* Bottom-left patch */}
+            <polygon points="24,57 33,51 40,58 36,68 24,66"/>
+            {/* Bottom-right patch */}
+            <polygon points="56,57 56,66 44,68 40,58 47,51"/>
+          </g>
+          {/* Specular shine */}
+          <ellipse cx="32" cy="30" rx="11" ry="8" fill="url(#ballShine)"/>
+        </svg>
       </div>
-      <div style={{position:"absolute",width:180,height:180,borderRadius:"50%",border:"1px solid rgba(247,195,68,0.08)",animation:"trophyOrbit2 13s linear infinite reverse",pointerEvents:"none"}}>
-        <div style={{position:"absolute",top:-3,left:"50%",marginLeft:-3,width:6,height:6,borderRadius:"50%",background:"rgba(247,195,68,0.5)",boxShadow:"0 0 6px rgba(247,195,68,0.7)"}}/>
-      </div>
-      <svg viewBox="0 0 100 170" width="95" height="145" style={{animation:"trophyFloat 3.8s ease-in-out infinite",filter:"drop-shadow(0 8px 24px rgba(247,195,68,0.55)) drop-shadow(0 0 6px rgba(247,195,68,0.4))",position:"relative",zIndex:2}} xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="goldMain" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ffe680"/><stop offset="30%" stopColor="#F7C344"/><stop offset="60%" stopColor="#c8860a"/><stop offset="80%" stopColor="#F7C344"/><stop offset="100%" stopColor="#a86600"/></linearGradient>
-          <linearGradient id="goldDark" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#d4a017"/><stop offset="50%" stopColor="#8a5500"/><stop offset="100%" stopColor="#d4a017"/></linearGradient>
-          <linearGradient id="goldLight" x1="0%" y1="0%" x2="80%" y2="100%"><stop offset="0%" stopColor="#fff5b0"/><stop offset="40%" stopColor="#F7C344"/><stop offset="100%" stopColor="#b87800"/></linearGradient>
-          <linearGradient id="greenBand" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#2d7a3a"/><stop offset="100%" stopColor="#1a4d24"/></linearGradient>
-          <radialGradient id="trophyShine" cx="35%" cy="30%"><stop offset="0%" stopColor="rgba(255,255,255,0.6)"/><stop offset="60%" stopColor="rgba(255,255,255,0)"/></radialGradient>
-        </defs>
-        <ellipse cx="50" cy="155" rx="34" ry="7" fill="url(#goldDark)" opacity="0.5"/>
-        <rect x="22" y="148" width="56" height="8" rx="3" fill="url(#goldMain)"/>
-        <rect x="20" y="144" width="60" height="5" rx="2.5" fill="url(#goldDark)"/>
-        <rect x="22" y="143" width="56" height="3" rx="1.5" fill="url(#greenBand)"/>
-        <text x="50" y="153" textAnchor="middle" fontSize="3.5" fill="rgba(100,60,0,0.7)" fontFamily="serif" letterSpacing="1.5">WORLD CUP</text>
-        <rect x="26" y="136" width="48" height="8" rx="2" fill="url(#goldMain)"/>
-        <rect x="28" y="134" width="44" height="4" rx="2" fill="url(#goldLight)"/>
-        <path d="M38 134 Q37 120 36 108 L64 108 Q63 120 62 134 Z" fill="url(#goldMain)"/>
-        <path d="M44 134 Q43 120 43 108 L47 108 Q47 120 47 134 Z" fill="rgba(255,255,255,0.15)"/>
-        <path d="M58 134 Q59 120 60 108 L64 108 Q63 120 62 134 Z" fill="rgba(0,0,0,0.15)"/>
-        <ellipse cx="50" cy="107" rx="16" ry="7" fill="url(#goldMain)"/>
-        <ellipse cx="50" cy="104" rx="14" ry="5" fill="url(#goldLight)"/>
-        <ellipse cx="46" cy="103" rx="5" ry="2.5" fill="rgba(255,255,255,0.25)"/>
-        <path d="M40 104 Q38 92 36 78 L64 78 Q62 92 60 104 Z" fill="url(#goldMain)"/>
-        <path d="M46 104 Q45 92 44 78 L48 78 Q48 92 48 104 Z" fill="rgba(255,255,255,0.12)"/>
-        <path d="M36 78 Q24 72 18 56 Q14 42 20 30 Q28 14 50 10 Q72 14 80 30 Q86 42 82 56 Q76 72 64 78 Z" fill="url(#goldMain)"/>
-        <path d="M40 78 Q32 72 28 58 Q24 44 30 32 Q38 18 50 15 Q62 18 70 32 Q76 44 72 58 Q68 72 60 78 Z" fill="url(#goldDark)" opacity="0.5"/>
-        <path d="M34 45 Q40 38 50 36 Q60 38 66 45 Q60 55 50 57 Q40 55 34 45 Z" fill="rgba(180,120,0,0.3)"/>
-        <path d="M22 42 Q28 35 34 38 Q32 48 26 50 Z" fill="rgba(180,120,0,0.2)"/>
-        <path d="M78 42 Q72 35 66 38 Q68 48 74 50 Z" fill="rgba(180,120,0,0.2)"/>
-        <path d="M30 30 Q38 22 50 20 Q62 22 70 30 Q65 25 50 23 Q35 25 30 30 Z" fill="rgba(255,230,100,0.2)"/>
-        <path d="M20 40 Q24 30 34 24" stroke="rgba(100,60,0,0.3)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M80 40 Q76 30 66 24" stroke="rgba(100,60,0,0.3)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M18 52 Q20 62 28 68" stroke="rgba(100,60,0,0.25)" strokeWidth="1" fill="none" strokeLinecap="round"/>
-        <path d="M82 52 Q80 62 72 68" stroke="rgba(100,60,0,0.25)" strokeWidth="1" fill="none" strokeLinecap="round"/>
-        <ellipse cx="40" cy="30" rx="9" ry="7" fill="url(#trophyShine)" opacity="0.7"/>
-        <ellipse cx="50" cy="12" rx="14" ry="5" fill="url(#goldLight)"/>
-        <ellipse cx="50" cy="11" rx="12" ry="3.5" fill="rgba(255,255,200,0.3)"/>
-        <rect x="35" y="76" width="30" height="4" rx="2" fill="url(#greenBand)"/>
-      </svg>
-      <div style={{position:"absolute",bottom:-8,left:"50%",transform:"translateX(-50%)",width:60,height:10,borderRadius:"50%",background:"rgba(247,195,68,0.2)",filter:"blur(6px)",animation:"trophyGlow 3.8s ease-in-out infinite"}}/>
+
+      {/* Shadow under ball — squishes on bounce */}
+      <div style={{
+        position:"absolute",
+        bottom:6,
+        left:"50%",
+        transform:"translateX(-50%)",
+        width:44,
+        height:8,
+        borderRadius:"50%",
+        background:"rgba(0,0,0,0.45)",
+        filter:"blur(4px)",
+        animation:"fbShadow 1.1s cubic-bezier(0.36,0,0.66,-0.56) infinite",
+      }}/>
+
       <style>{`
-        @keyframes trophyFloat { 0%,100%{transform:translateY(0px) rotate(-1deg)} 50%{transform:translateY(-14px) rotate(1deg)} }
-        @keyframes trophyGlow  { 0%,100%{opacity:0.7;transform:translateX(-50%) scale(1)} 50%{opacity:1;transform:translateX(-50%) scale(1.15)} }
-        @keyframes trophyOrbit1 { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes trophyOrbit2 { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fbBounce {
+          0%   { transform: translateX(-50%) translateY(0px) scaleY(1) scaleX(1); animation-timing-function: cubic-bezier(0.33,0,0.66,0); }
+          45%  { transform: translateX(-50%) translateY(-110px) scaleY(1) scaleX(1); animation-timing-function: cubic-bezier(0.33,1,0.66,1); }
+          90%  { transform: translateX(-50%) translateY(-4px) scaleY(1) scaleX(1); }
+          95%  { transform: translateX(-50%) translateY(0px) scaleY(0.72) scaleX(1.22); }
+          100% { transform: translateX(-50%) translateY(0px) scaleY(1) scaleX(1); }
+        }
+        @keyframes fbShadow {
+          0%,100% { transform: translateX(-50%) scale(1);   opacity: 0.45; }
+          45%     { transform: translateX(-50%) scale(0.4); opacity: 0.12; }
+          95%     { transform: translateX(-50%) scale(1.3); opacity: 0.6;  }
+        }
       `}</style>
     </div>
   );
 }
 
+/* ── ENHANCED TOP NAV ── */
 function TopNav({ user, dailyXP, xpPct, navigate }) {
+  const [navHovered, setNavHovered] = useState(false);
+
   return (
-    <nav style={{position:"sticky",top:0,zIndex:200,width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px",height:58,background:"rgba(6,8,16,0.55)",backdropFilter:"blur(18px) saturate(1.3)",borderBottom:`1px solid ${C.border}`,boxSizing:"border-box"}}>
-      <div onClick={()=>navigate("/")} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:3,background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",cursor:"pointer",flexShrink:0}}>
+    <nav
+      onMouseEnter={()=>setNavHovered(true)}
+      onMouseLeave={()=>setNavHovered(false)}
+      style={{
+        position:"sticky", top:0, zIndex:200,
+        width:"100%", display:"flex", alignItems:"center",
+        justifyContent:"space-between",
+        padding:"0 20px", height:62,
+        background:"rgba(6,8,16,0.6)",
+        backdropFilter:"blur(24px) saturate(1.5)",
+        borderBottom:`1px solid ${navHovered ? "rgba(247,195,68,0.18)" : C.border}`,
+        boxSizing:"border-box",
+        transition:"border-color 0.3s",
+        /* Layered depth */
+        boxShadow:"0 1px 0 rgba(255,255,255,0.04), 0 4px 30px rgba(0,0,0,0.4)",
+        overflow:"hidden",
+      }}
+    >
+      {/* Animated shimmer sweep across nav on hover */}
+      <div style={{
+        position:"absolute", inset:0, pointerEvents:"none",
+        background:"linear-gradient(105deg,transparent 30%,rgba(247,195,68,0.06) 50%,transparent 70%)",
+        backgroundSize:"200% 100%",
+        animation: navHovered ? "navShimmer 1.8s ease-in-out infinite" : "none",
+      }}/>
+
+      {/* Subtle top accent line that pulses */}
+      <div style={{
+        position:"absolute", top:0, left:0, right:0, height:2,
+        background:"linear-gradient(90deg,transparent,rgba(247,195,68,0.6) 40%,rgba(247,195,68,0.9) 50%,rgba(247,195,68,0.6) 60%,transparent)",
+        animation:"navAccentLine 4s ease-in-out infinite",
+        opacity:0.7,
+      }}/>
+
+      {/* Logo */}
+      <div
+        onClick={()=>navigate("/")}
+        style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"1.65rem", letterSpacing:3,
+          background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",
+          WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
+          cursor:"pointer", flexShrink:0,
+          position:"relative", zIndex:1,
+          filter:"drop-shadow(0 0 12px rgba(247,195,68,0.35))",
+          transition:"filter 0.2s",
+        }}
+      >
         FOOTBRAWLS
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,border:`1px solid ${C.border2}`,background:C.surface,fontFamily:"'Space Mono',monospace",fontSize:"0.6rem",fontWeight:700,letterSpacing:1,color:C.muted,flexShrink:0}}>
-          <div style={{width:36,height:4,borderRadius:99,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
-            <div style={{width:`${xpPct}%`,height:"100%",background:`linear-gradient(90deg,${C.green},#7fffcc)`,borderRadius:99,transition:"width 0.6s ease"}}/>
+
+      {/* Right controls */}
+      <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0,position:"relative",zIndex:1}}>
+
+        {/* XP pill — glowing progress bar */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:7,
+          padding:"6px 12px", borderRadius:100,
+          border:`1px solid rgba(61,214,140,0.25)`,
+          background:"rgba(61,214,140,0.06)",
+          fontFamily:"'Space Mono',monospace",
+          fontSize:"0.6rem", fontWeight:700, letterSpacing:1,
+          color:C.muted, flexShrink:0,
+          boxShadow:"0 0 14px rgba(61,214,140,0.08)",
+          transition:"box-shadow 0.3s, border-color 0.3s",
+        }}>
+          {/* Bar track */}
+          <div style={{width:42,height:5,borderRadius:99,background:"rgba(255,255,255,0.07)",overflow:"hidden",position:"relative"}}>
+            <div style={{
+              width:`${xpPct}%`, height:"100%",
+              background:"linear-gradient(90deg,#3DD68C,#7fffcc)",
+              borderRadius:99,
+              transition:"width 0.6s ease",
+              boxShadow:"0 0 8px rgba(61,214,140,0.7)",
+              position:"relative", overflow:"hidden",
+            }}>
+              {/* Shimmer on fill */}
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)",animation:"xpFillShimmer 2s ease-in-out infinite"}}/>
+            </div>
           </div>
-          <span style={{color:C.accent,fontWeight:800}}>{dailyXP}</span>
+          <span style={{color:C.accent,fontWeight:800,letterSpacing:0.5}}>{dailyXP}</span>
           <span style={{color:C.muted2}}>/{DAILY_XP_CAP}</span>
+          <span style={{fontSize:"0.55rem",color:"rgba(61,214,140,0.7)",letterSpacing:0}}>XP</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:100,border:`1px solid ${C.border2}`,background:C.surface,fontSize:"0.72rem",fontWeight:700,color:C.text,fontFamily:"'Syne',sans-serif",letterSpacing:0.5,flexShrink:0,maxWidth:120,overflow:"hidden"}}>
-          <span style={{flexShrink:0}}>{user.flag||"🏳️"}</span>
+
+        {/* User pill */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:7,
+          padding:"6px 12px", borderRadius:100,
+          border:`1px solid ${C.border2}`,
+          background:C.surface,
+          fontSize:"0.72rem", fontWeight:700, color:C.text,
+          fontFamily:"'Syne',sans-serif", letterSpacing:0.5,
+          flexShrink:0, maxWidth:130, overflow:"hidden",
+          boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06)",
+          transition:"border-color 0.2s, background 0.2s",
+        }}>
+          <span style={{flexShrink:0,fontSize:"1rem"}}>{user.flag||"🏳️"}</span>
           <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nickname}</span>
         </div>
       </div>
-      <style>{`@keyframes fbPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.35;transform:scale(0.65)}}@keyframes fbShimmer{0%{left:-130%}100%{left:210%}}`}</style>
+
+      <style>{`
+        @keyframes navShimmer    { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes navAccentLine { 0%,100%{opacity:0.4;background-position:0% 0} 50%{opacity:0.9;background-position:100% 0} }
+        @keyframes xpFillShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(300%)} }
+        @keyframes fbPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.35;transform:scale(0.65)}}
+        @keyframes fbShimmer{0%{left:-130%}100%{left:210%}}
+      `}</style>
     </nav>
   );
 }
@@ -556,25 +671,37 @@ export default function Home() {
       <BgCanvas/>
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
-<div style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:900,margin:"0 auto",boxSizing:"border-box"}}>
+      <div style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:900,margin:"0 auto",boxSizing:"border-box"}}>
 
-        {/* Hero: text left + 24px, trophy in-flow right */}
-        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",paddingTop:28,paddingLeft:24,paddingRight:16}}>
-          <div style={{flex:1,minWidth:0}}>
-            <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.6rem,8vw,4.5rem)",lineHeight:0.88,letterSpacing:2,margin:0}}>
+        {/* ── HERO ── generous horizontal padding, ball right-aligned */}
+        <div style={{
+          display:"flex", alignItems:"flex-start", justifyContent:"space-between",
+          paddingTop:32, paddingLeft:32, paddingRight:28, gap:16,
+        }}>
+          <div style={{flex:1,minWidth:0,paddingRight:8}}>
+            <h1 style={{
+              fontFamily:"'Bebas Neue',sans-serif",
+              fontSize:"clamp(2.8rem,9vw,5rem)",
+              lineHeight:0.88, letterSpacing:2, margin:0,
+            }}>
               <span style={{display:"block"}}>YOUR</span>
               <span style={{display:"block",WebkitTextStroke:`2px ${C.accent}`,color:"transparent"}}>FOOTBALL</span>
               <span style={{display:"block"}}>HOME</span>
             </h1>
-            <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.7,margin:"16px 0 0",maxWidth:360}}>
+            <p style={{
+              fontFamily:"'Syne',sans-serif",
+              fontSize:"0.92rem", color:C.muted, lineHeight:1.75,
+              margin:"18px 0 0", maxWidth:340,
+            }}>
               Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
             </p>
           </div>
-          <FifaTrophy/>
+          {/* Bouncing football instead of trophy */}
+          <BouncingFootball/>
         </div>
 
         {/* ── STAT BAR ── */}
-        <div style={{padding:"0 24px",boxSizing:"border-box",marginBottom:28}}>
+        <div style={{padding:"0 32px",boxSizing:"border-box",marginTop:24,marginBottom:28}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",border:`1px solid ${C.border2}`,borderRadius:16,overflow:"hidden"}}>
             {[
               {num:`${doneCount}/${games.length}`, lbl:"Done"},
@@ -591,7 +718,7 @@ export default function Home() {
         </div>
 
         {/* ── REST OF CONTENT ── */}
-        <div style={{padding:"0 24px 100px",boxSizing:"border-box"}}>
+        <div style={{padding:"0 32px 100px",boxSizing:"border-box"}}>
           <MatchCard fixture={nextFixture} fallbackSecs={mockSecs}/>
           <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
           <div style={{display:"flex",flexDirection:"column",gap:12}}>

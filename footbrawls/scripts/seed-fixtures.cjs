@@ -3,8 +3,8 @@
 // Requires: npm install firebase-admin
 // Requires: GOOGLE_APPLICATION_CREDENTIALS env var pointing to your service account JSON
 // OR place serviceAccount.json in the same folder and it will auto-load
-
-const admin = require("firebase-admin");
+const { initializeApp, cert, applicationDefault } = require("firebase-admin/app");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const path  = require("path");
 const fs    = require("fs");
 
@@ -12,17 +12,17 @@ const fs    = require("fs");
 const saPath = path.join(__dirname, "serviceAccount.json");
 if (fs.existsSync(saPath)) {
   const serviceAccount = require(saPath);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+  initializeApp({
+    credential: cert(serviceAccount),
   });
 } else {
   // Falls back to GOOGLE_APPLICATION_CREDENTIALS env var
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+  initializeApp({
+    credential: applicationDefault(),
   });
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const FIXTURES = [
   // ── GROUP A ──────────────────────────────────────────────────────────────
@@ -135,8 +135,8 @@ async function seed() {
         fixtureId:  f.id,
         homeTeam:   f.home,
         awayTeam:   f.away,
-        kickoffAt:  admin.firestore.Timestamp.fromDate(ko),
-        locksAt:    admin.firestore.Timestamp.fromDate(new Date(ko - 3_600_000)),
+        kickoffAt:  Timestamp.fromDate(ko),
+        locksAt:    Timestamp.fromDate(new Date(ko - 3_600_000)),
         stage:      f.stage,
         status:     f.done ? "FT" : "NS",
         homeScore:  f.done ? (f.hs ?? null) : null,

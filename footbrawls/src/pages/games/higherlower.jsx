@@ -242,7 +242,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       const currentUser = getUser();
       const uid = userId || currentUser?.userId;
       if (uid && raw > 0) {
-        const result = await awardXP(uid, "higherLower", { rawXP: raw });
+        const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
         xp = result?.xpAwarded ?? raw;
       } else {
         xp = raw;

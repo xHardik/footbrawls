@@ -812,7 +812,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       if (won) {
         const user = getUser();
         if (user?.userId) {
-          const r = await awardXP(user.userId, "wordle", pts);
+          const r = await awardXP(user.userId, "wordle_correct", { rawXP: pts });
           xp = r?.xpAwarded ?? pts;
         }
       }

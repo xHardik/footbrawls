@@ -346,20 +346,16 @@ function ChatTab({ user, guild, tier, canChat }) {
   const memberCount = guild?.memberCount ?? 0;
   return (
     <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, padding:"16px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
-      {canChat ? (
-        <GuildChat guildCode={user.homeCountry} currentUid={user.userId} nickname={user.nickname} tier={tier.label} memberCount={memberCount} />
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", flex:1, gap:16, padding:"40px 0" }}>
-          <span style={{ fontSize:48 }}>🔒</span>
-          <div style={{ textAlign:"center" }}>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.4rem", letterSpacing:2, color:"var(--text)", marginBottom:8 }}>Chat Locked</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"0.8rem", color:"var(--muted)", lineHeight:1.5, maxWidth:280 }}>Earn <span style={{ color:"var(--accent)", fontWeight:700 }}>50 XP</span> to unlock guild chat. Play games to climb tiers.</div>
-          </div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 16px", borderRadius:99, background:"rgba(247,195,68,0.09)", border:"1px solid rgba(247,195,68,0.2)" }}>
-            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.65rem", color:"var(--accent)", fontWeight:700, letterSpacing:1 }}>YOU ARE: {tier.label}</span>
-          </div>
-        </div>
-      )}
+      <GuildChat 
+        guildCode={user.homeCountry} 
+        currentUid={user.userId} 
+        nickname={user.nickname} 
+        tier={tier.label} 
+        memberCount={memberCount} 
+        totalXP={user.totalXP || 0}
+        canChat={canChat}
+        currentFlag={user.flag}
+      />
     </div>
   );
 }

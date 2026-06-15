@@ -443,9 +443,22 @@ function WorldChat({ messages, user, navigate }) {
   const [sending,setSending] = useState(false);
   const [focused,setFocused] = useState(false);
   const [err,setErr]         = useState("");
-  const bottomRef            = useRef(null);
+  const containerRef         = useRef(null);
+  const isInitialRef         = useRef(true);
 
-  useEffect(()=>{ bottomRef.current?.scrollIntoView({behavior:"smooth"}); },[messages]);
+  useEffect(() => {
+    if (containerRef.current) {
+      if (isInitialRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        isInitialRef.current = false;
+      } else {
+        containerRef.current.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: "smooth"
+        });
+      }
+    }
+  }, [messages]);
 
   async function handleSend() {
     const text=input.trim();
@@ -480,7 +493,7 @@ function WorldChat({ messages, user, navigate }) {
           MY GUILD →
         </button>
       </div>
-      <div style={{height:"min(270px,50vh)",overflowY:"auto",padding:"12px 14px",scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.08) transparent",display:"flex",flexDirection:"column",gap:2}}>
+      <div ref={containerRef} style={{height:"min(270px,50vh)",overflowY:"auto",padding:"12px 14px",scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.08) transparent",display:"flex",flexDirection:"column",gap:2}}>
         {messages.length===0&&(
           <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,opacity:0.6}}>
             <div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,0.04)",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.5rem"}}>💬</div>
@@ -511,7 +524,6 @@ function WorldChat({ messages, user, navigate }) {
             </div>
           );
         })}
-        <div ref={bottomRef}/>
       </div>
       {err&&(
         <div style={{padding:"7px 16px",fontFamily:"'Space Mono',monospace",fontSize:"0.54rem",color:C.red,background:"rgba(232,64,64,0.07)",borderTop:`1px solid rgba(232,64,64,0.1)`,display:"flex",alignItems:"center",gap:6}}>

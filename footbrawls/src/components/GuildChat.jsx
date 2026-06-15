@@ -107,7 +107,8 @@ export default function GuildChat({
   const [sending,  setSending]  = useState(false);
   const [error,    setError]    = useState("");
   const [toast,    setToast]    = useState("");
-  const bottomRef = useRef(null);
+  const containerRef = useRef(null);
+  const isInitialRef = useRef(true);
   const inputRef  = useRef(null);
 
   // Everyone reads — no XP gate on the listener
@@ -127,7 +128,17 @@ export default function GuildChat({
   }, [guildCode]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior:"smooth" });
+    if (containerRef.current) {
+      if (isInitialRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        isInitialRef.current = false;
+      } else {
+        containerRef.current.scrollTo({
+          top: containerRef.current.scrollHeight,
+          behavior: "smooth"
+        });
+      }
+    }
   }, [messages]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2500); };
@@ -191,7 +202,7 @@ export default function GuildChat({
       </div>
 
       {/* Messages — visible to ALL users regardless of XP */}
-      <div style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column" }}>
+      <div ref={containerRef} style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column" }}>
         {loading && (
           <div style={{ display:"flex", justifyContent:"center", padding:20 }}>
             <div style={{ width:20, height:20, borderRadius:"50%", border:"2px solid rgba(255,255,255,0.07)", borderTopColor:"#F7C344", animation:"spin 0.7s linear infinite" }} />
@@ -207,7 +218,6 @@ export default function GuildChat({
         {messages.map(msg => (
           <MessageBubble key={msg.id} msg={msg} isSelf={msg.userId === currentUid} />
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {/* Error bar */}

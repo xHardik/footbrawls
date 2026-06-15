@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { getDailySeed, getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { PLAYERS } from "../../lib/players.js";
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 15;
@@ -214,7 +215,7 @@ function StreakBar({ streak }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function HigherLower({ players = [], userId, onComplete }) {
+export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const [round, setRound]         = useState(0);
   const [streak, setStreak]       = useState(0);
   const [gameOver, setGameOver]   = useState(false);

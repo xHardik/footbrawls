@@ -18,6 +18,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getDailyTrail, getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { PLAYERS } from "../../lib/players.js";
 
 const MAX_STEPS = 6;
 const XP_BY_STEPS = { 1: 20, 2: 20, 3: 20, 4: 15, 5: 10, 6: 5 };
@@ -354,7 +355,7 @@ function TeammatePicker({ club, players, clubIndex, usedPlayerIds, targetPlayer,
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function TransferTrail({ players = [], userId, onComplete }) {
+export default function TransferTrail({ players = PLAYERS, userId, onComplete }) {
   const { start, end } = useMemo(
     () => { const pd = getActivePuzzleDate(); return getDailyTrail(players, pd) || { start: players[0], end: players[11] }; },
     [players]

@@ -676,6 +676,44 @@ function StreakDots({ history, today }) {
   );
 }
 
+// Initialize Google AdBreak queue safely
+const adBreak = (options) => {
+  if (window.adBreak) {
+    window.adBreak(options);
+  } else {
+    // Fallback/Mock for local testing when AdSense is not loaded or in sandbox
+    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
+    if (options.beforeAd) options.beforeAd();
+    
+    // Simulate user behavior: automatically grant reward in development
+    setTimeout(() => {
+      if (options.type === 'reward') {
+        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
+        if (confirmReward) {
+          if (options.adViewed) options.adViewed();
+        } else {
+          if (options.adDismissed) options.adDismissed();
+        }
+      } else {
+        if (options.adViewed) options.adViewed();
+      }
+      if (options.afterAd) options.afterAd();
+      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
+    }, 1000);
+  }
+};
+
+// Initialize AdConfig safely
+if (typeof window !== "undefined") {
+  window.adConfig = window.adConfig || function() {
+    (window.adConfig.q = window.adConfig.q || []).push(arguments);
+  };
+  window.adConfig({
+    preloadAdBreaks: 'on',
+    sound: 'on'
+  });
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
@@ -697,6 +735,13 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [history,   setHistory]   = useState(loadHistory);
   const [revealing, setRevealing] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  
+  // Rewarded ad states
+  const [maxGuesses, setMaxGuesses] = useState(MAX_GUESSES);
+  const [rewardHints, setRewardHints] = useState([]);
+  const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
+  const [isAdLoading, setIsAdLoading] = useState(false);
+  
   const inputRef = useRef(null);
 
   const launch     = new Date("2026-06-01T00:00:00");
@@ -720,8 +765,11 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       setSolved(saved.solved);
       setScore(saved.score || 0);
       setXpAwarded(saved.xpAwarded || 0);
-      setGameOver(true);
+      setGameOver(saved.gameOver !== undefined ? saved.gameOver : true);
       setShowModal(false);
+      if (saved.maxGuesses) setMaxGuesses(saved.maxGuesses);
+      if (saved.hasWatchedExtraTryAd) setHasWatchedExtraTryAd(saved.hasWatchedExtraTryAd);
+      if (saved.rewardHints) setRewardHints(saved.rewardHints);
     }
   }, [targetName, puzzleDate]);
 
@@ -748,7 +796,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
     const newGuesses = [...guesses, newGuess];
     const won  = results.every(r => r === "correct");
-    const lost = !won && newGuesses.length >= MAX_GUESSES;
+    const lost = !won && newGuesses.length >= maxGuesses;
     const over = won || lost;
 
     setGuesses(newGuesses);
@@ -772,15 +820,113 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       const { stats: s, history: h } = saveResult(puzzleDate, calcScore);
       setStats(s); setHistory(h);
       localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
-        guesses: newGuesses, solved: won, score: calcScore, xpAwarded: xp,
+        guesses: newGuesses,
+        solved: won,
+        score: calcScore,
+        xpAwarded: xp,
+        gameOver: true,
+        maxGuesses,
+        hasWatchedExtraTryAd,
+        rewardHints
       }));
     }
 
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
+  function unlockNextPremiumHint() {
+    if (!target) return;
+    const hints = [];
+    if (target.club) hints.push(`Plays for ${target.club}`);
+    if (target.age && target.foot) hints.push(`Age: ${target.age} · Foot: ${target.foot}`);
+    if (targetName) hints.push(`First letter of name is "${targetName[0]}"`);
+
+    // Find the first hint not yet in rewardHints
+    const nextHint = hints.find(h => !rewardHints.includes(h));
+    if (nextHint) {
+      const newRewardHints = [...rewardHints, nextHint];
+      setRewardHints(newRewardHints);
+      showMsg("Hint unlocked successfully!", "success");
+
+      // Update local storage save state if game is already saved
+      const saved = JSON.parse(localStorage.getItem(`footbrawls_wordle_${puzzleDate}`) || "null");
+      if (saved) {
+        localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
+          ...saved,
+          rewardHints: newRewardHints
+        }));
+      }
+    } else {
+      showMsg("No more hints available for this player!", "info");
+    }
+  }
+
+  function triggerRewardedAdForHint() {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: "get-premium-hint",
+      beforeAd: () => {
+        setIsAdLoading(true);
+      },
+      afterAd: () => {
+        setIsAdLoading(false);
+      },
+      adDismissed: () => {
+        showMsg("Ad dismissed. No hint unlocked.", "error");
+      },
+      adViewed: () => {
+        unlockNextPremiumHint();
+      },
+      adBreakDone: () => {
+        setIsAdLoading(false);
+      }
+    });
+  }
+
+  function triggerRewardedAdForExtraTry() {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: "get-extra-try",
+      beforeAd: () => {
+        setIsAdLoading(true);
+      },
+      afterAd: () => {
+        setIsAdLoading(false);
+      },
+      adDismissed: () => {
+        showMsg("Ad dismissed. No extra attempt granted.", "error");
+      },
+      adViewed: () => {
+        const newMaxGuesses = maxGuesses + 1;
+        setMaxGuesses(newMaxGuesses);
+        setGameOver(false);
+        setHasWatchedExtraTryAd(true);
+        showMsg("Granted 1 Extra Attempt! Keep guessing!", "success");
+
+        // Update local storage to reflect game is active again
+        localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
+          guesses,
+          solved: false,
+          score: 0,
+          xpAwarded: 0,
+          gameOver: false,
+          maxGuesses: newMaxGuesses,
+          hasWatchedExtraTryAd: true,
+          rewardHints
+        }));
+
+        setTimeout(() => inputRef.current?.focus(), 100);
+      },
+      adBreakDone: () => {
+        setIsAdLoading(false);
+      }
+    });
+  }
+
   function handleShare() {
-    const attemptsLabel = solved ? `${guesses.length}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
+    const attemptsLabel = solved ? `${guesses.length}/${maxGuesses}` : `X/${maxGuesses}`;
     const emoji = guesses.map(g =>
       g.results.map(r => r === "correct" ? "🟩" : r === "present" ? "🟨" : "⬛").join("")
     ).join("\n");
@@ -795,7 +941,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     }
   }
 
-  const remaining = MAX_GUESSES - guesses.length;
+  const remaining = maxGuesses - guesses.length;
 
   return (
     <div style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
@@ -828,7 +974,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5 }}>
             Player Wordle
           </h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>Guess the footballer's name in {MAX_GUESSES} tries</p>
+          <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>Guess the footballer's name in {maxGuesses} tries</p>
         </div>
 
         {/* ── PUZZLE BAR ── */}
@@ -849,11 +995,21 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         </div>
 
-        {/* ── HINT ── */}
-        {hint && (
-          <div className="wdl-hint">
-            <span className="wdl-hint-icon">💡</span>
-            <span className="wdl-hint-text"><strong>Hint:</strong> {hint}</span>
+        {/* ── HINTS ── */}
+        {(hint || rewardHints.length > 0) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+            {hint && (
+              <div className="wdl-hint">
+                <span className="wdl-hint-icon">💡</span>
+                <span className="wdl-hint-text"><strong>Hint:</strong> {hint}</span>
+              </div>
+            )}
+            {rewardHints.map((rh, idx) => (
+              <div key={idx} className="wdl-hint" style={{ borderLeft: "3px solid var(--accent3)", background: "rgba(168,85,247,0.12)" }}>
+                <span className="wdl-hint-icon">🎁</span>
+                <span className="wdl-hint-text"><strong>Ad Reward Hint:</strong> {rh}</span>
+              </div>
+            ))}
           </div>
         )}
 
@@ -910,15 +1066,38 @@ export default function Wordle({ players = PLAYERS, onBack }) {
                 placeholder="Enter player name…"
                 maxLength={targetName.length || 15}
                 autoComplete="off"
-                disabled={gameOver}
+                disabled={gameOver || isAdLoading}
               />
-              <button className="wdl-submit" onClick={handleSubmit} disabled={!input.trim() || gameOver}>
+              <button className="wdl-submit" onClick={handleSubmit} disabled={!input.trim() || gameOver || isAdLoading}>
                 Submit
               </button>
             </div>
           )}
 
-          <div className="wdl-attempt-counter">Attempts: {guesses.length} / {MAX_GUESSES}</div>
+          {!gameOver && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+              <button
+                className="wdl-btn"
+                style={{
+                  background: "linear-gradient(135deg, rgba(247,195,68,0.15), rgba(168,85,247,0.15))",
+                  border: "1px solid rgba(168,85,247,0.3)",
+                  color: "var(--accent)",
+                  fontSize: "0.8rem",
+                  padding: "6px 14px",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px"
+                }}
+                onClick={triggerRewardedAdForHint}
+                disabled={isAdLoading}
+              >
+                <span>{isAdLoading ? "⏳" : "📺"}</span> Watch Ad for Hint
+              </button>
+            </div>
+          )}
+
+          <div className="wdl-attempt-counter">Attempts: {guesses.length} / {maxGuesses}</div>
         </div>
 
         {/* ── CONTROLS ── */}
@@ -948,6 +1127,30 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             {solved && xpAwarded > 0 && (
               <div className="wdl-xp-badge">+{xpAwarded} XP earned</div>
             )}
+            
+            {!solved && !hasWatchedExtraTryAd && (
+              <div style={{ margin: "20px 0", padding: 16, background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: 12 }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 12 }}>
+                  Want another try? Watch a quick ad to get <strong>1 extra attempt</strong>!
+                </p>
+                <button
+                  className="wdl-btn"
+                  style={{
+                    background: "var(--accent3)",
+                    color: "#fff",
+                    width: "100%",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 16px rgba(168,85,247,0.28)",
+                    padding: "12px"
+                  }}
+                  onClick={triggerRewardedAdForExtraTry}
+                  disabled={isAdLoading}
+                >
+                  📺 {isAdLoading ? "Loading Ad..." : "Watch Ad for +1 Try"}
+                </button>
+              </div>
+            )}
+
             <div className="wdl-result-actions">
               <button className="wdl-btn wdl-btn-share" onClick={handleShare}>📤 Share</button>
               <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>

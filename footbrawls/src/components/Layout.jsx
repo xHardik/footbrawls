@@ -61,7 +61,6 @@ function isGameDoneToday(key) {
   try {
     const today = getTodayKey();
     const data = JSON.parse(localStorage.getItem(key) || '{}');
-    // WhoAreYa stores {date, won} — others store {[date]: ...}
     if (data.date === today) return true;
     if (data[today]) return true;
     return false;
@@ -74,9 +73,8 @@ export default function Layout({ children }) {
   const user      = getUser();
   const [guild, setGuild]         = useState(null);
   const [userXP, setUserXP]       = useState(0);
-  const [sidebarOpen, setSidebar] = useState(false);
 
-  // ── Live guild data ──
+  // Live guild data
   useEffect(() => {
     injectFonts();
     if (!user?.homeCountry) return;
@@ -87,12 +85,22 @@ export default function Layout({ children }) {
     return () => unsub();
   }, [user?.homeCountry]);
 
-  // ── Daily XP from localStorage ──
+  // Daily XP from localStorage
   useEffect(() => {
     const today = getTodayKey();
     const userData = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
     if (userData.dailyXPDate === today) setUserXP(userData.dailyXP || 0);
   }, [location.pathname]);
+
+  // Inject CSS
+  useEffect(() => {
+    if (!document.getElementById("ly-css")) {
+      const s = document.createElement("style");
+      s.id = "ly-css";
+      s.textContent = CSS;
+      document.head.appendChild(s);
+    }
+  }, []);
 
   const curse      = guild?.currentCurse || guild?.currentBlessing || null;
   const curseInfo  = CURSE_COLORS[curse] || CURSE_COLORS[null];
@@ -100,90 +108,86 @@ export default function Layout({ children }) {
   const xpPercent  = Math.min(100, (userXP / 200) * 100);
 
   return (
-    <div style={s.root}>
+    <div className="ly-root">
 
-      {/* ── Mobile Hamburger ── */}
-      <button style={s.hamburger} onClick={() => setSidebar(!sidebarOpen)}>
-        {sidebarOpen ? '✕' : '☰'}
-      </button>
+      {/* Sleek Mobile Navigation Header Bar */}
+      <div className="ly-mobile-nav">
+        <button className="ly-back-btn" onClick={() => navigate('/')}>
+          ← BACK
+        </button>
+        <div className="ly-mobile-title">FOOTBRAWLS</div>
+        <div style={{ width: 62 }}></div> {/* Spacer to balance layout */}
+      </div>
 
-      {/* ── Sidebar ── */}
-      <div style={{
-        ...s.sidebar,
-        transform: sidebarOpen ? 'translateX(0)' : undefined,
-      }}>
-
+      {/* Sidebar (Only shown on Desktop, hidden on Mobile) */}
+      <div className="ly-sidebar">
         {/* Logo */}
-        <div style={s.logo} onClick={() => navigate('/')}>
-          ⚽ <span style={s.logoText}>Footbrawls</span>
+        <div className="ly-logo" onClick={() => navigate('/')}>
+          ⚽ <span className="ly-logo-text">Footbrawls</span>
         </div>
 
-        {/* User */}
+        {/* User Card */}
         {user && (
-          <div style={s.userCard}>
-            <div style={s.userName}>{user.nickname}</div>
-            <div style={s.userMeta}>
-              {/* country flag from COUNTRIES */}
-              <span style={s.tier}>{user.tier || 'lurker'}</span>
+          <div className="ly-user-card">
+            <div className="ly-user-name">{user.nickname}</div>
+            <div className="ly-user-meta">
+              <span className="ly-tier">{user.tier || 'lurker'}</span>
             </div>
           </div>
         )}
 
-        {/* Daily XP */}
-        <div style={s.section}>
-          <div style={s.sectionLabel}>Daily XP</div>
-          <div style={s.xpRow}>
-            <span style={s.xpVal}>{userXP}</span>
-            <span style={s.xpMax}>/200</span>
+        {/* Daily XP progress */}
+        <div className="ly-section">
+          <div className="ly-section-label">Daily XP</div>
+          <div className="ly-xp-row">
+            <span className="ly-xp-val">{userXP}</span>
+            <span className="ly-xp-max">/200</span>
           </div>
-          <div style={s.barBg}>
-            <div style={{ ...s.barFill, width: `${xpPercent}%`, background: '#00ff87' }} />
+          <div className="ly-bar-bg">
+            <div className="ly-bar-fill xp-fill" style={{ width: `${xpPercent}%` }} />
           </div>
         </div>
 
-        {/* Guild */}
+        {/* Guild Castle HP and Curse status */}
         {guild && (
-          <div style={s.section}>
-            <div style={s.sectionLabel}>Your Castle</div>
-            <div style={s.guildName}>🏰 {guild.name}</div>
-            <div style={s.barBg}>
-              <div style={{
-                ...s.barFill,
-                width: `${hpPercent}%`,
-            background: hpPercent > 60 ? C.green : hpPercent > 30 ? C.accent : C.red,
-              }} />
+          <div className="ly-section">
+            <div className="ly-section-label">Your Castle</div>
+            <div className="ly-guild-name">🏰 {guild.name}</div>
+            <div className="ly-bar-bg">
+              <div 
+                className="ly-bar-fill hp-fill" 
+                style={{ 
+                  width: `${hpPercent}%`,
+                  background: hpPercent > 60 ? C.green : hpPercent > 30 ? C.accent : C.red 
+                }} 
+              />
             </div>
-            <div style={s.hpLabel}>{guild.castleHP?.toLocaleString()} / {guild.castleHPCap?.toLocaleString()} HP</div>
+            <div className="ly-hp-label">{guild.castleHP?.toLocaleString()} / {guild.castleHPCap?.toLocaleString()} HP</div>
 
-            {/* Curse */}
-            <div style={{ ...s.curseBadge, borderColor: curseInfo.color, color: curseInfo.color }}>
+            <div className="ly-curse-badge" style={{ borderColor: curseInfo.color, color: curseInfo.color }}>
               {curseInfo.icon} {curseInfo.label}
             </div>
           </div>
         )}
 
-        {/* Games */}
-        <div style={s.section}>
-          <div style={s.sectionLabel}>Games</div>
-          <div style={s.gameList}>
+        {/* Games list with status */}
+        <div className="ly-section">
+          <div className="ly-section-label">Games</div>
+          <div className="ly-game-list">
             {GAMES.map(game => {
               const done    = isGameDoneToday(game.key);
               const active  = location.pathname === game.path;
               return (
                 <div
                   key={game.path}
-                  style={{
-                    ...s.gameItem,
-                background: active ? C.accentDim : 'transparent',
-                borderColor: active ? C.accent : C.border,
-                  }}
-                  onClick={() => { navigate(game.path); setSidebar(false); }}
+                  className={`ly-game-item ${active ? 'active' : ''}`}
+                  onClick={() => navigate(game.path)}
                 >
-                  <span style={s.gameIcon}>{game.icon}</span>
-              <span style={{ ...s.gameName, color: active ? C.accent : done ? C.muted2 : C.text }}>
+                  <span className="ly-game-icon">{game.icon}</span>
+                  <span className={`ly-game-name ${active ? 'active' : done ? 'done' : ''}`}>
                     {game.name}
                   </span>
-                  <span style={s.gameXP}>
+                  <span className="ly-game-xp">
                     {done ? '✅' : `+${game.xp}`}
                   </span>
                 </div>
@@ -192,148 +196,321 @@ export default function Layout({ children }) {
           </div>
         </div>
 
-        {/* Guild room link */}
+        {/* Guild room button */}
         <div
-          style={s.guildBtn}
-          onClick={() => { navigate(`/guild/${user?.homeCountry}`); setSidebar(false); }}
+          className="ly-guild-btn"
+          onClick={() => navigate(`/guild/${user?.homeCountry}`)}
         >
           🏰 Guild Room
         </div>
-
       </div>
 
-      {/* ── Main Content ── */}
-      <div style={s.main}>
+      {/* Main Content Area */}
+      <div className="ly-main">
         {children}
       </div>
-
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div style={s.overlay} onClick={() => setSidebar(false)} />
-      )}
 
     </div>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-const s = {
-  root: {
-    display: 'flex',
-    minHeight: '100vh',
-    background: C.bg,
-    color: C.text,
-    fontFamily: "'Syne', sans-serif",
-  },
-  sidebar: {
-    width: 260,
-    minHeight: '100vh',
-    background: C.bg2,
-    borderRight: `1px solid ${C.border}`,
-    padding: '20px 14px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-    flexShrink: 0,
-    overflowY: 'auto',
-    position: 'sticky',
-    top: 0,
-    height: '100vh',
-    // Mobile: fixed overlay
-    '@media(max-width:768px)': {
-      position: 'fixed',
-      zIndex: 100,
-      transform: 'translateX(-100%)',
-      transition: 'transform 0.3s ease',
-    },
-  },
-  logo: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '8px 4px 16px',
-    cursor: 'pointer',
-    fontFamily:"'Bebas Neue',sans-serif",
-    fontSize:"1.7rem",
-    letterSpacing:3,
-    marginBottom: 8,
-  },
-  logoText: {
-    background:"linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%)",
-    WebkitBackgroundClip:"text",
-    WebkitTextFillColor:"transparent",
-    backgroundClip:"text",
-  },
-  userCard: {
-    padding: '10px 12px',
-    background: C.surface,
-    border: `1px solid ${C.border2}`,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  userName: { fontSize: 14, fontWeight: 700, marginBottom: 4, color: C.text },
-  userMeta: { display: 'flex', alignItems: 'center', gap: 6 },
-  tier: {
-    fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-    letterSpacing: 1, color: C.accent,
-    background: C.accentDim, padding: '2px 8px', borderRadius: 100,
-  },
-  section: {
-    padding: '12px 0',
-    borderTop: `1px solid ${C.border}`,
-    marginBottom: 4,
-  },
-  sectionLabel: {
-    fontFamily:"'Space Mono',monospace", fontSize:"0.62rem", fontWeight:700,
-    letterSpacing:3.5, textTransform:"uppercase", color:C.muted2, marginBottom: 12,
-  },
-  xpRow: { display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 },
-  xpVal: { fontFamily:"'Bebas Neue',sans-serif", fontSize: 22, fontWeight: 800, color: C.green, letterSpacing: 1 },
-  xpMax: { fontSize: 12, color: C.muted2 },
-  barBg: {
-    height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3,
-    overflow: 'hidden', marginBottom: 4,
-  },
-  barFill: { height: '100%', borderRadius: 3, transition: 'width 0.5s ease' },
-  guildName: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: C.muted },
-  hpLabel: { fontFamily:"'Space Mono',monospace", fontSize: 10, color: C.muted2, marginTop: 4, marginBottom: 8 },
-  curseBadge: {
-    display: 'inline-flex', alignItems: 'center', gap: 5,
-    padding: '4px 10px', borderRadius: 100, border: '1px solid',
-    fontSize: 11, fontWeight: 700, fontFamily:"'Space Mono',monospace",
-  },
-  gameList: { display: 'flex', flexDirection: 'column', gap: 3 },
-  gameItem: {
-    display: 'flex', alignItems: 'center', gap: 8,
-    padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-    border: '1px solid', transition: 'all 0.2s ease',
-  },
-  gameIcon: { fontSize: 14, width: 20, textAlign: 'center' },
-  gameName: { flex: 1, fontSize: 13, fontWeight: 600 },
-  gameXP:   { fontFamily:"'Space Mono',monospace", fontSize: 10, color: C.green, fontWeight: 700 },
-  guildBtn: {
-    marginTop: 'auto', padding: '12px 14px',
-    background: C.surface,
-    border: `1px solid ${C.border2}`,
-    borderRadius: 10, fontSize: 13, fontWeight: 700,
-    color: C.text, cursor: 'pointer', textAlign: 'center',
-  },
-  main: {
-    flex: 1,
-    minWidth: 0,
-    overflowX: 'hidden',
-  },
-  hamburger: {
-    display: 'none',
-    position: 'fixed', top: 10, left: 10, zIndex: 200,
-    background: C.surface, border: `1px solid ${C.border2}`,
-    color: C.text, width: 40, height: 40,
-    borderRadius: 8, fontSize: 16, cursor: 'pointer',
-    alignItems: 'center', justifyContent: 'center',
-    '@media(max-width:768px)': { display: 'flex' },
-  },
-  overlay: {
-    display: 'none',
-    position: 'fixed', inset: 0, zIndex: 99,
-    background: 'rgba(0,0,0,0.7)',
-    '@media(max-width:768px)': { display: 'block' },
-  },
-};
+const CSS = `
+.ly-root {
+  display: flex;
+  min-height: 100vh;
+  background: #060810;
+  color: #F2F2F4;
+  font-family: 'Syne', sans-serif;
+  width: 100%;
+}
+
+/* Sidebar Styling */
+.ly-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #0c0f1a;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.ly-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px 16px;
+  cursor: pointer;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.7rem;
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+.ly-logo-text {
+  background: linear-gradient(110deg, #ffe680 0%, #F7C344 40%, #e8a800 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ly-user-card {
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  borderRadius: 10px;
+  margin-bottom: 8px;
+}
+
+.ly-user-name {
+  font-size: 14px;
+  fontWeight: 700;
+  marginBottom: 4px;
+  color: #F2F2F4;
+}
+
+.ly-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ly-tier {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #F7C344;
+  background: rgba(247, 195, 68, 0.12);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.ly-section {
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 4px;
+}
+
+.ly-section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: rgba(242, 242, 244, 0.28);
+  margin-bottom: 12px;
+}
+
+.ly-xp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.ly-xp-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #3DD68C;
+  letter-spacing: 1px;
+}
+
+.ly-xp-max {
+  font-size: 12px;
+  color: rgba(242, 242, 244, 0.28);
+}
+
+.ly-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.ly-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.ly-bar-fill.xp-fill {
+  background: #00ff87;
+}
+
+.ly-guild-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: rgba(242, 242, 244, 0.5);
+}
+
+.ly-hp-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: rgba(242, 242, 244, 0.28);
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.ly-curse-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+}
+
+.ly-game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ly-game-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s ease;
+}
+
+.ly-game-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ly-game-item.active {
+  background: rgba(247, 195, 68, 0.12);
+  border-color: #F7C344;
+}
+
+.ly-game-icon {
+  font-size: 14px;
+  width: 20px;
+  text-align: center;
+}
+
+.ly-game-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ly-game-name.active {
+  color: #F7C344;
+}
+
+.ly-game-name.done {
+  color: rgba(242, 242, 244, 0.28);
+}
+
+.ly-game-xp {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #3DD68C;
+  font-weight: 700;
+}
+
+.ly-guild-btn {
+  margin-top: auto;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #F2F2F4;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.ly-guild-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Main Content Area */
+.ly-main {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Mobile Nav Bar Header (Hidden on Desktop) */
+.ly-mobile-nav {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: rgba(12, 15, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.ly-back-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #F2F2F4;
+  padding: 6px 14px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+
+.ly-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ly-mobile-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 2.5px;
+  color: #F7C344;
+  line-height: 1;
+}
+
+/* Responsive Media Queries to disable side table when playing a game */
+@media (max-width: 768px) {
+  .ly-sidebar {
+    display: none !important;
+  }
+  
+  .ly-mobile-nav {
+    display: flex !important;
+  }
+  
+  .ly-main {
+    padding-top: 56px;
+  }
+}
+`;

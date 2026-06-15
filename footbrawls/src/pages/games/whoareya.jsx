@@ -182,6 +182,30 @@ const INJECTED_CSS = `
   }
 `;
 
+// Initialize Google AdBreak queue safely
+const adBreak = (options) => {
+  if (window.adBreak) {
+    window.adBreak(options);
+  } else {
+    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
+    if (options.beforeAd) options.beforeAd();
+    setTimeout(() => {
+      if (options.type === 'reward') {
+        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
+        if (confirmReward) {
+          if (options.adViewed) options.adViewed();
+        } else {
+          if (options.adDismissed) options.adDismissed();
+        }
+      } else {
+        if (options.adViewed) options.adViewed();
+      }
+      if (options.afterAd) options.afterAd();
+      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
+    }, 1000);
+  }
+};
+
 export default function WhoAreYa() {
   const [target, setTarget]             = useState(null);
   const [guesses, setGuesses]           = useState([]);
@@ -195,6 +219,12 @@ export default function WhoAreYa() {
   const [hints, setHints]               = useState({ position:false, country:false, club:false });
   const [animKey, setAnimKey]           = useState(0);
   const searchRef = useRef(null);
+
+  // Rewarded ad states
+  const [maxAttempts, setMaxAttempts] = useState(MAX_ATTEMPTS);
+  const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
+  const [adUnlockedHints, setAdUnlockedHints] = useState({ position: false, country: false, club: false });
+  const [isAdLoading, setIsAdLoading] = useState(false);
 
   useEffect(() => {
     if (!document.getElementById('wya-css')) {
@@ -213,8 +243,11 @@ export default function WhoAreYa() {
     if (saved.date === today) {
       setGuesses(saved.guesses || []);
       setGuessedNames((saved.guesses || []).map(g => g.cells[0].name));
-      setGameOver(true);
+      setGameOver(saved.gameOver !== undefined ? saved.gameOver : true);
       setWon(saved.won);
+      if (saved.maxAttempts) setMaxAttempts(saved.maxAttempts);
+      if (saved.hasWatchedExtraTryAd) setHasWatchedExtraTryAd(saved.hasWatchedExtraTryAd);
+      if (saved.adUnlockedHints) setAdUnlockedHints(saved.adUnlockedHints);
     }
   }, []);
 
@@ -259,12 +292,21 @@ export default function WhoAreYa() {
     setGuessedNames(newNames);
     setSelected(null); setSearch(''); setDropdown([]);
     const isWin  = selected.name === target.name;
-    const isLoss = !isWin && newGuesses.length >= MAX_ATTEMPTS;
+    const isLoss = !isWin && newGuesses.length >= maxAttempts;
     if (isWin || isLoss) {
       setGameOver(true); setWon(isWin);
       const score = isWin ? SCORES[newGuesses.length-1] : 0;
       const today = new Date().toISOString().split('T')[0];
-      localStorage.setItem('footbrawls_whoareya', JSON.stringify({ date:today, guesses:newGuesses, won:isWin, score }));
+      localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+        date: today,
+        guesses: newGuesses,
+        won: isWin,
+        score,
+        gameOver: true,
+        maxAttempts,
+        hasWatchedExtraTryAd,
+        adUnlockedHints
+      }));
       if (isWin) {
         const user = getUser();
         if (user) {
@@ -275,6 +317,63 @@ export default function WhoAreYa() {
     }
   }
 
+  function triggerRewardedAdForHint(hintKey) {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: `who-are-ya-hint-${hintKey}`,
+      beforeAd: () => setIsAdLoading(true),
+      afterAd: () => setIsAdLoading(false),
+      adDismissed: () => {
+        // ad dismissed
+      },
+      adViewed: () => {
+        setAdUnlockedHints(prev => {
+          const updated = { ...prev, [hintKey]: true };
+          const today = new Date().toISOString().split('T')[0];
+          const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
+          saved.adUnlockedHints = updated;
+          localStorage.setItem('footbrawls_whoareya', JSON.stringify({ ...saved, date: today }));
+          return updated;
+        });
+      },
+      adBreakDone: () => setIsAdLoading(false)
+    });
+  }
+
+  function triggerRewardedAdForExtraTry() {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: "who-are-ya-extra-try",
+      beforeAd: () => setIsAdLoading(true),
+      afterAd: () => setIsAdLoading(false),
+      adDismissed: () => {
+        // ad dismissed
+      },
+      adViewed: () => {
+        const newMaxAttempts = maxAttempts + 1;
+        setMaxAttempts(newMaxAttempts);
+        setGameOver(false);
+        setHasWatchedExtraTryAd(true);
+        
+        const today = new Date().toISOString().split('T')[0];
+        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+          guesses,
+          won: false,
+          date: today,
+          gameOver: false,
+          maxAttempts: newMaxAttempts,
+          hasWatchedExtraTryAd: true,
+          adUnlockedHints
+        }));
+        
+        setTimeout(() => searchRef.current?.focus(), 100);
+      },
+      adBreakDone: () => setIsAdLoading(false)
+    });
+  }
+
   if (!target) return (
     <div className="wya-spinner">
       <div className="wya-spinner-ring" />
@@ -282,7 +381,7 @@ export default function WhoAreYa() {
   );
 
   const attempts     = guesses.length;
-  const attemptsLeft = MAX_ATTEMPTS - attempts;
+  const attemptsLeft = maxAttempts - attempts;
 
   return (
     <>
@@ -317,7 +416,7 @@ export default function WhoAreYa() {
               </span>
             </div>
             <div className="wya-track">
-              {Array.from({ length:MAX_ATTEMPTS }).map((_,i) => {
+              {Array.from({ length:maxAttempts }).map((_,i) => {
                 const filled    = i < attempts;
                 const isWinLast = won && i === attempts-1;
                 return (
@@ -336,9 +435,33 @@ export default function WhoAreYa() {
 
           {/* Hints */}
           <div className="wya-hints">
-            <HintCard icon="🎽" label="Position" value={target.position} revealed={hints.position} unlockAt={2} />
-            <HintCard icon="🌍" label="Country"  value={`${target.flag} ${target.country}`} revealed={hints.country}  unlockAt={5} />
-            <HintCard icon="🏟️" label="Club"     value={target.club}     revealed={hints.club}     unlockAt={7} />
+            <HintCard 
+              icon="🎽" 
+              label="Position" 
+              value={target.position} 
+              revealed={hints.position || adUnlockedHints.position} 
+              unlockAt={2} 
+              onAdUnlock={() => !(hints.position || adUnlockedHints.position) && triggerRewardedAdForHint('position')}
+              isAdLoading={isAdLoading}
+            />
+            <HintCard 
+              icon="🌍" 
+              label="Country"  
+              value={`${target.flag} ${target.country}`} 
+              revealed={hints.country || adUnlockedHints.country}  
+              unlockAt={5} 
+              onAdUnlock={() => !(hints.country || adUnlockedHints.country) && triggerRewardedAdForHint('country')}
+              isAdLoading={isAdLoading}
+            />
+            <HintCard 
+              icon="🏟️" 
+              label="Club"     
+              value={target.club}     
+              revealed={hints.club || adUnlockedHints.club}     
+              unlockAt={7} 
+              onAdUnlock={() => !(hints.club || adUnlockedHints.club) && triggerRewardedAdForHint('club')}
+              isAdLoading={isAdLoading}
+            />
           </div>
 
           {/* Search */}
@@ -446,6 +569,29 @@ export default function WhoAreYa() {
                   )}
                 </div>
               )}
+              {!won && !hasWatchedExtraTryAd && (
+                <div style={{ margin: "20px 0", padding: 16, background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: 12 }}>
+                  <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 12, fontFamily: "'Space Mono', monospace" }}>
+                    Want another try? Watch a quick ad to get <strong>1 extra attempt</strong>!
+                  </p>
+                  <button
+                    className="wya-btn wya-btn-active"
+                    style={{
+                      background: "var(--accent)",
+                      color: "#060810",
+                      width: "100%",
+                      justifyContent: "center",
+                      boxShadow: "0 4px 16px rgba(247,195,68,0.28)",
+                      padding: "12px",
+                      fontFamily: "'Space Mono', monospace"
+                    }}
+                    onClick={triggerRewardedAdForExtraTry}
+                    disabled={isAdLoading}
+                  >
+                    📺 {isAdLoading ? "Loading Ad..." : "Watch Ad for +1 Try"}
+                  </button>
+                </div>
+              )}
               <p className="wya-next-up">New puzzle tomorrow ⏳</p>
             </div>
           )}
@@ -459,7 +605,7 @@ export default function WhoAreYa() {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
-function HintCard({ icon, label, value, revealed, unlockAt }) {
+function HintCard({ icon, label, value, revealed, unlockAt, onAdUnlock, isAdLoading }) {
   const posC = POS_COLORS[value];
   return (
     <div className={`wya-hint${revealed?' revealed':''}`}
@@ -469,7 +615,15 @@ function HintCard({ icon, label, value, revealed, unlockAt }) {
         <div className="wya-hint-label">{label}</div>
         {revealed
           ? <div className="wya-hint-val" style={posC?{color:posC.text}:{}}>{value}</div>
-          : <div className="wya-hint-lock">@ guess {unlockAt}</div>}
+          : (
+            <div 
+              className="wya-hint-lock" 
+              onClick={onAdUnlock}
+              style={{ cursor: isAdLoading ? 'default' : 'pointer', textDecoration: 'underline', color: 'var(--accent)' }}
+            >
+              {isAdLoading ? '⏳...' : '📺 Unlock'}
+            </div>
+          )}
       </div>
     </div>
   );

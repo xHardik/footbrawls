@@ -18,24 +18,6 @@ import { PLAYERS } from "../../lib/players.js";
 const GAME_ID = "higherLower";
 const MAX_XP   = 15;
 
-const C = {
-  bg:      "#060810",
-  bg2:     "#0c0f1a",
-  surface: "rgba(255,255,255,0.04)",
-  surface2:"rgba(255,255,255,0.07)",
-  surface3:"rgba(255,255,255,0.11)",
-  border:  "rgba(255,255,255,0.07)",
-  border2: "rgba(255,255,255,0.13)",
-  accent:  "#F7C344",
-  accentDim: "rgba(247,195,68,0.12)",
-  green:   "#3DD68C",
-  red:     "#E84040",
-  blue:    "#4F8EF7",
-  text:    "#F2F2F4",
-  muted:   "rgba(242,242,244,0.5)",
-  muted2:  "rgba(242,242,244,0.28)",
-};
-// Attributes to compare — shown one at a time, randomly selected per round
 const ATTRIBUTES = [
   { key: "age",         label: "Age",          unit: "yrs",  format: (v) => v },
   { key: "caps",        label: "Int'l Caps",   unit: "",     format: (v) => v },
@@ -46,8 +28,6 @@ const ATTRIBUTES = [
 function getAttrForRound(roundIndex) {
   return ATTRIBUTES[roundIndex % ATTRIBUTES.length];
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getSequencedPlayer(players, roundOffset) {
   const seed = getDailySeed();
@@ -61,65 +41,24 @@ function formatValue(attr, player) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function PlayerCard({ player, attr, revealed, isRight, answer, animState }) {
-  const bgColor = revealed
-    ? animState === "correct" ? `${C.green}1F` : `${C.red}1F`
-    : C.surface2;
-  const borderColor = revealed
-    ? animState === "correct" ? `${C.green}59` : `${C.red}59`
-    : C.border2;
+function PlayerCard({ player, attr, revealed, isRight, animState }) {
+  let cardClass = "hl-player-card";
+  if (revealed) {
+    if (animState === "correct") cardClass += " hl-correct";
+    else if (animState === "wrong") cardClass += " hl-wrong";
+  }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        background: bgColor,
-        border: `1px solid ${borderColor}`,
-        borderRadius: 14,
-        padding: "16px 12px",
-        textAlign: "center",
-        transition: "all 0.3s",
-        minHeight: 160,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      <div style={{ fontSize: 28 }}>{player?.flag || "🏳️"}</div>
-      <div
-        style={{
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700,
-          fontSize: 15,
-          color: C.text,
-          letterSpacing: 0.3,
-          lineHeight: 1.2,
-          textAlign: "center",
-        }}
-      >
-        {player?.name}
+    <div className={cardClass}>
+      <div className="hl-player-flag-container">
+        <span className="hl-player-flag-sticker">{player?.flag || "🏳️"}</span>
       </div>
-      <div style={{ fontSize: 11, color: C.muted2 }}>{player?.club}</div>
-      <div style={{ fontSize: 11, color: C.muted }}>{player?.position}</div>
+      <div className="hl-player-name">{player?.name}</div>
+      <div className="hl-player-club">{player?.club}</div>
+      <div className="hl-player-pos">{player?.position}</div>
 
       {/* Value */}
-      <div
-        style={{
-          marginTop: 8,
-          background: C.bg2,
-          borderRadius: 8,
-          padding: "6px 14px",
-          fontSize: 13,
-          fontWeight: 700,
-          color: revealed ? C.text : C.muted2,
-          fontFamily: "'Barlow Condensed', sans-serif",
-          letterSpacing: 1,
-          minWidth: 80,
-        }}
-      >
+      <div className={`hl-player-value ${revealed || !isRight ? 'revealed' : 'hidden'}`}>
         {revealed || !isRight ? formatValue(attr, player) : "???"}
       </div>
     </div>
@@ -128,54 +67,22 @@ function PlayerCard({ player, attr, revealed, isRight, answer, animState }) {
 
 function ChoiceButtons({ onHigher, onLower, disabled }) {
   return (
-    <div style={{ display: "flex", gap: 10, margin: "0 16px" }}>
+    <div className="hl-choice-row">
       <button
         onClick={onHigher}
         disabled={disabled}
-        style={{
-          flex: 1,
-          background: `${C.green}1A`,
-          border: `1px solid ${C.green}4D`,
-          borderRadius: 12,
-          padding: "14px",
-          color: C.green,
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: disabled ? "default" : "pointer",
-          opacity: disabled ? 0.5 : 1,
-          fontFamily: "'DM Sans', sans-serif",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 3,
-        }}
+        className="hl-choice-btn hl-higher-btn"
       >
-        <span style={{ fontSize: 22 }}>↑</span>
-        Higher
+        <span className="hl-choice-icon">↑</span>
+        <span className="hl-choice-label">Higher</span>
       </button>
       <button
         onClick={onLower}
         disabled={disabled}
-        style={{
-          flex: 1,
-          background: `${C.red}1A`,
-          border: `1px solid ${C.red}4D`,
-          borderRadius: 12,
-          padding: "14px",
-          color: C.red,
-          fontSize: 15,
-          fontWeight: 700,
-          cursor: disabled ? "default" : "pointer",
-          opacity: disabled ? 0.5 : 1,
-          fontFamily: "'DM Sans', sans-serif",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 3,
-        }}
+        className="hl-choice-btn hl-lower-btn"
       >
-        <span style={{ fontSize: 22 }}>↓</span>
-        Lower
+        <span className="hl-choice-icon">↓</span>
+        <span className="hl-choice-label">Lower</span>
       </button>
     </div>
   );
@@ -183,35 +90,43 @@ function ChoiceButtons({ onHigher, onLower, disabled }) {
 
 function StreakBar({ streak }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        justifyContent: "center",
-        fontFamily: "'DM Sans', sans-serif",
-        fontSize: 13,
-        color: C.muted,
-      }}
-    >
-      {Array.from({ length: Math.max(5, streak + 1) }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            width: i < streak ? 18 : 14,
-            height: i < streak ? 18 : 14,
-            borderRadius: "50%",
-            background: i < streak ? C.accent : C.surface2,
-            border: `2px solid ${i < streak ? C.accent : C.surface2}`,
-            boxShadow: i < streak ? `0 0 6px ${C.accent}80` : "none",
-            transition: "all 0.2s",
-          }}
-        />
-      ))}
-      <span style={{ marginLeft: 4 }}>Streak: {streak}</span>
+    <div className="hl-streak-container">
+      <div className="hl-streak-dots">
+        {Array.from({ length: Math.max(5, streak + 1) }).map((_, i) => (
+          <div
+            key={i}
+            className={`hl-streak-dot ${i < streak ? 'active' : ''}`}
+          />
+        ))}
+      </div>
+      <span className="hl-streak-text">Streak: {streak}</span>
     </div>
   );
 }
+
+// Initialize Google AdBreak queue safely
+const adBreak = (options) => {
+  if (window.adBreak) {
+    window.adBreak(options);
+  } else {
+    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
+    if (options.beforeAd) options.beforeAd();
+    setTimeout(() => {
+      if (options.type === 'reward') {
+        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
+        if (confirmReward) {
+          if (options.adViewed) options.adViewed();
+        } else {
+          if (options.adDismissed) options.adDismissed();
+        }
+      } else {
+        if (options.adViewed) options.adViewed();
+      }
+      if (options.afterAd) options.afterAd();
+      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
+    }, 1000);
+  }
+};
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -222,6 +137,33 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const [revealed, setRevealed]   = useState(false);
   const [animState, setAnimState] = useState(null); // "correct" | "wrong"
   const [xpAwarded, setXpAwarded] = useState(0);
+
+  // Rewarded ad states
+  const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
+  const [isAdLoading, setIsAdLoading] = useState(false);
+
+  function triggerRewardedAdToSaveStreak() {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: "higher-lower-save-streak",
+      beforeAd: () => setIsAdLoading(true),
+      afterAd: () => setIsAdLoading(false),
+      adDismissed: () => {
+        // ad dismissed
+      },
+      adViewed: () => {
+        const nextRound = round + 1;
+        setRound(nextRound);
+        setRevealed(false);
+        setAnimState(null);
+        setGameOver(false);
+        setHasWatchedReviveAd(true);
+        persist({ round: nextRound, streak, gameOver: false, xpAwarded, hasWatchedReviveAd: true });
+      },
+      adBreakDone: () => setIsAdLoading(false)
+    });
+  }
 
   // Load saved state
   useEffect(() => {
@@ -234,6 +176,17 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       setStreak(s.streak);
       setGameOver(s.gameOver);
       setXpAwarded(s.xpAwarded);
+      if (s.hasWatchedReviveAd) setHasWatchedReviveAd(s.hasWatchedReviveAd);
+    }
+  }, []);
+
+  // Inject CSS
+  useEffect(() => {
+    if (!document.getElementById("hl-css")) {
+      const s = document.createElement("style");
+      s.id = "hl-css";
+      s.textContent = CSS;
+      document.head.appendChild(s);
     }
   }, []);
 
@@ -244,7 +197,16 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   function persist(updates) {
     const puzzleDate = getActivePuzzleDate();
     const key = `hl_${puzzleDate}_state`;
-    localStorage.setItem(key, JSON.stringify(updates));
+    localStorage.setItem(key, JSON.stringify({
+      hasWatchedReviveAd,
+      ...updates
+    }));
+
+    if (updates.gameOver) {
+      const hlHistory = JSON.parse(localStorage.getItem('footbrawls_higherlower') || '{}');
+      hlHistory[puzzleDate] = { completed: true, streak: updates.streak, xpAwarded: updates.xpAwarded };
+      localStorage.setItem('footbrawls_higherlower', JSON.stringify(hlHistory));
+    }
   }
 
   async function handleChoice(choice) {
@@ -288,101 +250,57 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       setTimeout(() => {
         setGameOver(true);
         setXpAwarded(xp);
-        persist({ round, streak, gameOver: true, xpAwarded: xp });
+        persist({ round, streak, gameOver: true, xpAwarded: xp, hasWatchedReviveAd });
         if (onComplete) onComplete({ gameId: "higherLower", streak, xpAwarded: xp });
       }, 900);
     }
   }
 
+  const getStreakStickerClass = (strk) => {
+    if (strk >= 8) return 'sticker-legendary';
+    if (strk >= 5) return 'sticker-hot';
+    return 'sticker-good';
+  };
+
+  const getStreakStickerText = (strk) => {
+    if (strk >= 8) return 'LEGENDARY STREAK';
+    if (strk >= 5) return 'HOT STREAK';
+    return 'GREAT ATTEMPT';
+  };
+
   if (!playerA || !playerB) {
     return (
-      <div style={{ padding: 32, textAlign: "center", color: C.muted2 }}>
+      <div className="hl-page-loading">
         Loading…
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        background: C.bg,
-        minHeight: "100vh",
-        maxWidth: 430,
-        margin: "0 auto",
-        paddingBottom: 24,
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
+    <div className="hl-page">
+      <div className="hl-bg" />
+      <div className="hl-grid" />
+
       {/* Header */}
-      <div
-        style={{
-          padding: "16px 16px 12px",
-          borderBottom: `1px solid ${C.border2}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+      <div className="hl-header">
         <div>
-          <div
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: 20,
-              color: C.text,
-            }}
-          >
-            📊 HIGHER OR LOWER
-          </div>
-          <div style={{ fontSize: 11, color: C.muted2, marginTop: 2 }}>
+          <h2 className="hl-title">HIGHER OR LOWER</h2>
+          <div className="hl-sub">
             {gameOver ? `Final streak: ${streak}` : `Round ${round + 1} · Streak ${streak}`}
           </div>
         </div>
-        <div
-          style={{
-            background: C.accentDim,
-            border: `1px solid ${C.accent}40`,
-            borderRadius: 99,
-            padding: "3px 10px",
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.accent,
-          }}
-        >
-          Max 15 XP
+        <div className="hl-badge-xp">
+          MAX 15 XP
         </div>
       </div>
 
       {/* Attribute label */}
-      <div
-        style={{
-          textAlign: "center",
-          padding: "16px 16px 10px",
-          fontSize: 13,
-          color: C.muted,
-          fontWeight: 500,
-        }}
-      >
-        Does{" "}
-        <strong style={{ color: C.text }}>{playerB?.name}</strong>
-        {" "}have a{" "}
-        <span
-          style={{
-            color: C.blue,
-            fontWeight: 700,
-            background: `${C.blue}1F`,
-            padding: "1px 7px",
-            borderRadius: 6,
-          }}
-        >
-          {attr.label}
-        </span>{" "}
-        higher or lower than{" "}
-        <strong style={{ color: C.text }}>{playerA?.name}</strong>?
+      <div className="hl-prompt-row">
+        Does <strong className="hl-name-highlight">{playerB?.name}</strong> have a <span className="hl-attr-badge">{attr.label}</span> higher or lower than <strong className="hl-name-highlight">{playerA?.name}</strong>?
       </div>
 
       {/* Cards */}
-      <div style={{ display: "flex", gap: 10, padding: "0 16px", marginBottom: 16 }}>
+      <div className="hl-cards-row">
         <PlayerCard
           player={playerA}
           attr={attr}
@@ -390,21 +308,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           isRight={false}
           animState={null}
         />
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            width: 32,
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: 18,
-            color: C.surface2,
-          }}
-        >
-          VS
-        </div>
+        <div className="hl-vs-badge">VS</div>
         <PlayerCard
           player={playerB}
           attr={attr}
@@ -415,7 +319,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       </div>
 
       {/* Streak */}
-      <div style={{ marginBottom: 16 }}>
+      <div className="hl-streak-bar-wrapper">
         <StreakBar streak={streak} />
       </div>
 
@@ -427,49 +331,40 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           disabled={revealed}
         />
       ) : (
-        <div
-          style={{
-            margin: "0 16px",
-            background: `${C.red}14`,
-            border: `1px solid ${C.red}4D`,
-            borderRadius: 14,
-            padding: "20px 16px",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 36, marginBottom: 8 }}>
-            {streak >= 8 ? "🔥" : streak >= 5 ? "⚡" : "💪"}
+        <div className="hl-gameover-card">
+          <div className="hl-sticker-container">
+            <span className={`hl-sticker ${getStreakStickerClass(streak)}`}>
+              {getStreakStickerText(streak)}
+            </span>
           </div>
-          <div
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontSize: 22,
-              fontWeight: 700,
-              color: C.text,
-              marginBottom: 4,
-            }}
-          >
+
+          <div className="hl-result-title">
             Streak of {streak}
           </div>
-          <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>
+          <div className="hl-result-details">
             {playerB?.[attr.key]} vs {playerA?.[attr.key]} {attr.unit}
           </div>
+          
           {xpAwarded > 0 && (
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: C.accentDim,
-                border: `1px solid ${C.accent}4D`,
-                borderRadius: 99,
-                padding: "4px 14px",
-                fontSize: 13,
-                fontWeight: 700,
-                color: C.accent,
-              }}
-            >
-              +{xpAwarded} XP earned
+            <div className="hl-xp-badge-earned">
+              +{xpAwarded} XP EARNED
+            </div>
+          )}
+
+          {!hasWatchedReviveAd && (
+            <div className="hl-ad-section">
+              <p className="hl-ad-hint">
+                Streak ended? Save your streak and continue!
+              </p>
+              <button
+                type="button"
+                className="hl-ad-btn"
+                onClick={triggerRewardedAdToSaveStreak}
+                disabled={isAdLoading}
+              >
+                <span className="hl-ad-btn-icon">▶</span>
+                <span>{isAdLoading ? 'LOADING AD...' : 'SAVE STREAK'}</span>
+              </button>
             </div>
           )}
         </div>
@@ -477,3 +372,478 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     </div>
   );
 }
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@0,9..40,400;0,9..40,700;0,9..40,900&display=swap');
+
+.hl-page {
+  position: relative;
+  z-index: 1;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+  font-family: 'DM Sans', sans-serif;
+  color: #F0F0F0;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.hl-page-loading {
+  padding: 32px;
+  text-align: center;
+  color: rgba(242, 242, 244, 0.28);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.hl-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 50% at 50% -10%, rgba(79, 142, 247, 0.1) 0%, transparent 60%), #05070f;
+}
+
+.hl-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+  background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Header */
+.hl-header {
+  padding: 16px 0 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.hl-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  line-height: 1;
+  margin: 0 0 4px 0;
+  background: linear-gradient(135deg, #4F8EF7, #E84040);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hl-sub {
+  color: rgba(240,240,240,0.45);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.hl-badge-xp {
+  background: rgba(247, 195, 68, 0.1);
+  border: 1px solid rgba(247, 195, 68, 0.25);
+  border-radius: 99px;
+  padding: 4px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #F7C344;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Attribute label prompt */
+.hl-prompt-row {
+  text-align: center;
+  padding: 12px 8px 18px;
+  font-size: 0.88rem;
+  color: rgba(242, 242, 244, 0.5);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.hl-name-highlight {
+  color: #F2F2F4;
+}
+
+.hl-attr-badge {
+  color: #4F8EF7;
+  font-weight: 700;
+  background: rgba(79, 142, 247, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(79, 142, 247, 0.25);
+  margin: 0 4px;
+}
+
+/* Cards Row */
+.hl-cards-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.hl-player-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 12px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+}
+
+.hl-player-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent 60%); pointer-events: none;
+  border-radius: 16px;
+}
+
+.hl-player-card.hl-correct {
+  background: rgba(61, 214, 140, 0.06);
+  border-color: rgba(61, 214, 140, 0.35);
+  box-shadow: 0 0 16px rgba(61, 214, 140, 0.1);
+  transform: scale(1.02);
+}
+
+.hl-player-card.hl-wrong {
+  background: rgba(232, 64, 64, 0.06);
+  border-color: rgba(232, 64, 64, 0.35);
+  box-shadow: 0 0 16px rgba(232, 64, 64, 0.1);
+}
+
+.hl-player-flag-container {
+  margin-bottom: 8px;
+}
+
+.hl-player-flag-sticker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-size: 1.6rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.hl-player-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #F2F2F4;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.hl-player-club {
+  font-size: 0.7rem;
+  color: rgba(242, 242, 244, 0.3);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hl-player-pos {
+  font-size: 0.72rem;
+  color: rgba(242, 242, 244, 0.5);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.hl-player-value {
+  margin-top: auto;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  font-weight: 900;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+  min-width: 80px;
+  transition: all 0.3s;
+}
+
+.hl-player-value.revealed {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F2F2F4;
+}
+
+.hl-player-value.hidden {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: rgba(242, 242, 244, 0.25);
+}
+
+/* VS Badge */
+.hl-vs-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F7C344;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  box-shadow: 0 0 15px rgba(247, 195, 68, 0.15);
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+/* Streak Bar */
+.hl-streak-bar-wrapper {
+  margin-bottom: 24px;
+}
+
+.hl-streak-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  font-size: 0.78rem;
+  color: rgba(242, 242, 244, 0.5);
+  font-weight: 700;
+}
+
+.hl-streak-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.hl-streak-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  transition: all 0.3s ease;
+}
+
+.hl-streak-dot.active {
+  width: 12px;
+  height: 12px;
+  background: #F7C344;
+  border-color: #F7C344;
+  box-shadow: 0 0 8px rgba(247, 195, 68, 0.8);
+}
+
+.hl-streak-text {
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.7rem;
+}
+
+/* Choice Buttons */
+.hl-choice-row {
+  display: flex;
+  gap: 12px;
+}
+
+.hl-choice-btn {
+  flex: 1;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hl-choice-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none !important;
+}
+
+.hl-higher-btn {
+  background: rgba(61, 214, 140, 0.08);
+  border: 1px solid rgba(61, 214, 140, 0.35);
+  color: #3DD68C;
+}
+
+.hl-higher-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  background: rgba(61, 214, 140, 0.15);
+  box-shadow: 0 4px 20px rgba(61, 214, 140, 0.25);
+}
+
+.hl-lower-btn {
+  background: rgba(232, 64, 64, 0.08);
+  border: 1px solid rgba(232, 64, 64, 0.35);
+  color: #E84040;
+}
+
+.hl-lower-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  background: rgba(232, 64, 64, 0.15);
+  box-shadow: 0 4px 20px rgba(232, 64, 64, 0.25);
+}
+
+.hl-choice-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.hl-choice-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* Gameover Card */
+.hl-gameover-card {
+  background: rgba(232, 64, 64, 0.04);
+  border: 1px solid rgba(232, 64, 64, 0.25);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hl-sticker-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Custom Stickers instead of emojis */
+.hl-sticker {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 1.5px;
+  transform: rotate(-3deg);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  border: 2px solid;
+}
+
+.sticker-legendary {
+  background: linear-gradient(135deg, #F7C344, #F59E0B);
+  color: #05070f;
+  border-color: #FFF;
+  box-shadow: 0 0 15px rgba(247, 195, 68, 0.4);
+}
+
+.sticker-hot {
+  background: linear-gradient(135deg, #E84040, #A855F7);
+  color: #FFF;
+  border-color: #FFAAAA;
+  box-shadow: 0 0 15px rgba(232, 64, 64, 0.4);
+}
+
+.sticker-good {
+  background: linear-gradient(135deg, #4F8EF7, #06B6D4);
+  color: #FFF;
+  border-color: #AAE2FF;
+}
+
+.hl-result-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #F2F2F4;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+
+.hl-result-details {
+  font-size: 0.82rem;
+  color: rgba(242, 242, 244, 0.5);
+  margin-bottom: 16px;
+}
+
+.hl-xp-badge-earned {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(247, 195, 68, 0.1);
+  border: 1px solid rgba(247, 195, 68, 0.3);
+  border-radius: 99px;
+  padding: 6px 18px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #F7C344;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(247, 195, 68, 0.1);
+}
+
+/* Ad recovery section */
+.hl-ad-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hl-ad-hint {
+  font-size: 0.75rem;
+  color: rgba(242, 242, 244, 0.45);
+  margin: 0 0 12px 0;
+}
+
+.hl-ad-btn {
+  background: #F7C344;
+  border: none;
+  border-radius: 12px;
+  color: #060810;
+  padding: 12px 18px;
+  font-weight: 900;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  box-shadow: 0 4px 14px rgba(247, 195, 68, 0.25);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.hl-ad-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(247, 195, 68, 0.4);
+  background: #ffcf54;
+}
+
+.hl-ad-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hl-ad-btn-icon {
+  font-size: 0.85rem;
+}
+`;

@@ -1,185 +1,562 @@
-// src/pages/games/WhoAreYa.jsx
-// Football "Who Are Ya?" — guess the mystery WC 2026 player
-// UI updated to match Home.jsx / Guild.jsx design system
+// src/pages/games/whoareya.jsx
+// Football "Who Are Ya?" — Footbrawls edition
+// UI faithfully ported from cricket to football with Google AdBreak integration
 
 import { useState, useEffect, useRef } from 'react';
-import { getDailyPlayer } from '../../lib/dailySeed.js';
+import { getDailyPlayer, getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 import { PLAYERS } from '../../lib/players.js';
 
-// ─── Player Database (WC 2026 players) ────────────────────────────────────────
-const PLAYER_DB = PLAYERS;
-
 const MAX_ATTEMPTS = 8;
 const SCORES = [25, 23, 20, 17, 14, 11, 8, 5];
 
-const REGIONS = {
-  ARG:'SouthAmerica', BRA:'SouthAmerica', URU:'SouthAmerica', COL:'SouthAmerica',
-  FRA:'Europe', ESP:'Europe', GER:'Europe', ENG:'Europe', POR:'Europe',
-  NED:'Europe', BEL:'Europe', CHE:'Europe', POL:'Europe', CRO:'Europe',
-  USA:'NorthAmerica', CAN:'NorthAmerica', MEX:'NorthAmerica',
-  MAR:'Africa', NGA:'Africa', SEN:'Africa',
-  JPN:'Asia', KOR:'Asia', NOR:'Europe',
+const STATS_KEY = 'footbrawls_whoareya_stats';
+const HISTORY_KEY = 'footbrawls_whoareya_history';
+
+// ─── Continent/Region Map for Football Players ────────────────────────────────
+const COUNTRY_REGIONS = {
+  ARG: 'South America',
+  BRA: 'South America',
+  URU: 'South America',
+  COL: 'South America',
+  FRA: 'Europe',
+  NOR: 'Europe',
+  ENG: 'Europe',
+  POL: 'Europe',
+  ESP: 'Europe',
+  GER: 'Europe',
+  POR: 'Europe',
+  CRO: 'Europe',
+  NED: 'Europe',
+  CHE: 'Europe',
+  BEL: 'Europe',
+  USA: 'North America',
+  CAN: 'North America',
+  MEX: 'North America',
+  MAR: 'Africa',
+  NGA: 'Africa',
+  SEN: 'Africa',
+  EGY: 'Africa',
+  KOR: 'Asia',
+  JPN: 'Asia'
 };
-function getRegion(code) { return REGIONS[code] || 'Other'; }
 
-const POS_COLORS = {
-  Forward:    { bg:'rgba(232,64,64,0.12)',    border:'rgba(232,64,64,0.35)',    text:'#f87171' },
-  Midfielder: { bg:'rgba(79,142,247,0.12)',   border:'rgba(79,142,247,0.35)',   text:'#93c5fd' },
-  Defender:   { bg:'rgba(61,214,140,0.12)',   border:'rgba(61,214,140,0.35)',   text:'#6ee7b7' },
-  Goalkeeper: { bg:'rgba(247,195,68,0.12)',   border:'rgba(247,195,68,0.35)',   text:'#fcd34d' },
-};
+// ─── Injected CSS ──────────────────────────────────────────────────────────────
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
-// ─── Injected CSS (same design system as Home/Guild) ──────────────────────────
-const INJECTED_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+:root {
+  --bg:#05070f; --surface:rgba(255,255,255,.038); --border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.13); --accent:#F7C344; --accent2:#E84040;
+  --accent3:#4F8EF7; --green:#3DD68C; --text:#F0F0F0;
+  --muted:rgba(240,240,240,.45); --muted2:rgba(240,240,240,.25);
+  --card-radius:16px; --dd:#060a1a; --orange:#F97316;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif}
 
-  :root {
-    --bg:#060810; --bg2:#0c0f1a;
-    --surface:rgba(255,255,255,0.04); --surface2:rgba(255,255,255,0.07); --surface3:rgba(255,255,255,0.11);
-    --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13); --border3:rgba(255,255,255,0.2);
-    --accent:#F7C344; --accent-glow:rgba(247,195,68,0.35); --accent-dim:rgba(247,195,68,0.12);
-    --green:#3DD68C; --blue:#4F8EF7; --red:#E84040; --purple:#A855F7; --teal:#06B6D4;
-    --text:#F2F2F4; --muted:rgba(242,242,244,0.5); --muted2:rgba(242,242,244,0.28); --muted3:rgba(242,242,244,0.15);
-  }
+/* MAIN LAYOUT */
+.wya-page {
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  position: relative; overflow-x: hidden;
+  font-family: 'DM Sans', sans-serif;
+}
+.wya-bg-layer {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(249,115,22,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(247,195,68,0.035) 0%, transparent 45%);
+}
+.wya-noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  opacity: .018; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
 
-  .wya-page { min-height:100vh; background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; padding:0 0 100px; position:relative; overflow-x:hidden; }
+/* NAV */
+.wya-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; padding: 0 24px; position: relative; z-index: 10;
+  border-bottom: 1px solid var(--border);
+  background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
+}
+.wya-nav-logo {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--orange), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; border: none; cursor: pointer; text-transform: uppercase;
+}
+.wya-nav-tag {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--muted); border: 1px solid var(--border); padding: 5px 12px;
+  border-radius: 100px; display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.02);
+}
+.wya-fire-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--orange);
+  box-shadow: 0 0 8px var(--orange);
+}
+.wya-nav-right {
+  display: flex; gap: 8px;
+}
+.wya-nav-btn {
+  background: var(--surface); border: 1px solid var(--border); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.wya-nav-btn:hover {
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
+}
 
-  /* Background grid + blobs (identical to Home) */
-  .wya-bg { position:fixed;inset:0;z-index:0;pointer-events:none; }
-  .wya-grid { position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.055) 1px,transparent 1px);background-size:56px 56px;animation:fbGridPulse 6s ease-in-out infinite; }
-  .wya-grid::after { content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(247,195,68,0.18) 1px,transparent 1px);background-size:56px 56px;background-position:-0.5px -0.5px;animation:fbGridPulse 6s ease-in-out infinite reverse; }
-  .wya-blob1 { position:absolute;width:700px;height:500px;top:-200px;left:-100px;border-radius:50%;filter:blur(90px);opacity:0.4;background:radial-gradient(ellipse,rgba(168,85,247,0.22) 0%,rgba(79,142,247,0.1) 40%,transparent 70%);animation:fbDrift 20s ease-in-out infinite alternate; }
-  .wya-blob2 { position:absolute;width:500px;height:400px;bottom:-80px;right:-100px;border-radius:50%;filter:blur(90px);opacity:0.3;background:radial-gradient(ellipse,rgba(61,214,140,0.1) 0%,transparent 70%);animation:fbDrift 24s ease-in-out infinite alternate-reverse; }
-  .wya-noise { position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px; }
+/* MAIN CONTENT */
+.wya-main {
+  max-width: 580px; margin: 0 auto; padding: 32px 16px 80px;
+  position: relative; z-index: 5;
+}
+.wya-page-header {
+  text-align: center; margin-bottom: 28px;
+}
+.wya-page-header h1 {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.7rem; letter-spacing: 1.5px;
+  color: #fff; margin-bottom: 4px; line-height: 1;
+}
+.wya-page-header p {
+  font-size: .82rem; color: var(--muted); font-weight: 500;
+}
 
-  /* Nav */
-  .wya-nav { position:sticky;top:0;z-index:200;height:56px;padding:0 16px;background:rgba(6,8,16,0.35);backdrop-filter:blur(16px) saturate(1.3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
-  .wya-nav-back { background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;padding:0;display:flex;align-items:center;line-height:1; }
-  .wya-nav-title { font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;background:linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
-  .wya-nav-badge { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:1px;color:var(--accent);border:1px solid rgba(247,195,68,0.28);border-radius:999px;padding:3px 10px;background:rgba(247,195,68,0.09); }
+/* ATTEMPTS INDICATOR */
+.wya-attempts-indicator {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-bottom: 20px;
+}
+.wya-attempts-label {
+  font-size: .65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted);
+}
+.wya-attempts-dots {
+  display: flex; gap: 7px;
+}
+.wya-att-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15); transition: background .3s,border-color .3s,transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.wya-att-dot.used {background: var(--accent2); border-color: var(--accent2)}
+.wya-att-dot.correct {background: var(--green); border-color: var(--green); transform: scale(1.4)}
 
-  /* Content wrapper */
-  .wya-content { position:relative;z-index:1;padding:20px 16px 0;max-width:520px;margin:0 auto; }
+/* HINT STRIP */
+.wya-hint-strip {
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  margin-bottom: 16px; animation: fadeUp .5s ease .1s both; padding: 0 4px;
+}
+.wya-hint-pill {
+  display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08); border-radius: 100px; padding: 6px 14px 6px 10px;
+  font-size: .73rem; font-weight: 600; color: var(--muted);
+  transition: all .4s cubic-bezier(.34,1.56,.64,1); white-space: nowrap; cursor: default;
+}
+.wya-hint-pill .hp-icon {font-size: .8rem; opacity: .5; transition: opacity .3s}
+.wya-hint-pill .hp-label {
+  font-size: .58rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; opacity: .45; transition: opacity .3s; margin-right: 2px;
+}
+.wya-hint-pill .hp-val {font-weight: 700}
+.wya-hint-pill.revealed {
+  color: var(--accent); border-color: rgba(247,195,68,.5);
+  background: rgba(247,195,68,0.08); box-shadow: 0 0 12px rgba(247,195,68,.12);
+  animation: pillPop .55s cubic-bezier(.34,1.56,.64,1);
+}
+.wya-hint-pill.revealed .hp-icon {opacity: 1}
+.wya-hint-pill.revealed .hp-label {opacity: .65}
+.wya-hint-pill.clickable {cursor: pointer}
+.wya-hint-pill.clickable:hover {
+  background: rgba(255,255,255,.08); border-color: rgba(247,195,68,.35);
+  color: #fff;
+}
+.wya-hint-pill.clickable:hover .hp-icon {opacity: 0.9}
 
-  /* Header */
-  .wya-header { margin-bottom:20px;animation:fadeUp 0.3s ease both; }
-  .wya-eyebrow { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
-  .wya-eyebrow-pill { display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:rgba(61,214,140,0.1);border:1px solid rgba(61,214,140,0.25);color:var(--green);font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:1px; }
-  .wya-eyebrow-sep { color:var(--border2);font-size:14px; }
-  .wya-eyebrow-status { font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted); }
-  .wya-title { font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:3px;color:var(--text);margin:0 0 12px;line-height:1; }
+@keyframes pillPop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 
-  /* Attempt track */
-  .wya-track { display:flex;gap:5px;align-items:center; }
-  .wya-dot { width:10px;height:10px;border-radius:50%;transition:background 0.35s,box-shadow 0.35s; }
+/* LEGEND */
+.wya-legend-bar {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px;
+  animation: fadeUp .5s ease .12s both; background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.06); border-radius: 100px;
+  padding: 7px 16px; width: fit-content; margin-left: auto; margin-right: auto;
+}
+.wya-legend-item {
+  display: flex; align-items: center; gap: 5px; font-size: .67rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .8px;
+  padding: 0 8px; position: relative;
+}
+.wya-legend-item:not(:last-child)::after {
+  content: ''; position: absolute; right: -4px; top: 25%; height: 50%;
+  width: 1px; background: rgba(255,255,255,.08);
+}
+.wya-legend-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.wya-legend-dot.green {background: var(--green); box-shadow: 0 0 6px var(--green)}
+.wya-legend-dot.yellow {background: var(--accent); box-shadow: 0 0 6px var(--accent)}
+.wya-legend-dot.red {background: var(--accent2); box-shadow: 0 0 6px var(--accent2)}
 
-  /* Section label */
-  .wya-section-hdr { display:flex;align-items:center;gap:12px;margin-bottom:12px; }
-  .wya-section-label { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted2);white-space:nowrap; }
-  .wya-section-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
+/* SEARCHBOX & DROPDOWN */
+.wya-search-wrapper {
+  position: relative; margin-bottom: 30px; z-index: 100;
+  animation: fadeUp .5s ease .15s both; display: flex; gap: 8px;
+}
+.wya-search-input {
+  flex: 1; background: rgba(255,255,255,.03); border: 1px solid var(--border);
+  color: #fff; padding: 14px 18px; border-radius: 14px; font-size: .92rem;
+  font-family: inherit; font-weight: 500; outline: none; transition: all 0.2s;
+}
+.wya-search-input:focus {
+  border-color: rgba(247,195,68,0.45); background: rgba(255,255,255,.05);
+  box-shadow: 0 0 16px rgba(247,195,68,0.06);
+}
+.wya-btn-guess {
+  background: var(--accent); color: #000; border: none; font-weight: 700;
+  padding: 0 24px; border-radius: 14px; font-size: .88rem; cursor: pointer;
+  transition: opacity .2s, transform .15s; font-family: inherit;
+}
+.wya-btn-guess:hover:not(:disabled) {
+  opacity: .93; transform: translateY(-1px);
+}
+.wya-btn-guess:disabled {
+  opacity: .35; cursor: not-allowed; background: rgba(255,255,255,.15); color: var(--muted);
+}
+.wya-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--dd); border: 1px solid var(--border2); border-radius: 14px;
+  overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,.6); max-height: 280px;
+  overflow-y: auto; z-index: 999; backdrop-filter: blur(20px);
+}
+.wya-di {
+  display: flex; align-items: center; gap: 14px; padding: 11px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.03); cursor: pointer; transition: background .15s;
+}
+.wya-di:hover {
+  background: rgba(255,255,255,.05);
+}
+.wya-di-flag {
+  font-size: 1.5rem;
+}
+.wya-di-info {
+  flex: 1;
+}
+.wya-di-name {
+  font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: 2px;
+}
+.wya-di-meta {
+  font-size: .72rem; color: var(--muted); font-weight: 500;
+}
+.wya-role-badge {
+  font-size: .6rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px;
+  padding: 4px 8px; border-radius: 6px;
+}
+.wya-role-badge.batter   {background: rgba(247,195,68,.15); color: var(--accent); border: 1px solid rgba(247,195,68,.3)}
+.wya-role-badge.bowler   {background: rgba(232,64,64,.12); color: var(--accent2); border: 1px solid rgba(232,64,64,.25)}
+.wya-role-badge.allround {background: rgba(79,142,247,.12); color: var(--accent3); border: 1px solid rgba(79,142,247,.25)}
+.wya-role-badge.wk       {background: rgba(61,214,140,.12); color: var(--green); border: 1px solid rgba(61,214,140,.25)}
+.wya-no-results {
+  padding: 16px; text-align: center; color: var(--muted); font-size: .82rem;
+}
 
-  /* Hint strip */
-  .wya-hints { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;animation:fadeUp 0.3s 0.05s ease both; }
-  .wya-hint { display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);transition:all 0.3s; }
-  .wya-hint.revealed { background:rgba(61,214,140,0.07);border-color:rgba(61,214,140,0.25); }
-  .wya-hint-icon { font-size:16px;flex-shrink:0; }
-  .wya-hint-label { font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted2);margin-bottom:3px; }
-  .wya-hint-val { font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-  .wya-hint-lock { font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted3); }
+/* RESULTS GRID */
+.wya-col-headers {
+  display: grid; grid-template-columns: 2.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr; gap: 6px;
+  padding: 0 4px; margin-bottom: 8px; animation: fadeUp .5s ease .18s both;
+}
+.wya-col-hdr {
+  font-size: .62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted); text-align: center;
+}
+.wya-guesses-wrap {
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 30px;
+}
+.wya-guess-row {
+  display: grid; grid-template-columns: 2.2fr 1.3fr 1.3fr 1.3fr 1fr 1fr; gap: 6px;
+  animation: rowEntry 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes rowEntry {
+  from {opacity: 0; transform: scale(.97) translateY(12px)}
+  to {opacity: 1; transform: scale(1) translateY(0)}
+}
+.wya-cell {
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 12px; min-height: 62px; padding: 10px 6px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 600; text-align: center; position: relative;
+  transition: transform .3s; overflow: hidden;
+}
+.wya-cell.correct {
+  background: rgba(61,214,140,0.14); border-color: rgba(61,214,140,0.38); color: #fff;
+  box-shadow: inset 0 0 10px rgba(61,214,140,0.08);
+}
+.wya-cell.partial {
+  background: rgba(247,195,68,0.12); border-color: rgba(247,195,68,0.38); color: #fff;
+  box-shadow: inset 0 0 10px rgba(247,195,68,0.06);
+}
+.wya-cell.wrong {
+  background: rgba(232,64,64,0.08); border-color: rgba(232,64,64,0.24); color: var(--muted);
+}
+.wya-cell-tick {
+  position: absolute; top: 3px; right: 4px; font-size: .55rem;
+  color: var(--green); font-weight: 900; opacity: .8;
+}
+.wya-cell-flag {
+  font-size: 1.4rem; line-height: 1.1;
+}
+.wya-cell-ctry {
+  font-size: .52rem; font-weight: 800; text-transform: uppercase;
+  color: var(--muted); letter-spacing: .5px; margin-top: 2px;
+}
+.wya-cell-name {
+  font-size: .78rem; font-weight: 800; color: #fff; line-height: 1.2;
+}
+.wya-cell-sub {
+  font-size: .52rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px;
+}
+.wya-cell .arrow {
+  font-size: .75rem; font-weight: 900; margin-top: 1px; color: var(--accent);
+}
 
-  /* Search */
-  .wya-search-wrap { position:relative;margin-bottom:20px;animation:fadeUp 0.3s 0.1s ease both; }
-  .wya-search-box { display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:0 14px;margin-bottom:10px;transition:border-color 0.2s; }
-  .wya-search-box:focus-within { border-color:rgba(247,195,68,0.4); }
-  .wya-search-glyph { font-size:15px;opacity:0.4;flex-shrink:0; }
-  .wya-search-input { flex:1;background:transparent;border:none;color:var(--text);font-size:15px;padding:13px 0;outline:none;font-family:'Syne',sans-serif; }
-  .wya-search-input::placeholder { color:var(--muted2); }
-  .wya-clear { background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:4px;flex-shrink:0; }
+/* RESULT CARD */
+.wya-result-card {
+  background: linear-gradient(180deg, rgba(255,255,255,.035) 0%, rgba(255,255,255,.015) 100%);
+  border: 1px solid var(--border2); border-radius: 20px; padding: 36px 28px;
+  text-align: center; margin-bottom: 34px; animation: fadeUp .5s ease both;
+  backdrop-filter: blur(10px);
+}
+.wya-result-badge {
+  display: inline-block; padding: 5px 14px; border-radius: 100px;
+  font-size: .65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 16px;
+}
+.wya-result-badge.win {
+  background: rgba(61,214,140,.12); color: var(--green); border: 1px solid rgba(61,214,140,.3);
+}
+.wya-result-badge.lose {
+  background: rgba(232,64,64,.12); color: var(--accent2); border: 1px solid rgba(232,64,64,.3);
+}
+.wya-result-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.wya-result-player {
+  font-size: 1.35rem; font-weight: 800; color: #fff; margin-bottom: 2px;
+}
+.wya-result-phrase {
+  font-size: .78rem; color: var(--muted); margin-bottom: 22px; font-weight: 500;
+}
+.wya-result-breakdown {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  background: rgba(5,7,15,0.4); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 10px; margin-bottom: 24px;
+}
+.wya-rb-item {
+  text-align: center;
+}
+.wya-rb-label {
+  font-size: .58rem; font-weight: 800; text-transform: uppercase;
+  color: var(--muted); letter-spacing: .8px; margin-bottom: 3px;
+}
+.wya-rb-val {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; color: #fff;
+}
+.wya-rb-val.green {
+  color: var(--green);
+}
+.wya-result-actions {
+  display: flex; gap: 8px; justify-content: center;
+}
+.wya-btn {
+  padding: 12px 20px; border-radius: 12px; font-size: .82rem; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: opacity 0.2s, transform 0.15s;
+}
+.wya-btn:hover {
+  opacity: .9; transform: translateY(-1px);
+}
+.wya-btn.primary {
+  background: var(--accent); color: #000; border: none; flex: 1.2;
+}
+.wya-btn.share {
+  background: var(--surface); color: #fff; border: 1px solid var(--border2); flex: 1;
+}
+.wya-btn.secondary {
+  background: transparent; color: var(--muted); border: 1px solid transparent;
+}
 
-  /* Dropdown */
-  .wya-dropdown { position:absolute;top:60px;left:0;right:0;background:#0c0f1a;border:1px solid var(--border2);border-radius:14px;z-index:999;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,0.8);animation:wyaDropIn 0.18s ease both; }
-  .wya-drop-row { display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid rgba(255,255,255,0.04); }
-  .wya-drop-row:last-child { border-bottom:none; }
-  .wya-drop-row:hover { background:var(--surface3); }
-  .wya-drop-flag { font-size:22px;flex-shrink:0; }
-  .wya-drop-name { font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text);display:block;margin-bottom:2px; }
-  .wya-drop-meta { display:flex;align-items:center;flex-wrap:wrap;gap:3px;font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--muted); }
+/* XP BADGE */
+.pn-xp-badge {
+  background: linear-gradient(135deg, rgba(247,195,68,0.12) 0%, rgba(249,115,22,0.12) 100%);
+  border: 1px solid rgba(247,195,68,0.25); border-radius: 100px;
+  padding: 6px 16px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.78rem; font-weight: 700; color: var(--accent);
+  margin-bottom: 20px; animation: pillPop 0.6s ease;
+}
 
-  /* Guess button */
-  .wya-btn { width:100%;padding:14px 20px;border-radius:14px;border:none;font-size:0.85rem;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all 0.2s; }
-  .wya-btn-active { background:var(--accent);color:#060810;box-shadow:0 8px 24px rgba(247,195,68,0.25); }
-  .wya-btn-active:hover { filter:brightness(1.08); }
-  .wya-btn-active:active { transform:scale(0.98); }
-  .wya-btn-inactive { background:var(--surface);color:var(--muted3);cursor:not-allowed;border:1px solid var(--border); }
+/* DASHBOARD & STATS */
+.wya-bottom-section {
+  animation: fadeUp .5s ease .22s both;
+}
+.wya-section-divider {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 22px;
+}
+.wya-section-label {
+  font-size: .65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); white-space: nowrap;
+}
+.wya-section-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+.wya-dashboard-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.wya-dash-card {
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; display: flex; flex-direction: column;
+}
+.wya-dash-card-hdr {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 14px;
+}
+.wya-dash-icon {
+  font-size: .95rem;
+}
+.wya-dash-label {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted);
+}
+.wya-streak-dots {
+  display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-bottom: 12px;
+}
+.wya-streak-dot {
+  aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.wya-streak-dot.win {
+  background: rgba(61,214,140,.18); border-color: rgba(61,214,140,.32);
+}
+.wya-streak-dot.miss {
+  background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18);
+}
+.wya-streak-dot.today-played {
+  background: rgba(247,195,68,.14); border-color: var(--accent); box-shadow: 0 0 10px rgba(247,195,68,.2);
+}
+.wya-streak-dot.today-pending {
+  background: rgba(79,142,247,.09); border-style: dashed; border-color: rgba(79,142,247,.38);
+}
+.wya-streak-legend {
+  display: flex; gap: 13px; font-size: .68rem; color: var(--muted); align-items: center; flex-wrap: wrap;
+}
+.wya-dot-sample {
+  display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: middle;
+}
+.wya-dot-sample.win {background: rgba(61,214,140,.18); border: 1px solid var(--green)}
+.wya-dot-sample.miss {background: rgba(232,64,64,.08); border: 1px solid rgba(232,64,64,0.18)}
+.wya-dot-sample.today {background: rgba(247,195,68,.14); border: 1px solid var(--accent)}
+.wya-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.wya-stat-item {
+  background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 12px; text-align: center; transition: border-color .2s,background .2s;
+}
+.wya-stat-item:hover {
+  border-color: rgba(247,195,68,.22); background: rgba(247,195,68,.03);
+}
+.wya-stat-value {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--accent), #fff 80%); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 3px;
+}
+.wya-stat-name {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted);
+}
 
-  /* Column labels */
-  .wya-col-labels { display:grid;grid-template-columns:2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr;gap:4px;margin-bottom:6px; }
-  .wya-col-label { font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);text-align:center;padding:3px 0; }
+/* MODAL */
+.wya-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.84);
+  backdrop-filter: blur(14px); justify-content: center; align-items: center; padding: 20px;
+}
+.wya-modal-overlay.active {
+  display: flex; animation: fadeIn .22s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.wya-modal-box {
+  background: #0c1020; border: 1px solid rgba(249,115,22,.25); border-radius: 24px;
+  padding: 44px 36px; max-width: 520px; width: 100%; max-height: 88vh; overflow-y: auto;
+  position: relative; animation: modalUp .32s cubic-bezier(.4,0,.2,1);
+}
+.wya-modal-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--orange), var(--accent), var(--orange)); border-radius: 24px 24px 0 0;
+}
+@keyframes modalUp{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.wya-modal-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.3rem; letter-spacing: 2px; text-align: center; margin-bottom: 26px;
+}
+.wya-rules-list {
+  list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 9px;
+}
+.wya-rules-list li {
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid rgba(249,115,22,0.45);
+  border-radius: 12px; padding: 13px 16px; font-size: .88rem; line-height: 1.6; transition: border-color .2s,transform .2s;
+}
+.wya-rules-list li:hover {
+  border-left-color: var(--orange); transform: translateX(4px);
+}
+.wya-modal-attrs {
+  background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,0.2); border-radius: 14px; padding: 18px; margin-bottom: 22px;
+}
+.wya-modal-attrs-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 1px; color: var(--orange); margin-bottom: 12px; text-align: center;
+}
+.wya-modal-attrs-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: .82rem; color: var(--muted);
+}
+.wya-modal-close {
+  width: 100%; padding: 14px; font-size: .92rem; border-radius: 12px; background: var(--orange);
+  color: #fff; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 700;
+  transition: opacity .2s;
+}
+.wya-modal-close:hover {opacity: .88}
 
-  /* Guess grid */
-  .wya-grid-rows { display:flex;flex-direction:column;gap:4px; }
-  .wya-guess-row { display:grid;grid-template-columns:2fr 1.5fr 1.2fr 1.5fr 0.7fr 0.7fr;gap:4px; }
-  .wya-row-enter { animation:wyaRowIn 0.32s cubic-bezier(0.34,1.56,0.64,1) both; }
+/* SPINNER */
+.wya-spinner {display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg)}
+.wya-spinner-ring {
+  width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(255,255,255,.07);
+  border-top-color: var(--orange); animation: spin .7s linear infinite;
+}
+@keyframes spin {to{transform:rotate(360deg)}}
 
-  /* Cell */
-  .wya-cell { position:relative;border-radius:10px;overflow:hidden;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64px;padding:8px 4px;text-align:center;word-break:break-word;gap:2px; }
-  .wya-cell-top { position:absolute;top:0;left:0;right:0;height:2px; }
-  .wya-cell-flag { font-size:18px; }
-  .wya-cell-name { font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;color:var(--text);line-height:1.3; }
-  .wya-cell-val { font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;color:var(--muted); }
-  .wya-cell-arrow { font-size:13px;font-weight:900; }
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 
-  /* Legend */
-  .wya-legend { display:flex;gap:16px;margin-top:14px;flex-wrap:wrap; }
-  .wya-legend-item { display:flex;align-items:center;gap:6px;font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted2); }
-  .wya-legend-swatch { width:8px;height:8px;border-radius:2px;flex-shrink:0; }
-
-  /* Result */
-  .wya-result { margin-top:24px;padding:28px 24px;border-radius:20px;border:1px solid;text-align:center;animation:wyaResultPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .wya-result-win { background:rgba(61,214,140,0.05);border-color:rgba(61,214,140,0.2); }
-  .wya-result-loss { background:rgba(232,64,64,0.04);border-color:rgba(232,64,64,0.15); }
-  .wya-result-emoji { font-size:40px;margin-bottom:10px; }
-  .wya-result-eyebrow { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);margin-bottom:10px; }
-  .wya-result-name { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--text);margin-bottom:6px; }
-  .wya-result-info { font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:20px;letter-spacing:0.5px; }
-  .wya-stats-row { display:inline-flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:14px 22px;margin-bottom:16px; }
-  .wya-stats-div { width:1px;height:30px;background:var(--border2); }
-  .wya-stat-chip { display:flex;flex-direction:column;align-items:center;gap:2px; }
-  .wya-stat-val { font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--text);line-height:1;letter-spacing:1px; }
-  .wya-stat-val.xp { color:var(--green); }
-  .wya-stat-label { font-family:'Space Mono',monospace;font-size:0.52rem;color:var(--muted2);text-transform:uppercase;letter-spacing:1.2px; }
-  .wya-next-up { font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--muted3);margin:0;letter-spacing:0.5px; }
-
-  /* Pos badge */
-  .wya-pos-badge { display:inline-block;padding:1px 7px;border-radius:100px;font-family:'Space Mono',monospace;font-size:0.52rem;font-weight:700;margin-right:4px; }
-
-  /* Spinner */
-  .wya-spinner { display:flex;align-items:center;justify-content:center;height:100vh; }
-  .wya-spinner-ring { width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,0.07);border-top-color:var(--accent);animation:spin 0.7s linear infinite; }
-
-  /* Bottom nav */
-  .wya-bottom-nav { position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(6,8,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px); }
-  .wya-nav-item { flex:1;min-width:0;border:none;background:transparent;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:rgba(242,242,244,0.38); }
-  .wya-nav-item.active { color:var(--green); }
-  .wya-nav-icon { font-size:20px;line-height:1; }
-  .wya-nav-label { font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px; }
-  .wya-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 8px var(--green); }
-
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes fbDrift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(36px,28px) scale(1.1)} }
-  @keyframes fbGridPulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes wyaRowIn { from{opacity:0;transform:translateY(-10px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes wyaDropIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes wyaResultPop { 0%{opacity:0;transform:scale(0.94) translateY(12px)} 60%{transform:scale(1.02) translateY(0)} 100%{opacity:1;transform:scale(1)} }
-
-  @media(max-width:640px){
-    .wya-blob1,.wya-blob2{filter:blur(40px);opacity:0.25;}
-    .wya-grid{display:none;}
-    .wya-title{font-size:2rem;}
-  }
+/* RESPONSIVE */
+@media(max-width:700px){
+  .wya-nav {padding: 0 14px; height: 54px}
+  .wya-nav-logo {font-size: 1.35rem}
+  .wya-nav-tag {font-size: .6rem; padding: 4px 10px}
+  .wya-main {padding: 18px 14px 56px}
+  .wya-page-header h1 {font-size: 1.9rem}
+  .wya-hint-strip {gap: 6px}
+  .wya-hint-pill {padding: 5px 10px 5px 8px; font-size: .68rem}
+  .wya-hint-pill .hp-label {display: none}
+  .wya-legend-bar {padding: 6px 12px; gap: 4px}
+  .wya-legend-item {font-size: .62rem; padding: 0 6px}
+  .wya-col-headers, .wya-guess-row {grid-template-columns: 2fr 1.3fr 1.1fr 1.1fr .95fr .95fr; gap: 3px}
+  .wya-cell {font-size: .62rem; min-height: 56px; padding: 8px 4px}
+  .wya-cell:first-child {font-size: .72rem}
+  .wya-cell-flag {font-size: 1.2rem}
+  .wya-dashboard-grid {grid-template-columns: 1fr}
+  .wya-result-breakdown {grid-template-columns: 1fr 1fr}
+  .wya-result-card {padding: 28px 18px}
+}
+@media(max-width:480px){
+  .wya-col-headers, .wya-guess-row {grid-template-columns: 2fr 1.1fr 1fr 1fr .9fr .9fr}
+  .wya-result-actions {flex-direction: column; align-items: stretch}
+}
 `;
 
 // Initialize Google AdBreak queue safely
@@ -191,7 +568,7 @@ const adBreak = (options) => {
     if (options.beforeAd) options.beforeAd();
     setTimeout(() => {
       if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
+        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to unlock hint: ${options.name}?`);
         if (confirmReward) {
           if (options.adViewed) options.adViewed();
         } else {
@@ -206,481 +583,630 @@ const adBreak = (options) => {
   }
 };
 
+if (typeof window !== "undefined") {
+  window.adConfig = window.adConfig || function() {
+    (window.adConfig.q = window.adConfig.q || []).push(arguments);
+  };
+  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+function roleBadgeClass(position) {
+  if (!position) return '';
+  const p = position.toLowerCase();
+  if (p.includes('forward')) return 'batter';      // mapping to yellow badge CSS
+  if (p.includes('midfielder')) return 'allround';  // mapping to blue badge CSS
+  if (p.includes('defender')) return 'bowler';      // mapping to red badge CSS
+  if (p.includes('goalkeeper')) return 'wk';        // mapping to green badge CSS
+  return '';
+}
+
+function evaluateGuess(guess, target) {
+  const sameCountry = guess.countryCode === target.countryCode;
+  
+  // Continent/Region determination
+  const guessRegion = COUNTRY_REGIONS[guess.countryCode] || 'Other';
+  const targetRegion = COUNTRY_REGIONS[target.countryCode] || 'Other';
+  const sameRegion = !sameCountry && guessRegion === targetRegion;
+
+  const samePosition = guess.position === target.position;
+  const sameClub = guess.club === target.club;
+  const ageDiff = Math.abs(guess.age - target.age);
+  const sameFoot = guess.foot === target.foot;
+
+  return {
+    cells: [
+      {
+        type: 'name',
+        name: guess.name,
+        flag: guess.flag,
+        cls: guess.name === target.name ? 'correct' : 'wrong',
+      },
+      {
+        type: 'country',
+        flag: guess.flag,
+        val: guess.country,
+        cls: sameCountry ? 'correct' : sameRegion ? 'partial' : 'wrong',
+      },
+      {
+        type: 'position',
+        val: guess.position,
+        cls: samePosition ? 'correct' : 'wrong',
+      },
+      {
+        type: 'club',
+        val: guess.club,
+        cls: sameClub ? 'correct' : 'wrong',
+      },
+      {
+        type: 'age',
+        val: guess.age,
+        cls: guess.age === target.age ? 'correct' : ageDiff <= 3 ? 'partial' : 'wrong',
+        arrow: guess.age < target.age ? '↑' : guess.age > target.age ? '↓' : '',
+      },
+      {
+        type: 'foot',
+        val: guess.foot,
+        cls: sameFoot ? 'correct' : 'wrong',
+      },
+    ],
+  };
+}
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { played: 0, won: 0, avgPts: 0, streak: 0 }; }
+  catch { return { played: 0, won: 0, avgPts: 0, streak: 0 }; }
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveResult(puzzleDate, won, score) {
+  const today = new Date().toISOString().split('T')[0];
+  const history = loadHistory();
+  if (!history[puzzleDate] || score > (history[puzzleDate].score || 0)) {
+    history[puzzleDate] = { won, score };
+  }
+  const allEntries = Object.values(history);
+  const stats = {
+    played: allEntries.length,
+    won: allEntries.filter(e => e.won).length,
+    avgPts: Math.round(allEntries.reduce((s, e) => s + (e.score || 0), 0) / allEntries.length),
+    streak: 0,
+  };
+  const check = new Date(today + "T00:00:00");
+  while (true) {
+    const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
+    if (history[k]) { stats.streak++; check.setDate(check.getDate()-1); } else break;
+  }
+  localStorage.setItem(STATS_KEY,   JSON.stringify(stats));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  return { stats, history };
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
 export default function WhoAreYa() {
-  const [target, setTarget]             = useState(null);
-  const [guesses, setGuesses]           = useState([]);
+  const [target, setTarget]           = useState(null);
+  const [guesses, setGuesses]         = useState([]);
   const [guessedNames, setGuessedNames] = useState([]);
-  const [search, setSearch]             = useState('');
-  const [dropdown, setDropdown]         = useState([]);
-  const [selected, setSelected]         = useState(null);
-  const [gameOver, setGameOver]         = useState(false);
-  const [won, setWon]                   = useState(false);
-  const [xpAwarded, setXpAwarded]       = useState(null);
-  const [hints, setHints]               = useState({ position:false, country:false, club:false });
-  const [animKey, setAnimKey]           = useState(0);
+  const [search, setSearch]           = useState('');
+  const [dropdown, setDropdown]       = useState([]);
+  const [selected, setSelected]       = useState(null);
+  const [gameOver, setGameOver]       = useState(false);
+  const [won, setWon]                 = useState(false);
+  const [showModal, setShowModal]     = useState(false);
+  const [animKey, setAnimKey]         = useState(0);
+  const [xpAwarded, setXpAwarded]     = useState(null);
+  
+  // Rewarded ad hint state
+  const [unlockedHints, setUnlockedHints] = useState({ position: false, country: false, club: false });
+  const [isAdLoading, setIsAdLoading] = useState(false);
+  const [loadingKey, setLoadingKey] = useState(null);
+  const [msg, setMsg] = useState(null);
+
+  const [stats, setStats]           = useState(loadStats);
+  const [history, setHistory]       = useState(loadHistory);
   const searchRef = useRef(null);
 
-  // Rewarded ad states
-  const [maxAttempts, setMaxAttempts] = useState(MAX_ATTEMPTS);
-  const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
-  const [adUnlockedHints, setAdUnlockedHints] = useState({ position: false, country: false, club: false });
-  const [isAdLoading, setIsAdLoading] = useState(false);
+  const puzzleDate = getActivePuzzleDate();
+  const puzzleNumber = Math.floor((new Date(puzzleDate) - new Date('2025-01-01')) / 86400000) + 1;
 
+  function showMsg(text, type = "info", duration = 3000) {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), duration);
+  }
+
+  // Inject CSS once
   useEffect(() => {
-    if (!document.getElementById('wya-css')) {
+    if (!document.getElementById('wya-injected-css')) {
       const s = document.createElement('style');
-      s.id = 'wya-css';
-      s.textContent = INJECTED_CSS;
+      s.id = 'wya-injected-css';
+      s.textContent = CSS;
       document.head.appendChild(s);
     }
   }, []);
 
+  // Load state
   useEffect(() => {
-    const player = getDailyPlayer(PLAYER_DB);
+    const player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
     setTarget(player);
-    const today = new Date().toISOString().split('T')[0];
-    const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
-    if (saved.date === today) {
-      setGuesses(saved.guesses || []);
-      setGuessedNames((saved.guesses || []).map(g => g.cells[0].name));
-      setGameOver(saved.gameOver !== undefined ? saved.gameOver : true);
-      setWon(saved.won);
-      if (saved.maxAttempts) setMaxAttempts(saved.maxAttempts);
-      if (saved.hasWatchedExtraTryAd) setHasWatchedExtraTryAd(saved.hasWatchedExtraTryAd);
-      if (saved.adUnlockedHints) setAdUnlockedHints(saved.adUnlockedHints);
-    }
-  }, []);
+    try {
+      const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
+      if (saved.date === puzzleDate) {
+        setGuesses(saved.guesses || []);
+        setGuessedNames((saved.guesses || []).map(g => g.cells[0].name));
+        setGameOver(!!saved.gameOver);
+        setWon(!!saved.won);
+        setXpAwarded(saved.xpAwarded ?? null);
+        setUnlockedHints(saved.unlockedHints || { position: false, country: false, club: false });
+      }
+    } catch (_) {}
+  }, [puzzleDate]);
 
+  // Dropdown filtering
   useEffect(() => {
     if (!search.trim()) { setDropdown([]); return; }
     const q = search.toLowerCase();
     setDropdown(
-      PLAYER_DB.filter(p => p.name.toLowerCase().includes(q) && !guessedNames.includes(p.name)).slice(0, 8)
+      PLAYERS.filter(p => p.name.toLowerCase().includes(q) && !guessedNames.includes(p.name)).slice(0, 8)
     );
   }, [search, guessedNames]);
 
-  useEffect(() => {
-    const c = guesses.length;
-    setHints({ position:c>=2, country:c>=5, club:c>=7 });
-  }, [guesses]);
-
-  function evaluateGuess(guess) {
-    const t = target;
-    const sameCountry = guess.countryCode === t.countryCode;
-    const sameRegion  = !sameCountry && getRegion(guess.countryCode) === getRegion(t.countryCode);
-    return {
-      cells: [
-        { type:'name',     name:guess.name, flag:guess.flag, cls:guess.name===t.name?'correct':'wrong' },
-        { type:'country',  val:`${guess.flag} ${guess.country}`, cls:sameCountry?'correct':sameRegion?'partial':'wrong' },
-        { type:'position', val:guess.position, cls:guess.position===t.position?'correct':'wrong' },
-        { type:'club',     val:guess.club, cls:guess.club===t.club?'correct':'wrong' },
-        { type:'age',      val:guess.age,
-          cls:guess.age===t.age?'correct':Math.abs(guess.age-t.age)<=3?'partial':'wrong',
-          arrow:guess.age<t.age?'↑':guess.age>t.age?'↓':'' },
-        { type:'foot',     val:guess.foot, cls:guess.foot===t.foot?'correct':'wrong' },
-      ],
-    };
+  function triggerRewardedAdForHint(hintKey) {
+    if (gameOver) return;
+    setIsAdLoading(true);
+    setLoadingKey(hintKey);
+    adBreak({
+      type: "reward",
+      name: `who-are-ya-hint-${hintKey}`,
+      beforeAd: () => {
+        setIsAdLoading(true);
+      },
+      afterAd: () => {
+        setIsAdLoading(false);
+        setLoadingKey(null);
+      },
+      adDismissed: () => {
+        showMsg("Ad dismissed. Hint not unlocked.", "error");
+      },
+      adViewed: () => {
+        setUnlockedHints(prev => {
+          const updated = { ...prev, [hintKey]: true };
+          const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
+          saved.unlockedHints = updated;
+          localStorage.setItem('footbrawls_whoareya', JSON.stringify({ ...saved, date: puzzleDate }));
+          return updated;
+        });
+        showMsg("Hint unlocked successfully!", "success");
+      },
+      adBreakDone: () => {
+        setIsAdLoading(false);
+        setLoadingKey(null);
+      }
+    });
   }
 
   async function submitGuess() {
     if (!selected || gameOver || !target) return;
-    const result = evaluateGuess(selected);
+    const result     = evaluateGuess(selected, target);
     const newGuesses = [...guesses, result];
     const newNames   = [...guessedNames, selected.name];
-    setAnimKey(k => k+1);
+    setAnimKey(k => k + 1);
     setGuesses(newGuesses);
     setGuessedNames(newNames);
     setSelected(null); setSearch(''); setDropdown([]);
+
     const isWin  = selected.name === target.name;
-    const isLoss = !isWin && newGuesses.length >= maxAttempts;
+    const isLoss = !isWin && newGuesses.length >= MAX_ATTEMPTS;
+
     if (isWin || isLoss) {
       setGameOver(true); setWon(isWin);
-      const score = isWin ? SCORES[newGuesses.length-1] : 0;
-      const today = new Date().toISOString().split('T')[0];
-      localStorage.setItem('footbrawls_whoareya', JSON.stringify({
-        date: today,
-        guesses: newGuesses,
-        won: isWin,
-        score,
-        gameOver: true,
-        maxAttempts,
-        hasWatchedExtraTryAd,
-        adUnlockedHints
-      }));
-      if (isWin) {
-        const user = getUser();
-        if (user) {
-          const r = await awardXP(user.userId, 'whoareya_correct', { rawXP:score });
-          setXpAwarded(r?.xpAwarded || score);
+      const rawScore = isWin ? SCORES[newGuesses.length - 1] : 0;
+      let finalXP = 0;
+      
+      const user = getUser();
+      if (isWin && user?.userId) {
+        try {
+          const res = await awardXP(user.userId, 'whoareya_correct', { rawXP: rawScore });
+          finalXP = res?.xpAwarded ?? rawScore;
+        } catch (e) {
+          console.error('[WhoAreYa] awardXP failed:', e);
+          finalXP = rawScore;
         }
       }
+      setXpAwarded(finalXP);
+
+      try {
+        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+          date: puzzleDate, 
+          guesses: newGuesses, 
+          won: isWin, 
+          score: rawScore, 
+          gameOver: true,
+          xpAwarded: finalXP,
+          unlockedHints
+        }));
+      } catch (_) {}
+
+      const { stats: s, history: h } = saveResult(puzzleDate, isWin, finalXP);
+      setStats(s); setHistory(h);
+    } else {
+      // Just save incremental progress
+      try {
+        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+          date: puzzleDate,
+          guesses: newGuesses,
+          won: false,
+          score: 0,
+          gameOver: false,
+          unlockedHints
+        }));
+      } catch (_) {}
     }
   }
 
-  function triggerRewardedAdForHint(hintKey) {
-    setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: `who-are-ya-hint-${hintKey}`,
-      beforeAd: () => setIsAdLoading(true),
-      afterAd: () => setIsAdLoading(false),
-      adDismissed: () => {
-        // ad dismissed
-      },
-      adViewed: () => {
-        setAdUnlockedHints(prev => {
-          const updated = { ...prev, [hintKey]: true };
-          const today = new Date().toISOString().split('T')[0];
-          const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
-          saved.adUnlockedHints = updated;
-          localStorage.setItem('footbrawls_whoareya', JSON.stringify({ ...saved, date: today }));
-          return updated;
-        });
-      },
-      adBreakDone: () => setIsAdLoading(false)
-    });
+  function handleShare() {
+    const attempts = guesses.length;
+    const emoji    = won ? '🏆' : '💔';
+    const text     = `${emoji} Footbrawls – Who Are Ya?\nPuzzle #${puzzleNumber} | ${won ? attempts + '/8' : 'X/8'}\nhttps://footbrawls.vercel.app/games/whoareya`;
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(text);
+      alert('Result copied to clipboard!');
+    }
   }
 
-  function triggerRewardedAdForExtraTry() {
-    setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: "who-are-ya-extra-try",
-      beforeAd: () => setIsAdLoading(true),
-      afterAd: () => setIsAdLoading(false),
-      adDismissed: () => {
-        // ad dismissed
-      },
-      adViewed: () => {
-        const newMaxAttempts = maxAttempts + 1;
-        setMaxAttempts(newMaxAttempts);
-        setGameOver(false);
-        setHasWatchedExtraTryAd(true);
-        
-        const today = new Date().toISOString().split('T')[0];
-        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
-          guesses,
-          won: false,
-          date: today,
-          gameOver: false,
-          maxAttempts: newMaxAttempts,
-          hasWatchedExtraTryAd: true,
-          adUnlockedHints
-        }));
-        
-        setTimeout(() => searchRef.current?.focus(), 100);
-      },
-      adBreakDone: () => setIsAdLoading(false)
-    });
+  if (!target) {
+    return (
+      <div className="wya-spinner">
+        <div className="wya-spinner-ring" />
+      </div>
+    );
   }
-
-  if (!target) return (
-    <div className="wya-spinner">
-      <div className="wya-spinner-ring" />
-    </div>
-  );
 
   const attempts     = guesses.length;
-  const attemptsLeft = maxAttempts - attempts;
+  const attemptsLeft = MAX_ATTEMPTS - attempts;
+  const score        = won ? SCORES[attempts - 1] : 0;
 
   return (
     <>
       <div className="wya-page">
-        {/* Background */}
-        <div className="wya-bg">
-          <div className="wya-grid" />
-          <div className="wya-blob1" />
-          <div className="wya-blob2" />
-        </div>
+        <div className="wya-bg-layer" />
         <div className="wya-noise" />
 
-        {/* Nav */}
+        {/* Msg Banner */}
+        {msg && (
+          <div style={{
+            position: "fixed", top: "80px", left: "50%", transform: "translateX(-50%)",
+            background: msg.type === "success" ? "rgba(61,214,140,0.95)" : msg.type === "error" ? "rgba(232,64,64,0.95)" : "rgba(247,195,68,0.95)",
+            color: msg.type === "success" ? "#fff" : "#000",
+            padding: "10px 20px", borderRadius: "10px", zIndex: 100000,
+            fontSize: "0.85rem", fontWeight: "700", boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
+          }}>
+            {msg.text}
+          </div>
+        )}
+
+        {/* How to Play Modal */}
+        <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
+
+        {/* NAV */}
         <nav className="wya-nav">
-          <button className="wya-nav-back" onClick={() => window.history.back()}>‹</button>
-          <span className="wya-nav-title">Who Are Ya?</span>
-          <span className="wya-nav-badge">WC 2026</span>
+          <button className="wya-nav-logo" onClick={() => window.history.back()}>⚽ Footbrawls</button>
+          <div className="wya-nav-tag">
+            <span className="wya-fire-dot" />
+            Who Are Ya?
+          </div>
+          <div className="wya-nav-right">
+            <button className="wya-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
+          </div>
         </nav>
 
-        {/* Content */}
-        <div className="wya-content">
-
-          {/* Header */}
-          <header className="wya-header">
-            <div className="wya-eyebrow">
-              <span className="wya-eyebrow-pill">⚽ Daily Puzzle</span>
-              <span className="wya-eyebrow-sep">·</span>
-              <span className="wya-eyebrow-status">
-                {gameOver
-                  ? won ? `Solved in ${attempts} ${attempts===1?'guess':'guesses'}` : 'Better luck tomorrow'
-                  : `${attemptsLeft} attempt${attemptsLeft!==1?'s':''} left`}
-              </span>
-            </div>
-            <div className="wya-track">
-              {Array.from({ length:maxAttempts }).map((_,i) => {
-                const filled    = i < attempts;
-                const isWinLast = won && i === attempts-1;
-                return (
-                  <div key={i} className="wya-dot" style={{
-                    background: filled
-                      ? isWinLast ? 'var(--green)' : 'var(--red)'
-                      : 'rgba(255,255,255,0.07)',
-                    boxShadow: filled
-                      ? isWinLast ? '0 0 10px rgba(61,214,140,0.6)' : '0 0 6px rgba(232,64,64,0.35)'
-                      : 'none',
-                  }} />
-                );
-              })}
-            </div>
+        {/* MAIN */}
+        <main className="wya-main">
+          <header className="wya-page-header">
+            <h1>Who Are Ya?</h1>
+            <p>Guess the mystery footballer in {MAX_ATTEMPTS} tries</p>
           </header>
 
-          {/* Hints */}
-          <div className="wya-hints">
-            <HintCard 
-              icon="🎽" 
-              label="Position" 
-              value={target.position} 
-              revealed={hints.position || adUnlockedHints.position} 
-              unlockAt={2} 
-              onAdUnlock={() => !(hints.position || adUnlockedHints.position) && triggerRewardedAdForHint('position')}
-              isAdLoading={isAdLoading}
+          {/* Attempts Indicator */}
+          <div className="wya-attempts-indicator">
+            <div className="wya-attempts-label">
+              {gameOver ? 'Game Finished' : `${attemptsLeft} guesses left`}
+            </div>
+            <div className="wya-attempts-dots">
+              {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => {
+                let cls = '';
+                if (i < attempts) {
+                  cls = (won && i === attempts - 1) ? 'correct' : 'used';
+                }
+                return <div key={i} className={`wya-att-dot ${cls}`} />;
+              })}
+            </div>
+          </div>
+
+          {/* Hint Strip */}
+          <div className="wya-hint-strip">
+            <HintPill 
+              icon="🧢" 
+              label="Position"    
+              value={target.position}    
+              revealed={unlockedHints.position}    
+              onClick={() => triggerRewardedAdForHint('position')}
+              loading={loadingKey === 'position'}
             />
-            <HintCard 
+            <HintPill 
               icon="🌍" 
-              label="Country"  
+              label="Country" 
               value={`${target.flag} ${target.country}`} 
-              revealed={hints.country || adUnlockedHints.country}  
-              unlockAt={5} 
-              onAdUnlock={() => !(hints.country || adUnlockedHints.country) && triggerRewardedAdForHint('country')}
-              isAdLoading={isAdLoading}
+              revealed={unlockedHints.country} 
+              onClick={() => triggerRewardedAdForHint('country')}
+              loading={loadingKey === 'country'}
             />
-            <HintCard 
-              icon="🏟️" 
-              label="Club"     
-              value={target.club}     
-              revealed={hints.club || adUnlockedHints.club}     
-              unlockAt={7} 
-              onAdUnlock={() => !(hints.club || adUnlockedHints.club) && triggerRewardedAdForHint('club')}
-              isAdLoading={isAdLoading}
+            <HintPill 
+              icon="🏢" 
+              label="Club"   
+              value={target.club}   
+              revealed={unlockedHints.club}   
+              onClick={() => triggerRewardedAdForHint('club')}
+              loading={loadingKey === 'club'}
             />
+          </div>
+
+          {/* Legend */}
+          <div className="wya-legend-bar">
+            <div className="wya-legend-item"><div className="wya-legend-dot green" />Correct</div>
+            <div className="wya-legend-item"><div className="wya-legend-dot yellow" />Close</div>
+            <div className="wya-legend-item"><div className="wya-legend-dot red" />Wrong</div>
           </div>
 
           {/* Search */}
           {!gameOver && (
-            <div className="wya-search-wrap">
-              <div className="wya-search-box">
-                <span className="wya-search-glyph">⚽</span>
-                <input
-                  ref={searchRef}
-                  className="wya-search-input"
-                  placeholder="Type a player name…"
-                  value={search}
-                  onChange={e => { setSearch(e.target.value); setSelected(null); }}
-                  onKeyDown={e => e.key==='Enter' && selected && submitGuess()}
-                  autoComplete="off"
-                />
-                {search && (
-                  <button className="wya-clear" onClick={() => { setSearch(''); setSelected(null); setDropdown([]); }}>✕</button>
-                )}
-              </div>
-
+            <div className="wya-search-wrapper">
+              <input
+                ref={searchRef}
+                className="wya-search-input"
+                placeholder="⚽ Type a player name…"
+                autoComplete="off"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setSelected(null); }}
+                onKeyDown={e => e.key === 'Enter' && selected && submitGuess()}
+              />
               {dropdown.length > 0 && (
                 <div className="wya-dropdown">
                   {dropdown.map(p => (
-                    <div key={p.name} className="wya-drop-row" onClick={() => { setSelected(p); setSearch(p.name); setDropdown([]); }}>
-                      <span className="wya-drop-flag">{p.flag}</span>
-                      <div>
-                        <span className="wya-drop-name">{p.name}</span>
-                        <span className="wya-drop-meta">
-                          <PosBadge pos={p.position} />
-                          {p.country} · {p.club}
-                        </span>
+                    <div
+                      key={p.name}
+                      className="wya-di"
+                      onClick={() => { setSelected(p); setSearch(p.name); setDropdown([]); }}
+                    >
+                      <span className="wya-di-flag">{p.flag}</span>
+                      <div className="wya-di-info">
+                        <div className="wya-di-name">{p.name}</div>
+                        <div className="wya-di-meta">{p.country} · {p.club}</div>
                       </div>
+                      <span className={`wya-role-badge ${roleBadgeClass(p.position)}`}>{p.position}</span>
                     </div>
                   ))}
+                  {dropdown.length === 0 && search.length > 1 && (
+                    <div className="wya-no-results">No players found</div>
+                  )}
                 </div>
               )}
-
-              <button
-                className={`wya-btn ${selected ? 'wya-btn-active' : 'wya-btn-inactive'}`}
-                disabled={!selected}
-                onClick={submitGuess}
-              >
-                Confirm Guess →
+              <button className="wya-btn-guess" disabled={!selected} onClick={submitGuess}>
+                Guess →
               </button>
             </div>
           )}
 
-          {/* Column labels */}
+          {/* Column Headers */}
           {guesses.length > 0 && (
-            <div className="wya-col-labels">
-              {['Player','Country','Position','Club','Age','Foot'].map(h => (
-                <div key={h} className="wya-col-label">{h}</div>
+            <div className="wya-col-headers">
+              {['Player', 'Country', 'Pos', 'Club', 'Age', 'Foot'].map(h => (
+                <div key={h} className="wya-col-hdr">{h}</div>
               ))}
             </div>
           )}
 
-          {/* Guess grid */}
-          <div className="wya-grid-rows">
+          {/* Guess Rows */}
+          <div className="wya-guesses-wrap">
             {[...guesses].reverse().map((g, rowI) => (
-              <div key={`${animKey}-${rowI}`} className={`wya-guess-row${rowI===0?' wya-row-enter':''}`}>
-                {g.cells.map((cell, j) => <Cell key={j} cell={cell} />)}
+              <div key={`${animKey}-${rowI}`} className="wya-guess-row">
+                {g.cells.map((cell, j) => <GuessCell key={j} cell={cell} />)}
               </div>
             ))}
           </div>
 
-          {/* Legend */}
-          {guesses.length > 0 && (
-            <div className="wya-legend">
-              {[['var(--green)','Correct'],['var(--accent)','Same region / ±3 yrs'],['var(--surface)','Wrong']].map(([color,label]) => (
-                <span key={label} className="wya-legend-item">
-                  <span className="wya-legend-swatch" style={{ background:color }} />
-                  {label}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Result */}
+          {/* Result Card */}
           {gameOver && (
-            <div className={`wya-result ${won?'wya-result-win':'wya-result-loss'}`}>
-              <div className="wya-result-emoji">{won?'🏆':'💔'}</div>
-              <div className="wya-result-eyebrow">{won?'Nailed it!':'Not this time'}</div>
-              <div className="wya-result-name">{target.flag} {target.name}</div>
-              <div className="wya-result-info">{target.country} · {target.position} · {target.club} · Age {target.age}</div>
-              {won && (
-                <div className="wya-stats-row">
-                  <div className="wya-stat-chip">
-                    <span className="wya-stat-val">{attempts}</span>
-                    <span className="wya-stat-label">{attempts===1?'guess':'guesses'}</span>
-                  </div>
-                  <div className="wya-stats-div" />
-                  <div className="wya-stat-chip">
-                    <span className="wya-stat-val">{SCORES[attempts-1]}</span>
-                    <span className="wya-stat-label">points</span>
-                  </div>
-                  {xpAwarded != null && (
-                    <>
-                      <div className="wya-stats-div" />
-                      <div className="wya-stat-chip">
-                        <span className="wya-stat-val xp">+{xpAwarded}</span>
-                        <span className="wya-stat-label">XP</span>
-                      </div>
-                    </>
-                  )}
+            <div className="wya-result-card">
+              <div className={`wya-result-badge ${won ? 'win' : 'lose'}`}>
+                {won ? '🏆 Correct!' : '💔 Game Over'}
+              </div>
+              <div className="wya-result-title">{won ? 'Well Played!' : 'Better Luck Tomorrow'}</div>
+              <div className="wya-result-player">{target.flag} {target.name}</div>
+              <div className="wya-result-phrase">
+                {target.country} · {target.position} · {target.club} · Age {target.age} · {target.foot}-footed
+              </div>
+
+              {xpAwarded != null && (
+                <div className="pn-xp-badge">
+                  {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                 </div>
               )}
-              {!won && !hasWatchedExtraTryAd && (
-                <div style={{ margin: "20px 0", padding: 16, background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: 12 }}>
-                  <p style={{ fontSize: "0.82rem", color: "var(--muted)", marginBottom: 12, fontFamily: "'Space Mono', monospace" }}>
-                    Want another try? Watch a quick ad to get <strong>1 extra attempt</strong>!
-                  </p>
-                  <button
-                    className="wya-btn wya-btn-active"
-                    style={{
-                      background: "var(--accent)",
-                      color: "#060810",
-                      width: "100%",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 16px rgba(247,195,68,0.28)",
-                      padding: "12px",
-                      fontFamily: "'Space Mono', monospace"
-                    }}
-                    onClick={triggerRewardedAdForExtraTry}
-                    disabled={isAdLoading}
-                  >
-                    📺 {isAdLoading ? "Loading Ad..." : "Watch Ad for +1 Try"}
-                  </button>
+
+              <div className="wya-result-breakdown">
+                <div className="wya-rb-item">
+                  <div className="wya-rb-label">Attempts</div>
+                  <div className={`wya-rb-val${won ? ' green' : ''}`}>{won ? attempts : 'X'}</div>
                 </div>
-              )}
-              <p className="wya-next-up">New puzzle tomorrow ⏳</p>
+                <div className="wya-rb-item">
+                  <div className="wya-rb-label">Result</div>
+                  <div className="wya-rb-val">{won ? 'Guessed ✓' : 'Missed'}</div>
+                </div>
+                <div className="wya-rb-item">
+                  <div className="wya-rb-label">Score</div>
+                  <div className="wya-rb-val">{score}</div>
+                </div>
+              </div>
+              <div className="wya-result-actions">
+                <button className="wya-btn primary" onClick={() => window.location.reload()}>↺ Play Again</button>
+                <button className="wya-btn share"   onClick={handleShare}>📤 Share</button>
+                <button className="wya-btn secondary" onClick={() => window.history.back()}>← Home</button>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Bottom Nav */}
-        <BottomNav />
+          {/* Dashboard */}
+          <div className="wya-bottom-section">
+            <div className="wya-section-divider">
+              <span className="wya-section-label">Your Progress</span>
+              <div className="wya-section-line" />
+            </div>
+            <div className="wya-dashboard-grid">
+              {/* Streak Card */}
+              <div className="wya-dash-card">
+                <div className="wya-dash-card-hdr">
+                  <span className="wya-dash-icon">📅</span>
+                  <span className="wya-dash-label">Last 30 Days</span>
+                </div>
+                <StreakDots history={history} puzzleDate={puzzleDate} gameOver={gameOver} won={won} />
+                <div className="wya-streak-legend">
+                  <span><span className="wya-dot-sample win" />Guessed</span>
+                  <span><span className="wya-dot-sample miss" />Missed</span>
+                  <span><span className="wya-dot-sample today" />Today</span>
+                </div>
+              </div>
+              {/* Stats Card */}
+              <div className="wya-dash-card">
+                <div className="wya-dash-card-hdr">
+                  <span className="wya-dash-icon">📊</span>
+                  <span className="wya-dash-label">Your Stats</span>
+                </div>
+                <div className="wya-stats-grid">
+                  <div className="wya-stat-item"><div className="wya-stat-value">{stats.played || '—'}</div><div className="wya-stat-name">Played</div></div>
+                  <div className="wya-stat-item"><div className="wya-stat-value">{stats.won || '—'}</div><div className="wya-stat-name">Won</div></div>
+                  <div className="wya-stat-item"><div className="wya-stat-value">{stats.avgPts || '—'}</div><div className="wya-stat-name">Avg Pts</div></div>
+                  <div className="wya-stat-item"><div className="wya-stat-value">{stats.streak || '—'}</div><div className="wya-stat-name">Streak</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </main>
       </div>
     </>
   );
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
-function HintCard({ icon, label, value, revealed, unlockAt, onAdUnlock, isAdLoading }) {
-  const posC = POS_COLORS[value];
+function HintPill({ icon, label, value, revealed, onClick, loading }) {
   return (
-    <div className={`wya-hint${revealed?' revealed':''}`}
-      style={revealed && posC ? { background:posC.bg, borderColor:posC.border } : {}}>
-      <span className="wya-hint-icon">{icon}</span>
-      <div>
-        <div className="wya-hint-label">{label}</div>
-        {revealed
-          ? <div className="wya-hint-val" style={posC?{color:posC.text}:{}}>{value}</div>
-          : (
-            <div 
-              className="wya-hint-lock" 
-              onClick={onAdUnlock}
-              style={{ cursor: isAdLoading ? 'default' : 'pointer', textDecoration: 'underline', color: 'var(--accent)' }}
-            >
-              {isAdLoading ? '⏳...' : '📺 Unlock'}
-            </div>
-          )}
-      </div>
+    <div 
+      className={`wya-hint-pill${revealed ? ' revealed' : ' locked clickable'}`}
+      onClick={(!revealed && !loading) ? onClick : undefined}
+    >
+      <span className="hp-icon">{icon}</span>
+      <span className="hp-label">{label}</span>
+      <span className="hp-val">
+        {revealed ? value : (loading ? 'Loading...' : 'Tap to unlock 📺')}
+      </span>
     </div>
   );
 }
 
-function PosBadge({ pos }) {
-  const c = POS_COLORS[pos] || {};
-  return (
-    <span className="wya-pos-badge" style={{ background:c.bg, border:`1px solid ${c.border}`, color:c.text }}>
-      {pos}
-    </span>
-  );
-}
-
-function Cell({ cell }) {
+function GuessCell({ cell }) {
   const { cls, type, name, flag, val, arrow } = cell;
-  const bg   = cls==='correct'?'var(--accent-dim)' :cls==='partial'?'var(--accent-dim)' :'var(--surface)';
-  const brd  = cls==='correct'?'var(--border2)':cls==='partial'?'var(--border2)':'var(--border)';
-  const topC = cls==='correct'?'var(--green)'          :cls==='partial'?'var(--accent)'         :'transparent';
-  const arrC = cls==='partial'?'var(--accent)':'rgba(255,255,255,0.2)';
   return (
-    <div className="wya-cell" style={{ background:bg, borderColor:brd }}>
-      <div className="wya-cell-top" style={{ background:topC }} />
-      {type==='name' ? (
+    <div className={`wya-cell ${cls}`}>
+      {cls === 'correct' && <span className="wya-cell-tick">✓</span>}
+      {type === 'name' ? (
         <>
-          <span className="wya-cell-flag">{flag}</span>
-          <span className="wya-cell-name">{name}</span>
+          <div className="wya-cell-name">{name}</div>
+          <div className="wya-cell-sub">{flag}</div>
         </>
+      ) : type === 'country' ? (
+        <div className="wya-cell-flag-wrap" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+          <span className="wya-cell-flag">{flag}</span>
+          <span className="wya-cell-ctry">{val}</span>
+        </div>
       ) : (
         <>
-          <span className="wya-cell-val">{val}</span>
-          {arrow && <span className="wya-cell-arrow" style={{ color:arrC }}>{arrow}</span>}
+          <span>{val}</span>
+          {arrow && <span className="arrow">{arrow}</span>}
         </>
       )}
     </div>
   );
 }
 
-function BottomNav() {
-  const items = [
-    { id:'home',  label:'Games', icon:'⚽' },
-    { id:'guild', label:'Guild', icon:'🏰' },
-    { id:'raids', label:'Raids', icon:'⚔️' },
-    { id:'ranks', label:'Ranks', icon:'🏆' },
-    { id:'me',    label:'Me',    icon:'👤' },
-  ];
+function StreakDots({ history, puzzleDate, gameOver, won }) {
+  const today = new Date();
+  const dots = [];
+  
+  for (let i = 29; i >= 0; i--) {
+    const checkDate = new Date(today);
+    checkDate.setDate(today.getDate() - i);
+    const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,"0")}-${String(checkDate.getDate()).padStart(2,"0")}`;
+    const isToday = checkKey === puzzleDate;
+
+    let cls = 'miss';
+    if (isToday) {
+      if (gameOver) {
+        cls = won ? 'win' : 'miss';
+      } else {
+        cls = 'today-pending';
+      }
+    } else {
+      const entry = history[checkKey];
+      if (entry) {
+        cls = entry.won ? 'win' : 'miss';
+      } else {
+        cls = 'miss';
+      }
+    }
+    dots.push(cls);
+  }
+
+  // Slice to last 30 entries
+  const last30Dots = dots.slice(-30);
+
   return (
-    <nav className="wya-bottom-nav">
-      {items.map(item => (
-        <button key={item.id} className={`wya-nav-item${item.id==='home'?' active':''}`}
-          onClick={() => item.id==='home' && window.history.back()}
-          style={{ position:'relative' }}>
-          {item.id==='home' && <span className="wya-nav-indicator" />}
-          <span className="wya-nav-icon">{item.icon}</span>
-          <span className="wya-nav-label">{item.label}</span>
-        </button>
+    <div className="wya-streak-dots">
+      {last30Dots.map((cls, i) => (
+        <div key={i} className={`wya-streak-dot ${cls}`} />
       ))}
-    </nav>
+    </div>
+  );
+}
+
+function HowToPlayModal({ show, onClose }) {
+  if (!show) return null;
+  return (
+    <div className={`wya-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="wya-modal-box">
+        <h2 className="wya-modal-title">⚽ How to Play</h2>
+        <ul className="wya-rules-list">
+          <li><strong>🎯 Goal:</strong> Identify the mystery footballer in 8 guesses</li>
+          <li><strong>🟢 Green:</strong> Exact match for that attribute</li>
+          <li><strong>🟡 Yellow:</strong> Close! Same continent/region, or within 3 years of age</li>
+          <li><strong>🔴 Red:</strong> Wrong — not a match at all</li>
+          <li><strong>↑ / ↓ Arrows:</strong> The real answer's age is higher or lower</li>
+          <li><strong>🏳️ Flags:</strong> Each guess shows the player's country flag</li>
+          <li><strong>📺 Hint ads:</strong> Tap on a hint pill to watch a rewarded ad to unlock it</li>
+        </ul>
+        <div className="wya-modal-attrs">
+          <div className="wya-modal-attrs-title">📊 Attributes Revealed</div>
+          <div className="wya-modal-attrs-grid">
+            <div>🏳️ Country + Flag</div><div>🎭 Position</div>
+            <div>🎂 Age</div><div>🏢 Club & Foot</div>
+          </div>
+        </div>
+        <button className="wya-modal-close" onClick={onClose}>🚀 Let's Play!</button>
+      </div>
+    </div>
   );
 }

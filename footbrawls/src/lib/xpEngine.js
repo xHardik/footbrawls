@@ -69,7 +69,7 @@ function getTodayUTC() {
 export async function awardXP(userId, source, opts = {}) {
   const userRef = doc(db, 'users', userId);
 
-  return await runTransaction(db, async (t) => {
+  const result = await runTransaction(db, async (t) => {
     const userSnap = await t.get(userRef);
     if (!userSnap.exists()) throw new Error(`User ${userId} not found`);
 
@@ -136,6 +136,22 @@ export async function awardXP(userId, source, opts = {}) {
       split:          { home: homeXP, support: supportXP },
     };
   });
+
+  // Sync to local cache after successful Firestore transaction
+  try {
+    const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
+    if (localUser && localUser.userId === userId) {
+      localUser.totalXP = result.newTotal;
+      localUser.dailyXP = result.dailyXPUsed;
+      localUser.dailyXPDate = getTodayUTC();
+      localUser.tier = result.newTier;
+      localStorage.setItem('footbrawls_user', JSON.stringify(localUser));
+    }
+  } catch (e) {
+    console.error('[xpEngine] Failed to sync user XP to localStorage:', e);
+  }
+
+  return result;
 }
 
 // ─── Guild HP + Level Up ──────────────────────────────────────────────────────

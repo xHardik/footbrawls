@@ -11,6 +11,9 @@ import TransferTrail from './pages/games/transfertrail';
 import HigherOrLower from './pages/games/higherlower';
 import MatchPredictor from './pages/games/matchpredictor';
 import PenaltyNerve from './pages/games/penaltynerve';
+import DribbleGauntlet from './pages/games/dribble';
+import DailyTrivia from './pages/games/dailytrivia';
+import RapidFire from './pages/games/rapidfire';
 import Raid from './pages/Raid';
 
 function RequireUser({ children }) {
@@ -33,6 +36,9 @@ export default function App() {
         <Route path="/games/higherlower" element={<RequireUser><Layout><HigherOrLower /></Layout></RequireUser>} />
         <Route path="/games/matchpredictor" element={<RequireUser><Layout><MatchPredictor /></Layout></RequireUser>} />
         <Route path="/games/penaltynerve" element={<RequireUser><Layout><PenaltyNerve /></Layout></RequireUser>} />
+        <Route path="/games/dribble" element={<RequireUser><Layout><DribbleGauntlet /></Layout></RequireUser>} />
+        <Route path="/games/dailytrivia" element={<RequireUser><Layout><DailyTrivia /></Layout></RequireUser>} />
+        <Route path="/games/rapidfire" element={<RequireUser><Layout><RapidFire /></Layout></RequireUser>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

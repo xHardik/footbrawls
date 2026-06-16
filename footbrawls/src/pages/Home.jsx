@@ -20,7 +20,6 @@ const C = {
 
 // ── SVG ICON LIBRARY (no emoji) ──────────────────────────────────────────────
 const Icon = {
-  // Football / soccer ball
   Ball: ({size=20,color="currentColor",style={}}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
       <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5"/>
@@ -32,7 +31,6 @@ const Icon = {
       <path d="M8 19l1-4 3-1 3 1 1 4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
     </svg>
   ),
-  // Trophy / cup
   Trophy: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
@@ -42,7 +40,6 @@ const Icon = {
       <path d="M9 12.5c0 0 1 1.5 3 1.5s3-1.5 3-1.5" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
-  // Crosshair / target — for prediction
   Target: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
@@ -54,14 +51,12 @@ const Icon = {
       <line x1="19" y1="12" x2="22" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   ),
-  // Flame — penalty nerve
   Flame: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M12 22c4.4 0 8-3.3 8-7.4 0-2.4-1-4.4-2.6-5.9 0 1.4-.8 2.6-2 3.3C15.1 9.7 14 7 14 4c0 0-5 3-5 9.5 0 .8.1 1.5.3 2.2C8.5 15 8 13.6 8 12c-1.2 1.2-2 3-2 4.6C6 20.7 8.7 22 12 22z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <circle cx="12" cy="17" r="2" stroke={color} strokeWidth="1.2"/>
     </svg>
   ),
-  // Puzzle / brain — wordle
   Puzzle: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="3" y="3" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
@@ -71,7 +66,6 @@ const Icon = {
       <path d="M10 6.5h4M6.5 10v4M17.5 10v4M10 17.5h4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   ),
-  // Bar chart — higher/lower
   Chart: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="3" y="14" width="4" height="7" rx="1" fill={color} opacity="0.5"/>
@@ -80,7 +74,6 @@ const Icon = {
       <line x1="2" y1="21" x2="22" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   ),
-  // Network / transfer trail
   Network: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="5" cy="12" r="2.5" stroke={color} strokeWidth="1.5"/>
@@ -91,7 +84,6 @@ const Icon = {
       <line x1="19" y1="7.5" x2="19" y2="16.5" stroke={color} strokeWidth="1.3" strokeDasharray="2 2"/>
     </svg>
   ),
-  // Person / silhouette — who are ya
   Person: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
@@ -99,14 +91,12 @@ const Icon = {
       <path d="M9 21h6" stroke={color} strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
-  // Shield — guild
   Shield: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <path d="M9 12l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  // Swords / raid
   Swords: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M3 3l10 10M13 3l8 8-4 4-8-8V3h4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
@@ -114,26 +104,22 @@ const Icon = {
       <path d="M13.5 20.5l-2 2M20.5 13.5l2-2" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   ),
-  // Chevron right
   ChevronRight: ({size=16,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M9 6l6 6-6 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  // Flag / pennant
   Flag: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M5 3v18" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
       <path d="M5 3h14l-3 5 3 5H5" fill={color} opacity="0.5" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
     </svg>
   ),
-  // Live dot / pulse already inline, but also:
   Star: ({size=16,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 18.1l-6.2 3 1.2-6.9-5-4.9 6.9-1L12 2z"/>
     </svg>
   ),
-  // Users
   Users: ({size=16,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="9" cy="7" r="3" stroke={color} strokeWidth="1.5"/>
@@ -142,21 +128,18 @@ const Icon = {
       <path d="M21 20v-.5a5 5 0 00-4.3-4.9" stroke={color} strokeWidth="1.3" strokeLinecap="round" opacity="0.6"/>
     </svg>
   ),
-  // Clock
   Clock: ({size=16,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
       <path d="M12 7v5l3 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
-  // Send arrow (chat)
   Send: ({size=18,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M22 2L11 13" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M22 2L15 22l-4-9-9-4 20-7z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/>
     </svg>
   ),
-  // Rank
   Rank: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M3 20h18" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
@@ -165,14 +148,12 @@ const Icon = {
       <path d="M17 20V14" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.7"/>
     </svg>
   ),
-  // Home / pitch
   Home: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M3 10.5L12 3l9 7.5V21H3V10.5z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
       <rect x="9" y="14" width="6" height="7" rx="1" stroke={color} strokeWidth="1.3"/>
     </svg>
   ),
-  // Warning
   Warning: ({size=14,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M12 2L2 20h20L12 2z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
@@ -180,15 +161,41 @@ const Icon = {
       <circle cx="12" cy="17" r="1" fill={color}/>
     </svg>
   ),
+  // Lightning bolt — rapid fire
+  Lightning: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" fill={color} fillOpacity="0.25"/>
+    </svg>
+  ),
+  // Question mark — trivia
+  Question: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
+      <path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-1.5 2-2.5 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="17" r="1" fill={color}/>
+    </svg>
+  ),
+  // Dribble / zigzag — dribble gauntlet
+  Dribble: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="5" r="2.5" stroke={color} strokeWidth="1.4"/>
+      <path d="M12 7.5c0 3-4 3-4 6s4 3 4 6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="8" cy="11" r="1.5" fill={color} opacity="0.4"/>
+      <circle cx="16" cy="14" r="1.5" fill={color} opacity="0.4"/>
+    </svg>
+  ),
 };
 
 const GAMES = [
-  { id:"whoAreYa",      Icon:Icon.Person,  name:"Who Are Ya?",     tag:"Deduction",   desc:"Guess the mystery player from country, club, age, and position clues.",         xp:25,  route:"/games/whoareya",      color:C.orange, meta:["8 Attempts","Thinky"],              storageKey:"footbrawls_whoareya"        },
-  { id:"matchPredictor",Icon:Icon.Target,  name:"Match Predictor", tag:"Daily Pick",   desc:"Call today's result, top scorer, and exact scoreline — chase the season board.", xp:100, route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],           storageKey:"footbrawls_matchpredictor"  },
-  { id:"penaltyNerve",  Icon:Icon.Flame,   name:"Penalty Nerve",   tag:"Pressure",     desc:"Beat the keeper across five high-stakes penalty kicks.",                          xp:30,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],              storageKey:"footbrawls_penaltynerve"    },
-  { id:"wordle",        Icon:Icon.Puzzle,  name:"Player Wordle",   tag:"Word Game",    desc:"Wordle energy, football names. Narrow the attributes and land the player.",       xp:20,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],           storageKey:"footbrawls_wordle_history"  },
-  { id:"higherLower",   Icon:Icon.Chart,   name:"Higher or Lower", tag:"Stats",        desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",       xp:15,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"],        storageKey:"footbrawls_higherlower"     },
-  { id:"transferTrail", Icon:Icon.Network, name:"Transfer Trail",  tag:"Career Trail", desc:"Connect two players through shared clubs in the fewest possible hops.",           xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Difficulty"], storageKey:"footbrawls_transfertrail"   },
+  { id:"whoAreYa",      Icon:Icon.Person,   name:"Who Are Ya?",      tag:"Deduction",   desc:"Guess the mystery player from country, club, age, and position clues.",              xp:25,  route:"/games/whoareya",      color:C.orange, meta:["8 Attempts","Thinky"],       storageKey:"footbrawls_whoareya"        },
+  { id:"matchPredictor",Icon:Icon.Target,   name:"Match Predictor",  tag:"Daily Pick",  desc:"Call today's result, top scorer, and exact scoreline — chase the season board.",    xp:100, route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],     storageKey:"footbrawls_matchpredictor"  },
+  { id:"penaltyNerve",  Icon:Icon.Flame,    name:"Penalty Nerve",    tag:"Pressure",    desc:"Beat the keeper across five high-stakes penalty kicks.",                              xp:30,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],       storageKey:"footbrawls_penaltynerve"    },
+  { id:"wordle",        Icon:Icon.Puzzle,   name:"Player Wordle",    tag:"Word Game",   desc:"Wordle energy, football names. Narrow the attributes and land the player.",           xp:20,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],      storageKey:"footbrawls_wordle_history"  },
+  { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:15,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower"     },
+  { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail"   },
+  { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:20,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia"     },
+  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.orange, meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire"       },
+  { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:30,  route:"/games/dribble",        color:C.purple, meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble"         },
 ];
 
 const BAD_WORDS = ["spam","fuck","shit","ass","bitch","dick","cunt"];
@@ -248,7 +255,6 @@ function useWorldChat() {
 function BgCanvas() {
   return (
     <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
-      {/* Subtle pitch-line grid — vertical stripes like a broadcast overlay */}
       <div style={{
         position:"absolute",inset:0,
         backgroundImage:`
@@ -258,22 +264,10 @@ function BgCanvas() {
         backgroundSize:"72px 72px",
         maskImage:"linear-gradient(180deg,transparent,rgba(0,0,0,0.4) 20%,rgba(0,0,0,0.4) 80%,transparent)"
       }}/>
-      {/* Centre circle hint */}
-      <div style={{
-        position:"absolute",
-        width:520,height:520,
-        top:"50%",left:"50%",
-        transform:"translate(-50%,-50%)",
-        borderRadius:"50%",
-        border:`1px solid ${C.pitchLine}`,
-        opacity:0.5,
-      }}/>
+      <div style={{position:"absolute",width:520,height:520,top:"50%",left:"50%",transform:"translate(-50%,-50%)",borderRadius:"50%",border:`1px solid ${C.pitchLine}`,opacity:0.5}}/>
       <div style={{position:"absolute",width:10,height:10,borderRadius:"50%",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:C.pitchLine}}/>
-      {/* Gold atmosphere top-left */}
       <div style={{position:"absolute",width:800,height:600,top:-280,left:-200,borderRadius:"50%",background:`radial-gradient(ellipse,rgba(247,195,68,0.22) 0%,transparent 70%)`,filter:"blur(100px)"}}/>
-      {/* Subtle red bottom-right */}
       <div style={{position:"absolute",width:500,height:400,bottom:-120,right:-120,borderRadius:"50%",background:`radial-gradient(ellipse,rgba(232,64,64,0.08) 0%,transparent 70%)`,filter:"blur(80px)"}}/>
-      {/* Film grain */}
       <div style={{position:"fixed",inset:0,opacity:0.025,backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",backgroundSize:"256px 256px"}}/>
     </div>
   );
@@ -338,10 +332,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
       borderBottom:`1px solid ${C.border}`,
       boxShadow:"0 1px 0 rgba(255,255,255,0.03), 0 4px 24px rgba(0,0,0,0.5)",
     }}>
-      {/* Gold top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${C.gold} 40%,${C.gold} 60%,transparent)`,opacity:0.55}}/>
-
-      {/* Logo */}
       <div onClick={()=>navigate("/")} style={{
         fontFamily:"'Bebas Neue',sans-serif",
         fontSize:"1.55rem",letterSpacing:3,
@@ -352,10 +343,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
       }}>
         FOOTBRAWLS
       </div>
-
-      {/* Right: XP + user */}
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {/* XP pill */}
         <div style={{
           display:"flex",alignItems:"center",gap:7,
           padding:"5px 12px",borderRadius:100,
@@ -370,8 +358,6 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
           <span style={{color:C.gold,fontWeight:800}}>{dailyXP}</span>
           <span style={{color:C.muted2}}>XP</span>
         </div>
-
-        {/* User pill */}
         <div style={{
           display:"flex",alignItems:"center",gap:6,
           padding:"5px 12px",borderRadius:100,
@@ -384,7 +370,6 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
           <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nickname}</span>
         </div>
       </div>
-      <style>{`@keyframes xpFill{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}`}</style>
     </nav>
   );
 }
@@ -393,7 +378,6 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
 function SectionHdr({ label, count, right }) {
   return (
     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14,marginTop:32}}>
-      {/* Small pitch-corner accent */}
       <div style={{width:3,height:14,borderRadius:2,background:`linear-gradient(180deg,${C.gold},${C.gold}44)`,flexShrink:0}}/>
       <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.58rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",color:C.muted2,whiteSpace:"nowrap"}}>{label}</span>
       <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.border2},transparent)`}}/>
@@ -402,8 +386,8 @@ function SectionHdr({ label, count, right }) {
   );
 }
 
-// ── GAME CARD ─────────────────────────────────────────────────────────────────
-function GameCard({ game, done, onPlay }) {
+// ── GAME CARD COMPACT (for 3x3 grid) ─────────────────────────────────────────
+function GameCardCompact({ game, done, onPlay }) {
   const [hovered,setHovered]=useState(false);
   const ca = game.color;
   const GameIcon = game.Icon;
@@ -413,78 +397,106 @@ function GameCard({ game, done, onPlay }) {
       onMouseEnter={()=>setHovered(true)}
       onMouseLeave={()=>setHovered(false)}
       style={{
-        position:"relative",display:"flex",alignItems:"center",gap:14,
-        color:C.text,
-        background:hovered?`linear-gradient(115deg,${ca}10,rgba(5,8,15,0.92))`:"rgba(255,255,255,0.03)",
-        border:`1px solid ${hovered?ca+"99":C.border}`,
-        borderRadius:14,padding:"14px 14px",overflow:"hidden",
+        position:"relative",
+        display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"space-between",
+        padding:"14px 13px 12px",
+        background:hovered?`linear-gradient(145deg,${ca}16,rgba(5,8,15,0.96))`:"rgba(255,255,255,0.03)",
+        border:`1px solid ${hovered?ca+"bb":C.border}`,
+        borderRadius:14,
+        overflow:"hidden",
         cursor:"pointer",
-        transform:hovered?"translateY(-2px)":"none",
-        boxShadow:hovered?`0 18px 44px rgba(0,0,0,0.5),0 0 0 1px ${ca}33,0 0 28px ${ca}1a`:"0 1px 0 rgba(255,255,255,0.03)",
-        transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+        transform:hovered?"translateY(-3px) scale(1.01)":"none",
+        boxShadow:hovered?`0 20px 44px rgba(0,0,0,0.55),0 0 0 1px ${ca}44,0 0 30px ${ca}22`:"0 1px 0 rgba(255,255,255,0.03)",
+        transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
+        minHeight:130,
       }}
     >
-      {/* Left accent stripe */}
-      <div style={{position:"absolute",left:0,top:0,bottom:0,width:hovered?3:2,borderRadius:"0 2px 2px 0",background:`linear-gradient(180deg,${ca},${ca}55)`,opacity:hovered?1:0.35,transition:"all 0.2s"}}/>
+      {/* Top accent bar — thickens and brightens on hover */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.28,transition:"all 0.22s"}}/>
 
-      {/* Radial glow */}
-      <div style={{position:"absolute",inset:0,borderRadius:14,background:`radial-gradient(ellipse at 18% 50%,${ca}14,transparent 60%)`,opacity:hovered?1:0,transition:"opacity 0.22s",pointerEvents:"none"}}/>
+      {/* Full-card radial glow behind content */}
+      <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 0%,${ca}20,transparent 60%)`,opacity:hovered?1:0,transition:"opacity 0.25s",pointerEvents:"none"}}/>
 
-      {/* Icon box */}
-      <div style={{
-        position:"relative",zIndex:2,flexShrink:0,
-        width:50,height:50,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        background:hovered?`${ca}22`:`${ca}0e`,
-        border:`1px solid ${hovered?ca+"66":ca+"22"}`,
-        borderRadius:12,
-        transform:hovered?"scale(1.08) rotate(-4deg)":"scale(1)",
-        boxShadow:hovered?`0 0 24px ${ca}55,inset 0 0 10px ${ca}18`:"none",
-        transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
-        <GameIcon size={22} color={ca} style={{filter:hovered?`drop-shadow(0 0 5px ${ca})`:"none",transition:"filter 0.2s"}}/>
-        {done && (
-          <div style={{position:"absolute",inset:0,borderRadius:12,background:"rgba(61,214,140,0.28)",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(2px)"}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M5 13l4 4L19 7" stroke={C.green} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        )}
+      {/* Sweep shimmer on hover */}
+      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}12,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
+
+      {/* ── TOP ROW: icon + XP pill ── */}
+      <div style={{position:"relative",zIndex:2,display:"flex",alignItems:"flex-start",justifyContent:"space-between",width:"100%",marginBottom:10}}>
+        <div style={{
+          width:40,height:40,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          background:hovered?`${ca}28`:`${ca}10`,
+          border:`1px solid ${hovered?ca+"77":ca+"28"}`,
+          borderRadius:10,
+          transform:hovered?"scale(1.12) rotate(-6deg)":"scale(1)",
+          boxShadow:hovered?`0 0 22px ${ca}66,inset 0 0 12px ${ca}22`:"none",
+          transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+          flexShrink:0,
+        }}>
+          <GameIcon size={19} color={ca}/>
+        </div>
+
+        {/* XP pill — glows on hover */}
+        <div style={{
+          display:"flex",alignItems:"center",gap:3,
+          padding:"3px 7px",borderRadius:99,
+          background:hovered?`${C.gold}20`:`${C.gold}0c`,
+          border:`1px solid ${hovered?C.gold+"55":C.gold+"22"}`,
+          boxShadow:hovered?`0 0 10px ${C.gold}44`:"none",
+          transition:"all 0.22s",
+        }}>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.42rem",fontWeight:700,color:C.gold,letterSpacing:0.5}}>+{game.xp} XP</span>
+        </div>
       </div>
 
-      {/* Text */}
-      <div style={{flex:1,minWidth:0,position:"relative",zIndex:2}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.15rem",letterSpacing:1.5,lineHeight:1,textShadow:hovered?`0 0 18px ${ca}77`:"none",transition:"text-shadow 0.2s"}}>{game.name}</span>
+      {/* ── BOTTOM: name + desc + tag ── */}
+      <div style={{position:"relative",zIndex:2,width:"100%"}}>
+        <div style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"1.0rem",letterSpacing:1.4,lineHeight:1,
+          color:C.text,
+          textShadow:hovered?`0 0 16px ${ca}88`:"none",
+          transition:"text-shadow 0.22s",
+          marginBottom:5,
+        }}>{game.name}</div>
+
+        {/* Description — 2 lines, wraps naturally */}
+        <div style={{
+          fontFamily:"'Syne',sans-serif",
+          fontSize:"0.62rem",
+          color:hovered?C.muted:C.muted3,
+          lineHeight:1.45,
+          marginBottom:7,
+          overflow:"hidden",
+          display:"-webkit-box",
+          WebkitLineClamp:2,
+          WebkitBoxOrient:"vertical",
+          transition:"color 0.22s",
+        }}>{game.desc}</div>
+
+        {/* Tag pill — color shifts on hover */}
+        <div style={{display:"flex",alignItems:"center",gap:5}}>
           <span style={{
-            fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
-            textTransform:"uppercase",letterSpacing:1.5,padding:"3px 8px",borderRadius:3,
-            color:ca,background:`${ca}15`,border:`1px solid ${ca}44`,
-            boxShadow:hovered?`0 0 8px ${ca}33`:"none",transition:"box-shadow 0.2s",
-          }}>{done?"DONE":game.tag}</span>
-        </div>
-        <p style={{fontSize:"0.73rem",color:C.muted,lineHeight:1.5,marginBottom:7,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{game.desc}</p>
-        <div style={{display:"flex",alignItems:"center",gap:5,flexWrap:"wrap"}}>
-          {game.meta.map(m=>(
-            <span key={m} style={{display:"inline-flex",padding:"2px 7px",borderRadius:3,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",fontSize:"0.5rem",fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",color:C.muted2,fontFamily:"'Space Mono',monospace"}}>{m}</span>
-          ))}
-          <span style={{display:"inline-flex",padding:"2px 7px",borderRadius:3,background:`${C.gold}14`,border:`1px solid ${C.gold}44`,fontSize:"0.5rem",fontWeight:700,letterSpacing:0.6,textTransform:"uppercase",color:C.gold,fontFamily:"'Space Mono',monospace",boxShadow:hovered?`0 0 10px ${C.gold}33`:"none",transition:"box-shadow 0.2s"}}>+{game.xp} XP</span>
-        </div>
-      </div>
+            fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",fontWeight:700,
+            textTransform:"uppercase",letterSpacing:1.2,padding:"2px 7px",borderRadius:3,
+            color:hovered?"#000":ca,
+            background:hovered?ca:`${ca}14`,
+            border:`1px solid ${hovered?ca:ca+"33"}`,
+            boxShadow:hovered?`0 0 10px ${ca}66`:"none",
+            transition:"all 0.22s",
+          }}>{game.tag}</span>
 
-      {/* Arrow */}
-      <div style={{
-        position:"relative",zIndex:2,flexShrink:0,
-        width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",
-        background:hovered?ca:"transparent",
-        border:`1.5px solid ${hovered?ca:ca+"44"}`,
-        borderRadius:8,
-        color:hovered?"#000":ca,
-        transform:hovered?"translateX(2px) scale(1.06)":"none",
-        boxShadow:hovered?`0 0 16px ${ca}66`:"none",
-        transition:"all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
-        <Icon.ChevronRight size={14} color={hovered?"#000":ca}/>
+          {/* Done tick — replaces nothing, just sits next to tag */}
+          {done && (
+            <div style={{display:"flex",alignItems:"center",gap:3}}>
+              <div style={{width:16,height:16,borderRadius:"50%",background:"rgba(61,214,140,0.15)",border:"1px solid rgba(61,214,140,0.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 13l4 4L19 7" stroke={C.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -557,9 +569,7 @@ function GuildCard({ guild, navigate }) {
         transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
       }}
     >
-      {/* Sweep shimmer */}
       <div style={{position:"absolute",top:0,left:hovered?"-5%":"-130%",width:"55%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(6,182,212,0.07),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-
       <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
         <div style={{position:"relative",flexShrink:0}}>
           <div style={{
@@ -599,10 +609,7 @@ function GuildCard({ guild, navigate }) {
           transition:"all 0.2s",boxShadow:hovered?"0 0 12px rgba(6,182,212,0.25)":"none",
         }}>ENTER</div>
       </div>
-
       <div style={{height:1,background:"linear-gradient(90deg,rgba(6,182,212,0.18),rgba(255,255,255,0.04),transparent)",marginBottom:14}}/>
-
-      {/* Castle HP */}
       <div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -667,10 +674,8 @@ function WorldChat({ messages, user, navigate }) {
       boxShadow:focused?"0 0 0 1px rgba(255,255,255,0.05),0 8px 28px rgba(0,0,0,0.35)":"0 4px 20px rgba(0,0,0,0.2)",
       transition:"box-shadow 0.2s, border-color 0.2s",
     }}>
-      {/* Chat header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:`1px solid ${C.border}`,background:"linear-gradient(135deg,rgba(61,214,140,0.05),rgba(255,255,255,0.015))"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {/* Live dot */}
           <div style={{position:"relative",width:10,height:10,flexShrink:0}}>
             <div style={{position:"absolute",inset:-3,borderRadius:"50%",background:"rgba(61,214,140,0.22)",animation:"chatRipple 2s ease-out infinite"}}/>
             <div style={{position:"absolute",inset:0,borderRadius:"50%",background:C.green,boxShadow:`0 0 8px ${C.green}`}}/>
@@ -683,8 +688,6 @@ function WorldChat({ messages, user, navigate }) {
           My Guild
         </button>
       </div>
-
-      {/* Messages */}
       <div ref={containerRef} style={{height:"min(260px,48vh)",overflowY:"auto",padding:"12px 14px",scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.07) transparent",display:"flex",flexDirection:"column",gap:2}}>
         {messages.length===0&&(
           <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,opacity:0.5}}>
@@ -719,15 +722,11 @@ function WorldChat({ messages, user, navigate }) {
           );
         })}
       </div>
-
-      {/* Error */}
       {err&&(
         <div style={{padding:"7px 16px",fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.red,background:"rgba(232,64,64,0.06)",borderTop:"1px solid rgba(232,64,64,0.1)",display:"flex",alignItems:"center",gap:6}}>
           <Icon.Warning size={12} color={C.red}/> {err}
         </div>
       )}
-
-      {/* Input */}
       <div style={{padding:"10px 12px",borderTop:`1px solid ${C.border}`,background:"rgba(0,0,0,0.15)"}}>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div style={{width:30,height:30,borderRadius:8,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem",flexShrink:0}}>{user.flag||"🏴"}</div>
@@ -754,59 +753,121 @@ function WorldChat({ messages, user, navigate }) {
   );
 }
 
-// ── RAID BANNER ───────────────────────────────────────────────────────────────
-function RaidBanner({ onPress }) {
-  const [hovered,setHovered]=useState(false);
+// ── ACTION BUTTONS (Raid + vs Friends) ───────────────────────────────────────
+function ActionButtons({ onRaid, onFriends }) {
+  const [raidHovered, setRaidHovered] = useState(false);
+  const [friendsHovered, setFriendsHovered] = useState(false);
+
   return (
-    <div onClick={onPress} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
-      style={{
-        position:"relative",overflow:"hidden",
-        background:hovered?"radial-gradient(circle at 30% 50%,rgba(168,85,247,0.2),transparent 55%),rgba(168,85,247,0.05)":"radial-gradient(circle at top right,rgba(168,85,247,0.08),transparent 50%),rgba(255,255,255,0.02)",
-        border:`1px solid rgba(168,85,247,${hovered?0.65:0.18})`,
-        borderRadius:14,padding:"16px 16px",
-        display:"flex",alignItems:"center",gap:14,
-        cursor:"pointer",
-        transform:hovered?"translateY(-2px)":"none",
-        boxShadow:hovered?"0 18px 44px rgba(0,0,0,0.5),0 0 32px rgba(168,85,247,0.18)":"0 1px 0 rgba(255,255,255,0.03)",
-        transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
-        marginTop:24,
-      }}
-    >
-      {/* Sweep */}
-      <div style={{position:"absolute",top:0,left:hovered?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(168,85,247,0.1),transparent)",transition:"left 0.6s ease",pointerEvents:"none"}}/>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:16}}>
+      {/* Raid CTA */}
+      <div
+        onClick={onRaid}
+        onMouseEnter={()=>setRaidHovered(true)}
+        onMouseLeave={()=>setRaidHovered(false)}
+        style={{
+          position:"relative",overflow:"hidden",
+          background:raidHovered
+            ?"radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.22),transparent 65%),rgba(168,85,247,0.06)"
+            :"radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
+          border:`1px solid rgba(168,85,247,${raidHovered?0.65:0.22})`,
+          borderRadius:14,
+          padding:"20px 14px 18px",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,
+          cursor:"pointer",textAlign:"center",
+          transform:raidHovered?"translateY(-3px)":"none",
+          boxShadow:raidHovered?"0 18px 40px rgba(0,0,0,0.5),0 0 32px rgba(168,85,247,0.15)":"0 1px 0 rgba(255,255,255,0.03)",
+          transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+        }}
+      >
+        {/* Top glow line */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:raidHovered?1:0.35,transition:"opacity 0.2s"}}/>
+        {/* Sweep shimmer */}
+        <div style={{position:"absolute",top:0,left:raidHovered?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(168,85,247,0.09),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
 
-      {/* Icon */}
-      <div style={{
-        width:48,height:48,borderRadius:11,
-        background:hovered?"rgba(168,85,247,0.22)":"rgba(168,85,247,0.09)",
-        border:`1.5px solid rgba(168,85,247,${hovered?0.65:0.24})`,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        flexShrink:0,
-        boxShadow:hovered?"0 0 20px rgba(168,85,247,0.45)":"none",
-        transform:hovered?"scale(1.06) rotate(-3deg)":"none",
-        transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
-        <Icon.Swords size={22} color={C.purple}/>
-      </div>
-
-      <div style={{flex:1,minWidth:0,position:"relative",zIndex:2}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5,flexWrap:"wrap"}}>
-          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.35rem",letterSpacing:2,color:C.text,textShadow:hovered?"0 0 20px rgba(168,85,247,0.7)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</span>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.5,padding:"3px 8px",borderRadius:3,color:C.purple,background:"rgba(168,85,247,0.12)",border:`1px solid rgba(168,85,247,${hovered?0.6:0.26})`,boxShadow:hovered?"0 0 8px rgba(168,85,247,0.4)":"none",transition:"all 0.2s"}}>STAGE 5</span>
+        <div style={{
+          width:48,height:48,borderRadius:13,
+          background:raidHovered?"rgba(168,85,247,0.2)":"rgba(168,85,247,0.08)",
+          border:`1.5px solid rgba(168,85,247,${raidHovered?0.6:0.22})`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          flexShrink:0,
+          boxShadow:raidHovered?"0 0 22px rgba(168,85,247,0.45)":"none",
+          transform:raidHovered?"scale(1.08) rotate(-4deg)":"scale(1)",
+          transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+          <Icon.Swords size={22} color={C.purple}/>
         </div>
-        <p style={{fontSize:"0.76rem",color:hovered?C.muted:C.muted2,lineHeight:1.5,fontFamily:"'Syne',sans-serif",margin:0,transition:"color 0.2s"}}>Team up on match day to break curses and swing castle momentum.</p>
+
+        <div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:raidHovered?"0 0 18px rgba(168,85,247,0.65)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(168,85,247,0.6)",letterSpacing:1,marginTop:5}}>STAGE 5 · TEAM UP</div>
+        </div>
+
+        <div style={{
+          fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
+          letterSpacing:1.2,padding:"5px 12px",borderRadius:5,
+          color:C.purple,
+          background:raidHovered?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",
+          border:`1px solid rgba(168,85,247,${raidHovered?0.55:0.25})`,
+          textTransform:"uppercase",
+          boxShadow:raidHovered?"0 0 12px rgba(168,85,247,0.35)":"none",
+          transition:"all 0.2s",
+        }}>JOIN RAID →</div>
       </div>
 
-      <div style={{
-        width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",
-        background:hovered?"rgba(168,85,247,0.3)":C.surface2,
-        border:`1.5px solid rgba(168,85,247,${hovered?0.75:0.26})`,
-        borderRadius:7,color:C.purple,
-        transform:hovered?"translateX(2px) scale(1.08)":"none",
-        boxShadow:hovered?"0 0 14px rgba(168,85,247,0.5)":"none",
-        transition:"all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-      }}>
-        <Icon.ChevronRight size={14} color={C.purple}/>
+      {/* VS Friends CTA */}
+      <div
+        onClick={onFriends}
+        onMouseEnter={()=>setFriendsHovered(true)}
+        onMouseLeave={()=>setFriendsHovered(false)}
+        style={{
+          position:"relative",overflow:"hidden",
+          background:friendsHovered
+            ?"radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.22),transparent 65%),rgba(79,142,247,0.06)"
+            :"radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
+          border:`1px solid rgba(79,142,247,${friendsHovered?0.65:0.22})`,
+          borderRadius:14,
+          padding:"20px 14px 18px",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,
+          cursor:"pointer",textAlign:"center",
+          transform:friendsHovered?"translateY(-3px)":"none",
+          boxShadow:friendsHovered?"0 18px 40px rgba(0,0,0,0.5),0 0 32px rgba(79,142,247,0.15)":"0 1px 0 rgba(255,255,255,0.03)",
+          transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+        }}
+      >
+        {/* Top glow line */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:friendsHovered?1:0.35,transition:"opacity 0.2s"}}/>
+        {/* Sweep shimmer */}
+        <div style={{position:"absolute",top:0,left:friendsHovered?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(79,142,247,0.09),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
+
+        <div style={{
+          width:48,height:48,borderRadius:13,
+          background:friendsHovered?"rgba(79,142,247,0.2)":"rgba(79,142,247,0.08)",
+          border:`1.5px solid rgba(79,142,247,${friendsHovered?0.6:0.22})`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          flexShrink:0,
+          boxShadow:friendsHovered?"0 0 22px rgba(79,142,247,0.45)":"none",
+          transform:friendsHovered?"scale(1.08) rotate(4deg)":"scale(1)",
+          transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}>
+          <Icon.Users size={22} color={C.blue}/>
+        </div>
+
+        <div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:friendsHovered?"0 0 18px rgba(79,142,247,0.65)":"none",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(79,142,247,0.6)",letterSpacing:1,marginTop:5}}>PRIVATE LOBBY · LIVE</div>
+        </div>
+
+        <div style={{
+          fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
+          letterSpacing:1.2,padding:"5px 12px",borderRadius:5,
+          color:C.blue,
+          background:friendsHovered?"rgba(79,142,247,0.18)":"rgba(79,142,247,0.08)",
+          border:`1px solid rgba(79,142,247,${friendsHovered?0.55:0.25})`,
+          textTransform:"uppercase",
+          boxShadow:friendsHovered?"0 0 12px rgba(79,142,247,0.35)":"none",
+          transition:"all 0.2s",
+        }}>PLAY NOW →</div>
       </div>
     </div>
   );
@@ -1009,11 +1070,23 @@ export default function Home() {
           ):(
             <MatchCard fixture={null} fallbackSecs={mockSecs}/>
           )}
+
+          {/* ── 3x3 GAME GRID ── */}
           <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {games.map(game=><GameCard key={game.id} game={game} done={game.done} onPlay={()=>navigate(game.route)}/>)}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {games.map(game=>(
+              <GameCardCompact
+                key={game.id}
+                game={game}
+                done={game.done}
+                onPlay={()=>navigate(game.route)}
+              />
+            ))}
           </div>
-          <RaidBanner onPress={showSoon}/>
+
+          {/* ── ACTION BUTTONS ── */}
+          <ActionButtons onRaid={showSoon} onFriends={showSoon}/>
+
           <SectionHdr label="Your Guild"/>
           <GuildCard guild={guild} navigate={navigate}/>
           <SectionHdr label="World Chat" right="ALL GUILDS"/>

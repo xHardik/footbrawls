@@ -32,8 +32,9 @@ const GAMES = [
   { name: 'Higher or Lower',path: '/games/higherlower',   icon: '📊', xp: 15,  key: 'footbrawls_higherlower' },
   { name: 'Transfer Trail', path: '/games/transfertrail', icon: '🔄', xp: 20,  key: 'footbrawls_transfertrail' },
   { name: 'Match Predictor',path: '/games/matchpredictor',icon: '🎯', xp: 100, key: 'footbrawls_matchpredictor' },
-  { name: 'Daily Trivia',   path: '/games/trivia',        icon: '🧠', xp: 80,  key: 'footbrawls_trivia' },
+  { name: 'Daily Trivia',   path: '/games/dailytrivia',   icon: '🧠', xp: 80,  key: 'footbrawls_dailytrivia' },
   { name: 'Penalty Nerve',  path: '/games/penaltynerve',  icon: '⚽', xp: 30,  key: 'footbrawls_penaltynerve' },
+  { name: 'Dribble Gauntlet',path: '/games/dribble',       icon: '🏃‍♂️', xp: 30,  key: 'footbrawls_dribble' },
   { name: 'Rapid Fire',     path: '/games/rapidfire',     icon: '⚡', xp: 20,  key: 'footbrawls_rapidfire' },
 ];
 

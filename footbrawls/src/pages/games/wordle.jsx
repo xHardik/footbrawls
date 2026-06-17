@@ -278,7 +278,7 @@ html { scroll-behavior: smooth; }
 
 /* ── CONTROLS ── */
 .wdl-controls {
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
   margin-bottom: 20px; animation: fadeUp 0.5s ease 0.18s both;
 }
 .wdl-btn {
@@ -1117,7 +1117,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           )}
 
           {!gameOver && (
-            <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 12 }}>
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
               <button
                 className="wdl-btn"
                 style={{

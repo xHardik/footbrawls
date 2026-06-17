@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/" element={<RequireUser><Home /></RequireUser>} />
         <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
         <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
-        <Route path="/games/whoareya" element={<RequireUser><Layout><WhoAreYa /></Layout></RequireUser>} />
+        <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
         <Route path="/games/wordle" element={<RequireUser><Layout><Wordle /></Layout></RequireUser>} />
         <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />
         <Route path="/games/higherlower" element={<RequireUser><Layout><HigherOrLower /></Layout></RequireUser>} />

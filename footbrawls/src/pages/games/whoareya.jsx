@@ -440,12 +440,14 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 .wya-streak-dot {
   aspect-ratio: 1; border-radius: 6px; background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace; font-size: 0.52rem; font-weight: 700;
 }
 .wya-streak-dot.win {
-  background: rgba(61,214,140,.18); border-color: rgba(61,214,140,.32);
+  background: rgba(61,214,140,.18); border-color: rgba(61,214,140,.32); color: #3DD68C;
 }
 .wya-streak-dot.miss {
-  background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18);
+  background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18); color: #ff8080;
 }
 .wya-streak-dot.today-played {
   background: rgba(247,195,68,.14); border-color: var(--accent); box-shadow: 0 0 10px rgba(247,195,68,.2);
@@ -1190,21 +1192,32 @@ function StreakDots({ history, puzzleDate, gameOver, won }) {
     const isToday = checkKey === puzzleDate;
 
     let cls = 'miss';
+    let xp = 0;
     if (isToday) {
       if (gameOver) {
-        cls = won ? 'win' : 'miss';
+        const entry = history[checkKey];
+        if (entry) {
+          cls = entry.won ? 'win' : 'miss';
+          xp = entry.score || 0;
+        } else {
+          cls = won ? 'win' : 'miss';
+          xp = won ? 25 : 0;
+        }
       } else {
         cls = 'today-pending';
+        xp = null;
       }
     } else {
       const entry = history[checkKey];
       if (entry) {
         cls = entry.won ? 'win' : 'miss';
+        xp = entry.score || 0;
       } else {
         cls = 'miss';
+        xp = 0;
       }
     }
-    dots.push(cls);
+    dots.push({ cls, xp });
   }
 
   // Slice to last 30 entries
@@ -1212,8 +1225,10 @@ function StreakDots({ history, puzzleDate, gameOver, won }) {
 
   return (
     <div className="wya-streak-dots">
-      {last30Dots.map((cls, i) => (
-        <div key={i} className={`wya-streak-dot ${cls}`} />
+      {last30Dots.map((dot, i) => (
+        <div key={i} className={`wya-streak-dot ${dot.cls}`}>
+          {dot.xp !== null ? dot.xp : ""}
+        </div>
       ))}
     </div>
   );

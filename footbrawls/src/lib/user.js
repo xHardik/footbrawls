@@ -56,6 +56,8 @@ export async function createUser({ nickname, homeCountry, supportTeam , flag}) {
     tier: 'lurker',
     predictionStreak: 0,
     predictionMultiplier: 1,
+    predictionScorerStreak: 0,
+    predictionScorerMultiplier: 1,
     loginStreakDays: 0,
     loginStreakLastDate: null,
     createdAt: now,

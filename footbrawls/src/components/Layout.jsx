@@ -68,7 +68,7 @@ function isGameDoneToday(key) {
   } catch { return false; }
 }
 
-export default function Layout({ children }) {
+export default function Layout({ children, hideMobileNav }) {
   const navigate  = useNavigate();
   const location  = useLocation();
   const user      = getUser();
@@ -112,13 +112,15 @@ export default function Layout({ children }) {
     <div className="ly-root">
 
       {/* Sleek Mobile Navigation Header Bar */}
-      <div className="ly-mobile-nav">
-        <button className="ly-back-btn" onClick={() => navigate('/')}>
-          ← BACK
-        </button>
-        <div className="ly-mobile-title">FOOTBRAWLS</div>
-        <div style={{ width: 62 }}></div> {/* Spacer to balance layout */}
-      </div>
+      {!hideMobileNav && (
+        <div className="ly-mobile-nav">
+          <button className="ly-back-btn" onClick={() => navigate('/')}>
+            ← BACK
+          </button>
+          <div className="ly-mobile-title">FOOTBRAWLS</div>
+          <div style={{ width: 62 }}></div> {/* Spacer to balance layout */}
+        </div>
+      )}
 
       {/* Sidebar (Only shown on Desktop, hidden on Mobile) */}
       <div className="ly-sidebar">

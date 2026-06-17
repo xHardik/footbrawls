@@ -1,16 +1,32 @@
-// src/lib/xpEngine.js
-// The single source of truth for all XP operations.
-// Now includes guild level upgrade logic — castleHP never resets daily,
-// instead upgrades the guild to the next level on reaching the cap.
+// api/lib/xpEngine.js
+// Server-side XP Engine using firebase-admin.
+// Replicates src/lib/xpEngine.js functionality using Node.js Admin SDK.
 
-import { db } from './firebase';
-import {
-  doc, getDoc, updateDoc, increment,
-  runTransaction, serverTimestamp
-} from 'firebase/firestore';
-import { checkUpgrade, getXPMultiplier, getHPCap } from './guildLevels';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import fs from 'fs';
+import { checkUpgrade, getXPMultiplier, getHPCap } from '../../src/lib/guildLevels.js';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+if (!getApps().length) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    initializeApp({
+      credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+    });
+  } else {
+    try {
+      const saPath = new URL('../../serviceAccountKey.json', import.meta.url);
+      const sa = JSON.parse(fs.readFileSync(saPath, 'utf8'));
+      initializeApp({
+        credential: cert(sa),
+      });
+    } catch (err) {
+      console.warn("No service account key found for local firebase-admin fallback:", err.message);
+      initializeApp();
+    }
+  }
+}
+
+const db = getFirestore();
 
 const DAILY_XP_CAP = 200;
 
@@ -53,8 +69,6 @@ const TIERS = [
   { name: 'ultra',   min: 500 },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function getTier(totalXP) {
   const tier = [...TIERS].reverse().find(t => totalXP >= t.min);
   return tier ? tier.name : 'lurker';
@@ -64,14 +78,19 @@ function getTodayUTC() {
   return new Date().toISOString().split('T')[0];
 }
 
-// ─── Core XP Award Function ───────────────────────────────────────────────────
+export function getPredictionMultiplier(streakCount) {
+  if (streakCount >= 8) return 3.0;
+  if (streakCount >= 5) return 2.0;
+  if (streakCount >= 3) return 1.5;
+  return 1.0;
+}
 
 export async function awardXP(userId, source, opts = {}) {
-  const userRef = doc(db, 'users', userId);
+  const userRef = db.collection('users').doc(userId);
 
-  const result = await runTransaction(db, async (t) => {
+  const result = await db.runTransaction(async (t) => {
     const userSnap = await t.get(userRef);
-    if (!userSnap.exists()) throw new Error(`User ${userId} not found`);
+    if (!userSnap.exists) throw new Error(`User ${userId} not found`);
 
     const user  = userSnap.data();
     const today = getTodayUTC();
@@ -86,7 +105,7 @@ export async function awardXP(userId, source, opts = {}) {
     // Base XP
     let baseXP = opts.rawXP ?? (XP_REWARDS[source] || 0);
 
-    // Override/force game/prediction rewards based on the source to guarantee 25 XP / 50 XP maximums
+    // Override/force game/prediction rewards based on source
     if (source && (
       source.endsWith('_correct') ||
       source.endsWith('_complete') ||
@@ -99,17 +118,17 @@ export async function awardXP(userId, source, opts = {}) {
     }
 
     // ── ALL READS FIRST (Firestore requires reads before writes) ─────────────
-    const homeGuildRef  = doc(db, 'guilds', user.homeCountry);
+    const homeGuildRef  = db.collection('guilds').doc(user.homeCountry);
     const homeGuildSnap = await t.get(homeGuildRef);
-    const homeGuildData = homeGuildSnap.exists() ? homeGuildSnap.data() : {};
+    const homeGuildData = homeGuildSnap.exists ? homeGuildSnap.data() : {};
 
     const hasSupportGuild = !!(user.supportTeam && user.supportTeam !== user.homeCountry);
     let supportGuildRef  = null;
     let supportGuildData = {};
     if (hasSupportGuild) {
-      supportGuildRef = doc(db, 'guilds', user.supportTeam);
+      supportGuildRef = db.collection('guilds').doc(user.supportTeam);
       const supportSnap = await t.get(supportGuildRef);
-      supportGuildData  = supportSnap.exists() ? supportSnap.data() : {};
+      supportGuildData  = supportSnap.exists ? supportSnap.data() : {};
     }
 
     // ── ALL COMPUTATION ───────────────────────────────────────────────────────
@@ -125,7 +144,7 @@ export async function awardXP(userId, source, opts = {}) {
     const supportXP = xpToAward - homeXP;
     const newTotal  = (user.totalXP || 0) + xpToAward;
 
-    // ── ALL WRITES (only after all reads complete) ────────────────────────────
+    // ── ALL WRITES ───────────────────────────────────────────────────────────
     t.update(userRef, {
       totalXP:     newTotal,
       dailyXP:     dailyXP + xpToAward,
@@ -149,29 +168,9 @@ export async function awardXP(userId, source, opts = {}) {
     };
   });
 
-  // Sync to local cache after successful Firestore transaction
-  try {
-    const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
-    if (localUser && localUser.userId === userId) {
-      localUser.totalXP = result.newTotal;
-      localUser.dailyXP = result.dailyXPUsed;
-      localUser.dailyXPDate = getTodayUTC();
-      localUser.tier = result.newTier;
-      localStorage.setItem('footbrawls_user', JSON.stringify(localUser));
-    }
-  } catch (e) {
-    console.error('[xpEngine] Failed to sync user XP to localStorage:', e);
-  }
-
   return result;
 }
 
-// ─── Guild HP + Level Up ──────────────────────────────────────────────────────
-
-/**
- * Apply HP to a guild. If it reaches the cap, upgrade to next level
- * and carry overflow HP into the new level.
- */
 function applyGuildHP(t, guildRef, guildData, hpToAdd) {
   const currentLevel = guildData.guildLevel || 1;
   const currentHP    = guildData.castleHP   || 0;
@@ -180,37 +179,26 @@ function applyGuildHP(t, guildRef, guildData, hpToAdd) {
   const { shouldUpgrade, overflow, newLevel } = checkUpgrade(newHP, currentLevel);
 
   if (shouldUpgrade) {
-    // Level up — reset HP to overflow amount, bump level
     t.update(guildRef, {
       castleHP:        overflow,
       castleHPCap:     getHPCap(newLevel),
       guildLevel:      newLevel,
-      lastLevelUpAt:   serverTimestamp(),
-      // Announce level up in guild (picked up by Guild.jsx onSnapshot)
+      lastLevelUpAt:   FieldValue.serverTimestamp(),
       levelUpPending:  true,
       levelUpTo:       newLevel,
     });
   } else {
-    // Normal increment
     t.update(guildRef, {
-      castleHP:    increment(hpToAdd),
-      castleHPCap: getHPCap(currentLevel), // keep in sync
+      castleHP:    FieldValue.increment(hpToAdd),
+      castleHPCap: getHPCap(currentLevel),
     });
   }
 }
 
-// ─── Prediction XP ────────────────────────────────────────────────────────────
-
-export function getPredictionMultiplier(streakCount) {
-  if (streakCount >= 8) return 3.0;
-  if (streakCount >= 5) return 2.0;
-  if (streakCount >= 3) return 1.5;
-  return 1.0;
-}
-
 export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, scoreCorrect }) {
-  const userRef  = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
+  const userRef  = db.collection('users').doc(userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) throw new Error(`User ${userId} not found`);
   const user     = userSnap.data();
 
   // 1. Result (Winner) Streak & Multiplier
@@ -235,7 +223,7 @@ export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, 
 
   const finalXP = resultXP + scorerXP;
 
-  await updateDoc(userRef, {
+  await userRef.update({
     predictionStreak:           resultStreak,
     predictionMultiplier:       resultMult,
     predictionScorerStreak:     scorerStreak,
@@ -248,41 +236,3 @@ export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, 
 
   return awardXP(userId, 'prediction_result', { rawXP: finalXP });
 }
-
-// ─── Login Streak ─────────────────────────────────────────────────────────────
-
-export async function handleDailyLogin(userId) {
-  const userRef  = doc(db, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  const user     = userSnap.data();
-  const today    = getTodayUTC();
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-  const lastLogin = user.loginStreakLastDate;
-  let newStreak   = 1;
-
-  if (lastLogin === yesterday) {
-    newStreak = (user.loginStreakDays || 0) + 1;
-  } else if (lastLogin === today) {
-    return { alreadyLoggedIn: true };
-  }
-
-  await updateDoc(userRef, {
-    loginStreakDays:     newStreak,
-    loginStreakLastDate: today,
-  });
-
-  const isWeekStreak = newStreak > 0 && newStreak % 7 === 0;
-  return awardXP(userId, isWeekStreak ? 'login_streak_7day' : 'daily_login');
-}
-
-// ─── Clear level-up notification (call from Guild.jsx after showing banner) ───
-
-export async function clearLevelUpNotification(guildCode) {
-  await updateDoc(doc(db, 'guilds', guildCode), {
-    levelUpPending: false,
-    levelUpTo:      null,
-  });
-}
-
-export { XP_REWARDS, TIERS, getTier };

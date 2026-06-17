@@ -1,14 +1,15 @@
 // api/raid/finalize.js
 // Server-side raid persistence: raids doc, warRecord, castleHP damage, curseRaidWins
 
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
   });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 const HP_CAPS = [10_000, 25_000, 50_000, 100_000, 200_000];
 const CURSE_LIFT_WINS = 3;
@@ -47,7 +48,7 @@ export default async function handler(req, res) {
     }
 
     const raidRef = db.collection('raids').doc();
-    const now     = admin.firestore.Timestamp.now();
+    const now     = Timestamp.now();
 
     await raidRef.set({
       raidType:      raidType || 'normal',

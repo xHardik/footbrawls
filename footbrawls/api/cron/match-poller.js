@@ -7,17 +7,18 @@
 // with header: Authorization: Bearer <CRON_SECRET>
 // ============================================================
 
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { awardPredictionXP } from '../lib/xpEngine.js';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(
       JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
     ),
   });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 const API_FOOTBALL_KEY  = process.env.API_FOOTBALL_KEY;
 const WC_2026_LEAGUE_ID = 1; // ← update with real FIFA WC 2026 ID from API-Football
@@ -68,21 +69,31 @@ function mapFixtureToDoc(fixture) {
   const goals  = fixture.goals;
   const status = f.status.short; // NS, 1H, HT, 2H, FT, AET, PEN
 
+  const scorers = [];
+  if (fixture.events && Array.isArray(fixture.events)) {
+    fixture.events.forEach(ev => {
+      if (ev.type === 'Goal' && ev.player && ev.player.name) {
+        scorers.push(ev.player.name);
+      }
+    });
+  }
+
   return {
     fixtureId:     String(f.id),
     homeTeam:      teams.home.name,
     awayTeam:      teams.away.name,
     homeTeamLogo:  teams.home.logo,
     awayTeamLogo:  teams.away.logo,
-    kickoffAt:     admin.firestore.Timestamp.fromMillis(f.timestamp * 1000),
+    kickoffAt:     Timestamp.fromMillis(f.timestamp * 1000),
     stage:         fixture.league.round,
     status,
     homeScore:     goals.home ?? 0,
     awayScore:     goals.away ?? 0,
     isLive:        ['1H','HT','2H','ET','BT','P','INT'].includes(status),
     isComplete:    ['FT','AET','PEN'].includes(status),
-    locksAt:       admin.firestore.Timestamp.fromMillis((f.timestamp - 3600) * 1000),
-    updatedAt:     admin.firestore.FieldValue.serverTimestamp(),
+    locksAt:       Timestamp.fromMillis((f.timestamp - 3600) * 1000),
+    updatedAt:     FieldValue.serverTimestamp(),
+    scorers,
   };
 }
 
@@ -102,7 +113,7 @@ async function triggerCurseBlessing(match) {
   // Draw → no curse, just clear blessings
 
   const expires24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const expiresTs  = admin.firestore.Timestamp.fromDate(expires24h);
+  const expiresTs  = Timestamp.fromDate(expires24h);
   const batch      = db.batch();
 
   if (winner) {
@@ -146,7 +157,7 @@ async function triggerCurseBlessing(match) {
 }
 
 // ─── Resolve predictions ──────────────────────────────────────────────────────
-async function resolveMatchPredictions(fixtureId, homeScore, awayScore) {
+async function resolveMatchPredictions(fixtureId, homeScore, awayScore, scorers = []) {
   const actualResult = homeScore > awayScore ? 'home' : awayScore > homeScore ? 'away' : 'draw';
 
   const snap = await db.collection('predictions')
@@ -164,29 +175,39 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore) {
     const resultCorrect = pred.predictedResult === actualResult;
     const scoreCorrect  = pred.predictedScore?.home === homeScore &&
                           pred.predictedScore?.away === awayScore;
-    const xpAwarded     = resultCorrect ? 50 : 0;
+
+    // Check if scorer is correct (support 'No Goals' prediction if score is 0-0)
+    let scorerCorrect = false;
+    if (homeScore + awayScore === 0) {
+      scorerCorrect = pred.predictedScorer === 'No Goals';
+    } else if (scorers && scorers.length > 0) {
+      scorerCorrect = scorers.includes(pred.predictedScorer);
+    }
+
+    const xpAwarded     = (resultCorrect ? 15 : 0) + (scorerCorrect ? 5 : 0);
 
     batch.update(predDoc.ref, {
       resolved: true,
       resultCorrect,
+      scorerCorrect,
       scoreCorrect,
       xpAwarded,
-      resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      resolvedAt: FieldValue.serverTimestamp(),
     });
 
     if (xpAwarded > 0) {
-      toAward.push({ userId: pred.userId, resultCorrect, scoreCorrect });
+      toAward.push({ userId: pred.userId, resultCorrect, scorerCorrect, scoreCorrect });
     }
   });
 
   await batch.commit();
   console.log(`✅ Resolved ${snap.size} predictions for fixture ${fixtureId}`);
 
-  // Award XP — FIX: static import at top, not dynamic import here
+  // Award XP
   for (const p of toAward) {
     await awardPredictionXP(p.userId, {
       resultCorrect: p.resultCorrect,
-      scorerCorrect: false,
+      scorerCorrect: p.scorerCorrect,
       scoreCorrect:  p.scoreCorrect,
     });
   }
@@ -242,7 +263,7 @@ export default async function handler(req, res) {
     // 4. Trigger curse/blessing + resolve predictions
     for (const match of justCompleted) {
       await triggerCurseBlessing(match);
-      await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore);
+      await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore, match.scorers || []);
     }
 
     return res.status(200).json({

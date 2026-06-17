@@ -5,14 +5,15 @@
 //
 // vercel.json: { "crons": [{ "path": "/api/cron/midnight-reset", "schedule": "0 0 * * *" }] }
 
-import admin from 'firebase-admin';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
   });
 }
-const db = admin.firestore();
+const db = getFirestore();
 
 // ─── Clean world chat — keep only last 40 messages ───────────────────────────
 async function cleanWorldChat() {
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
     const guildsSnap = await db.collection('guilds').get();
 
     // ── 1. Expire curses/blessings that have run out ──────────────────────────
-    const now          = admin.firestore.Timestamp.now();
+    const now          = Timestamp.now();
     const expireBatch  = db.batch();
     let   cursesExpired = 0;
 

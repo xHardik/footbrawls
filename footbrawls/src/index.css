@@ -128,4 +128,7 @@ code {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
+  .home-games-grid > :nth-child(9) {
+    grid-column: span 2;
+  }
 }

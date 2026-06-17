@@ -109,6 +109,7 @@ html { scroll-behavior: smooth; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: pnLogoShimmer 4s linear infinite;
+  background-color: transparent; border: none; outline: none; cursor: pointer;
 }
 @keyframes pnLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -1050,16 +1051,13 @@ export default function PenaltyNerve({ onBack }) {
 
       {/* ── NAV ── */}
       <nav className="pn-nav">
-        <span className="pn-logo">⚽ Footbrawls</span>
+        <button className="pn-logo" onClick={handleBack}>←</button>
         <div className="pn-nav-tag">
           <span className="pn-tag-dot" />
           Penalty Nerve
         </div>
         <div className="pn-nav-right">
-          <div className="pn-help-wrap">
-            <button className="pn-help-btn" onClick={() => setShowModal(true)} aria-label="How to play">?</button>
-            <div className="pn-help-tooltip">Rules / How to Play</div>
-          </div>
+          <button className="pn-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 
@@ -1336,7 +1334,7 @@ export default function PenaltyNerve({ onBack }) {
           { id: "guild", label: "Guild", icon: "🏰" },
           { id: "raids", label: "Raids", icon: "⚔️" },
           { id: "ranks", label: "Ranks", icon: "🏆" },
-          { id: "me",    label: "Me",    icon: "👤" },
+          { id: "me",    label: "Me" ,    icon: "👤" },
         ].map(item => (
           <button
             key={item.id}

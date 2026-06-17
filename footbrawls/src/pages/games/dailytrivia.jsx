@@ -776,7 +776,7 @@ export default function DailyTrivia() {
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
         <nav className="dt-nav">
-          <button className="dt-nav-logo" onClick={() => window.history.back()}>⚽ Footbrawls</button>
+          <button className="dt-nav-logo" onClick={() => window.history.back()}>←</button>
           <div className="dt-nav-tag">
             <span className="dt-fire-dot" />
             Daily Trivia

@@ -261,6 +261,7 @@ export default function MatchPredictor() {
   const [scheduleFilter, setScheduleFilter] = useState('all');  // 'all' | 'upcoming' | 'results'
   const [unlockedInsights, setUnlockedInsights] = useState(false);
   const [isAdLoading, setIsAdLoading]     = useState(false);
+  const [showModal, setShowModal]         = useState(false);
 
   useEffect(() => {
     if (!document.getElementById('mp2-css')) {
@@ -379,11 +380,9 @@ export default function MatchPredictor() {
       await setDoc(doc(db, 'predictions', `${selected.id}_${user.userId}`), predData);
       setPredictions(prev => ({ ...prev, [selected.id]: predData }));
       setSubmitted(true);
-      const res = await awardXP(user.userId, 'prediction_result', { rawXP: 50 });
-      setXpAwarded(res?.xpAwarded || 50);
       const today = new Date().toISOString().slice(0, 10);
       const hist = JSON.parse(localStorage.getItem('footbrawls_matchpredictor') || '{}');
-      hist[today] = { completed: true, xpAwarded: res?.xpAwarded || 50 };
+      hist[today] = { completed: true, xpAwarded: 0 };
       localStorage.setItem('footbrawls_matchpredictor', JSON.stringify(hist));
     } catch (err) {
       console.error(err);
@@ -439,15 +438,16 @@ export default function MatchPredictor() {
 
       {/* ── Nav ── */}
       <nav className="mp2-nav">
-        <div className="mp2-nav-logo">FOOTBRAWLS</div>
+        <button className="mp2-nav-logo" onClick={() => window.history.back()}>←</button>
         <div className="mp2-nav-tag">
           <span className="mp2-fire-dot" />
-          WC 2026 · PREDICTOR
+          Match Predictor
         </div>
         <div className="mp2-nav-right">
-          <button className="mp2-nav-btn" onClick={() => window.history.back()}>← Back</button>
+          <button className="mp2-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
+      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
       {/* ── Page Header ── */}
       <div className="mp2-main">
@@ -628,7 +628,11 @@ export default function MatchPredictor() {
 
                   {/* Submit / Banner */}
                   <div style={{ marginTop: 24 }}>
-                    {!submitted ? (
+                    {isLocked && !submitted ? (
+                      <div className="mp2-submitted-banner locked">
+                        🔒 Prediction closed for this match
+                      </div>
+                    ) : !submitted ? (
                       <button
                         className="mp2-submit-btn"
                         disabled={!pickedWinner || !pickedScorer}
@@ -643,10 +647,6 @@ export default function MatchPredictor() {
                           : '🔒 Prediction locked in! Come back after the match'}
                       </div>
                     )}
-
-                    {xpAwarded != null && (
-                      <div className="mp2-xp-badge">+{xpAwarded} XP added to Guild</div>
-                    )}
                   </div>
 
                   {/* Result reveal */}
@@ -656,9 +656,25 @@ export default function MatchPredictor() {
                       <div className="mp2-result-reveal-score">
                         {selected.homeScore} – {selected.awayScore}
                       </div>
-                      <div className="mp2-result-reveal-teams">
+                      <div className="mp2-result-reveal-teams" style={{ marginBottom: predictions[selected.id].resolved ? 16 : 0 }}>
                         {getFlag(selected.homeTeam)} {selected.homeTeam} vs {selected.awayTeam} {getFlag(selected.awayTeam)}
                       </div>
+                      {predictions[selected.id].resolved && (
+                        <div className="mp2-prediction-outcome" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted)', marginBottom: 10 }}>YOUR PREDICTION OUTCOME</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: '0.8rem', gap: 12, marginBottom: 12 }}>
+                            <div>Result: {predictions[selected.id].resultCorrect ? '✅ Correct (+15 XP)' : '❌ Incorrect'}</div>
+                            <div>Scorer: {predictions[selected.id].scorerCorrect ? '✅ Correct (+5 XP)' : '❌ Incorrect'}</div>
+                          </div>
+                          {predictions[selected.id].xpAwarded > 0 ? (
+                            <div className="mp2-xp-badge" style={{ display: 'inline-block', marginTop: 4 }}>
+                              +{predictions[selected.id].xpAwarded} XP Earned
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '0.78rem', color: 'var(--muted2)' }}>0 XP Earned</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -798,6 +814,32 @@ export default function MatchPredictor() {
   );
 }
 
+// ─── How to Play Modal ────────────────────────────────────────────────────────
+function HowToPlayModal({ show, onClose }) {
+  if (!show) return null;
+  return (
+    <div className={`mp2-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="mp2-modal-box">
+        <h2 className="mp2-modal-title">📋 How to Play</h2>
+        <ul className="mp2-rules-list">
+          <li><strong>⚽ Predict Result:</strong> Select who will win the match (Home, Away, or Draw). A correct result prediction earns <strong>+15 XP</strong>.</li>
+          <li><strong>🎯 Predict Scorer:</strong> Choose the player you think will score a goal. If they score, you earn <strong>+5 XP</strong>.</li>
+          <li><strong>🚫 No Goals:</strong> If you predict a 0-0 scoreline, choose "No Goals / None" as the top scorer.</li>
+          <li><strong>⏰ Prediction Lock:</strong> Predictions lock exactly 1 hour before kickoff. Make sure to lock yours in on time!</li>
+          <li><strong>🔥 Streaks & Multipliers:</strong> Build a prediction streak to multiply your XP rewards:
+            <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--accent)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span>• Streak of 3: <strong>1.5x XP</strong></span>
+              <span>• Streak of 5: <strong>2x XP</strong></span>
+              <span>• Streak of 8+: <strong>3x XP</strong></span>
+            </div>
+          </li>
+        </ul>
+        <button className="mp2-modal-close" onClick={onClose}>🚀 Got It!</button>
+      </div>
+    </div>
+  );
+}
+
 // ── CSS ───────────────────────────────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=Space+Mono:wght@400;700&display=swap');
@@ -864,6 +906,7 @@ const CSS = `
   background: linear-gradient(135deg, var(--orange), var(--accent));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
+  background-color: transparent; border: none; outline: none; cursor: pointer;
 }
 .mp2-nav-tag {
   font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
@@ -1260,4 +1303,43 @@ const CSS = `
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* LOCKED BANNER */
+.mp2-submitted-banner.locked {
+  background: rgba(232, 64, 64, 0.08);
+  border: 1px solid rgba(232, 64, 64, 0.25);
+  color: var(--accent2);
+}
+
+/* MODAL */
+.mp2-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.84);
+  backdrop-filter: blur(14px); justify-content: center; align-items: center; padding: 20px;
+}
+.mp2-modal-overlay.active { display: flex; animation: mp2FadeIn .22s ease; }
+@keyframes mp2FadeIn { from{opacity:0}to{opacity:1} }
+.mp2-modal-box {
+  background: #0c1020; border: 1px solid rgba(247,195,68,.25); border-radius: 24px;
+  padding: 40px 32px; max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto;
+  position: relative; animation: mp2ModalUp .3s cubic-bezier(.4,0,.2,1);
+}
+.mp2-modal-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent3), var(--accent), var(--accent3));
+  border-radius: 24px 24px 0 0;
+}
+@keyframes mp2ModalUp { from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none} }
+.mp2-modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 2px; text-align: center; margin-bottom: 22px; color: var(--accent); }
+.mp2-rules-list { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 8px; }
+.mp2-rules-list li {
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid rgba(247,195,68,0.45);
+  border-radius: 12px; padding: 12px 15px; font-size: .86rem; line-height: 1.6; transition: border-color .2s, transform .2s;
+  color: var(--text); text-align: left;
+}
+.mp2-rules-list li:hover { border-left-color: var(--accent); transform: translateX(4px); }
+.mp2-modal-close {
+  width: 100%; padding: 13px; font-size: .9rem; border-radius: 12px; background: var(--accent);
+  color: #060810; border: none; cursor: pointer; font-family: 'Space Mono', monospace; font-weight: 700; transition: opacity .2s;
+}
+.mp2-modal-close:hover { opacity: .88; }
 `;

@@ -374,12 +374,25 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }
 
   return (
-    <div className="tt-page">
+    <>
       <div className="tt-bg" />
       <div className="tt-grid" />
 
-      {/* Header */}
-      <div className="tt-header">
+      {/* Nav */}
+      <nav className="tt-nav">
+        <button className="tt-nav-logo" onClick={() => window.history.back()}>←</button>
+        <div className="tt-nav-tag">
+          <span className="tt-fire-dot" />
+          Transfer Trail
+        </div>
+        <div className="tt-nav-right">
+          <button className="tt-nav-btn" onClick={() => alert("How to Play Transfer Trail:\n\nFind a path of teammates between the start player and target player. Search for and select teammates that have played for the same club to build the chain.")}>❓ Help</button>
+        </div>
+      </nav>
+
+      <div className="tt-page" style={{ paddingTop: 16 }}>
+        {/* Header */}
+        <div className="tt-header">
         <div>
           <h2 className="tt-title">TRANSFER TRAIL</h2>
           <div className="tt-sub">
@@ -503,11 +516,47 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         </div>
       )}
     </div>
+    </>
   );
 }
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@0,9..40,400;0,9..40,700;0,9..40,900&display=swap');
+
+.tt-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; padding: 0 24px; position: relative; z-index: 10;
+  border-bottom: 1px solid rgba(79, 142, 247, 0.12);
+  background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(79, 142, 247, 0.15);
+}
+.tt-nav-logo {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px;
+  background: linear-gradient(135deg, #4F8EF7, #A855F7);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; border: none; cursor: pointer; background-color: transparent; outline: none;
+}
+.tt-nav-tag {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+  color: rgba(242, 242, 244, 0.5); border: 1px solid rgba(255, 255, 255, 0.07); padding: 5px 12px;
+  border-radius: 100px; display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.02);
+}
+.tt-fire-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #4F8EF7;
+  box-shadow: 0 0 8px #4F8EF7;
+}
+.tt-nav-right {
+  display: flex; gap: 8px;
+}
+.tt-nav-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255, 255, 255, 0.07); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.tt-nav-btn:hover {
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
+}
 
 .tt-page {
   position: relative;

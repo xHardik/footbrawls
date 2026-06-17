@@ -31,14 +31,14 @@ export default function App() {
         <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
         <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
         <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
-        <Route path="/games/wordle" element={<RequireUser><Layout><Wordle /></Layout></RequireUser>} />
-        <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />
-        <Route path="/games/higherlower" element={<RequireUser><Layout><HigherOrLower /></Layout></RequireUser>} />
-        <Route path="/games/matchpredictor" element={<RequireUser><Layout><MatchPredictor /></Layout></RequireUser>} />
-        <Route path="/games/penaltynerve" element={<RequireUser><Layout><PenaltyNerve /></Layout></RequireUser>} />
-        <Route path="/games/dribble" element={<RequireUser><Layout><DribbleGauntlet /></Layout></RequireUser>} />
-        <Route path="/games/dailytrivia" element={<RequireUser><Layout><DailyTrivia /></Layout></RequireUser>} />
-        <Route path="/games/rapidfire" element={<RequireUser><Layout><RapidFire /></Layout></RequireUser>} />
+        <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
+        <Route path="/games/transfertrail" element={<RequireUser><Layout hideMobileNav><TransferTrail /></Layout></RequireUser>} />
+        <Route path="/games/higherlower" element={<RequireUser><Layout hideMobileNav><HigherOrLower /></Layout></RequireUser>} />
+        <Route path="/games/matchpredictor" element={<RequireUser><Layout hideMobileNav><MatchPredictor /></Layout></RequireUser>} />
+        <Route path="/games/penaltynerve" element={<RequireUser><Layout hideMobileNav><PenaltyNerve /></Layout></RequireUser>} />
+        <Route path="/games/dribble" element={<RequireUser><Layout hideMobileNav><DribbleGauntlet /></Layout></RequireUser>} />
+        <Route path="/games/dailytrivia" element={<RequireUser><Layout hideMobileNav><DailyTrivia /></Layout></RequireUser>} />
+        <Route path="/games/rapidfire" element={<RequireUser><Layout hideMobileNav><RapidFire /></Layout></RequireUser>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

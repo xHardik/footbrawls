@@ -905,7 +905,7 @@ export default function WhoAreYa() {
 
         {/* NAV */}
         <nav className="wya-nav">
-          <button className="wya-nav-logo" onClick={() => window.history.back()}>⚽ Footbrawls</button>
+          <button className="wya-nav-logo" onClick={() => window.history.back()}>←</button>
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />
             Who Are Ya?

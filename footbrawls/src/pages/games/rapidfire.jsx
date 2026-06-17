@@ -656,7 +656,7 @@ export default function RapidFire() {
 
         {/* NAV */}
         <nav className="rf-nav">
-          <button className="rf-nav-logo" onClick={() => window.history.back()}>⚽ Footbrawls</button>
+          <button className="rf-nav-logo" onClick={() => window.history.back()}>←</button>
           <div className="rf-nav-tag">
             <span className="rf-fire-dot" />
             Rapid Fire

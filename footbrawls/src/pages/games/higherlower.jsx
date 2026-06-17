@@ -298,16 +298,13 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
       {/* ── NAV ── */}
       <nav className="hl-nav">
-        <span className="hl-nav-logo">⚽ Footbrawls</span>
+        <button className="hl-nav-logo" onClick={() => window.history.back()}>←</button>
         <div className="hl-nav-center-tag">
           <span className="hl-tag-dot" />
           Higher or Lower
         </div>
         <div className="hl-nav-right">
-          <div className="hl-nav-help-wrap">
-            <button className="hl-nav-help-btn" onClick={() => setShowModal(true)} aria-label="How to play">?</button>
-            <div className="hl-nav-help-tooltip">Rules / How to Play</div>
-          </div>
+          <button className="hl-nav-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 
@@ -500,6 +497,7 @@ const CSS = `
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: hlLogoShimmer 4s linear infinite;
+  background-color: transparent; border: none; outline: none; cursor: pointer;
 }
 @keyframes hlLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 

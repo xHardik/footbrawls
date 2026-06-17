@@ -85,6 +85,7 @@ html { scroll-behavior: smooth; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: logoShimmer 4s linear infinite;
+  background-color: transparent; border: none; outline: none; cursor: pointer;
 }
 @keyframes logoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -954,16 +955,13 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
-        <span className="wdl-logo">⚽ Footbrawls</span>
+        <button className="wdl-logo" onClick={() => window.history.back()}>←</button>
         <div className="wdl-nav-tag">
           <span className="wdl-tag-dot" />
           Player Wordle
         </div>
         <div className="wdl-nav-right">
-          <div className="wdl-help-wrap">
-            <button className="wdl-help-btn" onClick={() => setShowModal(true)} aria-label="How to play">?</button>
-            <div className="wdl-help-tooltip">Rules / How to Play</div>
-          </div>
+          <button className="wdl-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 

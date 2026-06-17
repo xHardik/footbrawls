@@ -176,6 +176,50 @@ export default function RaidAct2({ onComplete }) {
 
   useEffect(() => { repaint(); }, [repaint]);
 
+  useEffect(() => {
+    if (!document.getElementById('db-css')) {
+      const s = document.createElement('style');
+      s.id = 'db-css';
+      s.textContent = `
+        .db-nav {
+          display: flex; align-items: center; justify-content: space-between;
+          height: 64px; padding: 0 24px; position: relative; z-index: 10;
+          border-bottom: 1px solid rgba(61, 214, 140, 0.12);
+          background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
+          box-shadow: 0 4px 20px rgba(61, 214, 140, 0.15);
+        }
+        .db-nav-logo {
+          font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px;
+          background: linear-gradient(135deg, #3DD68C, #10B981);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text; border: none; cursor: pointer; background-color: transparent; outline: none;
+        }
+        .db-nav-tag {
+          font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+          color: rgba(242, 242, 244, 0.5); border: 1px solid rgba(255, 255, 255, 0.07); padding: 5px 12px;
+          border-radius: 100px; display: flex; align-items: center; gap: 6px;
+          background: rgba(255,255,255,0.02);
+        }
+        .db-fire-dot {
+          width: 6px; height: 6px; border-radius: 50%; background: #3DD68C;
+          box-shadow: 0 0 8px #3DD68C;
+        }
+        .db-nav-right {
+          display: flex; gap: 8px;
+        }
+        .db-nav-btn {
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255, 255, 255, 0.07); color: #fff;
+          padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+          cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+        }
+        .db-nav-btn:hover {
+          background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
+        }
+      `;
+      document.head.appendChild(s);
+    }
+  }, []);
+
   // ── Animation helpers ────────────────────────────────────────────────────
 
   function animateTo(tx, ty, dur, cb) {
@@ -333,8 +377,21 @@ export default function RaidAct2({ onComplete }) {
   };
 
   return (
-    <div style={styles.wrap}>
-      {/* HUD */}
+    <>
+      {/* Nav */}
+      <nav className="db-nav">
+        <button className="db-nav-logo" onClick={() => window.history.back()}>←</button>
+        <div className="db-nav-tag">
+          <span className="db-fire-dot" />
+          Dribble Gauntlet
+        </div>
+        <div className="db-nav-right">
+          <button className="db-nav-btn" onClick={() => alert("How to Play Dribble Gauntlet:\n\nDribble past the defender by picking a direction (Left, Center, Right), then try to score a goal by choosing a shooting zone.")}>❓ Help</button>
+        </div>
+      </nav>
+
+      <div style={styles.wrap}>
+        {/* HUD */}
       <div style={styles.hud}>
         <div>
           <div style={styles.actLabel}>Act 2 — Dribble Gauntlet</div>
@@ -456,7 +513,8 @@ export default function RaidAct2({ onComplete }) {
         )}
       </div>
     </div>
-  );
+  </>
+);
 }
 
 const C = {
@@ -467,7 +525,7 @@ const C = {
 };
 
 const styles = {
-  wrap:       { color: C.text, fontFamily: 'inherit' },
+  wrap:       { color: C.text, fontFamily: 'inherit', maxWidth: 450, margin: '0 auto', padding: '16px 16px 80px', boxSizing: 'border-box', position: 'relative', zIndex: 1 },
   hud:        { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   actLabel:   { fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '.08em' },
   gameTitle:  { fontSize: 16, fontWeight: 500, color: C.text },

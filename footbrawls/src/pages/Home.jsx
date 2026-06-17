@@ -480,7 +480,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
     <div style={{
       position:"relative",
       overflow:"hidden",
-      minHeight:420,
+      minHeight:520,
       display:"flex",
       flexDirection:"column",
       justifyContent:"flex-end",
@@ -537,11 +537,11 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           opacity:0.55,
         }}/>
 
-        {/* Big headline */}
         <h1 style={{
           fontFamily:"'Bebas Neue',sans-serif",
           fontSize:"clamp(3.2rem,10vw,5.8rem)",
           lineHeight:0.88, letterSpacing:3, margin:"0 0 18px",
+          paddingTop: 40,
         }}>
           <span style={{display:"block", color:C.text}}>YOUR</span>
           <span style={{
@@ -550,7 +550,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
             color:"transparent",
             filter:`drop-shadow(0 0 30px ${C.goldGlow})`,
           }}>FOOTBALL</span>
-          <span style={{display:"block", color:C.text}}>UNIVERSE</span>
+          <span style={{display:"block", color:C.text}}>HOME</span>
         </h1>
 
         <p style={{
@@ -1412,7 +1412,7 @@ export default function Home() {
           {/* Game Portals */}
           <div id="games-section">
             <SectionDivider label="Game Portals" count={`${doneCount}/${games.length} Complete`} color={C.gold}/>
-            <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24}}>
+            <div className="home-games-grid">
               {games.map(game => (
                 <GamePortalCard
                   key={game.id}

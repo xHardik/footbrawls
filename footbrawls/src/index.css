@@ -115,3 +115,17 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+.home-games-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .home-games-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}

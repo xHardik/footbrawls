@@ -86,16 +86,16 @@ export async function awardXP(userId, source, opts = {}) {
     // Base XP
     let baseXP = opts.rawXP ?? (XP_REWARDS[source] || 0);
 
-    // Override/force game/prediction rewards based on the source to guarantee 25 XP / 50 XP
+    // Override/force game/prediction rewards based on the source to guarantee 25 XP / 50 XP maximums
     if (source && (
       source.endsWith('_correct') ||
       source.endsWith('_complete') ||
       source.endsWith('_all5') ||
       source === 'dailytrivia_complete'
     )) {
-      baseXP = 25;
+      baseXP = Math.min(25, baseXP);
     } else if (source === 'prediction_result') {
-      baseXP = 50;
+      baseXP = Math.min(50, baseXP);
     }
 
     // ── ALL READS FIRST (Firestore requires reads before writes) ─────────────

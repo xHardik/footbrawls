@@ -10,7 +10,7 @@ import { PLAYERS } from '../../lib/players.js';
 import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
 
 const MAX_ATTEMPTS = 8;
-const SCORES = [25, 25, 25, 25, 25, 25, 25, 25];
+const SCORES = [25, 23, 21, 19, 17, 15, 13, 11];
 
 const STATS_KEY = 'footbrawls_whoareya_stats';
 const HISTORY_KEY = 'footbrawls_whoareya_history';
@@ -385,13 +385,13 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
   opacity: .9; transform: translateY(-1px);
 }
 .wya-btn.primary {
-  background: var(--accent); color: #000; border: none; flex: 1.2;
+  background: var(--accent); color: #000; border: none; flex: 1;
 }
 .wya-btn.share {
   background: var(--surface); color: #fff; border: 1px solid var(--border2); flex: 1;
 }
 .wya-btn.secondary {
-  background: transparent; color: var(--muted); border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid var(--border); flex: 1;
 }
 
 /* XP BADGE */
@@ -557,13 +557,13 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
   .wya-cell {font-size: .62rem; min-height: 56px; padding: 8px 4px}
   .wya-cell:first-child {font-size: .72rem}
   .wya-cell-flag {font-size: 1.2rem}
-  .wya-dashboard-grid {grid-template-columns: 1fr}
+  .wya-dashboard-grid {grid-template-columns: 1fr 1fr; gap: 8px}
+  .wya-dash-card {padding: 12px}
   .wya-result-breakdown {grid-template-columns: 1fr 1fr}
   .wya-result-card {padding: 28px 18px}
 }
 @media(max-width:480px){
   .wya-col-headers, .wya-guess-row {grid-template-columns: 2fr 1.1fr 1fr 1fr .9fr .9fr}
-  .wya-result-actions {flex-direction: column; align-items: stretch}
 }
 `;
 
@@ -1084,7 +1084,6 @@ export default function WhoAreYa() {
               </div>
               <div className="wya-result-actions">
                 <button className="wya-btn primary" onClick={() => window.location.reload()}>↺ Play Again</button>
-                <button className="wya-btn share"   onClick={handleShare}>📤 Share</button>
                 <button className="wya-btn secondary" onClick={() => window.history.back()}>← Home</button>
               </div>
             </div>

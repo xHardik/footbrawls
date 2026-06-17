@@ -4,6 +4,7 @@
 // XP integration, AdBreak midrolls, and category scoring breakdown.
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
@@ -548,6 +549,7 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function DailyTrivia() {
+  const navigate = useNavigate();
   const puzzleDate   = getActivePuzzleDate();
   const puzzleNumber = Math.floor((new Date(puzzleDate) - new Date('2025-01-01')) / 86400000) + 1;
 
@@ -776,7 +778,7 @@ export default function DailyTrivia() {
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
         <nav className="dt-nav">
-          <button className="dt-nav-logo" onClick={() => window.history.back()}>←</button>
+          <button className="dt-nav-logo" onClick={() => navigate('/')}>←</button>
           <div className="dt-nav-tag">
             <span className="dt-fire-dot" />
             Daily Trivia

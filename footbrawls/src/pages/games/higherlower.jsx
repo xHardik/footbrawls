@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getDailySeed, getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
@@ -161,6 +162,7 @@ function StreakBar({ streak }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
+  const navigate = useNavigate();
   const [round, setRound]         = useState(0);
   const [streak, setStreak]       = useState(0);
   const [gameOver, setGameOver]   = useState(false);
@@ -298,7 +300,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
       {/* ── NAV ── */}
       <nav className="hl-nav">
-        <button className="hl-nav-logo" onClick={() => window.history.back()}>←</button>
+        <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>
         <div className="hl-nav-center-tag">
           <span className="hl-tag-dot" />
           Higher or Lower

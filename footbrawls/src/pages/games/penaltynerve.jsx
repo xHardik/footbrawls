@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { awardXP } from '../../lib/xpEngine';
 import { getUser } from '../../lib/user';
 
@@ -45,7 +46,7 @@ const GK_DIVES = {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
-:root {
+.pn-wrapper {
   --bg: #05070f;
   --surface: rgba(255,255,255,0.038);
   --surface2: rgba(255,255,255,0.065);
@@ -100,15 +101,18 @@ html { scroll-behavior: smooth; }
   padding: 0 32px; height: 62px;
   background: rgba(5,7,15,0.82);
   backdrop-filter: blur(24px) saturate(1.4);
-  border-bottom: 1px solid rgba(232,64,64,0.12);
+  border-bottom: 1px solid rgba(232, 64, 64, 0.15);
+  box-shadow: 0 4px 20px rgba(232, 64, 64, 0.15);
 }
 .pn-logo {
   font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 3px;
-  background: linear-gradient(100deg, var(--accent) 0%, #ffe9a0 50%, var(--accent) 100%);
+  background: linear-gradient(100deg, var(--accent3) 0%, #ff9e9e 50%, var(--accent3) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: pnLogoShimmer 4s linear infinite;
+  border: none; background: none; cursor: pointer; outline: none; padding: 0;
+  justify-self: start;
 }
 @keyframes pnLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -130,21 +134,12 @@ html { scroll-behavior: smooth; }
 .pn-nav-right { display: flex; align-items: center; justify-content: flex-end; }
 .pn-help-wrap { position: relative; display: flex; align-items: center; }
 .pn-help-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1px solid var(--border2);
-  background: var(--surface);
-  color: var(--muted);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 1rem; font-weight: 700;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
+  background: var(--surface); border: 1px solid var(--border2); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
 }
 .pn-help-btn:hover {
-  background: rgba(232,64,64,0.12);
-  border-color: rgba(232,64,64,0.4);
-  color: var(--accent3);
-  transform: scale(1.1);
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
 }
 .pn-help-tooltip {
   position: absolute;
@@ -222,7 +217,7 @@ html { scroll-behavior: smooth; }
 
 /* ── PROGRESS DOTS ── */
 .pn-progress-row {
-  display: flex; gap: 8px; justify-content: center;
+  display: flex; gap: 8px; justify-content: flex-start;
   margin-bottom: 24px; position: relative; z-index: 1;
 }
 .pn-progress-dot {
@@ -522,7 +517,7 @@ html { scroll-behavior: smooth; }
 /* ── CORNER PICKER ── */
 .pn-aim-section { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
 .pn-instruction {
-  text-align: center; color: var(--muted); font-size: 0.72rem; font-weight: 700;
+  text-align: left; color: var(--muted); font-size: 0.72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 4px 0;
 }
 .pn-corner-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -558,7 +553,7 @@ html { scroll-behavior: smooth; }
 .pn-kick-btn:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; }
 
 .pn-attempt-counter {
-  text-align: center; font-size: 0.73rem; color: var(--muted);
+  text-align: left; font-size: 0.73rem; color: var(--muted);
   text-transform: uppercase; letter-spacing: 1px;
   margin-top: 16px; position: relative; z-index: 1;
 }
@@ -575,7 +570,7 @@ html { scroll-behavior: smooth; }
 
 /* ── CONTROLS ── */
 .pn-controls {
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start;
   margin-bottom: 20px; animation: pnFadeUp 0.5s ease 0.18s both;
 }
 .pn-btn {
@@ -965,9 +960,10 @@ function StreakDots({ history, today }) {
     else if (isToday)          cls += "today-pending";
     else if (entry)            cls += "win";
     else                       cls += "miss";
+    const xp = entry ? (entry.xp ?? (entry.goals ? entry.goals * XP_PER_GOAL : 0)) : 0;
     dots.push(
-      <div key={key} className={cls} title={entry ? `${key} · ${entry.goals}/${MAX_KICKS} goals` : key}>
-        {entry && <span className="pn-sdot-score">{entry.goals}/{MAX_KICKS}</span>}
+      <div key={key} className={cls} title={entry ? `${key} · ${xp} XP earned` : key}>
+        {entry && <span className="pn-sdot-score">{xp}</span>}
       </div>
     );
   }
@@ -985,7 +981,8 @@ function StreakDots({ history, today }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function PenaltyNerve({ onBack }) {
-  const handleBack = onBack || (() => window.history.back());
+  const navigate = useNavigate();
+  const handleBack = onBack || (() => navigate('/'));
 
   const [kicks, setKicks]           = useState([]);
   const [phase, setPhase]           = useState('aiming');
@@ -996,7 +993,7 @@ export default function PenaltyNerve({ onBack }) {
   const [savedScore, setSavedScore] = useState(0);
   const [savedGoals, setSavedGoals] = useState(0);
   const [animating, setAnimating]   = useState(false);
-  const [showModal, setShowModal]   = useState(true);
+  const [showModal, setShowModal]   = useState(false);
   const [msg, setMsg]               = useState(null);
   const [stats, setStats]           = useState(loadStats);
   const [history, setHistory]       = useState(loadHistory);
@@ -1177,7 +1174,7 @@ export default function PenaltyNerve({ onBack }) {
   const gkDiveClass  = (phase === 'result' && lastResult) ? `dive-${lastResult.gkDive}` : '';
 
   return (
-    <div style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
+    <div className="pn-wrapper" style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
       <div className="pn-bg2" />
       <div className="pn-noise" />
 
@@ -1187,16 +1184,13 @@ export default function PenaltyNerve({ onBack }) {
 
       {/* ── NAV ── */}
       <nav className="pn-nav">
-        <span className="pn-logo">⚽ Footbrawls</span>
+        <button className="pn-logo" onClick={() => navigate('/')}>←</button>
         <div className="pn-nav-tag">
           <span className="pn-tag-dot" />
           Penalty Nerve
         </div>
         <div className="pn-nav-right">
-          <div className="pn-help-wrap">
-            <button className="pn-help-btn" onClick={() => setShowModal(true)} aria-label="How to play">?</button>
-            <div className="pn-help-tooltip">Rules / How to Play</div>
-          </div>
+          <button className="pn-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 
@@ -1204,7 +1198,7 @@ export default function PenaltyNerve({ onBack }) {
 
         {/* ── HEADER ── */}
         <div style={{ marginBottom: 24, animation: "pnFadeUp 0.5s ease both" }}>
-          <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5 }}>
+          <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5, color: "var(--accent3)" }}>
             Penalty Nerve
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
@@ -1469,27 +1463,6 @@ export default function PenaltyNerve({ onBack }) {
         </div>
 
       </div>{/* end .pn-page2 */}
-
-      {/* ── BOTTOM NAV ── */}
-      <nav className="pn-bottom-nav">
-        {[
-          { id: "home",  label: "Games", icon: "⚽" },
-          { id: "guild", label: "Guild", icon: "🏰" },
-          { id: "raids", label: "Raids", icon: "⚔️" },
-          { id: "ranks", label: "Ranks", icon: "🏆" },
-          { id: "me",    label: "Me",    icon: "👤" },
-        ].map(item => (
-          <button
-            key={item.id}
-            className={`pn-nav-item${item.id === "home" ? " active" : ""}`}
-            onClick={() => item.id === "home" && handleBack()}
-          >
-            {item.id === "home" && <span className="pn-nav-indicator" />}
-            <span className="pn-nav-icon">{item.icon}</span>
-            <span className="pn-nav-label">{item.label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }

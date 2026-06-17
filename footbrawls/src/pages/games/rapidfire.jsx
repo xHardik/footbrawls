@@ -3,6 +3,7 @@
 // Timed multi-choice quiz with difficulty modes & Google AdBreak integration
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine.js';
 
@@ -442,6 +443,7 @@ body{font-family:'DM Sans',sans-serif}
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function RapidFire() {
+  const navigate = useNavigate();
   // Game phases: 'start' | 'game' | 'result'
   const [phase, setPhase]           = useState('start');
   const [difficulty, setDifficulty] = useState('medium');
@@ -656,7 +658,7 @@ export default function RapidFire() {
 
         {/* NAV */}
         <nav className="rf-nav">
-          <button className="rf-nav-logo" onClick={() => window.history.back()}>←</button>
+          <button className="rf-nav-logo" onClick={() => navigate('/')}>←</button>
           <div className="rf-nav-tag">
             <span className="rf-fire-dot" />
             Rapid Fire

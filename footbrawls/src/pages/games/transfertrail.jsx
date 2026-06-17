@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
@@ -443,6 +444,7 @@ function ResultCard({ score, correctCount, players: puzzlePlayers, onPlayAgain }
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function TransferTrail({ players = PLAYERS, userId, onComplete }) {
+  const navigate = useNavigate();
   const puzzleDate  = getActivePuzzleDate();
   const storageKey  = "footbrawls_transfertrail";
   const stateKey    = `tt2_state_${puzzleDate}`;
@@ -653,13 +655,17 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         backdropFilter:"blur(24px) saturate(1.4)",
         borderBottom:"1px solid rgba(79,142,247,0.12)",
       }}>
-        <div style={{
-          fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.7rem",letterSpacing:3,
-          background:"linear-gradient(100deg,#F7C344 0%,#ffe9a0 50%,#F7C344 100%)",
-          backgroundSize:"200% auto",
-          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-          animation:"tt2Shimmer 4s linear infinite",cursor:"pointer",
-        }}>FOOTBRAWLS</div>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.7rem",letterSpacing:3,
+            background:"linear-gradient(100deg,#F7C344 0%,#ffe9a0 50%,#F7C344 100%)",
+            backgroundSize:"200% auto",
+            WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+            animation:"tt2Shimmer 4s linear infinite",cursor:"pointer",
+            border:"none",outline:"none",textAlign:"left",padding:0
+          }}
+        >←</button>
 
         <div style={{
           display:"flex",alignItems:"center",gap:7,
@@ -673,21 +679,27 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         </div>
 
         <div style={{display:"flex",justifyContent:"flex-end"}}>
-          <div style={{position:"relative",display:"flex",alignItems:"center"}}>
-            <button
-              onClick={() => setShowModal(true)}
-              style={{
-                width:34,height:34,borderRadius:"50%",
-                border:`1px solid ${T.border2}`,background:T.surface,
-                color:T.muted,fontFamily:"'DM Sans',sans-serif",
-                fontSize:"1rem",fontWeight:700,cursor:"pointer",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                transition:"all 0.2s",
-              }}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(79,142,247,0.12)";e.currentTarget.style.borderColor="rgba(79,142,247,0.4)";e.currentTarget.style.color=T.blue;e.currentTarget.style.transform="scale(1.1)"}}
-              onMouseLeave={e=>{e.currentTarget.style.background=T.surface;e.currentTarget.style.borderColor=T.border2;e.currentTarget.style.color=T.muted;e.currentTarget.style.transform="scale(1)"}}
-            >?</button>
-          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              background: T.surface,
+              border: `1px solid ${T.border2 || 'rgba(255,255,255,0.1)'}`,
+              color: "#fff",
+              padding: "8px 14px",
+              borderRadius: "10px",
+              fontSize: ".8rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)";e.currentTarget.style.borderColor="rgba(255,255,255,0.2)"}}
+            onMouseLeave={e=>{e.currentTarget.style.background=T.surface;e.currentTarget.style.borderColor=T.border2}}
+          >
+            ❓ Help
+          </button>
         </div>
       </nav>
 

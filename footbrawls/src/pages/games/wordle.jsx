@@ -5,14 +5,14 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
 
 // ─── XP table ────────────────────────────────────────────────────────────────
-const XP_BY_GUESS  = { 1:25, 2:25, 3:25, 4:25, 5:25, 6:25 };
-const SCORE_BY_GUESS = { 1:1000, 2:800, 3:600, 4:400, 5:200, 6:100 };
+const XP_BY_GUESS  = { 1:25, 2:23, 3:21, 4:19, 5:17, 6:15 };
 const MAX_GUESSES  = 6;
 const STATS_KEY    = "footbrawls_wordle_stats";
 const HISTORY_KEY  = "footbrawls_wordle_history";
@@ -21,7 +21,7 @@ const HISTORY_KEY  = "footbrawls_wordle_history";
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
-:root {
+.wdl-wrapper {
   --bg: #05070f;
   --surface: rgba(255,255,255,0.038);
   --surface2: rgba(255,255,255,0.065);
@@ -76,16 +76,18 @@ html { scroll-behavior: smooth; }
   padding: 0 32px; height: 62px;
   background: rgba(5,7,15,0.82);
   backdrop-filter: blur(24px) saturate(1.4);
-  border-bottom: 1px solid rgba(168,85,247,0.12);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15);
 }
 .wdl-logo {
   font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 3px;
-  background: linear-gradient(100deg, var(--accent) 0%, #ffe9a0 50%, var(--accent) 100%);
+  background: linear-gradient(100deg, var(--accent3) 0%, #d8b4fe 50%, var(--accent3) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: logoShimmer 4s linear infinite;
   background-color: transparent; border: none; outline: none; cursor: pointer;
+  justify-self: start;
 }
 @keyframes logoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -107,21 +109,12 @@ html { scroll-behavior: smooth; }
 .wdl-nav-right { display: flex; align-items: center; justify-content: flex-end; }
 .wdl-help-wrap { position: relative; display: flex; align-items: center; }
 .wdl-help-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1px solid var(--border2);
-  background: var(--surface);
-  color: var(--muted);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 1rem; font-weight: 700;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
+  background: var(--surface); border: 1px solid var(--border2); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
 }
 .wdl-help-btn:hover {
-  background: rgba(168,85,247,0.12);
-  border-color: rgba(168,85,247,0.4);
-  color: var(--accent3);
-  transform: scale(1.1);
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
 }
 .wdl-help-tooltip {
   position: absolute;
@@ -226,16 +219,16 @@ html { scroll-behavior: smooth; }
 }
 
 /* ── LEGEND ── */
-.wdl-legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+.wdl-legend { display: flex; gap: 16px; justify-content: flex-start; margin-bottom: 24px; flex-wrap: wrap; }
 .wdl-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); }
 .wdl-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
 /* ── BOARD ── */
 .wdl-board {
   display: flex; flex-direction: column; gap: 8px;
-  margin-bottom: 28px; align-items: center; position: relative; z-index: 1;
+  margin-bottom: 28px; align-items: flex-start; position: relative; z-index: 1;
 }
-.wdl-row { display: flex; gap: 8px; justify-content: center; }
+.wdl-row { display: flex; gap: 8px; justify-content: flex-start; }
 
 /* ── TILES ── */
 .wdl-tile {
@@ -278,14 +271,14 @@ html { scroll-behavior: smooth; }
 .wdl-submit:disabled { background: var(--surface2); color: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; }
 
 .wdl-attempt-counter {
-  text-align: center; font-size: 0.73rem; color: var(--muted);
+  text-align: left; font-size: 0.73rem; color: var(--muted);
   text-transform: uppercase; letter-spacing: 1px;
   margin-top: 16px; position: relative; z-index: 1;
 }
 
 /* ── CONTROLS ── */
 .wdl-controls {
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-start;
   margin-bottom: 20px; animation: fadeUp 0.5s ease 0.18s both;
 }
 .wdl-btn {
@@ -560,18 +553,28 @@ function getToday() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
+function getXpFromScore(score) {
+  if (score === 1000) return 25;
+  if (score === 800)  return 23;
+  if (score === 600)  return 21;
+  if (score === 400)  return 19;
+  if (score === 200)  return 17;
+  if (score === 100)  return 15;
+  return score;
+}
 function loadStats()   { try { return JSON.parse(localStorage.getItem(STATS_KEY))   || {}; } catch { return {}; } }
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; } catch { return {}; } }
 
 function saveResult(puzzleDate, score) {
   const today   = getToday();
   const history = loadHistory();
-  if (!history[puzzleDate] || score > history[puzzleDate].score) history[puzzleDate] = { score };
+  const xp = getXpFromScore(score);
+  if (!history[puzzleDate] || xp > getXpFromScore(history[puzzleDate].score)) history[puzzleDate] = { score: xp };
   const allEntries = Object.values(history);
   const stats = {
     played: allEntries.length,
-    best:   Math.max(...allEntries.map(e => e.score)),
-    avg:    Math.round(allEntries.reduce((s, e) => s + e.score, 0) / allEntries.length),
+    best:   Math.max(...allEntries.map(e => getXpFromScore(e.score))),
+    avg:    Math.round(allEntries.reduce((s, e) => s + getXpFromScore(e.score), 0) / allEntries.length),
     streak: 0,
   };
   const check = new Date(today + "T00:00:00");
@@ -603,7 +606,7 @@ function evaluateGuess(guess, target) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function HowToPlayModal({ onClose }) {
   const scoring = [
-    [1, 1000], [2, 800], [3, 600], [4, 400], [5, 200], [6, 100],
+    [1, 25], [2, 23], [3, 21], [4, 19], [5, 17], [6, 15],
   ];
   return (
     <div className="wdl-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -613,7 +616,7 @@ function HowToPlayModal({ onClose }) {
           <li><span className="wdl-rule-icon">🎯</span>Guess the footballer's last name in {MAX_GUESSES} attempts</li>
           <li><span className="wdl-rule-icon">🔤</span>Each guess must match the correct number of letters</li>
           <li><span className="wdl-rule-icon">🎨</span>After each guess, tile colors show how close you are</li>
-          <li><span className="wdl-rule-icon">🏆</span>Earlier correct guesses earn more points!</li>
+          <li><span className="wdl-rule-icon">🏆</span>Earlier correct guesses earn more XP!</li>
           <li><span className="wdl-rule-icon">💡</span>Get a <strong>country hint</strong> after 3rd attempt and a <strong>position hint</strong> after 4th</li>
         </ul>
         <div className="wdl-color-demo">
@@ -631,14 +634,14 @@ function HowToPlayModal({ onClose }) {
           </div>
         </div>
         <div className="wdl-scoring-box">
-          <h3>💰 Scoring System — Max 1000 pts</h3>
-          {scoring.map(([attempt, pts]) => (
+          <h3>💰 Scoring System — Max 25 XP</h3>
+          {scoring.map(([attempt, xp]) => (
             <div key={attempt} className="wdl-scoring-item">
               <span>{attempt === 1 ? "1st" : attempt === 2 ? "2nd" : attempt === 3 ? "3rd" : `${attempt}th`} Try</span>
-              <span className="wdl-scoring-val">{pts} pts</span>
+              <span className="wdl-scoring-val">+{xp} XP</span>
             </div>
           ))}
-          <div className="wdl-scoring-item"><span>Failed</span><span className="wdl-scoring-val">0 pts</span></div>
+          <div className="wdl-scoring-item"><span>Failed</span><span className="wdl-scoring-val">0 XP</span></div>
         </div>
         <button className="wdl-modal-btn" onClick={onClose}>🚀 Start Playing</button>
       </div>
@@ -659,9 +662,10 @@ function StreakDots({ history, today }) {
     else if (isToday)          cls += "today-pending";
     else if (entry)            cls += "win";
     else                       cls += "miss";
+    const xp = entry ? getXpFromScore(entry.score) : 0;
     dots.push(
-      <div key={key} className={cls} title={entry ? `${key} · ${entry.score} pts` : key}>
-        {entry && <span className="wdl-sdot-score">{entry.score}</span>}
+      <div key={key} className={cls} title={entry ? `${key} · ${xp} XP earned` : key}>
+        {entry && <span className="wdl-sdot-score">{xp}</span>}
       </div>
     );
   }
@@ -721,7 +725,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const target     = players.length ? getDailyPlayer(players, "wordle", puzzleDate) : null;
   const targetName = (target?.name || "").toUpperCase().replace(/\s.*/, "");
 
-  const handleBack = onBack || (() => window.history.back());
+  const navigate = useNavigate();
+  const handleBack = onBack || (() => navigate('/'));
 
   const [guesses,   setGuesses]   = useState([]);
   const [input,     setInput]     = useState("");
@@ -731,7 +736,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [score,     setScore]     = useState(0);
   const [msg,       setMsg]       = useState(null);
   const [hint,      setHint]      = useState(null);
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [stats,     setStats]     = useState(loadStats);
   const [history,   setHistory]   = useState(loadHistory);
   const [revealing, setRevealing] = useState(false);
@@ -764,7 +769,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     if (saved) {
       setGuesses(saved.guesses || []);
       setSolved(saved.solved);
-      setScore(saved.score || 0);
+      setScore(saved.score ? getXpFromScore(saved.score) : 0);
       setXpAwarded(saved.xpAwarded || 0);
       setGameOver(saved.gameOver !== undefined ? saved.gameOver : true);
       setShowModal(false);
@@ -807,18 +812,17 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     if (newGuesses.length === 4 && target?.position) setHint(`${target.flag || ""} ${target.country} · ${target.position}`);
 
     if (over) {
-      const calcScore = won ? (SCORE_BY_GUESS[newGuesses.length] ?? 0) : 0;
-      const pts       = won ? (XP_BY_GUESS[newGuesses.length] ?? 5) : 0;
-      let xp = pts;
+      const calcScore = won ? (XP_BY_GUESS[newGuesses.length] ?? 0) : 0;
+      let xp = calcScore;
       if (won) {
         const user = getUser();
         if (user?.userId) {
-          const r = await awardXP(user.userId, "wordle_correct", { rawXP: pts });
-          xp = r?.xpAwarded ?? pts;
+          const r = await awardXP(user.userId, "wordle_correct", { rawXP: calcScore });
+          xp = r?.xpAwarded ?? calcScore;
         }
       }
-      setGameOver(true); setSolved(won); setScore(calcScore); setXpAwarded(xp);
-      const { stats: s, history: h } = saveResult(puzzleDate, calcScore);
+      setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
+      const { stats: s, history: h } = saveResult(puzzleDate, xp);
       setStats(s); setHistory(h);
       localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
         guesses: newGuesses,
@@ -945,7 +949,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const remaining = maxGuesses - guesses.length;
 
   return (
-    <div style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
+    <div className="wdl-wrapper" style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
       <div className="wdl-bg" />
       <div className="wdl-noise" />
 
@@ -955,7 +959,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
-        <button className="wdl-logo" onClick={() => window.history.back()}>←</button>
+        <button className="wdl-logo" onClick={handleBack}>←</button>
         <div className="wdl-nav-tag">
           <span className="wdl-tag-dot" />
           Player Wordle
@@ -969,29 +973,69 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
         {/* ── HEADER ── */}
         <div style={{ marginBottom: 24, animation: "fadeUp 0.5s ease both" }}>
-          <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5 }}>
+          <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5, color: "var(--accent3)" }}>
             Player Wordle
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>Guess the footballer's name in {maxGuesses} tries</p>
         </div>
 
-        {/* ── PUZZLE BAR ── */}
-        <div className="wdl-puzzle-bar">
-          <div className="wdl-puzzle-item">📅 <strong>{dateLabel}</strong></div>
-          <div className="wdl-puzzle-sep" />
-          <div className="wdl-puzzle-item">🧩 Puzzle <strong>#{puzzleNum}</strong></div>
-        </div>
-
         {/* ── SCORE BOX ── */}
         <div className="wdl-score-box">
           <div>
-            <div className="wdl-score-label">Current Score</div>
-            <div className="wdl-score-value">{score} pts</div>
+            <div className="wdl-score-label">Current XP</div>
+            <div className="wdl-score-value">{score} XP</div>
           </div>
           <div className="wdl-score-streak">
             {stats.streak ? `🔥 ${stats.streak} day streak` : "Play to start streak"}
           </div>
         </div>
+
+        {/* ── EXTRA TRY REWARDED AD ── */}
+        {gameOver && !solved && !hasWatchedExtraTryAd && (
+          <div style={{
+            margin: "0 auto 20px",
+            padding: "20px 24px",
+            background: "linear-gradient(135deg, rgba(168,85,247,0.12), rgba(168,85,247,0.04))",
+            border: "1px solid rgba(168,85,247,0.28)",
+            borderTop: "3px solid var(--accent3)",
+            borderRadius: "18px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            boxShadow: "0 8px 32px rgba(168,85,247,0.1)",
+            backdropFilter: "blur(12px)",
+            animation: "fadeUp 0.5s ease both",
+            width: "100%",
+            boxSizing: "border-box"
+          }}>
+            <p style={{ fontSize: "1rem", color: "#fff", fontWeight: "700", marginBottom: "6px", letterSpacing: "0.5px" }}>
+              😞 Game Over!
+            </p>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "16px", lineHeight: "1.4" }}>
+              Want another try? Watch a quick ad to get <strong>1 extra attempt</strong>!
+            </p>
+            <button
+              className="wdl-btn"
+              style={{
+                background: "var(--accent3)",
+                color: "#fff",
+                width: "100%",
+                maxWidth: "280px",
+                justifyContent: "center",
+                boxShadow: "0 4px 20px rgba(168,85,247,0.35)",
+                padding: "12px",
+                borderRadius: "10px",
+                fontSize: "0.88rem",
+                fontWeight: "700"
+              }}
+              onClick={triggerRewardedAdForExtraTry}
+              disabled={isAdLoading}
+            >
+              📺 {isAdLoading ? "Loading Ad..." : "Watch Ad for +1 Try"}
+            </button>
+          </div>
+        )}
 
         {/* ── HINTS ── */}
         {(hint || rewardHints.length > 0) && (
@@ -1073,7 +1117,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           )}
 
           {!gameOver && (
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 12 }}>
               <button
                 className="wdl-btn"
                 style={{
@@ -1116,7 +1160,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             <div className="wdl-result-title" style={{ color: solved ? "var(--green)" : "var(--accent2)" }}>
               {solved ? `🎉 ${targetName}!` : "😞 Game Over!"}
             </div>
-            <div className="wdl-result-score">{score} pts</div>
+            <div className="wdl-result-score">{score} XP</div>
             <div className="wdl-result-phrase">
               {solved
                 ? `Guessed correctly in ${guesses.length} ${guesses.length === 1 ? "try" : "tries"}!`
@@ -1124,29 +1168,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
             {solved && xpAwarded > 0 && (
               <div className="wdl-xp-badge">+{xpAwarded} XP earned</div>
-            )}
-            
-            {!solved && !hasWatchedExtraTryAd && (
-              <div style={{ margin: "20px 0", padding: 16, background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: 12 }}>
-                <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 12 }}>
-                  Want another try? Watch a quick ad to get <strong>1 extra attempt</strong>!
-                </p>
-                <button
-                  className="wdl-btn"
-                  style={{
-                    background: "var(--accent3)",
-                    color: "#fff",
-                    width: "100%",
-                    justifyContent: "center",
-                    boxShadow: "0 4px 16px rgba(168,85,247,0.28)",
-                    padding: "12px"
-                  }}
-                  onClick={triggerRewardedAdForExtraTry}
-                  disabled={isAdLoading}
-                >
-                  📺 {isAdLoading ? "Loading Ad..." : "Watch Ad for +1 Try"}
-                </button>
-              </div>
             )}
 
             <div className="wdl-result-actions">
@@ -1178,8 +1199,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
               <div className="wdl-stats-grid">
                 {[
                   { val: stats.played ?? 0, name: "Played" },
-                  { val: stats.best   ?? 0, name: "Best Score" },
-                  { val: stats.avg    ?? 0, name: "Avg Score" },
+                  { val: stats.best   ?? 0, name: "Best XP" },
+                  { val: stats.avg    ?? 0, name: "Avg XP" },
                   { val: stats.streak ?? 0, name: "Day Streak" },
                 ].map(s => (
                   <div key={s.name} className="wdl-stat-item">
@@ -1193,27 +1214,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         </div>
 
       </div>{/* end .wdl-page */}
-
-      {/* ── BOTTOM NAV ── */}
-      <nav className="wdl-bottom-nav">
-        {[
-          { id: "home",  label: "Games", icon: "⚽" },
-          { id: "guild", label: "Guild", icon: "🏰" },
-          { id: "raids", label: "Raids", icon: "⚔️" },
-          { id: "ranks", label: "Ranks", icon: "🏆" },
-          { id: "me",    label: "Me",    icon: "👤" },
-        ].map(item => (
-          <button
-            key={item.id}
-            className={`wdl-nav-item${item.id === "home" ? " active" : ""}`}
-            onClick={() => item.id === "home" && handleBack()}
-          >
-            {item.id === "home" && <span className="wdl-nav-indicator" />}
-            <span className="wdl-nav-icon">{item.icon}</span>
-            <span className="wdl-nav-label">{item.label}</span>
-          </button>
-        ))}
-      </nav>
     </div>
   );
 }

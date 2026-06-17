@@ -21,6 +21,22 @@ import RaidAct1 from '../components/RaidAct1';
 import RaidAct2 from '../components/RaidAct2';
 import RaidAct3 from '../components/RaidAct3';
 
+const Icon = {
+  Shield: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M9 12l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Swords: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 3l10 10M13 3l8 8-4 4-8-8V3h4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M3 13l8 8 4-4-8-8" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M13.5 20.5l-2 2M20.5 13.5l2-2" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+};
+
 const C = {
   bg:      "#060810",
   bg2:     "#0c0f1a",
@@ -156,8 +172,13 @@ export default function Raid() {
       <style>{'@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}'}</style>
       <nav style={s.nav}>
         <button type="button" style={s.backBtn} onClick={() => navigate('/')}>‹</button>
-        <span style={s.logo}>⚔️ RAID</span>
-        <button type="button" style={s.guildBtn} onClick={() => navigate('/guild')}>🏰</button>
+        <span style={{ ...s.logo, display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon.Swords size={20} color={C.accent} />
+          RAID
+        </span>
+        <button type="button" style={{ ...s.guildBtn, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => navigate('/guild')}>
+          <Icon.Shield size={18} color={C.accent} />
+        </button>
       </nav>
 
       <main style={s.main}>

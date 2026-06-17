@@ -307,6 +307,9 @@ const GlobalStyles = () => (
     ::-webkit-scrollbar{width:4px;height:4px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
+    @media (max-width: 768px) {
+      .home-top-nav-xp { display: none !important; }
+    }
   `}</style>
 );
 
@@ -407,7 +410,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
       {/* Right side */}
       <div style={{display:"flex", alignItems:"center", gap:8}}>
         {/* XP progress */}
-        <div style={{
+        <div className="home-top-nav-xp" style={{
           display:"flex", alignItems:"center", gap:8,
           padding:"6px 14px", borderRadius:100,
           border:"1px solid rgba(61,214,140,0.2)",
@@ -857,7 +860,7 @@ function GamePortalCard({ game, done, onPlay }) {
           color: hovered ? "#ffffff" : "rgba(255,255,255,0.85)",
           lineHeight:1.5,
           overflow:"hidden", display:"-webkit-box",
-          WebkitLineClamp:2, WebkitBoxOrient:"vertical",
+          WebkitLineClamp:3, WebkitBoxOrient:"vertical",
           transition:"color 0.22s",
         }}>{game.desc}</div>
       </div>

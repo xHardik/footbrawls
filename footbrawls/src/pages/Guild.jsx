@@ -13,6 +13,47 @@ import GuildChat from "../components/GuildChat";
 import { getGuildLevel, getLevelProgress, getHPDisplay, checkUpgrade, GUILD_LEVELS } from "../lib/guildLevels";
 import { clearLevelUpNotification } from "../lib/xpEngine";
 
+const Icon = {
+  Ball: ({size=20,color="currentColor",style={}}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
+      <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5"/>
+      <path d="M12 2c0 0-2.5 3-2.5 5s2.5 5 2.5 5 2.5-2 2.5-5S12 2 12 2z" fill={color} opacity="0.7"/>
+      <path d="M2 12h4l2 3-2 3H2" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+      <path d="M22 12h-4l-2 3 2 3h4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+      <path d="M5 5.5l3 2.5 1 4-4-2-1.5-4z" fill={color} opacity="0.6"/>
+      <path d="M19 5.5l-3 2.5-1 4 4-2 1.5-4z" fill={color} opacity="0.6"/>
+      <path d="M8 19l1-4 3-1 3 1 1 4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+    </svg>
+  ),
+  Shield: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M9 12l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Swords: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 3l10 10M13 3l8 8-4 4-8-8V3h4z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M3 13l8 8 4-4-8-8" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M13.5 20.5l-2 2M20.5 13.5l2-2" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Rank: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M3 20h18" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M7 20V10" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.5"/>
+      <path d="M12 20V4" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M17 20V14" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.7"/>
+    </svg>
+  ),
+  Person: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
+      <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+};
+
 // ─── Same CSS vars / design tokens as Home.jsx ────────────────────────────────
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
@@ -363,11 +404,11 @@ function ChatTab({ user, guild, tier, canChat }) {
 // ─── Bottom Nav — accepts toast/setToast as props (Option A) ──────────────────
 function BottomNav({ navigate, toast, setToast }) {
   const items = [
-    { id:"home",  label:"Games", icon:"⚽", route:"/"      },
-    { id:"guild", label:"Guild", icon:"🏰", route:"/guild" },
-    { id:"raids", label:"Raids", icon:"⚔️", route:"/raid"  },
-    { id:"ranks", label:"Ranks", icon:"🏆", route:null     },
-    { id:"me",    label:"Me",    icon:"👤", route:null     },
+    { id:"home",  label:"Games", IconC:Icon.Ball,   route:"/"      },
+    { id:"guild", label:"Guild", IconC:Icon.Shield, route:"/guild" },
+    { id:"raids", label:"Raids", IconC:Icon.Swords, route:"/raid"  },
+    { id:"ranks", label:"Ranks", IconC:Icon.Rank,   route:null     },
+    { id:"me",    label:"Me",    IconC:Icon.Person, route:null     },
   ];
   function handleClick(item) {
     if (item.route) navigate(item.route);
@@ -378,11 +419,14 @@ function BottomNav({ navigate, toast, setToast }) {
       <nav className="fb-bottom-nav">
         {items.map(item => {
           const active = item.id === "guild";
+          const NavIcon = item.IconC;
           return (
             <button key={item.id} className="fb-nav-item" onClick={() => handleClick(item)}
-              style={{ color:active?"var(--green)":"rgba(242,242,244,0.38)" }}>
+              style={{ color:active?"var(--green)":"rgba(242,242,244,0.38)", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
               {active && <span className="fb-nav-indicator"/>}
-              <span style={{ fontSize:20, lineHeight:1 }}>{item.icon}</span>
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28 }}>
+                <NavIcon size={18} color={active?"var(--green)":"rgba(242,242,244,0.38)"} />
+              </span>
               <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>{item.label}</span>
             </button>
           );

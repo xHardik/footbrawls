@@ -3,6 +3,7 @@
 // UI faithfully ported from cricket to football with Google AdBreak integration
 
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getDailyPlayer, getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
@@ -122,11 +123,11 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
   position: relative; z-index: 5;
 }
 .wya-page-header {
-  text-align: center; margin-bottom: 28px;
+  text-align: left; margin-bottom: 28px;
 }
 .wya-page-header h1 {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.7rem; letter-spacing: 1.5px;
-  color: #fff; margin-bottom: 4px; line-height: 1;
+  color: var(--orange); margin-bottom: 4px; line-height: 1;
 }
 .wya-page-header p {
   font-size: .82rem; color: var(--muted); font-weight: 500;
@@ -134,7 +135,7 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 
 /* ATTEMPTS INDICATOR */
 .wya-attempts-indicator {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
   margin-bottom: 20px;
 }
 .wya-attempts-label {
@@ -153,7 +154,7 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 
 /* HINT STRIP */
 .wya-hint-strip {
-  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  display: flex; gap: 8px; flex-wrap: nowrap; justify-content: flex-start;
   margin-bottom: 16px; animation: fadeUp .5s ease .1s both; padding: 0 4px;
 }
 .wya-hint-pill {
@@ -186,10 +187,10 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 
 /* LEGEND */
 .wya-legend-bar {
-  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px;
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; margin-bottom: 18px;
   animation: fadeUp .5s ease .12s both; background: rgba(255,255,255,.025);
   border: 1px solid rgba(255,255,255,.06); border-radius: 100px;
-  padding: 7px 16px; width: fit-content; margin-left: auto; margin-right: auto;
+  padding: 7px 16px; width: fit-content; margin-left: 0; margin-right: auto;
 }
 .wya-legend-item {
   display: flex; align-items: center; gap: 5px; font-size: .67rem; font-weight: 700;
@@ -698,6 +699,7 @@ function saveResult(puzzleDate, won, score) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function WhoAreYa() {
+  const navigate = useNavigate();
   const [target, setTarget]           = useState(null);
   const [guesses, setGuesses]         = useState([]);
   const [guessedNames, setGuessedNames] = useState([]);
@@ -905,7 +907,7 @@ export default function WhoAreYa() {
 
         {/* NAV */}
         <nav className="wya-nav">
-          <button className="wya-nav-logo" onClick={() => window.history.back()}>←</button>
+          <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />
             Who Are Ya?

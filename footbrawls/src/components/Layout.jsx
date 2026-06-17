@@ -26,16 +26,89 @@ const C = {
   muted2:  "rgba(242,242,244,0.28)",
 };
 
+const Icon = {
+  Person: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
+      <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Puzzle: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <path d="M10 6.5h4M6.5 10v4M17.5 10v4M10 17.5h4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Chart: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="14" width="4" height="7" rx="1" fill={color} opacity="0.5"/>
+      <rect x="10" y="9" width="4" height="12" rx="1" fill={color} opacity="0.7"/>
+      <rect x="17" y="4" width="4" height="17" rx="1" fill={color}/>
+      <line x1="2" y1="21" x2="22" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Network: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="5" cy="12" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="19" cy="5" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="19" cy="19" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <line x1="7.2" y1="11" x2="16.8" y2="6.4" stroke={color} strokeWidth="1.3"/>
+      <line x1="7.2" y1="13" x2="16.8" y2="17.6" stroke={color} strokeWidth="1.3"/>
+      <line x1="19" y1="7.5" x2="19" y2="16.5" stroke={color} strokeWidth="1.3" strokeDasharray="2 2"/>
+    </svg>
+  ),
+  Target: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
+      <circle cx="12" cy="12" r="4" stroke={color} strokeWidth="1.5"/>
+      <circle cx="12" cy="12" r="1.5" fill={color}/>
+      <line x1="12" y1="2" x2="12" y2="5" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12" y1="19" x2="12" y2="22" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="2" y1="12" x2="5" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="19" y1="12" x2="22" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Question: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
+      <path d="M9.5 9a2.5 2.5 0 015 0c0 1.5-1.5 2-2.5 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="12" cy="17" r="1" fill={color}/>
+    </svg>
+  ),
+  Flame: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 22c4.4 0 8-3.3 8-7.4 0-2.4-1-4.4-2.6-5.9 0 1.4-.8 2.6-2 3.3C15.1 9.7 14 7 14 4c0 0-5 3-5 9.5 0 .8.1 1.5.3 2.2C8.5 15 8 13.6 8 12c-1.2 1.2-2 3-2 4.6C6 20.7 8.7 22 12 22z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="12" cy="17" r="2" stroke={color} strokeWidth="1.2"/>
+    </svg>
+  ),
+  Dribble: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="5" r="2.5" stroke={color} strokeWidth="1.4"/>
+      <path d="M12 7.5c0 3-4 3-4 6s4 3 4 6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="8" cy="11" r="1.5" fill={color} opacity="0.4"/>
+      <circle cx="16" cy="14" r="1.5" fill={color} opacity="0.4"/>
+    </svg>
+  ),
+  Lightning: ({size=16,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" fill={color} fillOpacity="0.25"/>
+    </svg>
+  ),
+};
+
 const GAMES = [
-  { name: 'Who Are Ya?',    path: '/games/whoareya',      icon: '🔍', xp: 25,  key: 'footbrawls_whoareya' },
-  { name: 'Player Wordle',  path: '/games/wordle',        icon: '🔤', xp: 25,  key: 'footbrawls_wordle_history' },
-  { name: 'Higher or Lower',path: '/games/higherlower',   icon: '📊', xp: 25,  key: 'footbrawls_higherlower' },
-  { name: 'Transfer Trail', path: '/games/transfertrail', icon: '🔄', xp: 25,  key: 'footbrawls_transfertrail' },
-  { name: 'Match Predictor',path: '/games/matchpredictor',icon: '🎯', xp: 50,  key: 'footbrawls_matchpredictor' },
-  { name: 'Daily Trivia',   path: '/games/dailytrivia',   icon: '🧠', xp: 25,  key: 'footbrawls_dailytrivia' },
-  { name: 'Penalty Nerve',  path: '/games/penaltynerve',  icon: '⚽', xp: 25,  key: 'footbrawls_penaltynerve' },
-  { name: 'Dribble Gauntlet',path: '/games/dribble',       icon: '🏃‍♂️', xp: 25,  key: 'footbrawls_dribble' },
-  { name: 'Rapid Fire',     path: '/games/rapidfire',     icon: '⚡', xp: 25,  key: 'footbrawls_rapidfire' },
+  { name: 'Who Are Ya?',    path: '/games/whoareya',      IconC: Icon.Person,    xp: 25,  key: 'footbrawls_whoareya',      color: '#F97316' },
+  { name: 'Player Wordle',  path: '/games/wordle',        IconC: Icon.Puzzle,    xp: 25,  key: 'footbrawls_wordle_history', color: '#A855F7' },
+  { name: 'Higher or Lower',path: '/games/higherlower',   IconC: Icon.Chart,     xp: 25,  key: 'footbrawls_higherlower' },
+  { name: 'Transfer Trail', path: '/games/transfertrail', IconC: Icon.Network,   xp: 25,  key: 'footbrawls_transfertrail' },
+  { name: 'Match Predictor',path: '/games/matchpredictor',IconC: Icon.Target,    xp: 50,  key: 'footbrawls_matchpredictor', color: '#F7C344' },
+  { name: 'Daily Trivia',   path: '/games/dailytrivia',   IconC: Icon.Question,  xp: 25,  key: 'footbrawls_dailytrivia' },
+  { name: 'Penalty Nerve',  path: '/games/penaltynerve',  IconC: Icon.Flame,     xp: 25,  key: 'footbrawls_penaltynerve',   color: '#E84040' },
+  { name: 'Dribble Gauntlet',path: '/games/dribble',       IconC: Icon.Dribble,   xp: 25,  key: 'footbrawls_dribble' },
+  { name: 'Rapid Fire',     path: '/games/rapidfire',     IconC: Icon.Lightning, xp: 25,  key: 'footbrawls_rapidfire' },
 ];
 
 const CURSE_COLORS = {
@@ -180,14 +253,21 @@ export default function Layout({ children, hideMobileNav }) {
             {GAMES.map(game => {
               const done    = isGameDoneToday(game.key);
               const active  = location.pathname === game.path;
+              const NavIcon = game.IconC;
+              const textColor = game.color;
               return (
                 <div
                   key={game.path}
                   className={`ly-game-item ${active ? 'active' : ''}`}
                   onClick={() => navigate(game.path)}
                 >
-                  <span className="ly-game-icon">{game.icon}</span>
-                  <span className={`ly-game-name ${active ? 'active' : done ? 'done' : ''}`}>
+                  <span className="ly-game-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20 }}>
+                    <NavIcon size={16} color={textColor || (active ? C.accent : 'rgba(242,242,244,0.5)')} />
+                  </span>
+                  <span 
+                    className={`ly-game-name ${active ? 'active' : done ? 'done' : ''}`}
+                    style={textColor ? { color: textColor } : {}}
+                  >
                     {game.name}
                   </span>
                   <span className="ly-game-xp">

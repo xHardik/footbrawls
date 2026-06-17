@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ROUNDS = 5;
 const SEED = 42;
@@ -158,10 +159,12 @@ function drawScene(ctx, st) {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function RaidAct2({ onComplete }) {
+  const navigate = useNavigate();
   const canvasRef = useRef(null);
   const stRef = useRef(initState());
   const rafRef = useRef(null);
   const [, forceRender] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
   const repaint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -214,6 +217,37 @@ export default function RaidAct2({ onComplete }) {
         }
         .db-nav-btn:hover {
           background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
+        }
+        .db-modal-overlay {
+          position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+          backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+          z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .db-modal-overlay.active {
+          opacity: 1; pointer-events: auto;
+        }
+        .db-modal-box {
+          background: #1c2a1c; border: 1px solid rgba(255,255,255,0.28);
+          padding: 32px; border-radius: 20px; max-width: 440px; width: 90%;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center;
+        }
+        .db-modal-title {
+          font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px;
+          margin-bottom: 20px; color: #3DD68C;
+        }
+        .db-rules-list {
+          text-align: left; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px;
+          padding-left: 20px; font-size: 0.9rem; color: rgba(242, 242, 244, 0.6);
+        }
+        .db-rules-list strong { color: #fff; }
+        .db-modal-close {
+          background: linear-gradient(135deg, #3DD68C, #10B981);
+          color: #000; border: none; padding: 12px 28px; border-radius: 12px;
+          font-size: 1rem; font-weight: 800; cursor: pointer; transition: all 0.2s;
+          box-shadow: 0 8px 20px rgba(61, 214, 140, 0.2);
+        }
+        .db-modal-close:hover {
+          transform: translateY(-2px); box-shadow: 0 12px 24px rgba(61, 214, 140, 0.3);
         }
       `;
       document.head.appendChild(s);
@@ -378,15 +412,29 @@ export default function RaidAct2({ onComplete }) {
 
   return (
     <>
+      {showModal && (
+        <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+          <div className="db-modal-box">
+            <h2 className="db-modal-title">⚽ How to Play</h2>
+            <ul className="db-rules-list">
+              <li><strong>🏃‍♂️ Dribble Phase:</strong> Choose a direction (Left, Center, or Right) to dribble past the defender.</li>
+              <li><strong>🥅 Shooting Phase:</strong> Once you beat the defender, pick a shooting zone to strike the ball.</li>
+              <li><strong>🧤 Goalkeeper:</strong> The GK will attempt to save. Choose wisely to score!</li>
+            </ul>
+            <button className="db-modal-close" onClick={() => setShowModal(false)}>Let's Play!</button>
+          </div>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="db-nav">
-        <button className="db-nav-logo" onClick={() => window.history.back()}>←</button>
+        <button className="db-nav-logo" onClick={() => navigate('/')}>←</button>
         <div className="db-nav-tag">
           <span className="db-fire-dot" />
           Dribble Gauntlet
         </div>
         <div className="db-nav-right">
-          <button className="db-nav-btn" onClick={() => alert("How to Play Dribble Gauntlet:\n\nDribble past the defender by picking a direction (Left, Center, Right), then try to score a goal by choosing a shooting zone.")}>❓ Help</button>
+          <button className="db-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 

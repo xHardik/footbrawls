@@ -18,7 +18,6 @@ const C = {
   text:"#F2F2F4", muted:"rgba(242,242,244,0.5)", muted2:"rgba(242,242,244,0.28)", muted3:"rgba(242,242,244,0.15)",
 };
 
-// ── SVG ICON LIBRARY (no emoji) ──────────────────────────────────────────────
 const Icon = {
   Ball: ({size=20,color="currentColor",style={}}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
@@ -37,7 +36,6 @@ const Icon = {
       <path d="M6 5H3a1 1 0 00-1 1v2a4 4 0 004 4" stroke={color} strokeWidth="1.5"/>
       <path d="M18 5h3a1 1 0 011 1v2a4 4 0 01-4 4" stroke={color} strokeWidth="1.5"/>
       <path d="M12 16v4M8 20h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M9 12.5c0 0 1 1.5 3 1.5s3-1.5 3-1.5" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   ),
   Target: ({size=20,color="currentColor"}) => (
@@ -88,7 +86,6 @@ const Icon = {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
       <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M9 21h6" stroke={color} strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   Shield: ({size=20,color="currentColor"}) => (
@@ -161,13 +158,11 @@ const Icon = {
       <circle cx="12" cy="17" r="1" fill={color}/>
     </svg>
   ),
-  // Lightning bolt — rapid fire
   Lightning: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" fill={color} fillOpacity="0.25"/>
     </svg>
   ),
-  // Question mark — trivia
   Question: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
@@ -175,7 +170,6 @@ const Icon = {
       <circle cx="12" cy="17" r="1" fill={color}/>
     </svg>
   ),
-  // Dribble / zigzag — dribble gauntlet
   Dribble: ({size=20,color="currentColor"}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <circle cx="12" cy="5" r="2.5" stroke={color} strokeWidth="1.4"/>
@@ -184,18 +178,43 @@ const Icon = {
       <circle cx="16" cy="14" r="1.5" fill={color} opacity="0.4"/>
     </svg>
   ),
+  Play: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M8 5.5l11 6.5-11 6.5V5.5z" fill={color} stroke={color} strokeWidth="1.2" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Zap: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color} fillOpacity="0.9">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+  ),
+  Castle: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="11" width="18" height="10" rx="1" stroke={color} strokeWidth="1.5"/>
+      <path d="M3 11V7h3V9h2V7h3V9h2V7h3V11" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="9" y="15" width="6" height="6" rx="1" stroke={color} strokeWidth="1.3"/>
+    </svg>
+  ),
+  Skull: ({size=20,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 3a7 7 0 017 7c0 2.5-1.3 4.7-3.3 6L15 21H9l-.7-5C6.3 14.7 5 12.5 5 10a7 7 0 017-7z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="9" cy="11" r="1.5" fill={color}/>
+      <circle cx="15" cy="11" r="1.5" fill={color}/>
+      <path d="M9 17h6M10 19h4" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  ),
 };
 
 const GAMES = [
-  { id:"whoAreYa",      Icon:Icon.Person,   name:"Who Are Ya?",      tag:"Deduction",   desc:"Guess the mystery player from country, club, age, and position clues.",              xp:25,  route:"/games/whoareya",      color:C.orange, meta:["8 Attempts","Thinky"],       storageKey:"footbrawls_whoareya"        },
-  { id:"matchPredictor",Icon:Icon.Target,   name:"Match Predictor",  tag:"Daily Pick",  desc:"Call today's result, top scorer, and exact scoreline — chase the season board.",    xp:100, route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],     storageKey:"footbrawls_matchpredictor"  },
-  { id:"penaltyNerve",  Icon:Icon.Flame,    name:"Penalty Nerve",    tag:"Pressure",    desc:"Beat the keeper across five high-stakes penalty kicks.",                              xp:30,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],       storageKey:"footbrawls_penaltynerve"    },
-  { id:"wordle",        Icon:Icon.Puzzle,   name:"Player Wordle",    tag:"Word Game",   desc:"Wordle energy, football names. Narrow the attributes and land the player.",           xp:20,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],      storageKey:"footbrawls_wordle_history"  },
-  { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:15,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower"     },
-  { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail"   },
-  { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:20,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia"     },
-  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.orange, meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire"       },
-  { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:30,  route:"/games/dribble",        color:C.purple, meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble"         },
+  { id:"whoAreYa",      Icon:Icon.Person,   name:"Who Are Ya?",      tag:"Deduction",   desc:"Guess the mystery player from country, club, age, and position clues.",              xp:25,  route:"/games/whoareya",      color:C.orange, meta:["8 Attempts","Thinky"],       storageKey:"footbrawls_whoareya",       theme:"detective"   },
+  { id:"matchPredictor",Icon:Icon.Target,   name:"Match Predictor",  tag:"Daily Pick",  desc:"Call today's result, top scorer, and exact scoreline — chase the season board.",    xp:100, route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],     storageKey:"footbrawls_matchpredictor", theme:"broadcast"   },
+  { id:"penaltyNerve",  Icon:Icon.Flame,    name:"Penalty Nerve",    tag:"Pressure",    desc:"Beat the keeper across five high-stakes penalty kicks.",                              xp:30,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],       storageKey:"footbrawls_penaltynerve",   theme:"penalty"     },
+  { id:"wordle",        Icon:Icon.Puzzle,   name:"Player Wordle",    tag:"Word Game",   desc:"Wordle energy, football names. Narrow the attributes and land the player.",           xp:20,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],      storageKey:"footbrawls_wordle_history", theme:"scouting"    },
+  { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:15,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower",    theme:"stats"       },
+  { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail",  theme:"transfers"   },
+  { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:20,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia",    theme:"trivia"      },
+  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.orange, meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire",      theme:"rapid"       },
+  { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:30,  route:"/games/dribble",        color:C.purple, meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble",        theme:"training"    },
 ];
 
 const BAD_WORDS = ["spam","fuck","shit","ass","bitch","dick","cunt"];
@@ -251,24 +270,395 @@ function useWorldChat() {
   return messages;
 }
 
-// ── PITCH GRID BACKGROUND ─────────────────────────────────────────────────────
-function BgCanvas() {
+const GlobalStyles = () => (
+  <style>{`
+    @font-face {
+      font-family: "Twemoji Country Flags";
+      src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/CountryFlagEmojiPolyfill.ttf") format("truetype");
+    }
+    body, button, input, select, textarea {
+      font-family: "Twemoji Country Flags", "DM Sans", "Segoe UI", sans-serif;
+    }
+    @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.65)}}
+    @keyframes hpShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}
+    @keyframes chatRipple{0%{transform:scale(1);opacity:0.5}100%{transform:scale(3);opacity:0}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @keyframes floodlightSweep{0%{opacity:0;transform:rotate(-8deg) translateX(-60px)}30%{opacity:0.7}70%{opacity:0.7}100%{opacity:0;transform:rotate(8deg) translateX(60px)}}
+    @keyframes floodlightSweep2{0%{opacity:0;transform:rotate(8deg) translateX(60px)}30%{opacity:0.5}70%{opacity:0.5}100%{opacity:0;transform:rotate(-8deg) translateX(-60px)}}
+    @keyframes pitchPulse{0%,100%{opacity:0.4}50%{opacity:0.65}}
+    @keyframes heroBanner{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    @keyframes xpGain{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
+    @keyframes goalFlash{0%{opacity:0;transform:scaleX(0)}20%{opacity:1;transform:scaleX(1)}80%{opacity:1}100%{opacity:0}}
+    @keyframes fbBounce{
+      0%,100%{bottom:12px;transform:translateX(-50%) scaleY(0.78) scaleX(1.22);animation-timing-function:cubic-bezier(0.1,0.8,0.3,1)}
+      50%{bottom:calc(100% - 76px);transform:translateX(-50%) scaleY(1.04) scaleX(0.96);animation-timing-function:cubic-bezier(0.7,0,0.9,0.2)}
+    }
+    @keyframes fbShadow{
+      0%,100%{transform:translateX(-50%) scale(1.22);opacity:0.5;animation-timing-function:cubic-bezier(0.1,0.8,0.3,1)}
+      50%{transform:translateX(-50%) scale(0.32);opacity:0.04;animation-timing-function:cubic-bezier(0.7,0,0.9,0.2)}
+    }
+    @keyframes cardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    @keyframes siegeFire{0%,100%{opacity:0.6;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.15)}}
+    @keyframes fortressCrumble{0%{opacity:0.15}50%{opacity:0.35}100%{opacity:0.15}}
+    @keyframes broadcastTicker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+    @keyframes statCountUp{0%{transform:translateY(8px);opacity:0}100%{transform:translateY(0);opacity:1}}
+    @keyframes stadiumZoom{0%{transform:scale(1)}100%{transform:scale(1.06)}}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
+  `}</style>
+);
+
+// ── STADIUM BACKGROUND ────────────────────────────────────────────────────────
+function StadiumBg() {
   return (
     <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
+      {/* Deep space base */}
+      <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 120% 80% at 50% -20%, rgba(12,20,40,0.95) 0%, ${C.bg} 60%)`}}/>
+
+      {/* Pitch grid */}
       <div style={{
         position:"absolute",inset:0,
         backgroundImage:`
-          linear-gradient(${C.pitchLine} 1px, transparent 1px),
-          linear-gradient(90deg, ${C.pitchLine} 1px, transparent 1px)
+          linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px)
         `,
-        backgroundSize:"72px 72px",
-        maskImage:"linear-gradient(180deg,transparent,rgba(0,0,0,0.4) 20%,rgba(0,0,0,0.4) 80%,transparent)"
+        backgroundSize:"80px 80px",
+        maskImage:"linear-gradient(180deg,transparent 0%,rgba(0,0,0,0.5) 15%,rgba(0,0,0,0.5) 85%,transparent 100%)",
+        animation:"pitchPulse 6s ease-in-out infinite",
       }}/>
-      <div style={{position:"absolute",width:520,height:520,top:"50%",left:"50%",transform:"translate(-50%,-50%)",borderRadius:"50%",border:`1px solid ${C.pitchLine}`,opacity:0.5}}/>
-      <div style={{position:"absolute",width:10,height:10,borderRadius:"50%",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:C.pitchLine}}/>
-      <div style={{position:"absolute",width:800,height:600,top:-280,left:-200,borderRadius:"50%",background:`radial-gradient(ellipse,rgba(247,195,68,0.22) 0%,transparent 70%)`,filter:"blur(100px)"}}/>
-      <div style={{position:"absolute",width:500,height:400,bottom:-120,right:-120,borderRadius:"50%",background:`radial-gradient(ellipse,rgba(232,64,64,0.08) 0%,transparent 70%)`,filter:"blur(80px)"}}/>
-      <div style={{position:"fixed",inset:0,opacity:0.025,backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",backgroundSize:"256px 256px"}}/>
+
+      {/* Centre circle */}
+      <div style={{position:"absolute",width:600,height:600,top:"50%",left:"50%",transform:"translate(-50%,-50%)",borderRadius:"50%",border:"1px solid rgba(255,255,255,0.03)",opacity:0.7}}/>
+      <div style={{position:"absolute",width:10,height:10,borderRadius:"50%",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"rgba(255,255,255,0.05)"}}/>
+
+      {/* Floodlight beam left */}
+      <div style={{
+        position:"absolute",
+        top:"-10%", left:"8%",
+        width:220, height:"140%",
+        background:"linear-gradient(180deg, rgba(247,195,68,0.06) 0%, rgba(247,195,68,0.02) 40%, transparent 100%)",
+        transformOrigin:"top left",
+        filter:"blur(30px)",
+        animation:"floodlightSweep 12s ease-in-out infinite",
+      }}/>
+
+      {/* Floodlight beam right */}
+      <div style={{
+        position:"absolute",
+        top:"-10%", right:"8%",
+        width:220, height:"140%",
+        background:"linear-gradient(180deg, rgba(79,142,247,0.05) 0%, rgba(79,142,247,0.015) 40%, transparent 100%)",
+        transformOrigin:"top right",
+        filter:"blur(30px)",
+        animation:"floodlightSweep2 15s ease-in-out infinite",
+        animationDelay:"3s",
+      }}/>
+
+      {/* Gold atmospheric glow top */}
+      <div style={{position:"absolute",width:900,height:500,top:-200,left:"50%",transform:"translateX(-50%)",borderRadius:"50%",background:"radial-gradient(ellipse, rgba(247,195,68,0.09) 0%, transparent 65%)",filter:"blur(60px)"}}/>
+
+      {/* Blue glow bottom */}
+      <div style={{position:"absolute",width:600,height:400,bottom:-100,right:-100,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(79,142,247,0.06) 0%, transparent 70%)",filter:"blur(80px)"}}/>
+      <div style={{position:"absolute",width:400,height:300,bottom:-80,left:-60,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(61,214,140,0.04) 0%, transparent 70%)",filter:"blur(60px)"}}/>
+
+      {/* Film grain */}
+      <div style={{position:"fixed",inset:0,opacity:0.022,backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",backgroundSize:"256px"}}/>
+    </div>
+  );
+}
+
+// ── TOP NAV ───────────────────────────────────────────────────────────────────
+function TopNav({ user, dailyXP, xpPct, navigate }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  return (
+    <nav style={{
+      position:"sticky", top:0, zIndex:200,
+      width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"0 20px", height:58, boxSizing:"border-box",
+      background: scrolled ? "rgba(5,8,15,0.92)" : "rgba(5,8,15,0.55)",
+      backdropFilter:"blur(32px) saturate(1.5)",
+      borderBottom:`1px solid ${scrolled ? C.border2 : "rgba(255,255,255,0.04)"}`,
+      boxShadow: scrolled ? "0 4px 40px rgba(0,0,0,0.7)" : "none",
+      transition:"all 0.3s ease",
+    }}>
+      {/* Gold top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent 0%,${C.gold} 30%,rgba(255,220,100,0.9) 50%,${C.gold} 70%,transparent 100%)`,opacity:0.6}}/>
+
+      {/* Logo */}
+      <div onClick={() => navigate("/")} style={{
+        fontFamily:"'Bebas Neue',sans-serif",
+        fontSize:"1.65rem", letterSpacing:4,
+        background:`linear-gradient(110deg, #ffe680, ${C.gold} 40%, #ffaa00 65%, ${C.gold})`,
+        WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
+        cursor:"pointer", flexShrink:0,
+        filter:`drop-shadow(0 0 14px ${C.goldGlow})`,
+      }}>
+        FOOTBRAWLS
+      </div>
+
+      {/* Right side */}
+      <div style={{display:"flex", alignItems:"center", gap:8}}>
+        {/* XP progress */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:8,
+          padding:"6px 14px", borderRadius:100,
+          border:"1px solid rgba(61,214,140,0.2)",
+          background:"rgba(61,214,140,0.04)",
+          fontFamily:"'Space Mono',monospace",
+        }}>
+          <div style={{position:"relative", width:52, height:5, borderRadius:99, background:"rgba(255,255,255,0.07)", overflow:"hidden"}}>
+            <div style={{width:`${xpPct}%`, height:"100%", background:"linear-gradient(90deg,#3DD68C,#7fffcc)", borderRadius:99, transition:"width 0.8s cubic-bezier(0.22,1,0.36,1)"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)",animation:"hpShimmer 2.5s ease-in-out infinite"}}/>
+          </div>
+          <span style={{fontSize:"0.6rem", fontWeight:700, letterSpacing:0.5, color:C.gold}}>{dailyXP}</span>
+          <span style={{fontSize:"0.55rem", color:C.muted2}}>XP</span>
+        </div>
+
+        {/* User pill */}
+        <div style={{
+          display:"flex", alignItems:"center", gap:7,
+          padding:"5px 13px", borderRadius:100,
+          border:`1px solid ${C.border2}`, background:C.surface,
+          fontSize:"0.72rem", fontWeight:700, color:C.text,
+          fontFamily:"'Syne',sans-serif", letterSpacing:0.4,
+          flexShrink:0, maxWidth:140, overflow:"hidden",
+        }}>
+          <span style={{flexShrink:0, fontSize:"1.05rem"}}>{user.flag || "🏴"}</span>
+          <span style={{overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{user.nickname}</span>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ── BROADCAST TICKER ──────────────────────────────────────────────────────────
+function BroadcastTicker({ doneCount, gamesTotal, dailyXP, guildName }) {
+  const items = [
+    `⚽ ${doneCount}/${gamesTotal} games completed today`,
+    `🏆 ${dailyXP} XP earned today`,
+    `🛡 ${guildName} — fortress active`,
+    `⚡ Rapid Fire — fastest fingers win`,
+    `🔥 Penalty Nerve — can you keep your cool?`,
+    `📡 World Chat is live — join the banter`,
+  ];
+  const content = items.join("   ·   ");
+  return (
+    <div style={{
+      overflow:"hidden", height:28, background:"rgba(247,195,68,0.06)",
+      borderBottom:"1px solid rgba(247,195,68,0.12)",
+      borderTop:"1px solid rgba(247,195,68,0.08)",
+      display:"flex", alignItems:"center",
+    }}>
+      <div style={{
+        display:"flex", alignItems:"center", whiteSpace:"nowrap",
+        animation:"broadcastTicker 28s linear infinite",
+        fontFamily:"'Space Mono',monospace", fontSize:"0.52rem",
+        color:C.muted, letterSpacing:0.8,
+        gap:0,
+      }}>
+        <span style={{marginRight:60}}>{content}</span>
+        <span>{content}</span>
+      </div>
+    </div>
+  );
+}
+
+// ── HERO SECTION WITH STADIUM BACKGROUND ─────────────────────────────────────
+// Drop-in replacement for your existing HeroSection component.
+// No other files need to change — StadiumBg still handles the rest of the page.
+
+function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navigate }) {
+  return (
+    <div style={{
+      position:"relative",
+      overflow:"hidden",
+      minHeight:420,
+      display:"flex",
+      flexDirection:"column",
+      justifyContent:"flex-end",
+      padding:"0 28px 36px",
+    }}>
+
+      {/* ── STADIUM PHOTO ── */}
+      <img
+        src="/stadium.jpg"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position:"absolute", inset:0,
+          width:"100%", height:"100%",
+          objectFit:"cover", objectPosition:"center 28%",
+          zIndex:0,
+          // subtle zoom on mount for life
+          animation:"stadiumZoom 18s ease-in-out infinite alternate",
+        }}
+      />
+
+      {/* ── OVERLAYS ── */}
+      {/* Main dark gradient — bottom-heavy so text pops */}
+      <div style={{
+        position:"absolute", inset:0, zIndex:1,
+        background:"linear-gradient(180deg, rgba(5,8,15,0.28) 0%, rgba(5,8,15,0.52) 35%, rgba(5,8,15,0.88) 70%, rgba(5,8,15,0.97) 100%)",
+      }}/>
+      {/* Side vignette — left-heavy so copy stays legible */}
+      <div style={{
+        position:"absolute", inset:0, zIndex:1,
+        background:"linear-gradient(90deg, rgba(5,8,15,0.55) 0%, rgba(5,8,15,0.1) 55%, transparent 100%)",
+      }}/>
+      {/* Gold atmospheric bloom from top */}
+      <div style={{
+        position:"absolute", top:-80, left:"50%", transform:"translateX(-50%)",
+        width:900, height:420, borderRadius:"50%", zIndex:1,
+        background:"radial-gradient(ellipse, rgba(247,195,68,0.07) 0%, transparent 60%)",
+        filter:"blur(40px)", pointerEvents:"none",
+      }}/>
+
+      {/* ── GOLD TOP BAR ── */}
+      <div style={{
+        position:"absolute", top:0, left:0, right:0, height:3, zIndex:3,
+        background:"linear-gradient(90deg,transparent 0%,rgba(247,195,68,0.7) 30%,rgba(255,220,100,0.9) 50%,rgba(247,195,68,0.7) 70%,transparent 100%)",
+      }}/>
+
+      {/* ── ALL CONTENT ── */}
+      <div style={{position:"relative", zIndex:2}}>
+
+        {/* Broadcast corner accent */}
+        <div style={{
+          position:"absolute", top:0, left:-28, bottom:0, width:4,
+          background:`linear-gradient(180deg, ${C.gold}, transparent)`,
+          opacity:0.55,
+        }}/>
+
+        {/* Eyebrow */}
+        <div style={{
+          display:"inline-flex", alignItems:"center", gap:7,
+          marginBottom:14, padding:"4px 12px", borderRadius:4,
+          background:"rgba(247,195,68,0.1)", border:"1px solid rgba(247,195,68,0.28)",
+          fontFamily:"'Space Mono',monospace", fontSize:"0.52rem",
+          fontWeight:700, letterSpacing:2, color:C.gold, textTransform:"uppercase",
+        }}>
+          <div style={{width:6, height:6, borderRadius:"50%", background:C.gold, boxShadow:`0 0 8px ${C.gold}`, animation:"livePulse 2s ease infinite"}}/>
+          Season Active
+        </div>
+
+        {/* Big headline */}
+        <h1 style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"clamp(3.2rem,10vw,5.8rem)",
+          lineHeight:0.88, letterSpacing:3, margin:"0 0 18px",
+        }}>
+          <span style={{display:"block", color:C.text}}>YOUR</span>
+          <span style={{
+            display:"block",
+            WebkitTextStroke:`2.5px ${C.gold}`,
+            color:"transparent",
+            filter:`drop-shadow(0 0 30px ${C.goldGlow})`,
+          }}>FOOTBALL</span>
+          <span style={{display:"block", color:C.text}}>UNIVERSE</span>
+        </h1>
+
+        <p style={{
+          fontFamily:"'Syne',sans-serif", fontSize:"0.88rem",
+          color:C.muted, lineHeight:1.8, margin:"0 0 24px", maxWidth:320,
+        }}>
+          Nine daily football games, one obsession. Earn XP, defend your guild's fortress, become a legend.
+        </p>
+
+        {/* Stat strip */}
+        <div style={{
+          display:"grid", gridTemplateColumns:"repeat(3,1fr)",
+          gap:10, marginBottom:18,
+        }}>
+          {[
+            { num:`${doneCount}/${gamesTotal}`, label:"Today's Games", color:C.teal },
+            { num:`${dailyXP}`, label:`of ${DAILY_XP_CAP} XP`, color:C.gold },
+            { num:guild.flag, label:guild.name.split(" ").slice(0,2).join(" "), color:C.green, emoji:true },
+          ].map(({ num, label, color, emoji }) => (
+            <div key={label} style={{
+              padding:"14px 12px",
+              background:"rgba(5,8,15,0.55)",
+              border:`1px solid rgba(255,255,255,0.1)`,
+              borderRadius:12,
+              backdropFilter:"blur(12px)",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:4,
+              position:"relative", overflow:"hidden",
+            }}>
+              <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 0%,${color}12,transparent 60%)`,pointerEvents:"none"}}/>
+              <span style={{
+                fontFamily: emoji ? "'Syne',sans-serif" : "'Bebas Neue',sans-serif",
+                fontSize: emoji ? "1.5rem" : "1.8rem",
+                letterSpacing: emoji ? 0 : 2,
+                color, lineHeight:1,
+                animation:"statCountUp 0.5s ease",
+                textShadow:`0 0 20px ${color}55`,
+              }}>{num}</span>
+              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:0.8,color:C.muted2,textTransform:"uppercase",textAlign:"center"}}>{label}</span>
+              <div style={{position:"absolute",bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${color}55,transparent)`}}/>
+            </div>
+          ))}
+        </div>
+
+        {/* XP progress bar */}
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,letterSpacing:1.5,color:C.muted2,textTransform:"uppercase"}}>Daily XP Progress</span>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.9rem",letterSpacing:1,color:C.gold}}>{xpPct}%</span>
+          </div>
+          <div style={{height:8,borderRadius:99,background:"rgba(255,255,255,0.08)",overflow:"hidden",position:"relative",backdropFilter:"blur(4px)"}}>
+            <div style={{width:`${xpPct}%`,height:"100%",borderRadius:99,background:"linear-gradient(90deg,#3DD68C88,#3DD68C,#7fffcc)",boxShadow:"0 0 12px rgba(61,214,140,0.5)",transition:"width 1s cubic-bezier(0.22,1,0.36,1)"}}>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)",animation:"hpShimmer 2.5s ease-in-out infinite"}}/>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA strip */}
+        <div style={{display:"flex", gap:10}}>
+          <button
+            onClick={() => navigate("/guild")}
+            style={{
+              flex:1, padding:"12px 16px", borderRadius:10,
+              fontFamily:"'Bebas Neue',sans-serif", fontSize:"1rem", letterSpacing:2,
+              background:"rgba(6,182,212,0.12)",
+              border:"1px solid rgba(6,182,212,0.35)", color:C.teal,
+              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+              transition:"all 0.2s", backdropFilter:"blur(8px)",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(6,182,212,0.22)";e.currentTarget.style.boxShadow="0 0 24px rgba(6,182,212,0.2)"}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(6,182,212,0.12)";e.currentTarget.style.boxShadow="none"}}
+          >
+            <Icon.Shield size={16} color={C.teal}/> MY GUILD
+          </button>
+          <button
+            onClick={() => {
+              const el = document.getElementById("games-section");
+              if (el) el.scrollIntoView({ behavior:"smooth" });
+            }}
+            style={{
+              flex:2, padding:"12px 16px", borderRadius:10,
+              fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.05rem", letterSpacing:2.5,
+              background:"linear-gradient(135deg,rgba(247,195,68,0.22),rgba(247,195,68,0.08))",
+              border:"1px solid rgba(247,195,68,0.42)", color:C.gold,
+              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+              transition:"all 0.2s",
+              boxShadow:"0 0 20px rgba(247,195,68,0.12)",
+              backdropFilter:"blur(8px)",
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,195,68,0.28)";e.currentTarget.style.boxShadow="0 0 32px rgba(247,195,68,0.25)"}}
+            onMouseLeave={e=>{e.currentTarget.style.background="linear-gradient(135deg,rgba(247,195,68,0.22),rgba(247,195,68,0.08))";e.currentTarget.style.boxShadow="0 0 20px rgba(247,195,68,0.12)"}}
+          >
+            <Icon.Play size={16} color={C.gold}/> PLAY TODAY'S GAMES
+          </button>
+        </div>
+
+      </div>{/* end content */}
     </div>
   );
 }
@@ -276,10 +666,10 @@ function BgCanvas() {
 // ── ANIMATED FOOTBALL ─────────────────────────────────────────────────────────
 function BouncingFootball() {
   return (
-    <div style={{position:"relative",width:92,flexShrink:0,alignSelf:"stretch",display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
+    <div style={{position:"relative",width:88,flexShrink:0,alignSelf:"stretch",display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
       <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",width:72,height:72,borderRadius:"50%",background:`radial-gradient(ellipse,${C.goldGlow} 0%,transparent 70%)`,filter:"blur(16px)"}}/>
       <div style={{position:"absolute",bottom:12,left:"50%",transform:"translateX(-50%)",animation:"fbBounce 1.2s linear infinite"}}>
-        <svg viewBox="0 0 80 80" width="68" height="68" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 6px 18px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(247,195,68,0.18))"}}>
+        <svg viewBox="0 0 80 80" width="68" height="68" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 6px 18px rgba(0,0,0,0.7)) drop-shadow(0 0 12px rgba(247,195,68,0.22))"}}>
           <defs>
             <radialGradient id="ballGrad" cx="38%" cy="32%">
               <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95"/>
@@ -306,203 +696,11 @@ function BouncingFootball() {
         </svg>
       </div>
       <div style={{position:"absolute",bottom:2,left:"50%",transform:"translateX(-50%)",width:42,height:7,borderRadius:"50%",background:"rgba(0,0,0,0.45)",filter:"blur(4px)",animation:"fbShadow 1.2s linear infinite"}}/>
-      <style>{`
-        @keyframes fbBounce {
-          0%,100%{bottom:12px;transform:translateX(-50%) scaleY(0.78) scaleX(1.22);animation-timing-function:cubic-bezier(0.1,0.8,0.3,1)}
-          50%{bottom:calc(100% - 76px);transform:translateX(-50%) scaleY(1.04) scaleX(0.96);animation-timing-function:cubic-bezier(0.7,0,0.9,0.2)}
-        }
-        @keyframes fbShadow {
-          0%,100%{transform:translateX(-50%) scale(1.22);opacity:0.5;animation-timing-function:cubic-bezier(0.1,0.8,0.3,1)}
-          50%{transform:translateX(-50%) scale(0.32);opacity:0.04;animation-timing-function:cubic-bezier(0.7,0,0.9,0.2)}
-        }
-      `}</style>
     </div>
   );
 }
 
-// ── TOP NAV ───────────────────────────────────────────────────────────────────
-function TopNav({ user, dailyXP, xpPct, navigate }) {
-  return (
-    <nav style={{
-      position:"sticky",top:0,zIndex:200,
-      width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",
-      padding:"0 20px",height:58,boxSizing:"border-box",
-      background:"rgba(5,8,15,0.7)",
-      backdropFilter:"blur(28px) saturate(1.4)",
-      borderBottom:`1px solid ${C.border}`,
-      boxShadow:"0 1px 0 rgba(255,255,255,0.03), 0 4px 24px rgba(0,0,0,0.5)",
-    }}>
-      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${C.gold} 40%,${C.gold} 60%,transparent)`,opacity:0.55}}/>
-      <div onClick={()=>navigate("/")} style={{
-        fontFamily:"'Bebas Neue',sans-serif",
-        fontSize:"1.55rem",letterSpacing:3,
-        background:`linear-gradient(110deg,#ffe680,${C.gold} 45%,#e8a800)`,
-        WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-        cursor:"pointer",flexShrink:0,
-        filter:`drop-shadow(0 0 10px ${C.goldGlow})`,
-      }}>
-        FOOTBRAWLS
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{
-          display:"flex",alignItems:"center",gap:7,
-          padding:"5px 12px",borderRadius:100,
-          border:"1px solid rgba(61,214,140,0.22)",
-          background:"rgba(61,214,140,0.05)",
-          fontFamily:"'Space Mono',monospace",
-          fontSize:"0.58rem",fontWeight:700,letterSpacing:1,color:C.muted,
-        }}>
-          <div style={{width:40,height:4,borderRadius:99,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}>
-            <div style={{width:`${xpPct}%`,height:"100%",background:"linear-gradient(90deg,#3DD68C,#7fffcc)",borderRadius:99,transition:"width 0.6s ease"}}/>
-          </div>
-          <span style={{color:C.gold,fontWeight:800}}>{dailyXP}</span>
-          <span style={{color:C.muted2}}>XP</span>
-        </div>
-        <div style={{
-          display:"flex",alignItems:"center",gap:6,
-          padding:"5px 12px",borderRadius:100,
-          border:`1px solid ${C.border2}`,background:C.surface,
-          fontSize:"0.72rem",fontWeight:700,color:C.text,
-          fontFamily:"'Syne',sans-serif",letterSpacing:0.4,
-          flexShrink:0,maxWidth:130,overflow:"hidden",
-        }}>
-          <span style={{flexShrink:0,fontSize:"1rem"}}>{user.flag||"🏴"}</span>
-          <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nickname}</span>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-// ── SECTION HEADER ────────────────────────────────────────────────────────────
-function SectionHdr({ label, count, right }) {
-  return (
-    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14,marginTop:32}}>
-      <div style={{width:3,height:14,borderRadius:2,background:`linear-gradient(180deg,${C.gold},${C.gold}44)`,flexShrink:0}}/>
-      <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.58rem",fontWeight:700,letterSpacing:3,textTransform:"uppercase",color:C.muted2,whiteSpace:"nowrap"}}>{label}</span>
-      <div style={{flex:1,height:1,background:`linear-gradient(90deg,${C.border2},transparent)`}}/>
-      {(count||right)&&<span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.54rem",color:C.muted3,letterSpacing:1,whiteSpace:"nowrap"}}>{count||right}</span>}
-    </div>
-  );
-}
-
-// ── GAME CARD COMPACT (for 3x3 grid) ─────────────────────────────────────────
-function GameCardCompact({ game, done, onPlay }) {
-  const [hovered,setHovered]=useState(false);
-  const ca = game.color;
-  const GameIcon = game.Icon;
-  return (
-    <div
-      onClick={()=>onPlay(game)}
-      onMouseEnter={()=>setHovered(true)}
-      onMouseLeave={()=>setHovered(false)}
-      style={{
-        position:"relative",
-        display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"space-between",
-        padding:"14px 13px 12px",
-        background:hovered?`linear-gradient(145deg,${ca}16,rgba(5,8,15,0.96))`:"rgba(255,255,255,0.03)",
-        border:`1px solid ${hovered?ca+"bb":C.border}`,
-        borderRadius:14,
-        overflow:"hidden",
-        cursor:"pointer",
-        transform:hovered?"translateY(-3px) scale(1.01)":"none",
-        boxShadow:hovered?`0 20px 44px rgba(0,0,0,0.55),0 0 0 1px ${ca}44,0 0 30px ${ca}22`:"0 1px 0 rgba(255,255,255,0.03)",
-        transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
-        minHeight:130,
-      }}
-    >
-      {/* Top accent bar — thickens and brightens on hover */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.28,transition:"all 0.22s"}}/>
-
-      {/* Full-card radial glow behind content */}
-      <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 20% 0%,${ca}20,transparent 60%)`,opacity:hovered?1:0,transition:"opacity 0.25s",pointerEvents:"none"}}/>
-
-      {/* Sweep shimmer on hover */}
-      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}12,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
-
-      {/* ── TOP ROW: icon + XP pill ── */}
-      <div style={{position:"relative",zIndex:2,display:"flex",alignItems:"flex-start",justifyContent:"space-between",width:"100%",marginBottom:10}}>
-        <div style={{
-          width:40,height:40,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          background:hovered?`${ca}28`:`${ca}10`,
-          border:`1px solid ${hovered?ca+"77":ca+"28"}`,
-          borderRadius:10,
-          transform:hovered?"scale(1.12) rotate(-6deg)":"scale(1)",
-          boxShadow:hovered?`0 0 22px ${ca}66,inset 0 0 12px ${ca}22`:"none",
-          transition:"all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-          flexShrink:0,
-        }}>
-          <GameIcon size={19} color={ca}/>
-        </div>
-
-        {/* XP pill — glows on hover */}
-        <div style={{
-          display:"flex",alignItems:"center",gap:3,
-          padding:"3px 7px",borderRadius:99,
-          background:hovered?`${C.gold}20`:`${C.gold}0c`,
-          border:`1px solid ${hovered?C.gold+"55":C.gold+"22"}`,
-          boxShadow:hovered?`0 0 10px ${C.gold}44`:"none",
-          transition:"all 0.22s",
-        }}>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.42rem",fontWeight:700,color:C.gold,letterSpacing:0.5}}>+{game.xp} XP</span>
-        </div>
-      </div>
-
-      {/* ── BOTTOM: name + desc + tag ── */}
-      <div style={{position:"relative",zIndex:2,width:"100%"}}>
-        <div style={{
-          fontFamily:"'Bebas Neue',sans-serif",
-          fontSize:"1.0rem",letterSpacing:1.4,lineHeight:1,
-          color:C.text,
-          textShadow:hovered?`0 0 16px ${ca}88`:"none",
-          transition:"text-shadow 0.22s",
-          marginBottom:5,
-        }}>{game.name}</div>
-
-        {/* Description — 2 lines, wraps naturally */}
-        <div style={{
-          fontFamily:"'Syne',sans-serif",
-          fontSize:"0.62rem",
-          color:hovered?C.muted:C.muted3,
-          lineHeight:1.45,
-          marginBottom:7,
-          overflow:"hidden",
-          display:"-webkit-box",
-          WebkitLineClamp:2,
-          WebkitBoxOrient:"vertical",
-          transition:"color 0.22s",
-        }}>{game.desc}</div>
-
-        {/* Tag pill — color shifts on hover */}
-        <div style={{display:"flex",alignItems:"center",gap:5}}>
-          <span style={{
-            fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",fontWeight:700,
-            textTransform:"uppercase",letterSpacing:1.2,padding:"2px 7px",borderRadius:3,
-            color:hovered?"#000":ca,
-            background:hovered?ca:`${ca}14`,
-            border:`1px solid ${hovered?ca:ca+"33"}`,
-            boxShadow:hovered?`0 0 10px ${ca}66`:"none",
-            transition:"all 0.22s",
-          }}>{game.tag}</span>
-
-          {/* Done tick — replaces nothing, just sits next to tag */}
-          {done && (
-            <div style={{display:"flex",alignItems:"center",gap:3}}>
-              <div style={{width:16,height:16,borderRadius:"50%",background:"rgba(61,214,140,0.15)",border:"1px solid rgba(61,214,140,0.4)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 13l4 4L19 7" stroke={C.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── MATCH CARD ────────────────────────────────────────────────────────────────
+// ── MATCH / FIXTURE CARD ──────────────────────────────────────────────────────
 function MatchCard({ fixture, fallbackSecs }) {
   const [secs,setSecs]=useState(fallbackSecs);
   useEffect(()=>{
@@ -511,124 +709,344 @@ function MatchCard({ fixture, fallbackSecs }) {
     const tick=()=>setSecs(Math.max(0,Math.floor((ms-Date.now())/1000)));
     tick(); const t=setInterval(tick,1000); return ()=>clearInterval(t);
   },[fixture,fallbackSecs]);
-  const name=fixture?`${fixture.homeTeam} vs ${fixture.awayTeam}`:"No match scheduled today";
-  const kickoffMs=fixture?.kickoffAt?.toMillis?fixture.kickoffAt.toMillis():(fixture?.kickoffAt?fixture.kickoffAt*1000:0);
-  const isLive=fixture?.isLive||(fixture&&!fixture.isComplete&&kickoffMs<Date.now()&&kickoffMs>=Date.now()-3*60*60*1000);
-  const hasFixture=!!fixture;
+
+  const name = fixture ? `${fixture.homeTeam} vs ${fixture.awayTeam}` : "No match scheduled today";
+  const kickoffMs = fixture?.kickoffAt?.toMillis ? fixture.kickoffAt.toMillis() : (fixture?.kickoffAt ? fixture.kickoffAt*1000 : 0);
+  const isLive = fixture?.isLive || (fixture && !fixture.isComplete && kickoffMs < Date.now() && kickoffMs >= Date.now() - 3*60*60*1000);
+  const hasFixture = !!fixture;
+
   return (
     <div style={{
-      background:`radial-gradient(circle at top right,rgba(247,195,68,0.1),transparent 40%),rgba(255,255,255,0.025)`,
-      border:`1px solid ${isLive?"rgba(232,64,64,0.35)":C.border2}`,
-      borderRadius:16,padding:"16px 18px",
-      display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",
-      boxShadow:isLive?"0 0 28px rgba(232,64,64,0.12)":"none",
+      position:"relative", overflow:"hidden",
+      background: isLive
+        ? "linear-gradient(135deg, rgba(232,64,64,0.12), rgba(232,64,64,0.04))"
+        : "linear-gradient(135deg, rgba(247,195,68,0.06), rgba(255,255,255,0.02))",
+      border:`1px solid ${isLive ? "rgba(232,64,64,0.4)" : C.border2}`,
+      borderRadius:16, padding:"18px 20px",
+      display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap",
+      boxShadow: isLive ? "0 0 40px rgba(232,64,64,0.12), inset 0 1px 0 rgba(255,255,255,0.05)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
     }}>
-      <div style={{minWidth:0,flex:1}}>
+      {/* Broadcast stripe */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:isLive?"linear-gradient(90deg,transparent,rgba(232,64,64,0.8),transparent)":"linear-gradient(90deg,transparent,rgba(247,195,68,0.5),transparent)"}}/>
+
+      <div style={{minWidth:0, flex:1}}>
         <div style={{
-          fontFamily:"'Space Mono',monospace",fontSize:"0.56rem",fontWeight:700,
-          letterSpacing:2,textTransform:"uppercase",
-          color:isLive?C.red:hasFixture?C.gold:C.muted2,
-          marginBottom:6,display:"flex",alignItems:"center",gap:8,
+          fontFamily:"'Space Mono',monospace", fontSize:"0.55rem", fontWeight:700,
+          letterSpacing:2, textTransform:"uppercase",
+          color: isLive ? C.red : hasFixture ? C.gold : C.muted2,
+          marginBottom:8, display:"flex", alignItems:"center", gap:8,
         }}>
-          {isLive && <div style={{width:6,height:6,borderRadius:"50%",background:C.red,boxShadow:`0 0 8px ${C.red}`,animation:"livePulse 1.8s ease infinite"}}/>}
-          <Icon.Clock size={12} color={isLive?C.red:hasFixture?C.gold:C.muted2}/>
-          {isLive?"Live Now":hasFixture?"Prediction Lock":"Daily Reset"}
+          {isLive && <div style={{width:7,height:7,borderRadius:"50%",background:C.red,boxShadow:`0 0 10px ${C.red}`,animation:"livePulse 1.8s ease infinite"}}/>}
+          <Icon.Clock size={12} color={isLive ? C.red : hasFixture ? C.gold : C.muted2}/>
+          {isLive ? "Live Now" : hasFixture ? "Prediction Lock" : "Daily Reset"}
         </div>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.22rem",letterSpacing:1,color:C.text,lineHeight:1}}>{name}</div>
-        {fixture?.stage&&<div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.muted2,marginTop:4,letterSpacing:0.4}}>{fixture.stage}</div>}
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.4rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:isLive?`0 0 20px rgba(232,64,64,0.4)`:hasFixture?`0 0 20px rgba(247,195,68,0.2)`:""}}>{name}</div>
+        {fixture?.stage && <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.muted2,marginTop:5,letterSpacing:0.6}}>{fixture.stage}</div>}
       </div>
+
       <div style={{textAlign:"right",flexShrink:0}}>
         {isLive
-          ?<div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.2rem",letterSpacing:3,color:C.red,lineHeight:1}}>{fixture.homeScore??0} – {fixture.awayScore??0}</div>
-          :<div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.85rem",letterSpacing:3,color:hasFixture?C.gold:C.muted2,lineHeight:1}}>{fmtCountdown(secs)}</div>
+          ? <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.6rem",letterSpacing:4,color:C.red,lineHeight:1,textShadow:`0 0 30px rgba(232,64,64,0.6)`}}>{fixture.homeScore??0} – {fixture.awayScore??0}</div>
+          : <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.1rem",letterSpacing:3,color:hasFixture?C.gold:C.muted2,lineHeight:1,textShadow:hasFixture?`0 0 20px ${C.goldGlow}`:""}}>{fmtCountdown(secs)}</div>
         }
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.54rem",color:C.muted,letterSpacing:1,marginTop:4}}>{isLive?"live score":hasFixture?"until lock":"until next day"}</div>
+        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:C.muted,letterSpacing:1,marginTop:4}}>{isLive?"live score":hasFixture?"until lock":"until next day"}</div>
       </div>
-      <style>{`@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.3;transform:scale(0.65)}}`}</style>
     </div>
   );
 }
 
-// ── GUILD CARD ────────────────────────────────────────────────────────────────
-function GuildCard({ guild, navigate }) {
-  const [hovered,setHovered]=useState(false);
-  const hp=guild.castleHP??0, maxHp=guild.castleHPCap??CASTLE_HP_CAP, hpPct=clampPct(hp,maxHp);
-  const hpColor=hpPct>=70?C.green:hpPct>=35?C.gold:C.red;
-  const hpGlow=hpPct>=70?"rgba(61,214,140,0.3)":hpPct>=35?"rgba(247,195,68,0.3)":"rgba(232,64,64,0.3)";
-  const statusLabel=hpPct>=70?"Fortified":hpPct>=35?"Holding":"Under Pressure";
+// ── SECTION DIVIDER ───────────────────────────────────────────────────────────
+function SectionDivider({ label, count, right, color = C.gold }) {
   return (
-    <div onClick={()=>navigate("/guild")} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
+    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,marginTop:36}}>
+      <div style={{width:3,height:18,borderRadius:2,background:`linear-gradient(180deg,${color},${color}33)`,flexShrink:0}}/>
+      <span style={{
+        fontFamily:"'Bebas Neue',sans-serif",
+        fontSize:"1.0rem",letterSpacing:3,color:C.text,whiteSpace:"nowrap",
+      }}>{label}</span>
+      {count && <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,letterSpacing:1,color,padding:"2px 8px",background:`${color}12`,border:`1px solid ${color}28`,borderRadius:3}}>{count}</span>}
+      <div style={{flex:1,height:1,background:`linear-gradient(90deg,${color}30,transparent)`}}/>
+      {right && <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:C.muted3,letterSpacing:1,whiteSpace:"nowrap"}}>{right}</span>}
+    </div>
+  );
+}
+
+// ── GAME PORTAL CARD ──────────────────────────────────────────────────────────
+const GAME_THEMES = {
+  detective:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(249,115,22,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(249,115,22,0.6)",  label:"DETECTIVE ROOM"   },
+  broadcast:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(247,195,68,0.2),rgba(5,8,15,0.95) 60%)",  accent:"rgba(247,195,68,0.6)",  label:"PREDICTION STUDIO" },
+  penalty:    { bg:"radial-gradient(ellipse at 70% 30%,rgba(232,64,64,0.2),rgba(5,8,15,0.95) 60%)",   accent:"rgba(232,64,64,0.6)",   label:"NIGHT STADIUM"     },
+  scouting:   { bg:"radial-gradient(ellipse at 70% 30%,rgba(168,85,247,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(168,85,247,0.6)",  label:"SCOUT CENTRE"      },
+  stats:      { bg:"radial-gradient(ellipse at 70% 30%,rgba(61,214,140,0.16),rgba(5,8,15,0.95) 60%)", accent:"rgba(61,214,140,0.6)",  label:"STAT ARENA"        },
+  transfers:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(79,142,247,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(79,142,247,0.6)",  label:"WAR ROOM"          },
+  trivia:     { bg:"radial-gradient(ellipse at 70% 30%,rgba(6,182,212,0.18),rgba(5,8,15,0.95) 60%)",  accent:"rgba(6,182,212,0.6)",   label:"QUIZ THEATRE"      },
+  rapid:      { bg:"radial-gradient(ellipse at 70% 30%,rgba(249,115,22,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(249,115,22,0.6)",  label:"ESPORTS ARENA"     },
+  training:   { bg:"radial-gradient(ellipse at 70% 30%,rgba(168,85,247,0.15),rgba(5,8,15,0.95) 60%)", accent:"rgba(168,85,247,0.6)",  label:"TRAINING GROUND"   },
+};
+
+function GamePortalCard({ game, done, onPlay }) {
+  const [hovered, setHovered] = useState(false);
+  const ca = game.color;
+  const theme = GAME_THEMES[game.theme] || GAME_THEMES.broadcast;
+  const GameIcon = game.Icon;
+
+  return (
+    <div
+      onClick={() => onPlay(game)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        position:"relative",overflow:"hidden",
-        background:hovered?`radial-gradient(ellipse at 10% 50%,rgba(6,182,212,0.08),transparent 55%),rgba(255,255,255,0.04)`:`rgba(255,255,255,0.03)`,
-        border:`1px solid ${hovered?"rgba(6,182,212,0.45)":C.border2}`,
-        borderRadius:16,padding:"18px 16px",
+        position:"relative", overflow:"hidden",
+        display:"flex", flexDirection:"column", justifyContent:"space-between",
+        padding:"16px 14px 14px",
+        background: hovered ? theme.bg : "rgba(255,255,255,0.03)",
+        border:`1px solid ${hovered ? ca + "cc" : C.border}`,
+        borderRadius:16,
         cursor:"pointer",
-        transform:hovered?"translateY(-2px)":"none",
-        boxShadow:hovered?"0 18px 44px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.18),0 0 28px rgba(6,182,212,0.07)":"0 1px 0 rgba(255,255,255,0.03)",
-        transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+        transform: hovered ? "translateY(-4px) scale(1.02)" : "none",
+        boxShadow: hovered
+          ? `0 24px 52px rgba(0,0,0,0.65), 0 0 0 1px ${ca}55, 0 0 40px ${ca}18`
+          : "0 1px 0 rgba(255,255,255,0.03)",
+        transition:"all 0.25s cubic-bezier(0.22,1,0.36,1)",
+        minHeight:148,
       }}
     >
-      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-130%",width:"55%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(6,182,212,0.07),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-        <div style={{position:"relative",flexShrink:0}}>
-          <div style={{
-            width:48,height:48,borderRadius:13,
-            background:"rgba(6,182,212,0.07)",
-            border:`1.5px solid ${hovered?"rgba(6,182,212,0.48)":"rgba(6,182,212,0.18)"}`,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            fontSize:"1.55rem",
-            transition:"all 0.22s",
-            boxShadow:hovered?"0 0 18px rgba(6,182,212,0.3)":"none",
-            transform:hovered?"scale(1.05)":"scale(1)",
-          }}>{guild.flag}</div>
-          <div style={{position:"absolute",bottom:-3,right:-3,width:13,height:13,borderRadius:"50%",background:hpColor,border:`2px solid ${C.bg}`,boxShadow:`0 0 8px ${hpGlow}`}}/>
+      {/* Top accent bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.3,transition:"all 0.25s"}}/>
+
+      {/* Broadcast corner label */}
+      <div style={{
+        position:"absolute",top:10,right:10,
+        fontFamily:"'Space Mono',monospace",fontSize:"0.36rem",fontWeight:700,
+        letterSpacing:1,color:hovered?ca:C.muted3,
+        textTransform:"uppercase",
+        opacity:hovered?1:0,
+        transition:"all 0.2s",
+      }}>{theme.label}</div>
+
+      {/* Sweep shimmer */}
+      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}14,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
+
+      {/* Icon + XP */}
+      <div style={{position:"relative",zIndex:2,display:"flex",alignItems:"flex-start",justifyContent:"space-between",width:"100%",marginBottom:12}}>
+        <div style={{
+          width:44,height:44,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          background: hovered ? `${ca}30` : `${ca}10`,
+          border:`1px solid ${hovered ? ca+"88" : ca+"28"}`,
+          borderRadius:11,
+          transform: hovered ? "scale(1.15) rotate(-6deg)" : "scale(1)",
+          boxShadow: hovered ? `0 0 28px ${ca}77, inset 0 0 14px ${ca}22` : "none",
+          transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)",
+          flexShrink:0,
+        }}>
+          <GameIcon size={20} color={ca}/>
         </div>
+
+        <div style={{
+          display:"flex",alignItems:"center",gap:3,
+          padding:"4px 8px",borderRadius:99,
+          background: hovered ? `${C.gold}22` : `${C.gold}0c`,
+          border:`1px solid ${hovered ? C.gold+"66" : C.gold+"22"}`,
+          boxShadow: hovered ? `0 0 14px ${C.gold}44` : "none",
+          transition:"all 0.22s",
+        }}>
+          <Icon.Zap size={10} color={C.gold}/>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,color:C.gold,letterSpacing:0.5}}>+{game.xp}</span>
+        </div>
+      </div>
+
+      {/* Name + desc + footer */}
+      <div style={{position:"relative",zIndex:2,width:"100%"}}>
+        <div style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"1.05rem",letterSpacing:1.8,lineHeight:1,
+          color:C.text,
+          textShadow: hovered ? `0 0 20px ${ca}99` : "none",
+          transition:"text-shadow 0.22s",
+          marginBottom:6,
+        }}>{game.name}</div>
+
+        <div style={{
+          fontFamily:"'Syne',sans-serif", fontSize:"0.61rem",
+          color: hovered ? C.muted : C.muted3,
+          lineHeight:1.5, marginBottom:9,
+          overflow:"hidden", display:"-webkit-box",
+          WebkitLineClamp:2, WebkitBoxOrient:"vertical",
+          transition:"color 0.22s",
+        }}>{game.desc}</div>
+
+        {/* Footer row */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{
+            fontFamily:"'Space Mono',monospace",fontSize:"0.4rem",fontWeight:700,
+            textTransform:"uppercase",letterSpacing:1,padding:"3px 8px",borderRadius:4,
+            color: hovered ? "#000" : ca,
+            background: hovered ? ca : `${ca}14`,
+            border:`1px solid ${hovered ? ca : ca+"33"}`,
+            boxShadow: hovered ? `0 0 12px ${ca}66` : "none",
+            transition:"all 0.22s",
+          }}>{game.tag}</span>
+
+          {done ? (
+            <div style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:4,background:"rgba(61,214,140,0.1)",border:"1px solid rgba(61,214,140,0.3)"}}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke={C.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",color:C.green,fontWeight:700}}>DONE</span>
+            </div>
+          ) : (
+            <div style={{
+              display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:4,
+              background: hovered ? `${ca}18` : "rgba(255,255,255,0.03)",
+              border:`1px solid ${hovered ? ca+"44" : C.border}`,
+              transition:"all 0.22s",
+            }}>
+              <Icon.Play size={9} color={hovered ? ca : C.muted3}/>
+              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",color:hovered?ca:C.muted3,fontWeight:700,transition:"color 0.22s"}}>PLAY</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── FORTRESS GUILD CARD ───────────────────────────────────────────────────────
+function FortressGuildCard({ guild, navigate }) {
+  const [hovered, setHovered] = useState(false);
+  const hp = guild.castleHP ?? 0;
+  const maxHp = guild.castleHPCap ?? CASTLE_HP_CAP;
+  const hpPct = clampPct(hp, maxHp);
+  const hpColor = hpPct >= 70 ? C.green : hpPct >= 35 ? C.gold : C.red;
+  const hpGlow = hpPct >= 70 ? "rgba(61,214,140,0.4)" : hpPct >= 35 ? "rgba(247,195,68,0.4)" : "rgba(232,64,64,0.4)";
+  const fortressStatus = hpPct >= 70 ? "FORTIFIED" : hpPct >= 35 ? "HOLDING" : "UNDER SIEGE";
+  const battlemarkers = [0, 25, 50, 75, 100];
+
+  return (
+    <div
+      onClick={() => navigate("/guild")}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position:"relative", overflow:"hidden",
+        background: hovered
+          ? `radial-gradient(ellipse at 20% 50%,rgba(6,182,212,0.1),transparent 55%),rgba(255,255,255,0.04)`
+          : "rgba(255,255,255,0.025)",
+        border:`1px solid ${hovered ? "rgba(6,182,212,0.5)" : C.border2}`,
+        borderRadius:18,
+        cursor:"pointer",
+        transform: hovered ? "translateY(-2px)" : "none",
+        boxShadow: hovered ? "0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(6,182,212,0.2)" : "none",
+        transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
+      }}
+    >
+      {/* Banner top */}
+      <div style={{
+        padding:"18px 20px 16px",
+        background:"linear-gradient(180deg,rgba(255,255,255,0.03),transparent)",
+        borderBottom:`1px solid ${C.border}`,
+        display:"flex", alignItems:"center", gap:14,
+      }}>
+        {/* Emblem */}
+        <div style={{
+          width:64, height:64, borderRadius:16, flexShrink:0,
+          background:"rgba(6,182,212,0.06)",
+          border:`2px solid ${hovered ? "rgba(6,182,212,0.55)" : "rgba(6,182,212,0.18)"}`,
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:"2rem",
+          boxShadow: hovered ? "0 0 24px rgba(6,182,212,0.3)" : "none",
+          transition:"all 0.22s",
+          position:"relative",
+        }}>
+          {guild.flag}
+          {/* Rank crown */}
+          <div style={{position:"absolute",top:-6,right:-6,width:18,height:18,borderRadius:"50%",background:C.gold,border:`2px solid ${C.bg}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Icon.Star size={9} color="#000"/>
+          </div>
+        </div>
+
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:1.5,lineHeight:1,color:C.text,marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textShadow:hovered?"0 0 18px rgba(6,182,212,0.35)":"none",transition:"text-shadow 0.2s"}}>{guild.name}</div>
+          <div style={{
+            fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.45rem",letterSpacing:2,lineHeight:1,
+            color:C.text, marginBottom:6,
+            textShadow: hovered ? "0 0 22px rgba(6,182,212,0.4)" : "none",
+            transition:"text-shadow 0.2s",
+            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+          }}>{guild.name}</div>
+
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             <span style={{display:"flex",alignItems:"center",gap:4,fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:C.muted2,letterSpacing:0.3}}>
               <Icon.Users size={11} color={C.muted2}/> {(guild.memberCount||0).toLocaleString()} members
             </span>
             <span style={{
-              display:"flex",alignItems:"center",gap:4,
               fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
-              color:hpColor,background:`${hpColor}12`,border:`1px solid ${hpColor}33`,
-              borderRadius:3,padding:"2px 7px",letterSpacing:0.8,textTransform:"uppercase",
+              color:hpColor, background:`${hpColor}12`, border:`1px solid ${hpColor}33`,
+              borderRadius:4, padding:"2px 8px", letterSpacing:0.8, textTransform:"uppercase",
             }}>
-              <Icon.Shield size={10} color={hpColor}/> {statusLabel}
+              {fortressStatus}
             </span>
           </div>
         </div>
+
         <div style={{
-          fontFamily:"'Space Mono',monospace",fontSize:"0.48rem",fontWeight:700,letterSpacing:0.8,
-          padding:"6px 10px",borderRadius:7,
-          color:C.teal,background:hovered?"rgba(6,182,212,0.14)":"rgba(6,182,212,0.06)",
-          border:`1px solid rgba(6,182,212,${hovered?0.45:0.18})`,
-          textTransform:"uppercase",flexShrink:0,whiteSpace:"nowrap",
-          transition:"all 0.2s",boxShadow:hovered?"0 0 12px rgba(6,182,212,0.25)":"none",
-        }}>ENTER</div>
+          fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,
+          letterSpacing:1, padding:"8px 14px", borderRadius:8,
+          color:C.teal,
+          background: hovered ? "rgba(6,182,212,0.15)" : "rgba(6,182,212,0.05)",
+          border:`1px solid rgba(6,182,212,${hovered ? 0.5 : 0.18})`,
+          textTransform:"uppercase", flexShrink:0, whiteSpace:"nowrap",
+          transition:"all 0.2s",
+          boxShadow: hovered ? "0 0 16px rgba(6,182,212,0.25)" : "none",
+        }}>ENTER →</div>
       </div>
-      <div style={{height:1,background:"linear-gradient(90deg,rgba(6,182,212,0.18),rgba(255,255,255,0.04),transparent)",marginBottom:14}}/>
-      <div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <Icon.Shield size={13} color={C.muted}/>
-            <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>Castle HP</span>
+
+      {/* Fortress HP section */}
+      <div style={{padding:"16px 20px 18px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <Icon.Castle size={15} color={hpColor}/>
+            <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",fontWeight:700,color:C.muted,letterSpacing:1.5,textTransform:"uppercase"}}>Fortress Integrity</span>
           </div>
-          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.95rem",letterSpacing:1,color:hpColor,textShadow:`0 0 10px ${hpGlow}`}}>{hp.toLocaleString()} <span style={{color:C.muted2,fontSize:"0.68rem",fontFamily:"'Space Mono',monospace"}}>/ {maxHp.toLocaleString()}</span></span>
+          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.1rem",letterSpacing:1.5,color:hpColor,textShadow:`0 0 14px ${hpGlow}`}}>
+            {hp.toLocaleString()} <span style={{color:C.muted2,fontSize:"0.72rem",fontFamily:"'Space Mono',monospace",fontWeight:400}}>/ {maxHp.toLocaleString()}</span>
+          </span>
         </div>
-        <div style={{height:7,borderRadius:99,background:"rgba(255,255,255,0.06)",overflow:"hidden",position:"relative"}}>
-          <div style={{width:`${hpPct}%`,height:"100%",borderRadius:99,background:`linear-gradient(90deg,${hpColor}88,${hpColor})`,boxShadow:`0 0 8px ${hpGlow}`,transition:"width 0.9s cubic-bezier(0.22,1,0.36,1)"}}>
+
+        {/* Fortified HP track */}
+        <div style={{position:"relative",height:12,borderRadius:99,background:"rgba(255,255,255,0.05)",overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
+          {/* Segment fill */}
+          <div style={{width:`${hpPct}%`,height:"100%",borderRadius:99,background:`linear-gradient(90deg,${hpColor}66,${hpColor})`,boxShadow:`0 0 10px ${hpGlow}`,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",position:"relative"}}>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(255,255,255,0.25),transparent)",borderRadius:99}}/>
             <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)",animation:"hpShimmer 2.5s ease-in-out infinite"}}/>
           </div>
-          {[25,50,75].map(p=><div key={p} style={{position:"absolute",top:0,left:`${p}%`,width:1,height:"100%",background:"rgba(0,0,0,0.35)"}}/>)}
+          {/* Checkpoint notches */}
+          {battlemarkers.slice(1,-1).map(p=>(
+            <div key={p} style={{position:"absolute",top:0,left:`${p}%`,width:1,height:"100%",background:"rgba(0,0,0,0.5)"}}/>
+          ))}
+          {/* Siege cracks when hp low */}
+          {hpPct < 35 && (
+            <>
+              <div style={{position:"absolute",top:"20%",left:`${hpPct + 3}%`,width:1,height:"60%",background:"rgba(232,64,64,0.5)",animation:"fortressCrumble 1.5s ease infinite"}}/>
+              <div style={{position:"absolute",top:"10%",left:`${hpPct + 8}%`,width:1,height:"80%",background:"rgba(232,64,64,0.3)",animation:"fortressCrumble 2s ease infinite",animationDelay:"0.4s"}}/>
+            </>
+          )}
         </div>
-        <div style={{display:"flex",justifyContent:"flex-end",marginTop:4}}>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.46rem",color:hpColor,fontWeight:700}}>{hpPct}% integrity</span>
+
+        {/* HP legend */}
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:7,alignItems:"center"}}>
+          <div style={{display:"flex",gap:12}}>
+            {[{c:C.green,l:"70–100% Fortified"},{c:C.gold,l:"35–69% Holding"},{c:C.red,l:"0–34% Siege"}].map(({c,l})=>(
+              <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:c,boxShadow:`0 0 6px ${c}66`}}/>
+                <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",color:C.muted3,letterSpacing:0.3}}>{l}</span>
+              </div>
+            ))}
+          </div>
+          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.9rem",letterSpacing:1,color:hpColor,textShadow:`0 0 8px ${hpGlow}`}}>{hpPct}%</span>
         </div>
       </div>
-      <style>{`@keyframes hpShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}`}</style>
+
+      {/* Sweep shimmer */}
+      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-130%",width:"55%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(6,182,212,0.06),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
     </div>
   );
 }
@@ -664,210 +1082,200 @@ function WorldChat({ messages, user, navigate }) {
 
   function handleKey(e){ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSend();} }
 
-  const TIER_COLORS={lurker:"#6b7a99",fan:"#4F8EF7",veteran:"#3DD68C",ultra:"#F7C344",legend:"#A855F7"};
+  const TIER_META = {
+    lurker:  { color:"#6b7a99", label:"LURKER"  },
+    fan:     { color:C.blue,    label:"FAN"     },
+    veteran: { color:C.green,   label:"VETERAN" },
+    ultra:   { color:C.gold,    label:"ULTRA"   },
+    legend:  { color:C.purple,  label:"LEGEND"  },
+  };
 
   return (
     <div style={{
       background:"rgba(255,255,255,0.02)",
-      border:`1px solid ${focused?C.border3:C.border2}`,
-      borderRadius:16,overflow:"hidden",
-      boxShadow:focused?"0 0 0 1px rgba(255,255,255,0.05),0 8px 28px rgba(0,0,0,0.35)":"0 4px 20px rgba(0,0,0,0.2)",
+      border:`1px solid ${focused ? C.border3 : C.border2}`,
+      borderRadius:18, overflow:"hidden",
+      boxShadow: focused ? "0 0 0 1px rgba(255,255,255,0.05),0 8px 32px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.2)",
       transition:"box-shadow 0.2s, border-color 0.2s",
     }}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",borderBottom:`1px solid ${C.border}`,background:"linear-gradient(135deg,rgba(61,214,140,0.05),rgba(255,255,255,0.015))"}}>
+      {/* Chat header */}
+      <div style={{
+        display:"flex",alignItems:"center",justifyContent:"space-between",
+        padding:"14px 18px",borderBottom:`1px solid ${C.border}`,
+        background:"linear-gradient(135deg,rgba(61,214,140,0.06),rgba(255,255,255,0.015))",
+      }}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{position:"relative",width:10,height:10,flexShrink:0}}>
-            <div style={{position:"absolute",inset:-3,borderRadius:"50%",background:"rgba(61,214,140,0.22)",animation:"chatRipple 2s ease-out infinite"}}/>
-            <div style={{position:"absolute",inset:0,borderRadius:"50%",background:C.green,boxShadow:`0 0 8px ${C.green}`}}/>
+            <div style={{position:"absolute",inset:-3,borderRadius:"50%",background:"rgba(61,214,140,0.2)",animation:"chatRipple 2s ease-out infinite"}}/>
+            <div style={{position:"absolute",inset:0,borderRadius:"50%",background:C.green,boxShadow:`0 0 10px ${C.green}`}}/>
           </div>
-          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.05rem",letterSpacing:3,color:C.text}}>WORLD CHAT</span>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:C.green,letterSpacing:1,padding:"2px 7px",background:"rgba(61,214,140,0.07)",border:"1px solid rgba(61,214,140,0.18)",borderRadius:3,fontWeight:700}}>LIVE</span>
+          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.1rem",letterSpacing:3,color:C.text}}>WORLD CHAT</span>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:C.green,letterSpacing:1,padding:"2px 8px",background:"rgba(61,214,140,0.07)",border:"1px solid rgba(61,214,140,0.2)",borderRadius:3,fontWeight:700}}>LIVE</span>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:C.muted3,letterSpacing:0.5}}>{messages.length} messages</span>
         </div>
-        <button onClick={()=>navigate("/guild")}
-          style={{fontFamily:"'Space Mono',monospace",fontSize:"0.48rem",fontWeight:700,letterSpacing:0.8,color:C.teal,background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.18)",borderRadius:6,padding:"5px 10px",cursor:"pointer",textTransform:"uppercase",transition:"all 0.18s",whiteSpace:"nowrap"}}>
-          My Guild
+        <button onClick={()=>navigate("/guild")} style={{fontFamily:"'Space Mono',monospace",fontSize:"0.48rem",fontWeight:700,letterSpacing:0.8,color:C.teal,background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.2)",borderRadius:6,padding:"5px 12px",cursor:"pointer",textTransform:"uppercase",transition:"all 0.18s",whiteSpace:"nowrap"}}>
+          Guild Chat
         </button>
       </div>
-      <div ref={containerRef} style={{height:"min(260px,48vh)",overflowY:"auto",padding:"12px 14px",scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.07) transparent",display:"flex",flexDirection:"column",gap:2}}>
-        {messages.length===0&&(
-          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,opacity:0.5}}>
-            <Icon.Ball size={36} color={C.muted2}/>
+
+      {/* Messages */}
+      <div ref={containerRef} style={{
+        height:"min(280px,50vh)",overflowY:"auto",
+        padding:"14px 16px",
+        scrollbarWidth:"thin",scrollbarColor:"rgba(255,255,255,0.07) transparent",
+        display:"flex",flexDirection:"column",gap:0,
+        background:"linear-gradient(180deg,rgba(0,0,0,0.1),transparent 20%)",
+      }}>
+        {messages.length===0 && (
+          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,opacity:0.5,paddingTop:40}}>
+            <Icon.Ball size={38} color={C.muted2}/>
             <div style={{textAlign:"center"}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.95rem",letterSpacing:2,color:C.muted,marginBottom:3}}>NO MESSAGES YET</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.0rem",letterSpacing:2,color:C.muted,marginBottom:4}}>NO MESSAGES YET</div>
               <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:C.muted2,letterSpacing:0.4}}>Be the first to start the banter</div>
             </div>
           </div>
         )}
-        {messages.map((m,i)=>{
-          const isMe=m.userId===user.userId;
-          const tierColor=TIER_COLORS[m.tier||"lurker"]||C.muted2;
-          const prevSameSender=i>0&&messages[i-1].userId===m.userId;
+        {messages.map((m,i) => {
+          const isMe = m.userId === user.userId;
+          const tmeta = TIER_META[m.tier || "lurker"] || TIER_META.lurker;
+          const prevSameSender = i > 0 && messages[i-1].userId === m.userId;
           return (
-            <div key={m.id||i} style={{display:"flex",alignItems:"flex-end",gap:8,flexDirection:isMe?"row-reverse":"row",marginTop:prevSameSender?1:8}}>
-              <div style={{width:26,height:26,borderRadius:7,background:isMe?"rgba(61,214,140,0.1)":"rgba(255,255,255,0.05)",border:`1px solid ${isMe?"rgba(61,214,140,0.22)":C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.85rem",flexShrink:0,opacity:prevSameSender?0:1}}>
-                {m.flag||"🏴"}
-              </div>
-              <div style={{maxWidth:"72%",display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",gap:3}}>
-                {!prevSameSender&&(
+            <div key={m.id||i} style={{
+              display:"flex", alignItems:"flex-end", gap:8,
+              flexDirection: isMe ? "row-reverse" : "row",
+              marginTop: prevSameSender ? 2 : 10,
+            }}>
+              {/* Avatar */}
+              <div style={{
+                width:28,height:28,borderRadius:8,
+                background: isMe ? "rgba(61,214,140,0.1)" : "rgba(255,255,255,0.05)",
+                border:`1px solid ${isMe ? "rgba(61,214,140,0.25)" : C.border}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:"0.9rem",flexShrink:0,
+                opacity: prevSameSender ? 0 : 1,
+              }}>{m.flag||"🏴"}</div>
+
+              {/* Bubble */}
+              <div style={{maxWidth:"72%",display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",gap:2}}>
+                {!prevSameSender && (
                   <div style={{display:"flex",alignItems:"center",gap:5,flexDirection:isMe?"row-reverse":"row"}}>
-                    <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,color:isMe?C.green:tierColor,letterSpacing:0.4}}>{m.nickname}</span>
-                    {m.tier&&m.tier!=="lurker"&&<span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",fontWeight:700,color:tierColor,background:`${tierColor}14`,border:`1px solid ${tierColor}28`,borderRadius:2,padding:"1px 5px",textTransform:"uppercase",letterSpacing:0.4}}>{m.tier}</span>}
+                    <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,color:isMe?C.green:tmeta.color,letterSpacing:0.3}}>{m.nickname}</span>
+                    {m.tier && m.tier!=="lurker" && (
+                      <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",fontWeight:700,color:tmeta.color,background:`${tmeta.color}14`,border:`1px solid ${tmeta.color}28`,borderRadius:2,padding:"1px 5px",textTransform:"uppercase",letterSpacing:0.4}}>{tmeta.label}</span>
+                    )}
                   </div>
                 )}
-                <div style={{padding:"8px 12px",borderRadius:isMe?"12px 12px 3px 12px":"12px 12px 12px 3px",background:isMe?"linear-gradient(135deg,rgba(61,214,140,0.16),rgba(61,214,140,0.09))":"rgba(255,255,255,0.055)",border:`1px solid ${isMe?"rgba(61,214,140,0.22)":C.border}`,boxShadow:isMe?"0 2px 10px rgba(61,214,140,0.08)":"0 2px 6px rgba(0,0,0,0.18)"}}>
-                  <span style={{fontSize:"0.78rem",color:isMe?"rgba(242,242,244,0.95)":C.muted,lineHeight:1.5,wordBreak:"break-word",display:"block"}}>{m.text}</span>
+                <div style={{
+                  padding:"9px 13px",
+                  borderRadius: isMe ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
+                  background: isMe
+                    ? "linear-gradient(135deg,rgba(61,214,140,0.17),rgba(61,214,140,0.09))"
+                    : "rgba(255,255,255,0.055)",
+                  border:`1px solid ${isMe ? "rgba(61,214,140,0.25)" : C.border}`,
+                  boxShadow: isMe ? "0 2px 12px rgba(61,214,140,0.1)" : "0 2px 6px rgba(0,0,0,0.2)",
+                }}>
+                  <span style={{fontSize:"0.78rem",color:isMe?"rgba(242,242,244,0.95)":C.muted,lineHeight:1.55,wordBreak:"break-word",display:"block"}}>{m.text}</span>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      {err&&(
-        <div style={{padding:"7px 16px",fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.red,background:"rgba(232,64,64,0.06)",borderTop:"1px solid rgba(232,64,64,0.1)",display:"flex",alignItems:"center",gap:6}}>
+
+      {/* Error */}
+      {err && (
+        <div style={{padding:"7px 18px",fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.red,background:"rgba(232,64,64,0.06)",borderTop:"1px solid rgba(232,64,64,0.1)",display:"flex",alignItems:"center",gap:6}}>
           <Icon.Warning size={12} color={C.red}/> {err}
         </div>
       )}
-      <div style={{padding:"10px 12px",borderTop:`1px solid ${C.border}`,background:"rgba(0,0,0,0.15)"}}>
+
+      {/* Input */}
+      <div style={{padding:"12px 14px",borderTop:`1px solid ${C.border}`,background:"rgba(0,0,0,0.18)"}}>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          <div style={{width:30,height:30,borderRadius:8,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.9rem",flexShrink:0}}>{user.flag||"🏴"}</div>
+          <div style={{width:32,height:32,borderRadius:8,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.95rem",flexShrink:0}}>{user.flag||"🏴"}</div>
           <div style={{flex:1,position:"relative"}}>
             <input
               value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey}
               onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
               placeholder="Say something to the world…" maxLength={120}
-              style={{width:"100%",boxSizing:"border-box",background:focused?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.04)",border:`1px solid ${focused?C.border3:C.border2}`,borderRadius:9,padding:"9px 38px 9px 13px",color:C.text,fontSize:"0.79rem",fontFamily:"'Syne',sans-serif",outline:"none",caretColor:C.green,transition:"all 0.18s"}}
+              style={{width:"100%",boxSizing:"border-box",background:focused?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.04)",border:`1px solid ${focused?C.border3:C.border2}`,borderRadius:9,padding:"9px 40px 9px 13px",color:C.text,fontSize:"0.79rem",fontFamily:"'Syne',sans-serif",outline:"none",caretColor:C.green,transition:"all 0.18s"}}
             />
-            {input&&<span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontFamily:"'Space Mono',monospace",fontSize:"0.42rem",color:input.length>100?C.red:C.muted3,pointerEvents:"none"}}>{120-input.length}</span>}
+            {input && <span style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",fontFamily:"'Space Mono',monospace",fontSize:"0.42rem",color:input.length>100?C.red:C.muted3,pointerEvents:"none"}}>{120-input.length}</span>}
           </div>
           <button onClick={handleSend} disabled={!input.trim()||sending}
-            style={{width:36,height:36,borderRadius:9,background:input.trim()?C.green:"rgba(255,255,255,0.05)",border:`1px solid ${input.trim()?"rgba(61,214,140,0.55)":C.border}`,color:input.trim()?"#000":C.muted3,display:"flex",alignItems:"center",justifyContent:"center",cursor:input.trim()?"pointer":"default",transition:"all 0.18s",flexShrink:0,boxShadow:input.trim()?"0 0 14px rgba(61,214,140,0.35)":"none",transform:input.trim()?"scale(1)":"scale(0.95)"}}>
-            {sending?<div style={{width:14,height:14,border:"2px solid rgba(0,0,0,0.3)",borderTopColor:"#000",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>:<Icon.Send size={15} color={input.trim()?"#000":C.muted3}/>}
+            style={{width:38,height:38,borderRadius:9,background:input.trim()?C.green:"rgba(255,255,255,0.05)",border:`1px solid ${input.trim()?"rgba(61,214,140,0.6)":C.border}`,color:input.trim()?"#000":C.muted3,display:"flex",alignItems:"center",justifyContent:"center",cursor:input.trim()?"pointer":"default",transition:"all 0.18s",flexShrink:0,boxShadow:input.trim()?"0 0 16px rgba(61,214,140,0.4)":"none",transform:input.trim()?"scale(1)":"scale(0.95)"}}>
+            {sending
+              ? <div style={{width:14,height:14,border:"2px solid rgba(0,0,0,0.3)",borderTopColor:"#000",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
+              : <Icon.Send size={15} color={input.trim()?"#000":C.muted3}/>
+            }
           </button>
         </div>
       </div>
-      <style>{`
-        @keyframes chatRipple{0%{transform:scale(1);opacity:0.5}100%{transform:scale(3);opacity:0}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-      `}</style>
     </div>
   );
 }
 
-// ── ACTION BUTTONS (Raid + vs Friends) ───────────────────────────────────────
+// ── ACTION BUTTONS ────────────────────────────────────────────────────────────
 function ActionButtons({ onRaid, onFriends }) {
-  const [raidHovered, setRaidHovered] = useState(false);
-  const [friendsHovered, setFriendsHovered] = useState(false);
-
+  const [rH,setRH]=useState(false);
+  const [fH,setFH]=useState(false);
+  const btnBase = {
+    position:"relative", overflow:"hidden",
+    borderRadius:16, padding:"22px 14px 20px",
+    display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:10,
+    cursor:"pointer", textAlign:"center",
+    transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
+  };
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:16}}>
-      {/* Raid CTA */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+      {/* Raid */}
       <div
         onClick={onRaid}
-        onMouseEnter={()=>setRaidHovered(true)}
-        onMouseLeave={()=>setRaidHovered(false)}
+        onMouseEnter={()=>setRH(true)}
+        onMouseLeave={()=>setRH(false)}
         style={{
-          position:"relative",overflow:"hidden",
-          background:raidHovered
-            ?"radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.22),transparent 65%),rgba(168,85,247,0.06)"
-            :"radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
-          border:`1px solid rgba(168,85,247,${raidHovered?0.65:0.22})`,
-          borderRadius:14,
-          padding:"20px 14px 18px",
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,
-          cursor:"pointer",textAlign:"center",
-          transform:raidHovered?"translateY(-3px)":"none",
-          boxShadow:raidHovered?"0 18px 40px rgba(0,0,0,0.5),0 0 32px rgba(168,85,247,0.15)":"0 1px 0 rgba(255,255,255,0.03)",
-          transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+          ...btnBase,
+          background: rH ? "radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.22),transparent 65%),rgba(168,85,247,0.06)" : "radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
+          border:`1px solid rgba(168,85,247,${rH?0.65:0.2})`,
+          transform: rH ? "translateY(-3px)" : "none",
+          boxShadow: rH ? "0 20px 44px rgba(0,0,0,0.55),0 0 36px rgba(168,85,247,0.12)" : "0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
-        {/* Top glow line */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:raidHovered?1:0.35,transition:"opacity 0.2s"}}/>
-        {/* Sweep shimmer */}
-        <div style={{position:"absolute",top:0,left:raidHovered?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(168,85,247,0.09),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-
-        <div style={{
-          width:48,height:48,borderRadius:13,
-          background:raidHovered?"rgba(168,85,247,0.2)":"rgba(168,85,247,0.08)",
-          border:`1.5px solid rgba(168,85,247,${raidHovered?0.6:0.22})`,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          flexShrink:0,
-          boxShadow:raidHovered?"0 0 22px rgba(168,85,247,0.45)":"none",
-          transform:raidHovered?"scale(1.08) rotate(-4deg)":"scale(1)",
-          transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-        }}>
-          <Icon.Swords size={22} color={C.purple}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:rH?1:0.35,transition:"opacity 0.2s"}}/>
+        <div style={{position:"absolute",top:0,left:rH?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(168,85,247,0.08),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
+        <div style={{width:50,height:50,borderRadius:14,background:rH?"rgba(168,85,247,0.2)":"rgba(168,85,247,0.08)",border:`1.5px solid rgba(168,85,247,${rH?0.6:0.22})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:rH?"0 0 24px rgba(168,85,247,0.4)":"none",transform:rH?"scale(1.08) rotate(-4deg)":"scale(1)",transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+          <Icon.Swords size={24} color={C.purple}/>
         </div>
-
         <div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:raidHovered?"0 0 18px rgba(168,85,247,0.65)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:rH?"0 0 20px rgba(168,85,247,0.6)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(168,85,247,0.6)",letterSpacing:1,marginTop:5}}>STAGE 5 · TEAM UP</div>
         </div>
-
-        <div style={{
-          fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
-          letterSpacing:1.2,padding:"5px 12px",borderRadius:5,
-          color:C.purple,
-          background:raidHovered?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",
-          border:`1px solid rgba(168,85,247,${raidHovered?0.55:0.25})`,
-          textTransform:"uppercase",
-          boxShadow:raidHovered?"0 0 12px rgba(168,85,247,0.35)":"none",
-          transition:"all 0.2s",
-        }}>JOIN RAID →</div>
+        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.purple,background:rH?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",border:`1px solid rgba(168,85,247,${rH?0.55:0.25})`,textTransform:"uppercase",boxShadow:rH?"0 0 14px rgba(168,85,247,0.35)":"none",transition:"all 0.2s"}}>JOIN RAID →</div>
       </div>
 
-      {/* VS Friends CTA */}
+      {/* VS Friends */}
       <div
         onClick={onFriends}
-        onMouseEnter={()=>setFriendsHovered(true)}
-        onMouseLeave={()=>setFriendsHovered(false)}
+        onMouseEnter={()=>setFH(true)}
+        onMouseLeave={()=>setFH(false)}
         style={{
-          position:"relative",overflow:"hidden",
-          background:friendsHovered
-            ?"radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.22),transparent 65%),rgba(79,142,247,0.06)"
-            :"radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
-          border:`1px solid rgba(79,142,247,${friendsHovered?0.65:0.22})`,
-          borderRadius:14,
-          padding:"20px 14px 18px",
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,
-          cursor:"pointer",textAlign:"center",
-          transform:friendsHovered?"translateY(-3px)":"none",
-          boxShadow:friendsHovered?"0 18px 40px rgba(0,0,0,0.5),0 0 32px rgba(79,142,247,0.15)":"0 1px 0 rgba(255,255,255,0.03)",
-          transition:"all 0.2s cubic-bezier(0.22,1,0.36,1)",
+          ...btnBase,
+          background: fH ? "radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.22),transparent 65%),rgba(79,142,247,0.06)" : "radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
+          border:`1px solid rgba(79,142,247,${fH?0.65:0.2})`,
+          transform: fH ? "translateY(-3px)" : "none",
+          boxShadow: fH ? "0 20px 44px rgba(0,0,0,0.55),0 0 36px rgba(79,142,247,0.12)" : "0 1px 0 rgba(255,255,255,0.03)",
         }}
       >
-        {/* Top glow line */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:friendsHovered?1:0.35,transition:"opacity 0.2s"}}/>
-        {/* Sweep shimmer */}
-        <div style={{position:"absolute",top:0,left:friendsHovered?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(79,142,247,0.09),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-
-        <div style={{
-          width:48,height:48,borderRadius:13,
-          background:friendsHovered?"rgba(79,142,247,0.2)":"rgba(79,142,247,0.08)",
-          border:`1.5px solid rgba(79,142,247,${friendsHovered?0.6:0.22})`,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          flexShrink:0,
-          boxShadow:friendsHovered?"0 0 22px rgba(79,142,247,0.45)":"none",
-          transform:friendsHovered?"scale(1.08) rotate(4deg)":"scale(1)",
-          transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)",
-        }}>
-          <Icon.Users size={22} color={C.blue}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:fH?1:0.35,transition:"opacity 0.2s"}}/>
+        <div style={{position:"absolute",top:0,left:fH?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(79,142,247,0.08),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
+        <div style={{width:50,height:50,borderRadius:14,background:fH?"rgba(79,142,247,0.2)":"rgba(79,142,247,0.08)",border:`1.5px solid rgba(79,142,247,${fH?0.6:0.22})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:fH?"0 0 24px rgba(79,142,247,0.4)":"none",transform:fH?"scale(1.08) rotate(4deg)":"scale(1)",transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
+          <Icon.Users size={24} color={C.blue}/>
         </div>
-
         <div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:friendsHovered?"0 0 18px rgba(79,142,247,0.65)":"none",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:fH?"0 0 20px rgba(79,142,247,0.6)":"none",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(79,142,247,0.6)",letterSpacing:1,marginTop:5}}>PRIVATE LOBBY · LIVE</div>
         </div>
-
-        <div style={{
-          fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,
-          letterSpacing:1.2,padding:"5px 12px",borderRadius:5,
-          color:C.blue,
-          background:friendsHovered?"rgba(79,142,247,0.18)":"rgba(79,142,247,0.08)",
-          border:`1px solid rgba(79,142,247,${friendsHovered?0.55:0.25})`,
-          textTransform:"uppercase",
-          boxShadow:friendsHovered?"0 0 12px rgba(79,142,247,0.35)":"none",
-          transition:"all 0.2s",
-        }}>PLAY NOW →</div>
+        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.blue,background:fH?"rgba(79,142,247,0.18)":"rgba(79,142,247,0.08)",border:`1px solid rgba(79,142,247,${fH?0.55:0.25})`,textTransform:"uppercase",boxShadow:fH?"0 0 14px rgba(79,142,247,0.35)":"none",transition:"all 0.2s"}}>PLAY NOW →</div>
       </div>
     </div>
   );
@@ -887,16 +1295,18 @@ function BottomNav({ active, navigate, onUnavailable }) {
     <nav style={{
       position:"fixed",bottom:0,left:0,right:0,zIndex:200,
       display:"flex",
-      background:"rgba(5,8,15,0.98)",
-      backdropFilter:"blur(28px) saturate(1.5)",
+      background:"rgba(5,8,15,0.97)",
+      backdropFilter:"blur(32px) saturate(1.5)",
       borderTop:`1px solid ${C.border}`,
       paddingBottom:"env(safe-area-inset-bottom,0px)",
-      boxShadow:"0 -1px 0 rgba(255,255,255,0.04),0 -10px 36px rgba(0,0,0,0.6)",
+      boxShadow:"0 -1px 0 rgba(255,255,255,0.04),0 -12px 40px rgba(0,0,0,0.7)",
     }}>
+      {/* Gold top edge */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(247,195,68,0.15),rgba(247,195,68,0.3) 50%,rgba(247,195,68,0.15),transparent)"}}/>
       {items.map(item=>{
-        const isActive=item.id===active;
-        const isPressed=pressed===item.id;
-        const NavIcon=item.IconC;
+        const isActive = item.id === active;
+        const isPressed = pressed === item.id;
+        const NavIcon = item.IconC;
         return (
           <button key={item.id} type="button"
             onMouseDown={()=>setPressed(item.id)}
@@ -911,23 +1321,23 @@ function BottomNav({ active, navigate, onUnavailable }) {
               display:"flex",flexDirection:"column",alignItems:"center",gap:4,
               cursor:"pointer",
               fontFamily:"'Space Mono',monospace",fontSize:"0.45rem",fontWeight:700,letterSpacing:0.8,textTransform:"uppercase",
-              color:isActive?C.gold:isPressed?"rgba(242,242,244,0.65)":"rgba(242,242,244,0.28)",
+              color:isActive?C.gold:isPressed?"rgba(242,242,244,0.65)":"rgba(242,242,244,0.27)",
               position:"relative",transition:"color 0.15s",
               WebkitTapHighlightColor:"transparent",touchAction:"manipulation",
-              transform:isPressed?"scale(0.9)":"scale(1)",
+              transform:isPressed?"scale(0.88)":"scale(1)",
             }}
           >
-            {isActive&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:24,height:2,borderRadius:"0 0 3px 3px",background:C.gold,boxShadow:`0 0 10px ${C.goldGlow}`}}/>}
-            {isActive&&<div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 25%,${C.goldDim},transparent 70%)`,pointerEvents:"none"}}/>}
+            {isActive && <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:28,height:2,borderRadius:"0 0 4px 4px",background:C.gold,boxShadow:`0 0 12px ${C.goldGlow}`}}/>}
+            {isActive && <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 25%,${C.goldDim},transparent 70%)`,pointerEvents:"none"}}/>}
             <div style={{
-              position:"relative",width:26,height:26,
+              position:"relative",width:28,height:28,
               display:"flex",alignItems:"center",justifyContent:"center",
-              borderRadius:7,
-              background:isActive?`rgba(247,195,68,0.09)`:"transparent",
-              border:isActive?`1px solid rgba(247,195,68,0.18)`:"1px solid transparent",
+              borderRadius:8,
+              background: isActive ? `rgba(247,195,68,0.1)` : "transparent",
+              border: isActive ? `1px solid rgba(247,195,68,0.2)` : "1px solid transparent",
               transition:"all 0.18s",
             }}>
-              <NavIcon size={17} color={isActive?C.gold:isPressed?"rgba(242,242,244,0.6)":"rgba(242,242,244,0.28)"}/>
+              <NavIcon size={18} color={isActive?C.gold:isPressed?"rgba(242,242,244,0.6)":"rgba(242,242,244,0.27)"}/>
             </div>
             <span style={{letterSpacing:0.4}}>{item.label}</span>
           </button>
@@ -941,156 +1351,135 @@ function BottomNav({ active, navigate, onUnavailable }) {
 function Toast({ message }) {
   if (!message) return null;
   return (
-    <div style={{position:"fixed",bottom:84,left:"50%",transform:"translateX(-50%)",zIndex:300,background:C.bg2,border:`1px solid ${C.border3}`,borderRadius:999,color:C.text,padding:"9px 18px",fontSize:"0.8rem",fontWeight:700,whiteSpace:"nowrap",boxShadow:"0 12px 28px rgba(0,0,0,0.4)",pointerEvents:"none",fontFamily:"'Syne',sans-serif",animation:"fadeUp 0.2s ease"}}>
+    <div style={{position:"fixed",bottom:88,left:"50%",transform:"translateX(-50%)",zIndex:300,background:C.bg2,border:`1px solid ${C.border3}`,borderRadius:999,color:C.text,padding:"9px 20px",fontSize:"0.8rem",fontWeight:700,whiteSpace:"nowrap",boxShadow:"0 12px 32px rgba(0,0,0,0.5)",pointerEvents:"none",fontFamily:"'Syne',sans-serif",animation:"fadeUp 0.2s ease"}}>
       {message}
-      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
     </div>
   );
 }
 
 // ── HOME PAGE ─────────────────────────────────────────────────────────────────
 export default function Home() {
-  const navigate=useNavigate();
-  const [toast,setToast]=useState("");
-  const [mockSecs,setMockSecs]=useState(()=>{
-    const now=new Date();
-    const midnight=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+1));
-    return Math.max(0,Math.floor((midnight-now)/1000));
+  const navigate = useNavigate();
+  const [toast, setToast] = useState("");
+  const [mockSecs, setMockSecs] = useState(() => {
+    const now = new Date();
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1));
+    return Math.max(0, Math.floor((midnight - now) / 1000));
   });
-  const [localUser,setLocalUser]=useState(()=>getUser());
-  const [guildDoc,setGuildDoc]=useState(null);
+  const [localUser, setLocalUser] = useState(() => getUser());
+  const [guildDoc, setGuildDoc] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     injectFonts();
-    const u=getUser();
+    const u = getUser();
     if (!u) { navigate("/onboarding"); return; }
     setLocalUser(u);
-  },[]);
+  }, []);
 
-  useEffect(()=>{ const t=setInterval(()=>setMockSecs(s=>Math.max(0,s-1)),1000); return()=>clearInterval(t); },[]);
+  useEffect(() => { const t = setInterval(() => setMockSecs(s => Math.max(0,s-1)), 1000); return () => clearInterval(t); }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
     if (!localUser?.homeCountry) return;
-    return onSnapshot(doc(db,"guilds",localUser.homeCountry),snap=>{
+    return onSnapshot(doc(db, "guilds", localUser.homeCountry), snap => {
       if (!snap.exists()) { setGuildDoc(null); return; }
-      const d=snap.data();
-      setGuildDoc({name:d.name??null,flag:d.flag??null,memberCount:d.memberCount??0,castleHP:d.castleHP??0,castleHPCap:d.castleHPCap??CASTLE_HP_CAP});
-    },()=>setGuildDoc(null));
-  },[localUser?.homeCountry]);
+      const d = snap.data();
+      setGuildDoc({ name:d.name??null, flag:d.flag??null, memberCount:d.memberCount??0, castleHP:d.castleHP??0, castleHPCap:d.castleHPCap??CASTLE_HP_CAP });
+    }, () => setGuildDoc(null));
+  }, [localUser?.homeCountry]);
 
-  const userIdRef=useRef(localUser?.userId);
-  useEffect(()=>{ userIdRef.current=localUser?.userId; },[localUser?.userId]);
+  const userIdRef = useRef(localUser?.userId);
+  useEffect(() => { userIdRef.current = localUser?.userId; }, [localUser?.userId]);
 
-  useEffect(()=>{
-    const uid=localUser?.userId;
-    if (!uid||uid==="guest") return;
-    return onSnapshot(doc(db,"users",uid),snap=>{
+  useEffect(() => {
+    const uid = localUser?.userId;
+    if (!uid || uid === "guest") return;
+    return onSnapshot(doc(db, "users", uid), snap => {
       if (!snap.exists()) return;
-      const d=snap.data();
-      const today=new Date().toISOString().split("T")[0];
-      setLocalUser(prev=>{
-        const fresh={...prev,totalXP:d.totalXP??prev?.totalXP??0,dailyXP:d.dailyXPDate===today?(d.dailyXP??0):0,dailyXPDate:d.dailyXPDate??null,tier:d.tier??prev?.tier??"lurker"};
+      const d = snap.data();
+      const today = new Date().toISOString().split("T")[0];
+      setLocalUser(prev => {
+        const fresh = { ...prev, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:d.dailyXPDate===today?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
         saveUserLocally(fresh);
         return fresh;
       });
-    },()=>{});
-  },[localUser?.userId]);
+    }, () => {});
+  }, [localUser?.userId]);
 
-  const nextFixtures=useNextFixtures();
-  const worldChat=useWorldChat();
+  const nextFixtures = useNextFixtures();
+  const worldChat = useWorldChat();
 
   if (!localUser) return null;
 
-  const user=localUser;
-  const country=COUNTRIES?.find(c=>c.code===user.homeCountry);
-  const guild={
-    name:       guildDoc?.name        || `${country?.name||user.homeCountry} Fan Guild`,
-    flag:       guildDoc?.flag        || user.flag || country?.flag || "🏴",
-    memberCount:guildDoc?.memberCount ?? 0,
-    castleHP:   guildDoc?.castleHP    ?? 0,
-    castleHPCap:guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
+  const user = localUser;
+  const country = COUNTRIES?.find(c => c.code === user.homeCountry);
+  const guild = {
+    name:        guildDoc?.name        || `${country?.name || user.homeCountry} Fan Guild`,
+    flag:        guildDoc?.flag        || user.flag || country?.flag || "🏴",
+    memberCount: guildDoc?.memberCount ?? 0,
+    castleHP:    guildDoc?.castleHP    ?? 0,
+    castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
   };
 
-  const games    =useMemo(()=>GAMES.map(g=>({...g,done:isDoneToday(g)})),[]);
-  const doneCount=games.filter(g=>g.done).length;
-  const dailyXP  =getDailyXP(user);
-  const xpPct    =clampPct(dailyXP,DAILY_XP_CAP);
+  const games     = useMemo(() => GAMES.map(g => ({ ...g, done: isDoneToday(g) })), []);
+  const doneCount = games.filter(g => g.done).length;
+  const dailyXP   = getDailyXP(user);
+  const xpPct     = clampPct(dailyXP, DAILY_XP_CAP);
 
-  const showSoon=useCallback(()=>{
+  const showSoon = useCallback(() => {
     setToast("Coming soon — stay tuned");
     clearTimeout(showSoon._t);
-    showSoon._t=setTimeout(()=>setToast(""),2200);
-  },[]);
+    showSoon._t = setTimeout(() => setToast(""), 2200);
+  }, []);
 
   return (
-    <div style={{background:C.bg,color:C.text,minHeight:"100vh",width:"100%",maxWidth:"100vw",fontFamily:"'Syne',sans-serif",display:"flex",flexDirection:"column",overflowX:"hidden",boxSizing:"border-box"}}>
-      <BgCanvas/>
+    <div style={{background:C.bg, color:C.text, minHeight:"100vh", width:"100%", maxWidth:"100vw", fontFamily:"'Syne',sans-serif", display:"flex", flexDirection:"column", overflowX:"hidden", boxSizing:"border-box"}}>
+      <GlobalStyles/>
+      <StadiumBg/>
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
-      <div style={{position:"relative",zIndex:1,flex:1,width:"100%",maxWidth:900,margin:"0 auto",boxSizing:"border-box"}}>
+      <div style={{position:"relative", zIndex:1, flex:1, width:"100%", maxWidth:920, margin:"0 auto", boxSizing:"border-box"}}>
+        {/* Broadcast ticker */}
+        <BroadcastTicker doneCount={doneCount} gamesTotal={games.length} dailyXP={dailyXP} guildName={guild.name}/>
 
-        {/* ── HERO ── */}
-        <div style={{display:"flex",alignItems:"stretch",justifyContent:"space-between",paddingTop:30,paddingLeft:32,paddingRight:26,gap:16}}>
-          <div style={{flex:1,minWidth:0,paddingRight:8}}>
-            <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.8rem,9vw,5rem)",lineHeight:0.88,letterSpacing:2,margin:0}}>
-              <span style={{display:"block"}}>YOUR</span>
-              <span style={{display:"block",WebkitTextStroke:`2px ${C.gold}`,color:"transparent"}}>FOOTBALL</span>
-              <span style={{display:"block"}}>HOME</span>
-            </h1>
-            <p style={{fontFamily:"'Syne',sans-serif",fontSize:"0.9rem",color:C.muted,lineHeight:1.75,margin:"16px 0 0",maxWidth:330}}>
-              Six fast football games, one daily ritual. Chase the XP, hold your guild's castle.
-            </p>
+        {/* Hero */}
+        <HeroSection user={user} dailyXP={dailyXP} xpPct={xpPct} doneCount={doneCount} gamesTotal={games.length} guild={guild} navigate={navigate}/>
+
+        <div style={{padding:"0 24px 110px", boxSizing:"border-box"}}>
+
+          {/* Fixture(s) */}
+          <div style={{marginTop:8}}>
+            {nextFixtures.length > 0
+              ? nextFixtures.map(f => <div key={f.id} style={{marginBottom:10}}><MatchCard fixture={f} fallbackSecs={mockSecs}/></div>)
+              : <MatchCard fixture={null} fallbackSecs={mockSecs}/>
+            }
           </div>
-          <BouncingFootball/>
-        </div>
 
-        {/* ── STAT BAR ── */}
-        <div style={{padding:"0 32px",boxSizing:"border-box",marginTop:22,marginBottom:26}}>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",border:`1px solid ${C.border2}`,borderRadius:14,overflow:"hidden"}}>
-            {[
-              {num:`${doneCount}/${games.length}`, lbl:"Done"},
-              {num:`${dailyXP}/${DAILY_XP_CAP}`,  lbl:"Daily XP"},
-              {num:(user.tier||"lurker").toUpperCase(), lbl:"Tier"},
-              {num:guild.flag, lbl:guild.name, small:true},
-            ].map(({num,lbl,small},i)=>(
-              <div key={lbl} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"12px 6px",background:C.surface,borderRight:i<3?`1px solid ${C.border2}`:"none",minWidth:0}}>
-                <span style={{fontFamily:small?"'Syne',sans-serif":"'Bebas Neue',sans-serif",fontSize:small?"1.3rem":"1.55rem",letterSpacing:small?0:1,color:C.gold,lineHeight:1}}>{num}</span>
-                <span style={{fontSize:"0.48rem",fontWeight:700,letterSpacing:0.5,textTransform:"uppercase",color:C.muted,fontFamily:"'Space Mono',monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",textAlign:"center"}}>{lbl}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── REST ── */}
-        <div style={{padding:"0 32px 100px",boxSizing:"border-box"}}>
-          {nextFixtures.length>0?(
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {nextFixtures.map(f=><MatchCard key={f.id} fixture={f} fallbackSecs={mockSecs}/>)}
+          {/* Game Portals */}
+          <div id="games-section">
+            <SectionDivider label="Game Portals" count={`${doneCount}/${games.length} Complete`} color={C.gold}/>
+            <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10}}>
+              {games.map(game => (
+                <GamePortalCard
+                  key={game.id}
+                  game={game}
+                  done={game.done}
+                  onPlay={() => navigate(game.route)}
+                />
+              ))}
             </div>
-          ):(
-            <MatchCard fixture={null} fallbackSecs={mockSecs}/>
-          )}
-
-          {/* ── 3x3 GAME GRID ── */}
-          <SectionHdr label="Choose Your Challenge" count={`${doneCount}/${games.length} done`}/>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-            {games.map(game=>(
-              <GameCardCompact
-                key={game.id}
-                game={game}
-                done={game.done}
-                onPlay={()=>navigate(game.route)}
-              />
-            ))}
           </div>
 
-          {/* ── ACTION BUTTONS ── */}
+          {/* Action CTAs */}
           <ActionButtons onRaid={showSoon} onFriends={showSoon}/>
 
-          <SectionHdr label="Your Guild"/>
-          <GuildCard guild={guild} navigate={navigate}/>
-          <SectionHdr label="World Chat" right="ALL GUILDS"/>
+          {/* Fortress Guild */}
+          <SectionDivider label="Your Nation" color={C.teal}/>
+          <FortressGuildCard guild={guild} navigate={navigate}/>
+
+          {/* World Chat */}
+          <SectionDivider label="World Chat" right="ALL NATIONS LIVE" color={C.green}/>
           <WorldChat messages={worldChat} user={user} navigate={navigate}/>
+
           <div style={{height:8}}/>
         </div>
       </div>

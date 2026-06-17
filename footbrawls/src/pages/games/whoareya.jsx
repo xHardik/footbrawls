@@ -7,6 +7,7 @@ import { getDailyPlayer, getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 import { PLAYERS } from '../../lib/players.js';
+import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
 
 const MAX_ATTEMPTS = 8;
 const SCORES = [25, 23, 20, 17, 14, 11, 8, 5];
@@ -46,6 +47,11 @@ const COUNTRY_REGIONS = {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
+@font-face {
+  font-family: "Twemoji Country Flags";
+  src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/CountryFlagEmojiPolyfill.ttf") format("truetype");
+}
+
 :root {
   --bg:#05070f; --surface:rgba(255,255,255,.038); --border:rgba(255,255,255,.08);
   --border2:rgba(255,255,255,.13); --accent:#F7C344; --accent2:#E84040;
@@ -55,13 +61,13 @@ const CSS = `
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif}
+body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 
 /* MAIN LAYOUT */
 .wya-page {
   background: var(--bg); color: var(--text); min-height: 100vh;
   position: relative; overflow-x: hidden;
-  font-family: 'DM Sans', sans-serif;
+  font-family: "Twemoji Country Flags", 'DM Sans', sans-serif;
 }
 .wya-bg-layer {
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
@@ -78,8 +84,9 @@ body{font-family:'DM Sans',sans-serif}
 .wya-nav {
   display: flex; align-items: center; justify-content: space-between;
   height: 64px; padding: 0 24px; position: relative; z-index: 10;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(249, 115, 22, 0.15);
   background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(249, 115, 22, 0.15);
 }
 .wya-nav-logo {
   font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px;
@@ -428,10 +435,10 @@ body{font-family:'DM Sans',sans-serif}
   letter-spacing: 1px; color: var(--muted);
 }
 .wya-streak-dots {
-  display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-bottom: 12px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 4px; margin-bottom: 16px;
 }
 .wya-streak-dot {
-  aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,.03);
+  aspect-ratio: 1; border-radius: 6px; background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.05);
 }
 .wya-streak-dot.win {
@@ -448,6 +455,7 @@ body{font-family:'DM Sans',sans-serif}
 }
 .wya-streak-legend {
   display: flex; gap: 13px; font-size: .68rem; color: var(--muted); align-items: center; flex-wrap: wrap;
+  margin-top: auto;
 }
 .wya-dot-sample {
   display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: middle;
@@ -1027,6 +1035,28 @@ export default function WhoAreYa() {
                 {won ? '🏆 Correct!' : '💔 Game Over'}
               </div>
               <div className="wya-result-title">{won ? 'Well Played!' : 'Better Luck Tomorrow'}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', margin: '24px 0' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <PlayerPhoto name={target.name} size={90} />
+                  <div style={{ 
+                    position: 'absolute', 
+                    bottom: '-4px', 
+                    right: '-4px', 
+                    background: '#0a0d1a', 
+                    borderRadius: '50%', 
+                    width: '36px', 
+                    height: '36px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    border: '2px solid #1a1f36',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                    padding: '4px'
+                  }}>
+                    <ClubLogo club={target.club} size={26} />
+                  </div>
+                </div>
+              </div>
               <div className="wya-result-player">{target.flag} {target.name}</div>
               <div className="wya-result-phrase">
                 {target.country} · {target.position} · {target.club} · Age {target.age} · {target.foot}-footed
@@ -1118,16 +1148,23 @@ function HintPill({ icon, label, value, revealed, onClick, loading }) {
   );
 }
 
+
+
 function GuessCell({ cell }) {
   const { cls, type, name, flag, val, arrow } = cell;
   return (
     <div className={`wya-cell ${cls}`}>
       {cls === 'correct' && <span className="wya-cell-tick">✓</span>}
       {type === 'name' ? (
-        <>
-          <div className="wya-cell-name">{name}</div>
-          <div className="wya-cell-sub">{flag}</div>
-        </>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', width: '100%' }}>
+          <PlayerPhoto name={name} size={28} />
+          <div className="wya-cell-name" style={{ fontSize: '0.62rem', textAlign: 'center', lineHeight: '1.1', wordBreak: 'break-word' }}>{name}</div>
+        </div>
+      ) : type === 'club' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', width: '100%' }}>
+          <ClubLogo club={val} size={28} />
+          <span style={{ fontSize: '0.58rem', opacity: 0.8, textAlign: 'center', lineHeight: '1.1', wordBreak: 'break-word' }}>{val}</span>
+        </div>
       ) : type === 'country' ? (
         <div className="wya-cell-flag-wrap" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
           <span className="wya-cell-flag">{flag}</span>

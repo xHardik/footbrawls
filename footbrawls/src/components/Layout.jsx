@@ -209,7 +209,7 @@ export default function Layout({ children, hideMobileNav }) {
       </div>
 
       {/* Main Content Area */}
-      <div className="ly-main">
+      <div className={`ly-main ${hideMobileNav ? 'no-mobile-nav' : ''}`}>
         {children}
       </div>
 
@@ -514,6 +514,10 @@ const CSS = `
   
   .ly-main {
     padding-top: 56px;
+  }
+  
+  .ly-main.no-mobile-nav {
+    padding-top: 0 !important;
   }
 }
 `;

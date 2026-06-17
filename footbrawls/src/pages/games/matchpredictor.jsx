@@ -1011,6 +1011,8 @@ const CSS = `
 }
 @media (max-width: 768px) {
   .mp2-predict-grid { grid-template-columns: 1fr; }
+  .mp2-rules-strip { display: none !important; }
+  .mp2-subtitle { display: none !important; }
 }
 
 /* CARD */

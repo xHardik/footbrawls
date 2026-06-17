@@ -41,7 +41,7 @@ const GK_DIVES = {
   bottomRight:  'dives right low',
 };
 
-// ─── Injected CSS (Wordle theme tokens, ported component-by-component) ───────
+// ─── Injected CSS ────────────────────────────────────────────────────────────
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
@@ -109,7 +109,6 @@ html { scroll-behavior: smooth; }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   text-decoration: none; white-space: nowrap;
   animation: pnLogoShimmer 4s linear infinite;
-  background-color: transparent; border: none; outline: none; cursor: pointer;
 }
 @keyframes pnLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -326,7 +325,7 @@ html { scroll-behavior: smooth; }
   z-index: 4;
   pointer-events: none;
   transform-origin: 50% 95%;
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* NO default transition — physics handled by keyframe animations */
   overflow: visible;
 }
 .pn-gk-svg {
@@ -350,10 +349,9 @@ html { scroll-behavior: smooth; }
 .pn-gk-leg {
   transform-box: fill-box;
   transform-origin: center;
-  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Idle stance: gentle ready-position sway */
+/* ── IDLE: gentle sway ── */
 .pn-goalkeeper.pn-gk-idle {
   animation: pnGkSway 2.4s ease-in-out infinite;
 }
@@ -361,38 +359,165 @@ html { scroll-behavior: smooth; }
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-3px); }
 }
-.pn-goalkeeper.pn-gk-idle .pn-gk-arm-left  { transform: rotate(8deg); }
-.pn-goalkeeper.pn-gk-idle .pn-gk-arm-right { transform: rotate(-8deg); }
+.pn-goalkeeper.pn-gk-idle .pn-gk-arm-left  { transform: rotate(8deg); transition: transform 0.4s ease; }
+.pn-goalkeeper.pn-gk-idle .pn-gk-arm-right { transform: rotate(-8deg); transition: transform 0.4s ease; }
 
-/* Diving stance: arms reach toward the dive direction */
+/* ── DIVING: physics keyframes ──
+   Each dive has 3 phases:
+   0%    → neutral stance
+   8-12% → weight-load micro-crouch (opposite to dive direction)
+   100%  → full dive position
+   Easing: cubic-bezier(0.22,1,0.36,1) = fast explosive launch, slight overshoot
+*/
 .pn-goalkeeper.pn-gk-diving { animation: none; }
-.pn-goalkeeper.pn-gk-diving .pn-gk-arm-left,
-.pn-goalkeeper.pn-gk-diving .pn-gk-arm-right {
-  transform: rotate(-40deg) translateY(-6px);
+
+/* Top-Left */
+.pn-goalkeeper.pn-gk-diving.dive-topLeft {
+  animation: gkDiveTopLeft 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-.pn-goalkeeper.pn-gk-diving .pn-gk-leg-left  { transform: rotate(18deg); }
-.pn-goalkeeper.pn-gk-diving .pn-gk-leg-right { transform: rotate(-18deg); }
+@keyframes gkDiveTopLeft {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  10%  { transform: translate(5px, 3px) rotate(5deg); }
+  100% { transform: translate(-70px, -26px) rotate(-55deg); }
+}
 
-/* Dive directions: translate + rotate the whole keeper toward the chosen zone */
-.dive-topLeft      { transform: translate(-70px, -26px) rotate(-55deg); }
-.dive-topCenter    { transform: translate(0px, -32px) rotate(0deg) scale(1.05); }
-.dive-topRight     { transform: translate(70px, -26px) rotate(55deg); }
-.dive-bottomLeft   { transform: translate(-70px, 4px) rotate(-70deg); }
-.dive-bottomCenter { transform: translate(0px, 6px) rotate(0deg); }
-.dive-bottomRight  { transform: translate(70px, 4px) rotate(70deg); }
+/* Top-Center */
+.pn-goalkeeper.pn-gk-diving.dive-topCenter {
+  animation: gkDiveTopCenter 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes gkDiveTopCenter {
+  0%   { transform: translate(0, 0) scale(1); }
+  10%  { transform: translate(0, 4px) scale(0.97); }
+  100% { transform: translate(0, -32px) scale(1.05); }
+}
 
+/* Top-Right */
+.pn-goalkeeper.pn-gk-diving.dive-topRight {
+  animation: gkDiveTopRight 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes gkDiveTopRight {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  10%  { transform: translate(-5px, 3px) rotate(-5deg); }
+  100% { transform: translate(70px, -26px) rotate(55deg); }
+}
+
+/* Bottom-Left */
+.pn-goalkeeper.pn-gk-diving.dive-bottomLeft {
+  animation: gkDiveBottomLeft 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes gkDiveBottomLeft {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  8%   { transform: translate(3px, -3px) rotate(3deg); }
+  100% { transform: translate(-70px, 4px) rotate(-70deg); }
+}
+
+/* Bottom-Center */
+.pn-goalkeeper.pn-gk-diving.dive-bottomCenter {
+  animation: gkDiveBottomCenter 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes gkDiveBottomCenter {
+  0%   { transform: translate(0, 0) scaleY(1); }
+  8%   { transform: translate(0, -4px) scaleY(1.04); }
+  100% { transform: translate(0, 6px) scaleY(0.9); }
+}
+
+/* Bottom-Right */
+.pn-goalkeeper.pn-gk-diving.dive-bottomRight {
+  animation: gkDiveBottomRight 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes gkDiveBottomRight {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  8%   { transform: translate(-3px, -3px) rotate(-3deg); }
+  100% { transform: translate(70px, 4px) rotate(70deg); }
+}
+
+/* ── ARM / LEG physics during dive ── */
+.pn-goalkeeper.pn-gk-diving .pn-gk-arm-left {
+  animation: gkArmReachLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.pn-goalkeeper.pn-gk-diving .pn-gk-arm-right {
+  animation: gkArmReachRight 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.pn-goalkeeper.pn-gk-diving .pn-gk-leg-left {
+  animation: gkLegSplitLeft 0.48s ease-out forwards;
+}
+.pn-goalkeeper.pn-gk-diving .pn-gk-leg-right {
+  animation: gkLegSplitRight 0.48s ease-out forwards;
+}
+
+@keyframes gkArmReachLeft {
+  0%   { transform: rotate(8deg) translateY(0); }
+  12%  { transform: rotate(2deg) translateY(1px); }
+  100% { transform: rotate(-60deg) translateY(-10px); }
+}
+@keyframes gkArmReachRight {
+  0%   { transform: rotate(-8deg) translateY(0); }
+  12%  { transform: rotate(-2deg) translateY(1px); }
+  100% { transform: rotate(-60deg) translateY(-10px); }
+}
+@keyframes gkLegSplitLeft {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(22deg); }
+}
+@keyframes gkLegSplitRight {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(-22deg); }
+}
+
+/* ── RESPONSIVE dive adjustments ── */
 @media (max-width: 480px) {
   .pn-goalkeeper { width: 50px; height: 50px; margin-left: -25px; }
   .pn-gk-svg { width: 50px; height: 50px; }
-  .dive-topLeft      { transform: translate(-50px, -20px) rotate(-55deg); }
-  .dive-topCenter    { transform: translate(0px, -24px) rotate(0deg) scale(1.05); }
-  .dive-topRight     { transform: translate(50px, -20px) rotate(55deg); }
-  .dive-bottomLeft   { transform: translate(-50px, 2px) rotate(-70deg); }
-  .dive-bottomCenter { transform: translate(0px, 4px) rotate(0deg); }
-  .dive-bottomRight  { transform: translate(50px, 2px) rotate(70deg); }
+
+  .pn-goalkeeper.pn-gk-diving.dive-topLeft {
+    animation: gkDiveTopLeftSm 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveTopLeftSm {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    10%  { transform: translate(4px, 3px) rotate(5deg); }
+    100% { transform: translate(-50px, -20px) rotate(-55deg); }
+  }
+  .pn-goalkeeper.pn-gk-diving.dive-topCenter {
+    animation: gkDiveTopCenterSm 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveTopCenterSm {
+    0%   { transform: translate(0, 0) scale(1); }
+    10%  { transform: translate(0, 3px) scale(0.97); }
+    100% { transform: translate(0, -24px) scale(1.05); }
+  }
+  .pn-goalkeeper.pn-gk-diving.dive-topRight {
+    animation: gkDiveTopRightSm 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveTopRightSm {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    10%  { transform: translate(-4px, 3px) rotate(-5deg); }
+    100% { transform: translate(50px, -20px) rotate(55deg); }
+  }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomLeft {
+    animation: gkDiveBottomLeftSm 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveBottomLeftSm {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    8%   { transform: translate(2px, -2px) rotate(3deg); }
+    100% { transform: translate(-50px, 2px) rotate(-70deg); }
+  }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomCenter {
+    animation: gkDiveBottomCenterSm 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveBottomCenterSm {
+    0%   { transform: translate(0, 0) scaleY(1); }
+    8%   { transform: translate(0, -3px) scaleY(1.03); }
+    100% { transform: translate(0, 4px) scaleY(0.9); }
+  }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomRight {
+    animation: gkDiveBottomRightSm 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes gkDiveBottomRightSm {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    8%   { transform: translate(-2px, -2px) rotate(-3deg); }
+    100% { transform: translate(50px, 2px) rotate(70deg); }
+  }
 }
-
-
 
 /* ── CORNER PICKER ── */
 .pn-aim-section { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
@@ -876,6 +1001,9 @@ export default function PenaltyNerve({ onBack }) {
   const [stats, setStats]           = useState(loadStats);
   const [history, setHistory]       = useState(loadHistory);
 
+  // Key to force re-mount the GK element so CSS animations re-fire each kick
+  const [gkKey, setGkKey] = useState(0);
+
   const scoreRef = useRef(0);
   const [scoreDisplay, setScoreDisplay] = useState(0);
 
@@ -907,6 +1035,7 @@ export default function PenaltyNerve({ onBack }) {
         setPhase('aiming');
         setLastResult(null);
         setHasWatchedAd(true);
+        setGkKey(k => k + 1);
         showMsg("Retake granted! Pick your corner.", "success");
 
         const newGoals = newKicks.filter(k => !k.saved).length;
@@ -974,6 +1103,8 @@ export default function PenaltyNerve({ onBack }) {
     setKicks(newKicks);
     setPhase('result');
     setSelected(null);
+    // Bump key so the GK element re-mounts and CSS animation fires fresh
+    setGkKey(k => k + 1);
 
     setTimeout(async () => {
       setAnimating(false);
@@ -1017,6 +1148,7 @@ export default function PenaltyNerve({ onBack }) {
       } else {
         setPhase('aiming');
         setLastResult(null);
+        setGkKey(k => k + 1);
       }
     }, 2000);
   }
@@ -1040,6 +1172,10 @@ export default function PenaltyNerve({ onBack }) {
     return 'var(--muted)';
   };
 
+  // Build goalkeeper className
+  const gkPhaseClass = (phase === 'result' && lastResult) ? 'pn-gk-diving' : 'pn-gk-idle';
+  const gkDiveClass  = (phase === 'result' && lastResult) ? `dive-${lastResult.gkDive}` : '';
+
   return (
     <div style={{ background: "var(--bg,#05070f)", minHeight: "100vh", color: "var(--text,#F0F0F0)", fontFamily: "'DM Sans',sans-serif" }}>
       <div className="pn-bg2" />
@@ -1051,13 +1187,16 @@ export default function PenaltyNerve({ onBack }) {
 
       {/* ── NAV ── */}
       <nav className="pn-nav">
-        <button className="pn-logo" onClick={handleBack}>←</button>
+        <span className="pn-logo">⚽ Footbrawls</span>
         <div className="pn-nav-tag">
           <span className="pn-tag-dot" />
           Penalty Nerve
         </div>
         <div className="pn-nav-right">
-          <button className="pn-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
+          <div className="pn-help-wrap">
+            <button className="pn-help-btn" onClick={() => setShowModal(true)} aria-label="How to play">?</button>
+            <div className="pn-help-tooltip">Rules / How to Play</div>
+          </div>
         </div>
       </nav>
 
@@ -1158,9 +1297,13 @@ export default function PenaltyNerve({ onBack }) {
                     })}
                   </div>
 
-                  {/* Diving goalkeeper */}
+                  {/*
+                    Goalkeeper — keyed so it fully re-mounts each kick,
+                    guaranteeing CSS @keyframe animations restart from 0%
+                  */}
                   <div
-                    className={`pn-goalkeeper ${phase === 'result' && lastResult ? 'pn-gk-diving' : 'pn-gk-idle'} ${phase === 'result' && lastResult ? `dive-${lastResult.gkDive}` : ''}`}
+                    key={gkKey}
+                    className={`pn-goalkeeper ${gkPhaseClass} ${gkDiveClass}`}
                   >
                     <svg viewBox="0 0 64 64" className="pn-gk-svg" xmlns="http://www.w3.org/2000/svg">
                       {/* Ground shadow */}
@@ -1334,7 +1477,7 @@ export default function PenaltyNerve({ onBack }) {
           { id: "guild", label: "Guild", icon: "🏰" },
           { id: "raids", label: "Raids", icon: "⚔️" },
           { id: "ranks", label: "Ranks", icon: "🏆" },
-          { id: "me",    label: "Me" ,    icon: "👤" },
+          { id: "me",    label: "Me",    icon: "👤" },
         ].map(item => (
           <button
             key={item.id}

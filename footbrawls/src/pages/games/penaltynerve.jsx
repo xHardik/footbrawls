@@ -12,7 +12,7 @@ import { getUser } from '../../lib/user';
 const HISTORY_KEY = 'footbrawls_penaltynerve_history';
 const STATS_KEY   = 'footbrawls_penaltynerve_stats';
 const MAX_KICKS   = 5;
-const XP_PER_GOAL = 6; // 5 goals = 30 XP max
+const XP_PER_GOAL = 5; // 5 goals = 25 XP max
 
 // Save-probability per zone, indexed in CORNERS order, one row per kick number
 const GK_PATTERNS = [
@@ -810,7 +810,7 @@ function HowToPlayModal({ onClose }) {
           <li><span className="pn-rule-icon">📺</span>If the keeper saves one, watch an ad to retake the kick</li>
         </ul>
         <div className="pn-scoring-box">
-          <h3>💰 Scoring — {XP_PER_GOAL} XP per Goal · Max 30 XP</h3>
+          <h3>💰 Scoring — {XP_PER_GOAL} XP per Goal · Max 25 XP</h3>
           {Array.from({ length: MAX_KICKS }).map((_, i) => (
             <div key={i} className="pn-scoring-item">
               <span>Goal #{i + 1}</span>

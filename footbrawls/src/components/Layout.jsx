@@ -28,14 +28,14 @@ const C = {
 
 const GAMES = [
   { name: 'Who Are Ya?',    path: '/games/whoareya',      icon: '🔍', xp: 25,  key: 'footbrawls_whoareya' },
-  { name: 'Player Wordle',  path: '/games/wordle',        icon: '🔤', xp: 20,  key: 'footbrawls_wordle_history' },
-  { name: 'Higher or Lower',path: '/games/higherlower',   icon: '📊', xp: 15,  key: 'footbrawls_higherlower' },
-  { name: 'Transfer Trail', path: '/games/transfertrail', icon: '🔄', xp: 20,  key: 'footbrawls_transfertrail' },
-  { name: 'Match Predictor',path: '/games/matchpredictor',icon: '🎯', xp: 100, key: 'footbrawls_matchpredictor' },
-  { name: 'Daily Trivia',   path: '/games/dailytrivia',   icon: '🧠', xp: 80,  key: 'footbrawls_dailytrivia' },
-  { name: 'Penalty Nerve',  path: '/games/penaltynerve',  icon: '⚽', xp: 30,  key: 'footbrawls_penaltynerve' },
-  { name: 'Dribble Gauntlet',path: '/games/dribble',       icon: '🏃‍♂️', xp: 30,  key: 'footbrawls_dribble' },
-  { name: 'Rapid Fire',     path: '/games/rapidfire',     icon: '⚡', xp: 20,  key: 'footbrawls_rapidfire' },
+  { name: 'Player Wordle',  path: '/games/wordle',        icon: '🔤', xp: 25,  key: 'footbrawls_wordle_history' },
+  { name: 'Higher or Lower',path: '/games/higherlower',   icon: '📊', xp: 25,  key: 'footbrawls_higherlower' },
+  { name: 'Transfer Trail', path: '/games/transfertrail', icon: '🔄', xp: 25,  key: 'footbrawls_transfertrail' },
+  { name: 'Match Predictor',path: '/games/matchpredictor',icon: '🎯', xp: 50,  key: 'footbrawls_matchpredictor' },
+  { name: 'Daily Trivia',   path: '/games/dailytrivia',   icon: '🧠', xp: 25,  key: 'footbrawls_dailytrivia' },
+  { name: 'Penalty Nerve',  path: '/games/penaltynerve',  icon: '⚽', xp: 25,  key: 'footbrawls_penaltynerve' },
+  { name: 'Dribble Gauntlet',path: '/games/dribble',       icon: '🏃‍♂️', xp: 25,  key: 'footbrawls_dribble' },
+  { name: 'Rapid Fire',     path: '/games/rapidfire',     icon: '⚡', xp: 25,  key: 'footbrawls_rapidfire' },
 ];
 
 const CURSE_COLORS = {

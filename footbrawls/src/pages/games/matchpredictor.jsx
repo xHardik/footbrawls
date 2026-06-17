@@ -244,13 +244,13 @@ export default function MatchPredictor() {
       setSubmitted(true);
 
       // Award base XP for submitting
-      const res = await awardXP(user.userId, 'prediction_result', { rawXP: 10 });
-      setXpAwarded(res?.xpAwarded || 10);
+      const res = await awardXP(user.userId, 'prediction_result', { rawXP: 50 });
+      setXpAwarded(res?.xpAwarded || 50);
 
       // Save completion to local storage for the sidebar
       const today = getTodayKey();
       const mpHistory = JSON.parse(localStorage.getItem('footbrawls_matchpredictor') || '{}');
-      mpHistory[today] = { completed: true, xpAwarded: res?.xpAwarded || 10 };
+      mpHistory[today] = { completed: true, xpAwarded: res?.xpAwarded || 50 };
       localStorage.setItem('footbrawls_matchpredictor', JSON.stringify(mpHistory));
     } catch (err) {
       console.error('Failed to submit prediction:', err);

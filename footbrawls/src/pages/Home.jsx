@@ -5,7 +5,7 @@ import { db } from "../lib/firebase";
 import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
 
-const DAILY_XP_CAP  = 200;
+const DAILY_XP_CAP  = 250;
 const CASTLE_HP_CAP = 10000;
 
 const C = {
@@ -14,7 +14,7 @@ const C = {
   surface:"rgba(255,255,255,0.04)", surface2:"rgba(255,255,255,0.07)", surface3:"rgba(255,255,255,0.11)",
   border:"rgba(255,255,255,0.07)", border2:"rgba(255,255,255,0.12)", border3:"rgba(255,255,255,0.22)",
   gold:"#F7C344", goldGlow:"rgba(247,195,68,0.32)", goldDim:"rgba(247,195,68,0.1)",
-  red:"#E84040", blue:"#4F8EF7", green:"#3DD68C", teal:"#06B6D4", purple:"#A855F7", orange:"#F97316",
+  red:"#E84040", blue:"#4F8EF7", green:"#3DD68C", teal:"#06B6D4", purple:"#A855F7", orange:"#F97316", pink:"#EC4899", lime:"#A3E635",
   text:"#F2F2F4", muted:"rgba(242,242,244,0.5)", muted2:"rgba(242,242,244,0.28)", muted3:"rgba(242,242,244,0.15)",
 };
 
@@ -207,14 +207,14 @@ const Icon = {
 
 const GAMES = [
   { id:"whoAreYa",      Icon:Icon.Person,   name:"Who Are Ya?",      tag:"Deduction",   desc:"Guess the mystery player from country, club, age, and position clues.",              xp:25,  route:"/games/whoareya",      color:C.orange, meta:["8 Attempts","Thinky"],       storageKey:"footbrawls_whoareya",       theme:"detective"   },
-  { id:"matchPredictor",Icon:Icon.Target,   name:"Match Predictor",  tag:"Daily Pick",  desc:"Call today's result, top scorer, and exact scoreline — chase the season board.",    xp:100, route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],     storageKey:"footbrawls_matchpredictor", theme:"broadcast"   },
-  { id:"penaltyNerve",  Icon:Icon.Flame,    name:"Penalty Nerve",    tag:"Pressure",    desc:"Beat the keeper across five high-stakes penalty kicks.",                              xp:30,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],       storageKey:"footbrawls_penaltynerve",   theme:"penalty"     },
-  { id:"wordle",        Icon:Icon.Puzzle,   name:"Player Wordle",    tag:"Word Game",   desc:"Wordle energy, football names. Narrow the attributes and land the player.",           xp:20,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],      storageKey:"footbrawls_wordle_history", theme:"scouting"    },
-  { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:15,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower",    theme:"stats"       },
-  { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:20,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail",  theme:"transfers"   },
-  { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:20,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia",    theme:"trivia"      },
-  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.orange, meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire",      theme:"rapid"       },
-  { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:30,  route:"/games/dribble",        color:C.purple, meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble",        theme:"training"    },
+  { id:"matchPredictor",Icon:Icon.Target,   name:"Match Predictor",  tag:"Daily Pick",  desc:"Call today's result, top scorer, and exact scoreline — chase the season board.",    xp:50,  route:"/games/matchpredictor", color:C.gold,   meta:["Season Board","Max XP"],     storageKey:"footbrawls_matchpredictor", theme:"broadcast"   },
+  { id:"penaltyNerve",  Icon:Icon.Flame,    name:"Penalty Nerve",    tag:"Pressure",    desc:"Beat the keeper across five high-stakes penalty kicks.",                              xp:25,  route:"/games/penaltynerve",   color:C.red,    meta:["5 Kicks","Keeper AI"],       storageKey:"footbrawls_penaltynerve",   theme:"penalty"     },
+  { id:"wordle",        Icon:Icon.Puzzle,   name:"Player Wordle",    tag:"Word Game",   desc:"Wordle energy, football names. Narrow the attributes and land the player.",           xp:25,  route:"/games/wordle",         color:C.purple, meta:["6 Guesses","Sharable"],      storageKey:"footbrawls_wordle_history", theme:"scouting"    },
+  { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:25,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower",    theme:"stats"       },
+  { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:25,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail",  theme:"transfers"   },
+  { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:25,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia",    theme:"trivia"      },
+  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.pink,   meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire",      theme:"rapid"       },
+  { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:25,  route:"/games/dribble",        color:C.lime,   meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble",        theme:"training"    },
 ];
 
 const BAD_WORDS = ["spam","fuck","shit","ass","bitch","dick","cunt"];
@@ -537,18 +537,6 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           opacity:0.55,
         }}/>
 
-        {/* Eyebrow */}
-        <div style={{
-          display:"inline-flex", alignItems:"center", gap:7,
-          marginBottom:14, padding:"4px 12px", borderRadius:4,
-          background:"rgba(247,195,68,0.1)", border:"1px solid rgba(247,195,68,0.28)",
-          fontFamily:"'Space Mono',monospace", fontSize:"0.52rem",
-          fontWeight:700, letterSpacing:2, color:C.gold, textTransform:"uppercase",
-        }}>
-          <div style={{width:6, height:6, borderRadius:"50%", background:C.gold, boxShadow:`0 0 8px ${C.gold}`, animation:"livePulse 2s ease infinite"}}/>
-          Season Active
-        </div>
-
         {/* Big headline */}
         <h1 style={{
           fontFamily:"'Bebas Neue',sans-serif",
@@ -780,8 +768,8 @@ const GAME_THEMES = {
   stats:      { bg:"radial-gradient(ellipse at 70% 30%,rgba(61,214,140,0.16),rgba(5,8,15,0.95) 60%)", accent:"rgba(61,214,140,0.6)",  label:"STAT ARENA"        },
   transfers:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(79,142,247,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(79,142,247,0.6)",  label:"WAR ROOM"          },
   trivia:     { bg:"radial-gradient(ellipse at 70% 30%,rgba(6,182,212,0.18),rgba(5,8,15,0.95) 60%)",  accent:"rgba(6,182,212,0.6)",   label:"QUIZ THEATRE"      },
-  rapid:      { bg:"radial-gradient(ellipse at 70% 30%,rgba(249,115,22,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(249,115,22,0.6)",  label:"ESPORTS ARENA"     },
-  training:   { bg:"radial-gradient(ellipse at 70% 30%,rgba(168,85,247,0.15),rgba(5,8,15,0.95) 60%)", accent:"rgba(168,85,247,0.6)",  label:"TRAINING GROUND"   },
+  rapid:      { bg:"radial-gradient(ellipse at 70% 30%,rgba(236,72,153,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(236,72,153,0.6)",  label:"ESPORTS ARENA"     },
+  training:   { bg:"radial-gradient(ellipse at 70% 30%,rgba(163,230,53,0.15),rgba(5,8,15,0.95) 60%)", accent:"rgba(163,230,53,0.6)",  label:"TRAINING GROUND"   },
 };
 
 function GamePortalCard({ game, done, onPlay }) {
@@ -798,8 +786,8 @@ function GamePortalCard({ game, done, onPlay }) {
       style={{
         position:"relative", overflow:"hidden",
         display:"flex", flexDirection:"column", justifyContent:"space-between",
-        padding:"16px 14px 14px",
-        background: hovered ? theme.bg : "rgba(255,255,255,0.03)",
+        padding:"16px 14px 20px",
+        background: hovered ? theme.bg : "rgba(255,255,255,0.09)",
         border:`1px solid ${hovered ? ca + "cc" : C.border}`,
         borderRadius:16,
         cursor:"pointer",
@@ -808,21 +796,11 @@ function GamePortalCard({ game, done, onPlay }) {
           ? `0 24px 52px rgba(0,0,0,0.65), 0 0 0 1px ${ca}55, 0 0 40px ${ca}18`
           : "0 1px 0 rgba(255,255,255,0.03)",
         transition:"all 0.25s cubic-bezier(0.22,1,0.36,1)",
-        minHeight:148,
+        minHeight:132,
       }}
     >
       {/* Top accent bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.3,transition:"all 0.25s"}}/>
-
-      {/* Broadcast corner label */}
-      <div style={{
-        position:"absolute",top:10,right:10,
-        fontFamily:"'Space Mono',monospace",fontSize:"0.36rem",fontWeight:700,
-        letterSpacing:1,color:hovered?ca:C.muted3,
-        textTransform:"uppercase",
-        opacity:hovered?1:0,
-        transition:"all 0.2s",
-      }}>{theme.label}</div>
 
       {/* Sweep shimmer */}
       <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}14,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
@@ -856,55 +834,32 @@ function GamePortalCard({ game, done, onPlay }) {
         </div>
       </div>
 
-      {/* Name + desc + footer */}
+      {/* Name + desc */}
       <div style={{position:"relative",zIndex:2,width:"100%"}}>
-        <div style={{
-          fontFamily:"'Bebas Neue',sans-serif",
-          fontSize:"1.05rem",letterSpacing:1.8,lineHeight:1,
-          color:C.text,
-          textShadow: hovered ? `0 0 20px ${ca}99` : "none",
-          transition:"text-shadow 0.22s",
-          marginBottom:6,
-        }}>{game.name}</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+          <div style={{
+            fontFamily:"'Bebas Neue',sans-serif",
+            fontSize:"1.05rem",letterSpacing:1.8,lineHeight:1,
+            color:C.text,
+            textShadow: hovered ? `0 0 20px ${ca}99` : "none",
+            transition:"text-shadow 0.22s",
+          }}>{game.name}</div>
+          {done && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{flexShrink:0}}>
+              <circle cx="12" cy="12" r="10" fill="rgba(61,214,140,0.15)" stroke={C.green} strokeWidth="2"/>
+              <path d="M8 12l3 3 5-5" stroke={C.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
 
         <div style={{
           fontFamily:"'Syne',sans-serif", fontSize:"0.61rem",
-          color: hovered ? C.muted : C.muted3,
-          lineHeight:1.5, marginBottom:9,
+          color: hovered ? "#ffffff" : "rgba(255,255,255,0.85)",
+          lineHeight:1.5,
           overflow:"hidden", display:"-webkit-box",
           WebkitLineClamp:2, WebkitBoxOrient:"vertical",
           transition:"color 0.22s",
         }}>{game.desc}</div>
-
-        {/* Footer row */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <span style={{
-            fontFamily:"'Space Mono',monospace",fontSize:"0.4rem",fontWeight:700,
-            textTransform:"uppercase",letterSpacing:1,padding:"3px 8px",borderRadius:4,
-            color: hovered ? "#000" : ca,
-            background: hovered ? ca : `${ca}14`,
-            border:`1px solid ${hovered ? ca : ca+"33"}`,
-            boxShadow: hovered ? `0 0 12px ${ca}66` : "none",
-            transition:"all 0.22s",
-          }}>{game.tag}</span>
-
-          {done ? (
-            <div style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:4,background:"rgba(61,214,140,0.1)",border:"1px solid rgba(61,214,140,0.3)"}}>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke={C.green} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",color:C.green,fontWeight:700}}>DONE</span>
-            </div>
-          ) : (
-            <div style={{
-              display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:4,
-              background: hovered ? `${ca}18` : "rgba(255,255,255,0.03)",
-              border:`1px solid ${hovered ? ca+"44" : C.border}`,
-              transition:"all 0.22s",
-            }}>
-              <Icon.Play size={9} color={hovered ? ca : C.muted3}/>
-              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.38rem",color:hovered?ca:C.muted3,fontWeight:700,transition:"color 0.22s"}}>PLAY</span>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
@@ -1457,7 +1412,7 @@ export default function Home() {
           {/* Game Portals */}
           <div id="games-section">
             <SectionDivider label="Game Portals" count={`${doneCount}/${games.length} Complete`} color={C.gold}/>
-            <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10}}>
+            <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24}}>
               {games.map(game => (
                 <GamePortalCard
                   key={game.id}

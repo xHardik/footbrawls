@@ -10,7 +10,7 @@ import { PLAYERS } from '../../lib/players.js';
 import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
 
 const MAX_ATTEMPTS = 8;
-const SCORES = [25, 23, 20, 17, 14, 11, 8, 5];
+const SCORES = [25, 25, 25, 25, 25, 25, 25, 25];
 
 const STATS_KEY = 'footbrawls_whoareya_stats';
 const HISTORY_KEY = 'footbrawls_whoareya_history';

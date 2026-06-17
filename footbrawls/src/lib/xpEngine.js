@@ -17,22 +17,22 @@ const DAILY_XP_CAP = 200;
 const XP_REWARDS = {
   // Games
   whoareya_correct:        25,
-  wordle_correct:          20,
-  higherLower_correct:     15,
-  transferTrail_correct:   20,
-  trivia_correct:          10,
-  rapidFire_complete:      20,
-  penaltyNerve_all5:       30,
-  silhouette_correct:      20,
-  firstTouch_complete:     15,
-  squadNumber_correct:     15,
-  passport_correct:        15,
-  feeOrFree_correct:       15,
-  whatYear_correct:        15,
+  wordle_correct:          25,
+  higherLower_correct:     25,
+  transferTrail_correct:   25,
+  trivia_correct:          25,
+  rapidFire_complete:      25,
+  penaltyNerve_all5:       25,
+  silhouette_correct:      25,
+  firstTouch_complete:     25,
+  squadNumber_correct:     25,
+  passport_correct:        25,
+  feeOrFree_correct:       25,
+  whatYear_correct:        25,
   // Predictions
-  prediction_result:       30,
-  prediction_scorer:       20,
-  prediction_score:        50,
+  prediction_result:       50,
+  prediction_scorer:       0,
+  prediction_score:        0,
   // Raids
   raid_win_normal:         100,
   raid_win_challenge:      200,
@@ -85,6 +85,18 @@ export async function awardXP(userId, source, opts = {}) {
 
     // Base XP
     let baseXP = opts.rawXP ?? (XP_REWARDS[source] || 0);
+
+    // Override/force game/prediction rewards based on the source to guarantee 25 XP / 50 XP
+    if (source && (
+      source.endsWith('_correct') ||
+      source.endsWith('_complete') ||
+      source.endsWith('_all5') ||
+      source === 'dailytrivia_complete'
+    )) {
+      baseXP = 25;
+    } else if (source === 'prediction_result') {
+      baseXP = 50;
+    }
 
     // ── ALL READS FIRST (Firestore requires reads before writes) ─────────────
     const homeGuildRef  = doc(db, 'guilds', user.homeCountry);

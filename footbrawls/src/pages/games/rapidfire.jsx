@@ -576,7 +576,7 @@ export default function RapidFire() {
       if (user?.userId) {
         try {
           const res = await awardXP(user.userId, 'rapidFire_complete', {
-            rawXP: Math.round(finalScore * DIFFICULTY[difficulty].xpMultiplier),
+            rawXP: 25,
           });
           awarded = res?.xpAwarded ?? 0;
         } catch (e) {

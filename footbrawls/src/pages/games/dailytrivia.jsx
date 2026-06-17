@@ -702,7 +702,7 @@ export default function DailyTrivia() {
       let awarded = 0;
       if (user?.userId) {
         try {
-          const res = await awardXP(user.userId, 'dailytrivia_complete', { rawXP: finalScore });
+          const res = await awardXP(user.userId, 'dailytrivia_complete', { rawXP: 25 });
           awarded = res?.xpAwarded ?? 0;
         } catch (e) { console.error('[DailyTrivia] awardXP error:', e); }
       }

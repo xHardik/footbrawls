@@ -21,7 +21,7 @@ import { getUser } from '../../lib/user';
 import { PLAYERS } from "../../lib/players.js";
 
 const MAX_STEPS = 6;
-const XP_BY_STEPS = { 1: 20, 2: 20, 3: 20, 4: 15, 5: 10, 6: 5 };
+const XP_BY_STEPS = { 1: 25, 2: 25, 3: 25, 4: 25, 5: 25, 6: 25 };
 
 // ─── Build club → players index from players array ────────────────────────────
 function buildClubIndex(players) {
@@ -391,7 +391,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           </div>
         </div>
         <div className="tt-badge-xp">
-          MAX 20 XP
+          MAX 25 XP
         </div>
       </div>
 

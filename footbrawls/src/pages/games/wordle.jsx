@@ -11,7 +11,7 @@ import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
 
 // ─── XP table ────────────────────────────────────────────────────────────────
-const XP_BY_GUESS  = { 1:20, 2:20, 3:20, 4:15, 5:10, 6:5 };
+const XP_BY_GUESS  = { 1:25, 2:25, 3:25, 4:25, 5:25, 6:25 };
 const SCORE_BY_GUESS = { 1:1000, 2:800, 3:600, 4:400, 5:200, 6:100 };
 const MAX_GUESSES  = 6;
 const STATS_KEY    = "footbrawls_wordle_stats";

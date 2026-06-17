@@ -16,7 +16,7 @@ import { getUser } from '../../lib/user';
 import { PLAYERS } from "../../lib/players.js";
 
 const GAME_ID = "higherLower";
-const MAX_XP   = 15;
+const MAX_XP   = 25;
 
 const ATTRIBUTES = [
   { key: "age",         label: "Age",          unit: "yrs",  format: (v) => v },

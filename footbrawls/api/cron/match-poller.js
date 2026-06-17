@@ -164,7 +164,7 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore) {
     const resultCorrect = pred.predictedResult === actualResult;
     const scoreCorrect  = pred.predictedScore?.home === homeScore &&
                           pred.predictedScore?.away === awayScore;
-    const xpAwarded     = (resultCorrect ? 30 : 0) + (scoreCorrect ? 50 : 0);
+    const xpAwarded     = resultCorrect ? 50 : 0;
 
     batch.update(predDoc.ref, {
       resolved: true,

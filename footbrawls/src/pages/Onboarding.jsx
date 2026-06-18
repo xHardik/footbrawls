@@ -4,7 +4,7 @@
 // v3: SVG icons, footballer silhouette, rich content per step
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { createUser, getUser } from '../lib/user';
 import { COUNTRIES, WC_2026_TEAMS } from '../lib/countries';
 
@@ -342,7 +342,7 @@ export default function Onboarding() {
   const [teamSearch, setTeamSearch]       = useState('');
 
   useEffect(() => { injectFonts(); }, []);
-  if (getUser()) { navigate('/'); return null; }
+  if (getUser()) return <Navigate to="/" replace />;
 
   const filteredCountries = COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()));
   const filteredWC        = WC_COUNTRIES.filter(c => c.name.toLowerCase().includes(teamSearch.toLowerCase()));

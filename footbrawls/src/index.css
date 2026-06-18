@@ -3,9 +3,10 @@
   src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/CountryFlagEmojiPolyfill.ttf") format("truetype");
 }
 
-* {
-  font-family: "Twemoji Country Flags", inherit !important;
+body, button, input, select, textarea {
+  font-family: "Twemoji Country Flags", system-ui, -apple-system, sans-serif;
 }
+
 
 :root {
   --text: #6b6375;

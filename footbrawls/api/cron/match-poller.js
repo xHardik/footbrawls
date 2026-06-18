@@ -36,19 +36,71 @@ function isTournamentActive() {
 
 // ─── Team name → guild country code ──────────────────────────────────────────
 const TEAM_NAME_TO_CODE = {
-  'Brazil': 'BRA', 'Argentina': 'ARG', 'France': 'FRA', 'Germany': 'GER',
-  'England': 'ENG', 'Spain': 'ESP', 'Portugal': 'POR', 'Netherlands': 'NED',
-  'Belgium': 'BEL', 'Uruguay': 'URU', 'Croatia': 'CRO', 'Denmark': 'DEN',
-  'Switzerland': 'SUI', 'Mexico': 'MEX', 'United States': 'USA', 'Canada': 'CAN',
-  'Japan': 'JPN', 'South Korea': 'KOR', 'Australia': 'AUS', 'Senegal': 'SEN',
-  'Morocco': 'MAR', 'Ghana': 'GHA', 'Cameroon': 'CMR', 'Nigeria': 'NGA',
-  'Saudi Arabia': 'KSA', 'Iran': 'IRN', 'Qatar': 'QAT', 'South Africa': 'RSA',
-  'Ecuador': 'ECU', 'Colombia': 'COL', 'Chile': 'CHI', 'Peru': 'PER',
-  'Poland': 'POL', 'Serbia': 'SRB', 'Ukraine': 'UKR', 'Austria': 'AUT',
-  'Sweden': 'SWE', 'Norway': 'NOR', 'Turkey': 'TUR', 'Wales': 'WAL',
-  'Scotland': 'SCO', 'Czech Republic': 'CZE', 'Hungary': 'HUN',
-  'Costa Rica': 'CRC', 'Panama': 'PAN', 'Honduras': 'HON', 'Jamaica': 'JAM',
+  // API-Football names / fallbacks
+  'United States': 'USA',
+  'Turkey': 'TUR',
+  'Czech Republic': 'CZE',
+  'Cameroon': 'CMR',
+  'Nigeria': 'NGA',
+  'Chile': 'CHI',
+  'Peru': 'PER',
+  'Serbia': 'SRB',
+  'Ukraine': 'UKR',
+  'Wales': 'WAL',
+  'Hungary': 'HUN',
+  'Costa Rica': 'CRC',
+  'Honduras': 'HON',
+  'Jamaica': 'JAM',
   'India': 'IND',
+  // Official Match Predictor schedule / flags names
+  'Algeria': 'ALG',
+  'Argentina': 'ARG',
+  'Australia': 'AUS',
+  'Austria': 'AUT',
+  'Belgium': 'BEL',
+  'Bosnia and Herzegovina': 'BIH',
+  'Brazil': 'BRA',
+  'Canada': 'CAN',
+  'Cape Verde': 'CPV',
+  'Colombia': 'COL',
+  'Croatia': 'CRO',
+  'Curaçao': 'CUW',
+  'Czechia': 'CZE',
+  'DR Congo': 'COD',
+  'Ecuador': 'ECU',
+  'Egypt': 'EGY',
+  'England': 'ENG',
+  'France': 'FRA',
+  'Germany': 'GER',
+  'Ghana': 'GHA',
+  'Haiti': 'HAI',
+  'Iran': 'IRN',
+  'Iraq': 'IRQ',
+  'Ivory Coast': 'CIV',
+  'Japan': 'JPN',
+  'Jordan': 'JOR',
+  'Mexico': 'MEX',
+  'Morocco': 'MAR',
+  'Netherlands': 'NED',
+  'New Zealand': 'NZL',
+  'Norway': 'NOR',
+  'Panama': 'PAN',
+  'Paraguay': 'PAR',
+  'Portugal': 'POR',
+  'Qatar': 'QAT',
+  'Saudi Arabia': 'KSA',
+  'Scotland': 'SCO',
+  'Senegal': 'SEN',
+  'South Africa': 'RSA',
+  'South Korea': 'KOR',
+  'Spain': 'ESP',
+  'Sweden': 'SWE',
+  'Switzerland': 'SUI',
+  'Tunisia': 'TUN',
+  'Türkiye': 'TUR',
+  'USA': 'USA',
+  'Uruguay': 'URU',
+  'Uzbekistan': 'UZB',
 };
 
 const MOCK_TEAM_PLAYERS = {
@@ -84,6 +136,23 @@ const MOCK_TEAM_PLAYERS = {
   Ghana:      ['Kudus', 'Thomas Partey', 'Ayew', 'Saka'],
   Czechia:    ['Schick', 'Soucek', 'Kuchta', 'Sadilek'],
   Scotland:   ['Robertson', 'McTominay', 'Tierney', 'Christie'],
+  Tunisia:      ['Msakni', 'Sliti', 'Layouni', 'Laidouni', 'Skhiri'],
+  Egypt:        ['Salah', 'Marmoush', 'Mostafa Mohamed', 'Trezeguet', 'Elneny'],
+  'New Zealand':['Wood', 'Barbarouses', 'Singh', 'Cacace', 'Garbett'],
+  Iraq:         ['Aymen Hussein', 'Ali Jasim', 'Amir Al-Ammari', 'Ibrahim Bayesh', 'Youssef Amyn'],
+  Jordan:       ['Al-Taamari', 'Al-Naimat', 'Olwan', 'Al-Mardi'],
+  'DR Congo':   ['Wissa', 'Elia', 'Bakambu', 'Banza', 'Masuaku', 'Moutoussamy'],
+  Uzbekistan:   ['Shomurodov', 'Masharipov', 'Urunov', 'Fayzullaev'],
+  Panama:       ['Fajardo', 'Guerrero', 'Carrasquilla', 'Barcenas', 'Rodriguez'],
+  Paraguay:     ['Almiron', 'Enciso', 'Sanabria', 'Bareiro', 'Bobadilla'],
+  Türkiye:      ['Yilmaz', 'Guler', 'Calhanoglu', 'Kocku', 'Akturkoglu', 'Yildiz'],
+  'South Africa':['Tau', 'Zwane', 'Maseko', 'Morena', 'Mokoena'],
+  Qatar:        ['Akram Afif', 'Almoez Ali', 'Al-Haydos', 'Hatem'],
+  Haiti:        ['Pierrot', 'Nazon', 'Guerrier', 'Etienne'],
+  'Ivory Coast': ['Haller', 'Adingra', 'Kessie', 'Singo', 'Fofana', 'Pepe'],
+  'Curaçao':    ['Janga', 'Bacuna', 'Gorré', 'Antonisse'],
+  'Cape Verde':  ['Bebe', 'Ryan Mendes', 'Cabral', 'Garry Rodrigues'],
+  'Bosnia and Herzegovina': ['Dzeko', 'Pjanic', 'Demirovic', 'Krunic', 'Tahirovic', 'Hajradinovic'],
 };
 
 function generateMockMatchResult(homeTeam, awayTeam) {
@@ -97,12 +166,14 @@ function generateMockMatchResult(homeTeam, awayTeam) {
   // Add goalscorers for home goals
   for (let i = 0; i < homeScore; i++) {
     const randPlayer = homePlayers[Math.floor(Math.random() * homePlayers.length)];
-    if (!scorers.includes(randPlayer)) scorers.push(randPlayer);
+    const item = `${randPlayer} (${homeTeam})`;
+    if (!scorers.includes(item)) scorers.push(item);
   }
   // Add goalscorers for away goals
   for (let i = 0; i < awayScore; i++) {
     const randPlayer = awayPlayers[Math.floor(Math.random() * awayPlayers.length)];
-    if (!scorers.includes(randPlayer)) scorers.push(randPlayer);
+    const item = `${randPlayer} (${awayTeam})`;
+    if (!scorers.includes(item)) scorers.push(item);
   }
 
   return { homeScore, awayScore, scorers };
@@ -132,8 +203,8 @@ function mapFixtureToDoc(fixture) {
   const scorers = [];
   if (fixture.events && Array.isArray(fixture.events)) {
     fixture.events.forEach(ev => {
-      if (ev.type === 'Goal' && ev.player && ev.player.name) {
-        scorers.push(ev.player.name);
+      if (ev.type === 'Goal' && ev.player && ev.player.name && ev.team && ev.team.name) {
+        scorers.push(`${ev.player.name} (${ev.team.name})`);
       }
     });
   }
@@ -241,7 +312,26 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore, scorers 
     if (homeScore + awayScore === 0) {
       scorerCorrect = pred.predictedScorer === 'No Goals';
     } else if (scorers && scorers.length > 0) {
-      scorerCorrect = scorers.includes(pred.predictedScorer);
+      if (pred.predictedScorer && pred.predictedScorer.endsWith(' - Someone Else')) {
+        const team = pred.predictedScorer.split(' - Someone Else')[0];
+        const teamPlayers = MOCK_TEAM_PLAYERS[team] || [];
+        scorerCorrect = scorers.some(s => {
+          if (s.includes(' (')) {
+            const parts = s.split(' (');
+            const name = parts[0];
+            const t = parts[1].replace(')', '');
+            return t === team && !teamPlayers.includes(name);
+          }
+          return false;
+        });
+      } else {
+        scorerCorrect = scorers.some(s => {
+          if (s.includes(' (')) {
+            return s.split(' (')[0] === pred.predictedScorer;
+          }
+          return s === pred.predictedScorer;
+        });
+      }
     }
 
     const xpAwarded     = (resultCorrect ? 15 : 0) + (scorerCorrect ? 5 : 0);

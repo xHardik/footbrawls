@@ -70,9 +70,7 @@ html { scroll-behavior: smooth; }
 /* ── NAV ── */
 .wdl-nav {
   position: sticky; top: 0; z-index: 200;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 0 32px; height: 62px;
   background: rgba(5,7,15,0.82);
   backdrop-filter: blur(24px) saturate(1.4);
@@ -87,7 +85,6 @@ html { scroll-behavior: smooth; }
   text-decoration: none; white-space: nowrap;
   animation: logoShimmer 4s linear infinite;
   background-color: transparent; border: none; outline: none; cursor: pointer;
-  justify-self: start;
 }
 @keyframes logoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -495,10 +492,10 @@ html { scroll-behavior: smooth; }
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .wdl-nav { padding: 0 12px; height: 54px; }
-  .wdl-logo { font-size: 1.3rem; }
+  .wdl-logo { font-size: 1.35rem; }
   .wdl-nav-tag { font-size: 0.58rem; padding: 4px 9px; gap: 4px; letter-spacing: 1.5px; }
   .wdl-tag-dot { width: 5px; height: 5px; }
-  .wdl-help-btn { width: 30px; height: 30px; font-size: 0.88rem; }
+  .wdl-help-btn { padding: 6px 12px; width: auto; height: auto; font-size: 0.8rem; }
   .wdl-page { padding: 18px 16px 56px; }
   .wdl-dash-grid { grid-template-columns: 1fr; gap: 12px; }
   .wdl-result { padding: 28px 20px; }
@@ -526,7 +523,7 @@ html { scroll-behavior: smooth; }
   .wdl-nav { height: 50px; }
   .wdl-logo { font-size: 1.25rem; letter-spacing: 2px; }
   .wdl-nav-tag { font-size: 0.55rem; padding: 3px 8px; letter-spacing: 1px; }
-  .wdl-help-btn { width: 26px; height: 26px; font-size: 0.8rem; }
+  .wdl-help-btn { padding: 4px 8px; width: auto; height: auto; font-size: 0.72rem; }
   .wdl-tile { width: 38px; height: 38px; font-size: 1rem; }
   .wdl-row { gap: 5px; }
   .wdl-sdot { height: 30px; }
@@ -550,11 +547,11 @@ function getXpFromScore(score) {
 function loadStats()   { try { return JSON.parse(localStorage.getItem(STATS_KEY))   || {}; } catch { return {}; } }
 function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; } catch { return {}; } }
 
-function saveResult(puzzleDate, score) {
+function saveResult(puzzleDate, won, score) {
   const today   = getToday();
   const history = loadHistory();
   const xp = getXpFromScore(score);
-  if (!history[puzzleDate] || xp > getXpFromScore(history[puzzleDate].score)) history[puzzleDate] = { score: xp };
+  if (!history[puzzleDate] || xp > getXpFromScore(history[puzzleDate].score)) history[puzzleDate] = { won, score: xp };
   const allEntries = Object.values(history);
   const stats = {
     played: allEntries.length,
@@ -634,23 +631,41 @@ function HowToPlayModal({ onClose }) {
   );
 }
 
-function StreakDots({ history, today }) {
+function StreakDots({ history, today, puzzleDate, gameOver, won, xpAwarded, attempts }) {
   const dots = [];
   const base = new Date(today + "T00:00:00");
   for (let i = 29; i >= 0; i--) {
     const d   = new Date(base); d.setDate(d.getDate() - i);
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
     const entry   = history[key];
-    const isToday = key === today;
+    const isToday = key === puzzleDate;
     let cls = "wdl-sdot ";
-    if      (isToday && entry) cls += "today-played";
-    else if (isToday)          cls += "today-pending";
-    else if (entry)            cls += "win";
-    else                       cls += "miss";
-    const xp = entry ? getXpFromScore(entry.score) : 0;
+    let xp = 0;
+    
+    if (isToday) {
+      if (gameOver) {
+        cls += "today-played";
+        if (entry) {
+          xp = getXpFromScore(entry.score);
+        } else {
+          xp = xpAwarded !== null && xpAwarded !== undefined && xpAwarded > 0 ? xpAwarded : (won ? (XP_BY_GUESS[attempts] || 25) : 0);
+        }
+      } else {
+        cls += "today-pending";
+      }
+    } else {
+      if (entry) {
+        const isEntryWon = entry.won !== undefined ? entry.won : (getXpFromScore(entry.score) > 0);
+        cls += isEntryWon ? "win" : "miss";
+        xp = getXpFromScore(entry.score);
+      } else {
+        cls += "miss";
+      }
+    }
+    
     dots.push(
-      <div key={key} className={cls} title={entry ? `${key} · ${xp} XP earned` : key}>
-        {entry && <span className="wdl-sdot-score">{xp}</span>}
+      <div key={key} className={cls} title={entry || (isToday && gameOver) ? `${key} · ${xp} XP earned` : key}>
+        {(entry || (isToday && gameOver)) && xp > 0 && <span className="wdl-sdot-score">{xp}</span>}
       </div>
     );
   }
@@ -806,12 +821,12 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         }
       }
       setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
-      const { stats: s, history: h } = saveResult(puzzleDate, xp);
+      const { stats: s, history: h } = saveResult(puzzleDate, won, xp);
       setStats(s); setHistory(h);
       localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
         guesses: newGuesses,
         solved: won,
-        score: calcScore,
+        score: xp,
         xpAwarded: xp,
         gameOver: true,
         maxGuesses,
@@ -1151,7 +1166,15 @@ export default function Wordle({ players = PLAYERS, onBack }) {
                 <span className="wdl-dash-icon">📅</span>
                 <span className="wdl-dash-lbl">Last 30 Days</span>
               </div>
-              <StreakDots history={history} today={getToday()} />
+              <StreakDots 
+                history={history} 
+                today={getToday()} 
+                puzzleDate={puzzleDate} 
+                gameOver={gameOver} 
+                won={solved} 
+                xpAwarded={xpAwarded} 
+                attempts={guesses.length} 
+              />
             </div>
             <div className="wdl-dash-card">
               <div className="wdl-dash-hdr">

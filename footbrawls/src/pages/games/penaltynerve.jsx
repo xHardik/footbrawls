@@ -95,9 +95,7 @@ html { scroll-behavior: smooth; }
 /* ── NAV ── */
 .pn-nav {
   position: sticky; top: 0; z-index: 200;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 0 32px; height: 62px;
   background: rgba(5,7,15,0.82);
   backdrop-filter: blur(24px) saturate(1.4);
@@ -112,7 +110,6 @@ html { scroll-behavior: smooth; }
   text-decoration: none; white-space: nowrap;
   animation: pnLogoShimmer 4s linear infinite;
   border: none; background: none; cursor: pointer; outline: none; padding: 0;
-  justify-self: start;
 }
 @keyframes pnLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
@@ -811,10 +808,10 @@ html { scroll-behavior: smooth; }
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .pn-nav { padding: 0 12px; height: 54px; }
-  .pn-logo { font-size: 1.3rem; }
+  .pn-logo { font-size: 1.35rem; }
   .pn-nav-tag { font-size: 0.58rem; padding: 4px 9px; gap: 4px; letter-spacing: 1.5px; }
   .pn-tag-dot { width: 5px; height: 5px; }
-  .pn-help-btn { width: 30px; height: 30px; font-size: 0.88rem; }
+  .pn-help-btn { padding: 6px 12px; width: auto; height: auto; font-size: 0.8rem; }
   .pn-page2 { padding: 18px 16px 56px; }
   .pn-dash-grid { grid-template-columns: 1fr; gap: 12px; }
   .pn-result { padding: 28px 20px; }
@@ -839,7 +836,7 @@ html { scroll-behavior: smooth; }
   .pn-nav { height: 50px; }
   .pn-logo { font-size: 1.25rem; letter-spacing: 2px; }
   .pn-nav-tag { font-size: 0.55rem; padding: 3px 8px; letter-spacing: 1px; }
-  .pn-help-btn { width: 26px; height: 26px; font-size: 0.8rem; }
+  .pn-help-btn { padding: 4px 8px; width: auto; height: auto; font-size: 0.72rem; }
   .pn-sdot { height: 30px; }
 }
 `;

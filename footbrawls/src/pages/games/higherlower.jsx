@@ -19,6 +19,7 @@ import { usePlayerWikiPhoto } from "../../lib/wikiAssets.jsx";
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 25;
+const STREAK_XP = [0, 2, 4, 6, 8, 10, 13, 16, 19, 22, 25];
 
 const ATTRIBUTES = [
   { key: "age",         label: "Age",          unit: "yrs",  format: (v) => v },
@@ -53,6 +54,7 @@ function getPuzzleNumber() {
 }
 
 function getResultPhrase(streak) {
+  if (streak >= 10) return "PERFECT STREAK! You've reached the maximum cap of 10! Outstanding!";
   if (streak === 0) return "Better luck next time — study those football stats!";
   if (streak < 3)  return "Decent start. Keep building that streak!";
   if (streak < 6)  return "Solid effort — you know your football!";
@@ -374,21 +376,51 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
     if (correct) {
       const newStreak = streak + 1;
-      setTimeout(async () => {
-        setStreak(newStreak);
-        setRevealed(false);
-        setAnimState(null);
-        setRound((r) => r + 1);
-        persist({ round: round + 1, streak: newStreak, gameOver: false, xpAwarded });
-      }, 900);
+      if (newStreak >= 10) {
+        const raw = MAX_XP;
+        let xp = 0;
+        const currentUser = getUser();
+        const uid = userId || currentUser?.userId;
+        if (uid && raw > 0) {
+          try {
+            const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
+            xp = result?.xpAwarded ?? raw;
+          } catch (e) {
+            console.error('[HigherLower] awardXP failed:', e);
+            xp = raw;
+          }
+        } else {
+          xp = raw;
+        }
+        setTimeout(() => {
+          setStreak(newStreak);
+          setGameOver(true);
+          setXpAwarded(xp);
+          persist({ round: round + 1, streak: newStreak, gameOver: true, xpAwarded: xp, hasWatchedReviveAd });
+          if (onComplete) onComplete({ gameId: "higherLower", streak: newStreak, xpAwarded: xp });
+        }, 900);
+      } else {
+        setTimeout(async () => {
+          setStreak(newStreak);
+          setRevealed(false);
+          setAnimState(null);
+          setRound((r) => r + 1);
+          persist({ round: round + 1, streak: newStreak, gameOver: false, xpAwarded });
+        }, 900);
+      }
     } else {
-      const raw = Math.min(MAX_XP, Math.round((streak / 10) * MAX_XP));
+      const raw = STREAK_XP[Math.min(10, streak)];
       let xp = 0;
       const currentUser = getUser();
       const uid = userId || currentUser?.userId;
       if (uid && raw > 0) {
-        const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
-        xp = result?.xpAwarded ?? raw;
+        try {
+          const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
+          xp = result?.xpAwarded ?? raw;
+        } catch (e) {
+          console.error('[HigherLower] awardXP failed:', e);
+          xp = raw;
+        }
       } else {
         xp = raw;
       }
@@ -445,8 +477,8 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             <div className="hl-score-value-current">{streak}</div>
           </div>
           <div className="hl-score-card hl-score-best">
-            <div className="hl-score-label">Max XP</div>
-            <div className="hl-score-value-best">{MAX_XP} XP</div>
+            <div className="hl-score-label">XP Earned</div>
+            <div className="hl-score-value-best">{STREAK_XP[Math.min(10, streak)]} XP</div>
           </div>
         </div>
 
@@ -493,7 +525,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         {gameOver && (
           <div className="hl-result-card">
             <div className="hl-result-badge">Game Complete</div>
-            <div className="hl-result-title">Game Over!</div>
+            <div className="hl-result-title">{streak >= 10 ? "Perfect!" : "Game Over!"}</div>
             <div className="hl-result-score">{streak}</div>
             <div className="hl-result-score-label">Streak</div>
             <div className="hl-result-phrase">{getResultPhrase(streak)}</div>
@@ -503,7 +535,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             )}
 
             {/* ── REWARDED AD — Save Streak ── */}
-            {!hasWatchedReviveAd && (
+            {!hasWatchedReviveAd && streak < 10 && (
               <div className="hl-ad-section">
                 <p className="hl-ad-hint">Streak ended? Watch a quick ad to revive and keep your streak going!</p>
                 <button
@@ -518,16 +550,20 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
               </div>
             )}
 
-            <div className="hl-result-actions">
+            <div className="hl-result-actions" style={{ display: "flex", gap: "10px", width: "100%", justifyContent: "center" }}>
               <button
                 className="hl-btn hl-btn-restart"
-                onClick={() => {
-                  setRound(0); setStreak(0); setGameOver(false);
-                  setRevealed(false); setAnimState(null); setXpAwarded(0); setHasWatchedReviveAd(false);
-                  persist({ round: 0, streak: 0, gameOver: false, xpAwarded: 0, hasWatchedReviveAd: false });
-                }}
+                style={{ opacity: 0.5, cursor: "not-allowed", flex: 1 }}
+                disabled
               >
-                ↺ Play Again
+                Played Today
+              </button>
+              <button
+                className="hl-btn"
+                style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", flex: 1 }}
+                onClick={() => navigate('/')}
+              >
+                ← Home
               </button>
             </div>
           </div>
@@ -1145,10 +1181,20 @@ const CSS = `
 }
 @media (max-width: 600px) {
   .hl-dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .hl-dash-card {
+    padding: 10px;
   }
   .hl-streak-dots {
+    gap: 4px;
+  }
+  .hl-stats-grid {
     gap: 6px;
+  }
+  .hl-stat-item {
+    padding: 8px 4px;
   }
 }
 @media (max-width: 480px) {

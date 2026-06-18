@@ -143,7 +143,7 @@ function scheduleToFixture(s) {
     homeScore: s.done ? (s.hs ?? null) : null,
     awayScore: s.done ? (s.as ?? null) : null,
     kickoffAt: { toMillis: () => new Date(s.kickoff).getTime() },
-    locksAt:   { toMillis: () => new Date(s.kickoff).getTime() - 3_600_000 },
+    locksAt:   { toMillis: () => new Date(s.kickoff).getTime() - 1_000 },
   };
 }
 
@@ -194,6 +194,35 @@ const TEAM_PLAYERS = {
   Ghana:      ['Kudus', 'Thomas Partey', 'Ayew', 'Saka'],
   Czechia:    ['Schick', 'Soucek', 'Kuchta', 'Sadilek'],
   Scotland:   ['Robertson', 'McTominay', 'Tierney', 'Christie'],
+  Tunisia:      ['Msakni', 'Sliti', 'Layouni', 'Laidouni', 'Skhiri'],
+  Egypt:        ['Salah', 'Marmoush', 'Mostafa Mohamed', 'Trezeguet', 'Elneny'],
+  'New Zealand':['Wood', 'Barbarouses', 'Singh', 'Cacace', 'Garbett'],
+  Iraq:         ['Aymen Hussein', 'Ali Jasim', 'Amir Al-Ammari', 'Ibrahim Bayesh', 'Youssef Amyn'],
+  Jordan:       ['Al-Taamari', 'Al-Naimat', 'Olwan', 'Al-Mardi'],
+  'DR Congo':   ['Wissa', 'Elia', 'Bakambu', 'Banza', 'Masuaku', 'Moutoussamy'],
+  Uzbekistan:   ['Shomurodov', 'Masharipov', 'Urunov', 'Fayzullaev'],
+  Panama:       ['Fajardo', 'Guerrero', 'Carrasquilla', 'Barcenas', 'Rodriguez'],
+  Paraguay:     ['Almiron', 'Enciso', 'Sanabria', 'Bareiro', 'Bobadilla'],
+  Türkiye:      ['Yilmaz', 'Guler', 'Calhanoglu', 'Kocku', 'Akturkoglu', 'Yildiz'],
+  'South Africa':['Tau', 'Zwane', 'Maseko', 'Morena', 'Mokoena'],
+  Qatar:        ['Akram Afif', 'Almoez Ali', 'Al-Haydos', 'Hatem'],
+  Haiti:        ['Pierrot', 'Nazon', 'Guerrier', 'Etienne'],
+  'Ivory Coast': ['Haller', 'Adingra', 'Kessie', 'Singo', 'Fofana', 'Pepe'],
+  'Curaçao':    ['Janga', 'Bacuna', 'Gorré', 'Antonisse'],
+  'Cape Verde':  ['Bebe', 'Ryan Mendes', 'Cabral', 'Garry Rodrigues'],
+  'Bosnia and Herzegovina': ['Dzeko', 'Pjanic', 'Demirovic', 'Krunic', 'Tahirovic', 'Hajradinovic'],
+};
+
+const TEAM_RATINGS = {
+  Argentina: 90, France: 91, Brazil: 89, England: 90, Spain: 89, Germany: 88, Portugal: 88,
+  Netherlands: 86, Belgium: 85, Croatia: 84, Morocco: 83, Senegal: 82, Colombia: 83, Uruguay: 84,
+  USA: 79, Mexico: 78, Japan: 81, 'South Korea': 80, Switzerland: 80, Denmark: 80,
+  Austria: 79, Sweden: 79, Norway: 80, Algeria: 79, Türkiye: 81, Poland: 78,
+  Egypt: 78, 'Ivory Coast': 81, Australia: 75, Canada: 76, Ecuador: 77, Czechia: 76,
+  Scotland: 75, Tunisia: 74, Wales: 76, 'DR Congo': 73, 'South Africa': 73,
+  Qatar: 72, Ghana: 75, Paraguay: 76, 'Saudi Arabia': 72, Iran: 74,
+  Panama: 70, Iraq: 70, Jordan: 70, Uzbekistan: 70, Haiti: 68,
+  'New Zealand': 65, 'Cape Verde': 70, Curaçao: 65, 'Bosnia and Herzegovina': 74
 };
 
 function getFlag(name) {
@@ -288,32 +317,37 @@ export default function MatchPredictor() {
     (async () => {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true');
+        const base = getInsightPercents(selected);
+        let home = base.home;
+        let away = base.away;
+        let draw = base.draw;
+
         if (res.ok) {
           const data = await res.json();
           const temp = data.current_weather?.temperature || 15;
           const wind = data.current_weather?.windspeed || 10;
           
-          let hSeed = Math.round(40 + (Math.abs(temp) % 20));
-          let aSeed = Math.round(30 + (Math.abs(wind) % 15));
-          
-          const deltaH = Math.floor(Math.random() * 7) - 3; // -3 to +3
-          const deltaA = Math.floor(Math.random() * 7) - 3; // -3 to +3
-          
-          let home = Math.max(15, Math.min(75, hSeed + deltaH));
-          let away = Math.max(15, Math.min(75, aSeed + deltaA));
-          let draw = 100 - home - away;
-          
-          const sites = ['Sofascore', 'WhoScored', 'FotMob', 'Flashscore', 'Bet365'];
-          const site = sites[selected.id.charCodeAt(selected.id.length - 1) % sites.length];
-          
-          setInsightVotes({ home, draw, away });
-          setInsightSource(site);
-        } else {
-          throw new Error('API response not OK');
+          // Apply a small, weather-dependent shift (e.g. up to +/- 3%)
+          const weatherShiftH = Math.round((temp % 7) - 3);
+          const weatherShiftA = Math.round((wind % 7) - 3);
+
+          home = Math.max(5, Math.min(90, home + weatherShiftH));
+          away = Math.max(5, Math.min(90, away + weatherShiftA));
+          draw = 100 - home - away;
+          if (draw < 5) {
+            draw = 5;
+            home = 100 - draw - away;
+          }
         }
+        
+        const sites = ['Sofascore', 'WhoScored', 'FotMob', 'Flashscore', 'Bet365'];
+        const site = sites[selected.id.charCodeAt(selected.id.length - 1) % sites.length];
+        
+        setInsightVotes({ home, draw, away });
+        setInsightSource(site);
       } catch (err) {
         console.warn('Failed to fetch predictions, falling back to deterministic generator:', err);
-        const p = getInsightPercents(selected.id);
+        const p = getInsightPercents(selected);
         setInsightVotes(p);
         setInsightSource('Footbrawls Users');
       }
@@ -417,6 +451,7 @@ export default function MatchPredictor() {
       predictedScorer: pickedScorer,
       resolved: false,
       submittedAt: new Date().toISOString(),
+      locksAt: new Date(kickoffMs - 1_000),
     };
     try {
       await setDoc(doc(db, 'predictions', `${selected.id}_${user.userId}`), predData);
@@ -436,20 +471,46 @@ export default function MatchPredictor() {
   const awayPlayers = selected ? getPlayers(selected.awayTeam) : [];
 
   const kickoffMs  = selected?.kickoffAt?.toMillis?.() ?? 0;
-  const locksAtMs  = selected?.locksAt?.toMillis?.() ?? (kickoffMs - 3_600_000);
+  const locksAtMs  = kickoffMs - 1_000;
   const isMatchLive = selected?.isLive || (
     selected && !selected.isComplete &&
     kickoffMs < Date.now() && kickoffMs >= Date.now() - 3 * 60 * 60 * 1000
   );
   const isLocked = submitted || isMatchLive || selected?.isComplete || Date.now() > locksAtMs;
 
-  // Community insight percentages (deterministic from fixture id)
-  function getInsightPercents(fixtureId) {
+  // Community insight percentages (deterministic from fixture object)
+  function getInsightPercents(fixture) {
+    if (!fixture) return { home: 45, draw: 25, away: 30 };
+    const ratingA = TEAM_RATINGS[fixture.homeTeam] || 75;
+    const ratingB = TEAM_RATINGS[fixture.awayTeam] || 75;
+    
+    // Base probability based on ratings difference + home advantage (+3 to home rating)
+    const diff = (ratingA + 3) - ratingB; 
+    
+    // Map diff to home/away win probabilities
+    let homeProb = 45 + diff * 2.5;
+    let awayProb = 30 - diff * 2.5;
+    
+    // Bound probabilities
+    homeProb = Math.max(10, Math.min(85, homeProb));
+    awayProb = Math.max(10, Math.min(85, awayProb));
+    
+    // Add minor deterministic variance based on fixture.id char codes
     let hash = 0;
-    for (let i = 0; i < fixtureId.length; i++) hash = fixtureId.charCodeAt(i) + ((hash << 5) - hash);
-    const home = 40 + Math.abs(hash % 31);
-    const draw = 10 + Math.abs((hash >> 2) % 16);
-    const away = 100 - home - draw;
+    const fid = fixture.id || "";
+    for (let i = 0; i < fid.length; i++) hash = fid.charCodeAt(i) + ((hash << 5) - hash);
+    const varH = (Math.abs(hash) % 7) - 3; // -3% to +3%
+    const varA = (Math.abs(hash >> 2) % 7) - 3;
+    
+    let home = Math.round(homeProb + varH);
+    let away = Math.round(awayProb + varA);
+    let draw = 100 - home - away;
+    
+    // Ensure bounds
+    if (home < 5) { home = 5; draw = 100 - home - away; }
+    if (away < 5) { away = 5; draw = 100 - home - away; }
+    if (draw < 5) { draw = 5; home = 100 - draw - away; }
+    
     return { home, draw, away };
   }
 
@@ -662,9 +723,11 @@ export default function MatchPredictor() {
                     <option value="No Goals">No Goals / None</option>
                     <optgroup label={selected.homeTeam}>
                       {homePlayers.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value={`${selected.homeTeam} - Someone Else`}>Someone Else ({selected.homeTeam})</option>
                     </optgroup>
                     <optgroup label={selected.awayTeam}>
                       {awayPlayers.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value={`${selected.awayTeam} - Someone Else`}>Someone Else ({selected.awayTeam})</option>
                     </optgroup>
                   </select>
 
@@ -867,7 +930,7 @@ function HowToPlayModal({ show, onClose }) {
           <li><strong>⚽ Predict Result:</strong> Select who will win the match (Home, Away, or Draw). A correct result prediction earns <strong>+15 XP</strong>.</li>
           <li><strong>🎯 Predict Scorer:</strong> Choose the player you think will score a goal. If they score, you earn <strong>+5 XP</strong>.</li>
           <li><strong>🚫 No Goals:</strong> If you predict a 0-0 scoreline, choose "No Goals / None" as the top scorer.</li>
-          <li><strong>⏰ Prediction Lock:</strong> Predictions lock exactly 1 hour before kickoff. Make sure to lock yours in on time!</li>
+          <li><strong>⏰ Prediction Lock:</strong> Predictions lock exactly 1 second before kickoff. Make sure to lock yours in on time!</li>
           <li><strong>🔥 Streaks & Multipliers:</strong> Build a prediction streak to multiply your XP rewards:
             <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: '2px solid var(--accent)', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span>• Streak of 3: <strong>1.5x XP</strong></span>

@@ -1,26 +1,53 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { awardXP } from '../../lib/xpEngine';
+import { getUser } from '../../lib/user';
 
 const ROUNDS = 5;
 const SEED = 42;
 const ZONE_SHORT = ['Far', 'Low L', 'Low R', 'Hi L', 'Hi R', 'Near'];
 const ZONE_LABELS = ['Far post', 'Low left', 'Low right', 'High left', 'High right', 'Near post'];
 
+const HISTORY_KEY = 'footbrawls_dribble_history';
+const STATS_KEY   = 'footbrawls_dribble_stats';
+const DAILY_KEY   = 'footbrawls_dribble';
+
+function getTodayKey() { return new Date().toISOString().split("T")[0]; }
+
+function loadStats() {
+  try {
+    return JSON.parse(localStorage.getItem(STATS_KEY)) || { played: 0, best: 0, avg: 0, streak: 0 };
+  } catch {
+    return { played: 0, best: 0, avg: 0, streak: 0 };
+  }
+}
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
 function rand(s, n) {
   const x = Math.sin(s * 9301 + n * 49297 + 233720923) * 10000;
   return x - Math.floor(x);
 }
+
 function simBot(seed, who) {
   let w = 0;
   for (let i = 0; i < ROUNDS; i++) if (rand(seed + (who === 'buddy' ? 1 : 2), i) > 0.45) w++;
   return Math.min(ROUNDS, w);
 }
+
 function getGKZones(round) {
   const z1 = Math.floor(rand(SEED + round * 17, 2) * 6);
   let z2 = Math.floor(rand(SEED + round * 17, 3) * 6);
   if (z2 === z1) z2 = (z1 + 1) % 6;
   return [z1, z2];
 }
+
 function zoneScreenX(i) { return 217 + i * 23 + 11; }
 
 const botScores = { buddy: simBot(SEED, 'buddy'), rival: simBot(SEED, 'rival') };
@@ -29,7 +56,7 @@ function initState() {
   return {
     phase: 'dribble',
     round: 0,
-    results: [],
+    results: [], // Array of { dribbleWon: boolean, goal: boolean }
     aiDefPick: null,
     playerPick: null,
     zonePick: null,
@@ -156,15 +183,66 @@ function drawScene(ctx, st) {
   drawBall(ctx, st.ballX, st.ballY);
 }
 
-// ─── Component ─────────────────────────────────────────────────────────────
+// ─── StreakDots helper ────────────────
 
-export default function RaidAct2({ onComplete }) {
+function StreakDots({ history, today }) {
+  const dots = [];
+  const start = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
+
+  for (let i = 0; i < 30; i++) {
+    const day = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+    const key = day.toISOString().split('T')[0];
+    const entry = history[key];
+    const isToday = key === today;
+
+    let cls = 'dot-empty';
+    let label = 'No attempt';
+    let xp = 0;
+
+    if (entry) {
+      if (entry.completed) {
+        cls = 'dot-won';
+        xp = entry.xpAwarded ?? entry.xp ?? 0;
+        label = `Scored: ${entry.score ?? entry.goals ?? 0}/5 (${xp} XP)`;
+      } else {
+        cls = 'dot-miss';
+        label = 'Missed attempt';
+      }
+    }
+
+    dots.push(
+      <div
+        key={key}
+        className={`db-dot ${cls} ${isToday ? 'dot-today' : ''}`}
+        title={`${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${label}`}
+      />
+    );
+  }
+
+  return <div className="db-streak-dots">{dots}</div>;
+}
+
+// ─── Main Component ────────────────
+
+export default function DribbleGauntlet() {
   const navigate = useNavigate();
+  const user = getUser();
   const canvasRef = useRef(null);
   const stRef = useRef(initState());
   const rafRef = useRef(null);
   const [, forceRender] = useState(0);
+  
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [xpAwarded, setXpAwarded] = useState(null);
+  const [history, setHistory] = useState(loadHistory);
+  const [stats, setStats] = useState(loadStats);
+  const [hasWatchedAd, setHasWatchedAd] = useState(false);
+  const [isAdLoading, setIsAdLoading] = useState(false);
+  const [userXP, setUserXP] = useState(0);
+  const [floatingXP, setFloatingXP] = useState(null);
+  
+  const today = getTodayKey();
 
   const repaint = useCallback(() => {
     const canvas = canvasRef.current;
@@ -177,86 +255,99 @@ export default function RaidAct2({ onComplete }) {
     forceRender(n => n + 1);
   }, [repaint]);
 
-  useEffect(() => { repaint(); }, [repaint]);
-
   useEffect(() => {
-    if (!document.getElementById('db-css')) {
+    repaint();
+  }, [repaint]);
+
+  // Load daily completed save and stats on mount
+  useEffect(() => {
+    if (!document.getElementById('db-css-injected')) {
       const s = document.createElement('style');
-      s.id = 'db-css';
-      s.textContent = `
-        .db-nav {
-          display: flex; align-items: center; justify-content: space-between;
-          height: 64px; padding: 0 24px; position: relative; z-index: 10;
-          border-bottom: 1px solid rgba(61, 214, 140, 0.12);
-          background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
-          box-shadow: 0 4px 20px rgba(61, 214, 140, 0.15);
-        }
-        .db-nav-logo {
-          font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px;
-          background: linear-gradient(135deg, #3DD68C, #10B981);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text; border: none; cursor: pointer; background-color: transparent; outline: none;
-        }
-        .db-nav-tag {
-          font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
-          color: rgba(242, 242, 244, 0.5); border: 1px solid rgba(255, 255, 255, 0.07); padding: 5px 12px;
-          border-radius: 100px; display: flex; align-items: center; gap: 6px;
-          background: rgba(255,255,255,0.02);
-        }
-        .db-fire-dot {
-          width: 6px; height: 6px; border-radius: 50%; background: #3DD68C;
-          box-shadow: 0 0 8px #3DD68C;
-        }
-        .db-nav-right {
-          display: flex; gap: 8px;
-        }
-        .db-nav-btn {
-          background: rgba(255,255,255,0.04); border: 1px solid rgba(255, 255, 255, 0.07); color: #fff;
-          padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
-          cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
-        }
-        .db-nav-btn:hover {
-          background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
-        }
-        .db-modal-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-          backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
-          z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .db-modal-overlay.active {
-          opacity: 1; pointer-events: auto;
-        }
-        .db-modal-box {
-          background: #1c2a1c; border: 1px solid rgba(255,255,255,0.28);
-          padding: 32px; border-radius: 20px; max-width: 440px; width: 90%;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center;
-        }
-        .db-modal-title {
-          font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px;
-          margin-bottom: 20px; color: #3DD68C;
-        }
-        .db-rules-list {
-          text-align: left; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px;
-          padding-left: 20px; font-size: 0.9rem; color: rgba(242, 242, 244, 0.6);
-        }
-        .db-rules-list strong { color: #fff; }
-        .db-modal-close {
-          background: linear-gradient(135deg, #3DD68C, #10B981);
-          color: #000; border: none; padding: 12px 28px; border-radius: 12px;
-          font-size: 1rem; font-weight: 800; cursor: pointer; transition: all 0.2s;
-          box-shadow: 0 8px 20px rgba(61, 214, 140, 0.2);
-        }
-        .db-modal-close:hover {
-          transform: translateY(-2px); box-shadow: 0 12px 24px rgba(61, 214, 140, 0.3);
-        }
-      `;
+      s.id = 'db-css-injected';
+      s.textContent = CSS;
       document.head.appendChild(s);
     }
-  }, []);
+    
+    const u = getUser();
+    if (u) {
+      setUserXP(u.totalXP || 0);
+    }
+    
+    const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+    if (dailySave[today] || history[today]) {
+      setAlreadyPlayed(true);
+      const entry = dailySave[today] || history[today];
+      setXpAwarded(entry.xpAwarded ?? entry.xp ?? 0);
+      
+      // Setup state for results summary display
+      const s = stRef.current;
+      s.phase = 'summary';
+      // Reconstruct mock round entries matching their scored goals count
+      const wins = entry.score ?? entry.goals ?? 0;
+      s.results = Array(wins).fill({ dribbleWon: true, goal: true })
+        .concat(Array(Math.max(0, 5 - wins)).fill({ dribbleWon: false, goal: false }));
+      repaint();
+    }
+  }, [history, today, repaint]);
 
-  // ── Animation helpers ────────────────────────────────────────────────────
+  // Google AdBreak helper
+  const adBreak = (options) => {
+    if (window.adBreak) {
+      window.adBreak(options);
+    } else {
+      if (options.beforeAd) options.beforeAd();
+      setTimeout(() => {
+        if (options.type === 'reward') {
+          const ok = window.confirm(`[TEST AD] Watch ad to retake round?`);
+          if (ok) { if (options.adViewed) options.adViewed(); }
+          else    { if (options.adDismissed) options.adDismissed(); }
+        } else {
+          if (options.adViewed) options.adViewed();
+        }
+        if (options.afterAd) options.afterAd();
+        if (options.adBreakDone) options.adBreakDone({ showStatus: 'mocked' });
+      }, 800);
+    }
+  };
 
-  function animateTo(tx, ty, dur, cb) {
+  const triggerRewardedAdToRetakeRound = () => {
+    setIsAdLoading(true);
+    adBreak({
+      type: 'reward',
+      name: 'dribble-gauntlet-retake',
+      beforeAd: () => setIsAdLoading(true),
+      afterAd: () => setIsAdLoading(false),
+      adDismissed: () => setIsAdLoading(false),
+      adViewed: () => {
+        const s = stRef.current;
+        if (s.results.length > 0) {
+          s.results.pop();
+        }
+        
+        Object.assign(s, {
+          phase: 'dribble',
+          aiDefPick: null,
+          playerPick: null,
+          zonePick: null,
+          feedback: null,
+          tackled: false,
+          shotPhase: false,
+          playerX: 280, playerY: 255,
+          ballX: 280, ballY: 265,
+          gkX: 280, gkY: 42,
+          gkDiveX: 280, gkDiveY: 42,
+          gkDiving: false,
+        });
+        
+        setHasWatchedAd(true);
+        rerender();
+      },
+      adBreakDone: () => setIsAdLoading(false)
+    });
+  };
+
+  // Animation helpers
+  const animateTo = (tx, ty, dur, cb) => {
     const s = stRef.current;
     const sx = s.ballX, sy = s.ballY, spx = s.playerX, spy = s.playerY;
     const start = performance.now();
@@ -269,9 +360,9 @@ export default function RaidAct2({ onComplete }) {
       rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
     }
     rafRef.current = requestAnimationFrame(step);
-  }
+  };
 
-  function animateBallOnly(tx, ty, dur, cb) {
+  const animateBallOnly = (tx, ty, dur, cb) => {
     const s = stRef.current;
     const sx = s.ballX, sy = s.ballY;
     const start = performance.now();
@@ -283,9 +374,9 @@ export default function RaidAct2({ onComplete }) {
       rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
     }
     rafRef.current = requestAnimationFrame(step);
-  }
+  };
 
-  function animateGKDive(tx, ty, dur, cb) {
+  const animateGKDive = (tx, ty, dur, cb) => {
     const s = stRef.current;
     const sx = s.gkX, sy = s.gkY;
     s.gkDiving = true;
@@ -298,10 +389,9 @@ export default function RaidAct2({ onComplete }) {
       rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
     }
     rafRef.current = requestAnimationFrame(step);
-  }
+  };
 
-  // ── Actions ──────────────────────────────────────────────────────────────
-
+  // Gameplay actions
   const pickDir = (d) => {
     const s = stRef.current;
     if (s.feedback || s.tackled) return;
@@ -329,7 +419,7 @@ export default function RaidAct2({ onComplete }) {
       s.tackled = true;
       rerender();
       animateTo(tx, s.defY[s.playerPick] + 5, 380, () => {
-        s.results = [...s.results, false];
+        s.results = [...s.results, { dribbleWon: false, goal: false }];
         rerender();
       });
     } else {
@@ -356,25 +446,84 @@ export default function RaidAct2({ onComplete }) {
       animateBallOnly(zoneScreenX(s.zonePick), 18, 420, () => {
         s.phase = 'shot_result';
         s.feedback = gkBlocked ? 'saved' : 'goal';
-        s.results = [...s.results, !gkBlocked];
+        s.results = [...s.results, { dribbleWon: true, goal: !gkBlocked }];
         rerender();
       });
     }, 80);
   };
 
+  const saveStatsAndXP = async (resultsArray) => {
+    // Calculate total XP based on split: 2 XP per successful dribble, 3 XP per goal
+    let calculatedXP = 0;
+    let wins = 0;
+    resultsArray.forEach(r => {
+      if (r.dribbleWon) calculatedXP += 2;
+      if (r.goal) {
+        calculatedXP += 3;
+        wins++;
+      }
+    });
+
+    let earnedXP = 0;
+    try {
+      if (user?.userId) {
+        const res = await awardXP(user.userId, 'dribble_correct', { rawXP: calculatedXP });
+        earnedXP = res?.xpAwarded ?? calculatedXP;
+      } else {
+        earnedXP = calculatedXP;
+      }
+    } catch (err) {
+      console.warn("Failed to award XP:", err);
+      earnedXP = calculatedXP;
+    }
+
+    setXpAwarded(earnedXP);
+
+    // Save daily completion
+    const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+    dailySave[today] = { completed: true, xpAwarded: earnedXP, score: wins };
+    localStorage.setItem(DAILY_KEY, JSON.stringify(dailySave));
+
+    // Update history & stats
+    const hist = loadHistory();
+    hist[today] = { completed: true, xpAwarded: earnedXP, score: wins };
+    const allEntries = Object.values(hist);
+
+    const newStats = {
+      played: allEntries.length,
+      best:   Math.max(...allEntries.map(e => e.score ?? 0)),
+      avg:    Math.round((allEntries.reduce((s, e) => s + (e.score ?? 0), 0) / allEntries.length) * 10) / 10,
+      streak: 0,
+    };
+
+    // Calculate streak
+    const check = new Date(today + "T00:00:00");
+    while (true) {
+      const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
+      if (hist[k]) {
+        newStats.streak++;
+        check.setDate(check.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+
+    setHistory(hist);
+    setStats(newStats);
+  };
+
   const nextRound = () => {
     const s = stRef.current;
     if (s.results.length >= ROUNDS) {
-      const pw = s.results.filter(Boolean).length;
-      const rv = Math.min(5, Math.max(0, 5 - pw));
-      const yt = pw + botScores.buddy;
-      const rt = rv + botScores.rival;
-      const winner = yt > rt ? 'you' : yt < rt ? 'rival' : 'draw';
       s.phase = 'summary';
       rerender();
-      onComplete?.({ playerRoundWins: pw, buddyRoundWins: botScores.buddy,
-        rivalRoundWins: rv, rivalBotWins: botScores.rival,
-        yourTotal: yt, rivalTotal: rt, winner });
+      
+      if (!alreadyPlayed) {
+        saveStatsAndXP(s.results);
+      }
       return;
     }
     s.round++;
@@ -391,218 +540,838 @@ export default function RaidAct2({ onComplete }) {
 
   const restart = () => {
     stRef.current = initState();
+    setHasWatchedAd(false);
     rerender();
   };
 
-  // ── Derived state for render ──────────────────────────────────────────────
-
   const s = stRef.current;
-  const pw = s.results.filter(Boolean).length;
+  const pw = s.results.filter(r => r.goal).length;
   const rv = Math.min(5, Math.max(0, 5 - pw));
   const yt = pw + botScores.buddy;
   const rt = rv + botScores.rival;
   const w = yt > rt ? 'you' : yt < rt ? 'rival' : 'draw';
 
   const feedbackMap = {
-    tackled: { cls: 'tackled', text: 'Tackled! Defender read your move' },
-    beaten:  { cls: 'beaten',  text: 'Defender beaten! Now pick your shot' },
-    goal:    { cls: 'goal',    text: 'GOAL! GK couldn\'t reach it' },
-    saved:   { cls: 'saved',   text: 'Saved! GK covered that zone' },
+    tackled: { cls: 'tackled', text: 'Tackled! Defender read your lane' },
+    beaten:  { cls: 'beaten',  text: 'Defender beaten! Select finishing zone' },
+    goal:    { cls: 'goal',    text: 'GOAL! Past the keeper (+3 XP)' },
+    saved:   { cls: 'saved',   text: 'Saved! GK diving blocked you' },
   };
 
+  // Live XP calculations
+  const getLiveXPGained = (resultsArray, currentRoundState) => {
+    let xp = 0;
+    resultsArray.forEach(r => {
+      if (r.dribbleWon) xp += 2;
+      if (r.goal) xp += 3;
+    });
+    if (currentRoundState.shotPhase || currentRoundState.phase === 'shot_result') {
+      if (currentRoundState.phase !== 'shot_result') {
+        xp += 2;
+      }
+    }
+    return xp;
+  };
+
+  const liveXPGained = getLiveXPGained(s.results, s);
+  const prevLiveXPRef = useRef(0);
+  
+  // Set initial ref to avoid mount trigger
+  useEffect(() => {
+    prevLiveXPRef.current = liveXPGained;
+  }, []);
+
+  useEffect(() => {
+    const diff = liveXPGained - prevLiveXPRef.current;
+    if (diff > 0) {
+      setFloatingXP({ text: `+${diff} XP`, key: Math.random() });
+    }
+    prevLiveXPRef.current = liveXPGained;
+  }, [liveXPGained]);
+
+  useEffect(() => {
+    if (floatingXP) {
+      const timer = setTimeout(() => setFloatingXP(null), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [floatingXP]);
+
   return (
-    <>
-      {showModal && (
-        <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
-          <div className="db-modal-box">
-            <h2 className="db-modal-title">⚽ How to Play</h2>
-            <ul className="db-rules-list">
-              <li><strong>🏃‍♂️ Dribble Phase:</strong> Choose a direction (Left, Center, or Right) to dribble past the defender.</li>
-              <li><strong>🥅 Shooting Phase:</strong> Once you beat the defender, pick a shooting zone to strike the ball.</li>
-              <li><strong>🧤 Goalkeeper:</strong> The GK will attempt to save. Choose wisely to score!</li>
-            </ul>
-            <button className="db-modal-close" onClick={() => setShowModal(false)}>Let's Play!</button>
+    <div className="db-wrapper">
+      <div className="db-page">
+        <div className="db-bg2" />
+        <div className="db-noise" />
+
+        {/* Modal */}
+        {showModal && (
+          <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
+            <div className="db-modal-box">
+              <h2 className="db-modal-title">⚽ Dribble Gauntlet</h2>
+              <ul className="db-rules-list">
+                <li><span className="db-rule-icon">🏃‍♂️</span><span><strong>Dribble Phase:</strong> Choose a lane (Left, Center, Right) to pass the defender. <strong>Beating them awards 2 XP.</strong></span></li>
+                <li><span className="db-rule-icon">🥅</span><span><strong>Goal Phase:</strong> Once beaten, pick one of the 6 goal target zones to strike. <strong>Scoring awards 3 XP.</strong></span></li>
+                <li><span className="db-rule-icon">🧤</span><span><strong>Keeper:</strong> Goalkeeper dives to cover 2 random zones. Score past them to make it a perfect attack!</span></li>
+                <li><span className="db-rule-icon">📺</span><span><strong>Retake:</strong> If you get tackled or saved, you can watch an ad once per game to retake the round.</span></li>
+              </ul>
+              <button className="db-modal-close" onClick={() => setShowModal(false)}>Start Attack</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Nav */}
-      <nav className="db-nav">
-        <button className="db-nav-logo" onClick={() => navigate('/')}>←</button>
-        <div className="db-nav-tag">
-          <span className="db-fire-dot" />
-          Dribble Gauntlet
-        </div>
-        <div className="db-nav-right">
-          <button className="db-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
-        </div>
-      </nav>
-
-      <div style={styles.wrap}>
-        {/* HUD */}
-      <div style={styles.hud}>
-        <div>
-          <div style={styles.actLabel}>Act 2 — Dribble Gauntlet</div>
-          <div style={styles.gameTitle}>
-            {s.phase === 'summary' ? 'Results' : `Round ${s.round + 1} of ${ROUNDS}`}
+        {/* Nav */}
+        <nav className="db-nav">
+          <button className="db-logo" onClick={() => navigate('/')}>←</button>
+          <div className="db-nav-tag">
+            <span className="db-tag-dot" />
+            Dribble Gauntlet
           </div>
-        </div>
-        <div style={styles.pips}>
-          {Array.from({ length: ROUNDS }, (_, i) => (
-            <div key={i} style={{
-              ...styles.pip,
-              background: s.results[i] === true ? '#3DD68C'
-                : s.results[i] === false ? '#E84040'
-                : 'rgba(255,255,255,0.1)',
-            }} />
-          ))}
-        </div>
-      </div>
+          <div className="db-nav-right">
+            <button className="db-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
+          </div>
+        </nav>
 
-      {/* 3D Canvas */}
-      <canvas ref={canvasRef} width={560} height={320} style={styles.canvas} />
-
-      {/* Controls */}
-      <div style={styles.controls}>
-        {s.phase === 'summary' ? (
-          <>
-            <div style={styles.duoGrid}>
-              <div style={styles.duoBox}>
-                <div style={styles.duoLbl}>Your duo</div>
-                <div style={{ ...styles.duoScore, color: '#3DD68C' }}>{yt}</div>
+        {/* Main Content */}
+        <div className="db-container">
+          
+          {/* Header Title with Live XP Pill */}
+          <div className="db-page-header">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+              <div>
+                <h1 className="db-page-title">Dribble Gauntlet</h1>
+                <p className="db-page-subtitle">Navigate past defenders, strike past goalkeeper</p>
               </div>
-              <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(242,242,244,0.5)' }}>vs</div>
-              <div style={styles.duoBox}>
-                <div style={styles.duoLbl}>Rivals</div>
-                <div style={{ ...styles.duoScore, color: '#E84040' }}>{rt}</div>
+              <div className="db-live-xp-pill">
+                <span className="db-live-xp-icon">🏆</span>
+                <span className="db-live-xp-val">{userXP + liveXPGained}</span>
+                <span className="db-live-xp-lbl">XP</span>
+                {floatingXP && (
+                  <span key={floatingXP.key} className="db-xp-float">
+                    {floatingXP.text}
+                  </span>
+                )}
               </div>
             </div>
-            <div style={styles.summary}>
-              {[
-                { label: 'Your rounds', val: `${pw}/${ROUNDS}`, color: '#3DD68C' },
-                { label: 'Buddy bot',   val: `${botScores.buddy}/${ROUNDS}` },
-                { label: 'Rival player',val: `${rv}/${ROUNDS}` },
-                { label: 'Rival bot',   val: `${botScores.rival}/${ROUNDS}` },
-              ].map(r => (
-                <div key={r.label} style={styles.sumRow}>
-                  <span>{r.label}</span>
-                  <span style={{ fontWeight: 500, color: r.color || '#f2f2f4' }}>{r.val}</span>
+          </div>
+
+          <div className="db-game-box">
+            {s.phase === 'summary' ? (
+              <div className="db-summary-card">
+                <span className="db-sum-badge">Session Done</span>
+                <h2 className="db-sum-title" style={{ color: w === 'you' ? 'var(--green)' : w === 'rival' ? 'var(--accent2)' : 'var(--muted)' }}>
+                  {w === 'you' ? '🎉 Act 2 Won!' : w === 'rival' ? '💥 Act 2 Lost' : '🤝 Match Draw'}
+                </h2>
+                <div className="db-sum-score">{pw} Goals Scored</div>
+                <p className="db-sum-phrase">
+                  You scored {pw} goals and beat defenders in {s.results.filter(r => r.dribbleWon).length} rounds.
+                </p>
+                
+                {xpAwarded !== null && (
+                  <div className="db-sum-xp-badge">
+                    {xpAwarded > 0 ? `+${xpAwarded} XP Earned` : 'Daily XP limit reached'}
+                  </div>
+                )}
+
+                <div className="db-duo-grid">
+                  <div className="db-duo-box" style={{ borderColor: w === 'you' ? 'rgba(61,214,140,0.3)' : 'var(--border)' }}>
+                    <div className="db-duo-lbl">Your Duo</div>
+                    <div className="db-duo-score" style={{ color: 'var(--green)' }}>{yt}</div>
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--muted)' }}>vs</div>
+                  <div className="db-duo-box" style={{ borderColor: w === 'rival' ? 'rgba(232,64,64,0.3)' : 'var(--border)' }}>
+                    <div className="db-duo-lbl">Rivals</div>
+                    <div className="db-duo-score" style={{ color: 'var(--accent2)' }}>{rt}</div>
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div style={{
-              ...styles.verdict,
-              background: w === 'you' ? 'rgba(61,214,140,.12)' : w === 'rival' ? 'rgba(232,64,64,.1)' : 'rgba(255,255,255,.05)',
-              color: w === 'you' ? '#3DD68C' : w === 'rival' ? '#ff8080' : 'rgba(242,242,244,0.6)',
-              border: `1px solid ${w === 'you' ? 'rgba(61,214,140,.25)' : w === 'rival' ? 'rgba(232,64,64,.2)' : 'rgba(255,255,255,.1)'}`,
-            }}>
-              {w === 'you' ? '✓ Act 2 Won' : w === 'rival' ? '✗ Act 2 Lost' : '— Draw'}
-            </div>
-            <button style={{ ...styles.actionBtn, ...styles.restartBtn }} onClick={restart}>Play again</button>
-          </>
-        ) : (
-          <>
-            {s.feedback && (
-              <div style={{ ...styles.feedback, ...styles[`fb_${feedbackMap[s.feedback]?.cls}`] }}>
-                {feedbackMap[s.feedback]?.text}
-              </div>
-            )}
 
-            {s.tackled || s.phase === 'shot_result' ? (
-              <button style={{ ...styles.actionBtn, ...styles.restartBtn }} onClick={nextRound}>
-                Next round
-              </button>
-            ) : !s.shotPhase ? (
-              <>
-                <div style={styles.ctrlLabel}>Pick a lane to dribble through</div>
-                <div style={styles.btnRow}>
-                  {['← Left', '↑ Centre', '→ Right'].map((lbl, i) => (
-                    <button
-                      key={i}
-                      style={{
-                        ...styles.dirBtn,
-                        ...(s.playerPick === i ? styles.dirBtnSel : {}),
-                      }}
-                      onClick={() => pickDir(i)}
-                      disabled={!!s.feedback}
-                    >{lbl}</button>
+                <div style={{ background: 'rgba(255,255,255,0.012)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
+                  {[
+                    { label: 'Your goals scored', val: `${pw}/${ROUNDS}`, color: 'var(--green)' },
+                    { label: 'Buddy bot goals',   val: `${botScores.buddy}/${ROUNDS}` },
+                    { label: 'Rival player goals',val: `${rv}/${ROUNDS}` },
+                    { label: 'Rival bot goals',   val: `${botScores.rival}/${ROUNDS}` },
+                  ].map(r => (
+                    <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.82rem', color: 'var(--muted)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <span>{r.label}</span>
+                      <span style={{ fontWeight: 700, color: r.color || '#fff' }}>{r.val}</span>
+                    </div>
                   ))}
                 </div>
-                <button
-                  style={{ ...styles.actionBtn, ...styles.goBtn }}
-                  onClick={dribble}
-                  disabled={s.playerPick === null || !!s.feedback}
-                >Dribble</button>
-              </>
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button className="db-action-btn db-btn-next" style={{ flex: 1 }} onClick={() => navigate('/')}>
+                    ← Home
+                  </button>
+                  <button className="db-action-btn db-btn-go" style={{ flex: 1.5 }} onClick={restart}>
+                    Play Again
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
-                <div style={styles.ctrlLabel}>Pick a finish zone — GK covers 2 zones</div>
-                <div style={styles.gkHint}>The keeper will dive to block 2 zones simultaneously</div>
-                <div style={styles.finishGrid}>
-                  {ZONE_LABELS.map((_, i) => (
-                    <button
-                      key={i}
-                      style={{
-                        ...styles.finBtn,
-                        ...(s.zonePick === i ? styles.finBtnSel : {}),
-                      }}
-                      onClick={() => pickZone(i)}
-                    >{ZONE_SHORT[i]}</button>
-                  ))}
+                {/* HUD */}
+                <div className="db-hud">
+                  <div className="db-hud-info">
+                    <span className="db-act-label">Act 2 · Standalone</span>
+                    <span className="db-game-title">Attack {s.round + 1} of {ROUNDS}</span>
+                  </div>
+                  <div className="db-pips">
+                    {Array.from({ length: ROUNDS }, (_, i) => {
+                      const res = s.results[i];
+                      let bg = 'rgba(255,255,255,0.08)';
+                      if (res) {
+                        if (res.goal) bg = 'var(--green)';
+                        else if (res.dribbleWon) bg = 'var(--accent)';
+                        else bg = 'var(--accent2)';
+                      }
+                      return <div key={i} className="db-pip" style={{ background: bg }} />;
+                    })}
+                  </div>
                 </div>
-                <button
-                  style={{ ...styles.actionBtn, ...styles.shootBtn }}
-                  onClick={shoot}
-                  disabled={s.zonePick === null}
-                >Shoot</button>
+
+                {/* Canvas Wrapper */}
+                <div className="db-canvas-wrapper">
+                  <canvas ref={canvasRef} width={560} height={320} className="db-canvas" />
+                </div>
+
+                {/* Controls Area */}
+                <div className="db-controls">
+                  {s.feedback && (
+                    <div className={`db-feedback db-fb-${feedbackMap[s.feedback]?.cls}`}>
+                      {feedbackMap[s.feedback]?.text}
+                    </div>
+                  )}
+
+                  {s.tackled || s.phase === 'shot_result' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && (
+                        <div className="db-ad-box">
+                          <p>Tackled or saved? Watch a quick ad to retake this round!</p>
+                          <button
+                            className="db-ad-go-btn"
+                            onClick={triggerRewardedAdToRetakeRound}
+                            disabled={isAdLoading}
+                          >
+                            📺 {isAdLoading ? 'Loading Ad...' : 'Retake Round'}
+                          </button>
+                        </div>
+                      )}
+                      
+                      <button className="db-action-btn db-btn-next" onClick={nextRound}>
+                        Next Attack
+                      </button>
+                    </div>
+                  ) : !s.shotPhase ? (
+                    <>
+                      <div className="db-ctrl-label">Choose a lane to dribble (+2 XP)</div>
+                      <div className="db-btn-row">
+                        {['← Left', '↑ Center', '→ Right'].map((lbl, i) => (
+                          <button
+                            key={i}
+                            className={`db-dir-btn ${s.playerPick === i ? 'selected' : ''}`}
+                            onClick={() => pickDir(i)}
+                            disabled={!!s.feedback}
+                          >
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className="db-action-btn db-btn-go"
+                        onClick={dribble}
+                        disabled={s.playerPick === null || !!s.feedback}
+                      >
+                        Dribble
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="db-ctrl-label">Pick Target Zone to Shoot (+3 XP)</div>
+                      <div className="db-finish-grid">
+                        {ZONE_LABELS.map((_, i) => (
+                          <button
+                            key={i}
+                            className={`db-fin-btn ${s.zonePick === i ? 'selected' : ''}`}
+                            onClick={() => pickZone(i)}
+                          >
+                            {ZONE_SHORT[i]}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        className="db-action-btn db-btn-shoot"
+                        onClick={shoot}
+                        disabled={s.zonePick === null}
+                      >
+                        Shoot
+                      </button>
+                    </>
+                  )}
+                </div>
               </>
             )}
-          </>
-        )}
+          </div>
+
+          {/* Bottom section */}
+          <div className="db-bottom-section">
+            <div className="db-section-div">
+              <span className="db-section-label">Your Progress</span>
+              <div className="db-section-line" />
+            </div>
+            
+            <div className="db-dash-grid">
+              <div className="db-dash-card">
+                <div className="db-dash-hdr">
+                  <span className="db-dash-icon">📅</span>
+                  <span className="db-dash-lbl">Last 30 Days</span>
+                </div>
+                <StreakDots history={history} today={today} />
+              </div>
+              
+              <div className="db-dash-card">
+                <div className="db-dash-hdr">
+                  <span className="db-dash-icon">📊</span>
+                  <span className="db-dash-lbl">Your Stats</span>
+                </div>
+                <div className="db-stats-grid">
+                  {[
+                    { val: stats.played ?? 0, name: "Played" },
+                    { val: stats.best   ?? 0, name: "Best Goals" },
+                    { val: stats.avg    ?? 0, name: "Avg Goals" },
+                    { val: stats.streak ?? 0, name: "Streak" },
+                  ].map(item => (
+                    <div key={item.name} className="db-stat-item">
+                      <div className="db-stat-val">{item.val}</div>
+                      <div className="db-stat-name">{item.name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
-  </>
-);
+  );
 }
 
-const C = {
-  surface: '#1c2a1c',
-  border:  'rgba(255,255,255,0.28)',
-  muted:   'rgba(242,242,244,0.6)',
-  text:    '#f2f2f4',
-};
+// ─── Stylesheet ────────────────
+const CSS = `
+.db-wrapper {
+  --bg: #05070f;
+  --surface: rgba(255,255,255,0.038);
+  --surface2: rgba(255,255,255,0.065);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.13);
+  --accent: #84CC16;
+  --accent2: #E84040;
+  --accent3: #84CC16;
+  --green: #3DD68C;
+  --orange: #ffa400;
+  --text: #F0F0F0;
+  --muted: rgba(240,240,240,0.45);
+  --muted2: rgba(240,240,240,0.25);
+  --card-radius: 16px;
+}
 
-const styles = {
-  wrap:       { color: C.text, fontFamily: 'inherit', maxWidth: 450, margin: '0 auto', padding: '16px 16px 80px', boxSizing: 'border-box', position: 'relative', zIndex: 1 },
-  hud:        { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  actLabel:   { fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '.08em' },
-  gameTitle:  { fontSize: 16, fontWeight: 500, color: C.text },
-  pips:       { display: 'flex', gap: 5 },
-  pip:        { width: 28, height: 5, borderRadius: 3, transition: 'background .3s' },
-  canvas:     { display: 'block', borderRadius: 12, border: '2px solid rgba(255,255,255,0.25)', width: '100%' },
-  controls:   { marginTop: 12 },
-  ctrlLabel:  { fontSize: 12, color: C.muted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.07em' },
-  gkHint:     { fontSize: 11, color: 'rgba(242,242,244,0.4)', textAlign: 'center', marginBottom: 6 },
-  btnRow:     { display: 'flex', gap: 8, marginBottom: 10 },
-  dirBtn:     { flex: 1, padding: '13px 8px', background: '#1e2e1e', border: '1.5px solid rgba(255,255,255,0.35)', borderRadius: 10, color: '#f2f2f4', cursor: 'pointer', fontSize: 14, fontWeight: 500, transition: 'all .15s', textAlign: 'center' },
-  dirBtnSel:  { borderColor: '#F7C344', background: 'rgba(247,195,68,.2)', color: '#F7C344' },
-  finishGrid: { display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 10 },
-  finBtn:     { padding: '10px 6px', background: '#1e2e1e', border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 8, color: '#d0d0d0', cursor: 'pointer', fontSize: 12, transition: 'all .15s', textAlign: 'center' },
-  finBtnSel:  { borderColor: '#3DD68C', background: 'rgba(61,214,140,.18)', color: '#3DD68C' },
-  actionBtn:  { width: '100%', padding: 13, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'opacity .15s', letterSpacing: '.04em', marginTop: 0 },
-  goBtn:      { background: '#F7C344', color: '#3d2e00' },
-  shootBtn:   { background: '#3DD68C', color: '#0d3d22' },
-  restartBtn: { background: '#1e2e1e', color: C.text, border: '1.5px solid rgba(255,255,255,0.3)' },
-  feedback:   { textAlign: 'center', fontSize: 13, fontWeight: 500, padding: '9px 14px', borderRadius: 8, marginBottom: 10 },
-  fb_tackled: { background: 'rgba(232,64,64,.15)', color: '#ff8080', border: '1px solid rgba(232,64,64,.3)' },
-  fb_beaten:  { background: 'rgba(247,195,68,.12)', color: '#F7C344', border: '1px solid rgba(247,195,68,.25)' },
-  fb_goal:    { background: 'rgba(61,214,140,.12)', color: '#3DD68C', border: '1px solid rgba(61,214,140,.3)' },
-  fb_saved:   { background: 'rgba(232,64,64,.12)', color: '#ff8080', border: '1px solid rgba(232,64,64,.25)' },
-  duoGrid:    { display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center', marginBottom: 12 },
-  duoBox:     { background: '#1e2e1e', border: '1.5px solid rgba(255,255,255,0.28)', borderRadius: 10, padding: 12, textAlign: 'center' },
-  duoLbl:     { fontSize: 11, color: C.muted, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 },
-  duoScore:   { fontSize: 26, fontWeight: 500 },
-  summary:    { background: '#1a281a', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: 12 },
-  sumRow:     { display: 'flex', justifyContent: 'space-between', padding: '7px 0', fontSize: 14, color: C.muted, borderBottom: '1px solid rgba(255,255,255,0.06)' },
-  verdict:    { textAlign: 'center', padding: 12, borderRadius: 8, fontSize: 14, fontWeight: 600, marginBottom: 10 },
-};
+.db-page {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  font-family: "Twemoji Country Flags", 'DM Sans', sans-serif;
+}
+
+.db-bg2 {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.db-bg2::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 8% -5%, rgba(132, 204, 22, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(61, 214, 140, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(132, 204, 22, 0.03) 0%, transparent 65%);
+}
+.db-bg2::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    -45deg, transparent, transparent 48px,
+    rgba(255,255,255,0.008) 48px, rgba(255,255,255,0.008) 49px
+  );
+}
+
+.db-noise {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+.db-nav {
+  position: sticky; top: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 62px;
+  background: rgba(5, 7, 15, 0.82);
+  backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid rgba(132, 204, 22, 0.15);
+  box-shadow: 0 4px 20px rgba(132, 204, 22, 0.15);
+}
+
+.db-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--accent), #a3e635);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  background-color: transparent;
+}
+
+.db-nav-tag {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.72rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--accent3);
+  background: rgba(132, 204, 22, 0.1);
+  border: 1px solid rgba(132, 204, 22, 0.28);
+  padding: 5px 14px; border-radius: 100px;
+}
+
+.db-tag-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent3); animation: dbBlink 1.5s ease infinite;
+}
+@keyframes dbBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.db-nav-right {
+  display: flex; align-items: center; justify-content: flex-end;
+}
+
+.db-help-btn {
+  background: var(--surface); border: 1px solid var(--border2); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.db-help-btn:hover {
+  background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .2);
+}
+
+.db-container {
+  max-width: 680px; margin: 0 auto;
+  padding: 24px 16px 80px; position: relative; z-index: 10;
+  box-sizing: border-box;
+}
+
+.db-page-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 16px;
+}
+.db-page-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--accent), #a3e635);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.db-page-subtitle {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.db-live-xp-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(132, 204, 22, 0.12);
+  border: 1px solid rgba(132, 204, 22, 0.28);
+  padding: 6px 16px;
+  border-radius: 100px;
+  box-shadow: 0 0 15px rgba(132, 204, 22, 0.1);
+  margin-bottom: 2px;
+}
+.db-live-xp-icon {
+  font-size: 0.95rem;
+}
+.db-live-xp-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+.db-live-xp-lbl {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@keyframes xpFloat {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  20% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+}
+.db-xp-float {
+  position: absolute;
+  right: 12px;
+  color: var(--green);
+  font-weight: 900;
+  font-size: 1.05rem;
+  animation: xpFloat 1.2s forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.db-game-box {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 20px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  margin-bottom: 24px;
+}
+
+.db-hud {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.db-hud-info {
+  display: flex; flex-direction: column;
+}
+
+.db-act-label {
+  font-size: 0.68rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+  font-weight: 700; margin-bottom: 2px;
+}
+
+.db-game-title {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+}
+
+.db-pips {
+  display: flex; gap: 6px;
+}
+.db-pip {
+  width: 24px; height: 5px; border-radius: 3px;
+  transition: background .3s;
+}
+
+.db-canvas-wrapper {
+  position: relative; border-radius: 16px; overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 15px rgba(132, 204, 22, 0.08);
+  margin-bottom: 20px;
+}
+
+.db-canvas {
+  display: block; width: 100%; height: auto;
+}
+
+.db-controls {
+  display: flex; flex-direction: column;
+}
+
+.db-ctrl-label {
+  font-size: 0.75rem; color: var(--muted); font-weight: 700;
+  margin-bottom: 10px; text-transform: uppercase; letter-spacing: .07em;
+  text-align: center;
+}
+
+.db-btn-row {
+  display: flex; gap: 10px; margin-bottom: 16px;
+}
+
+.db-dir-btn {
+  flex: 1; padding: 14px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border2);
+  border-radius: 12px; color: var(--text);
+  cursor: pointer; font-size: 0.85rem; font-weight: 700;
+  transition: all .2s; text-align: center;
+}
+.db-dir-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.2);
+}
+.db-dir-btn.selected {
+  border-color: var(--accent);
+  background: rgba(132, 204, 22, 0.12);
+  color: var(--accent);
+  box-shadow: 0 0 12px rgba(132, 204, 22, 0.15);
+}
+
+.db-finish-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-bottom: 16px;
+}
+
+.db-fin-btn {
+  padding: 12px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text);
+  cursor: pointer; font-size: 0.78rem; font-weight: 700;
+  transition: all .2s; text-align: center;
+}
+.db-fin-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.2);
+}
+.db-fin-btn.selected {
+  border-color: var(--green);
+  background: rgba(61, 214, 140, 0.15);
+  color: var(--green);
+  box-shadow: 0 0 12px rgba(61, 214, 140, 0.12);
+}
+
+.db-action-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-size: 0.92rem; font-weight: 800; cursor: pointer;
+  transition: all 0.2s; letter-spacing: .04em; text-transform: uppercase;
+}
+.db-action-btn:hover:not(:disabled) {
+  transform: translateY(-2px); filter: brightness(1.15);
+}
+.db-action-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.db-action-btn:disabled {
+  opacity: 0.5; cursor: not-allowed; transform: none;
+}
+
+.db-btn-go {
+  background: linear-gradient(135deg, var(--accent), #a3e635);
+  color: #1a2e05;
+  box-shadow: 0 6px 20px rgba(132, 204, 22, 0.25);
+}
+.db-btn-shoot {
+  background: linear-gradient(135deg, var(--green), #10b981);
+  color: #062f19;
+  box-shadow: 0 6px 20px rgba(61, 214, 140, 0.25);
+}
+.db-btn-next {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text); border: 1px solid var(--border2);
+}
+.db-btn-next:hover {
+  background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3);
+}
+
+.db-feedback {
+  text-align: center; font-size: 0.82rem; font-weight: 700;
+  padding: 10px 14px; border-radius: 10px; margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.db-fb-tackled {
+  background: rgba(232, 64, 64, 0.12); color: #ff8080;
+  border: 1px solid rgba(232, 64, 64, 0.25);
+}
+.db-fb-beaten {
+  background: rgba(132, 204, 22, 0.1); color: var(--accent);
+  border: 1px solid rgba(132, 204, 22, 0.22);
+}
+.db-fb-goal {
+  background: rgba(61, 214, 140, 0.1); color: var(--green);
+  border: 1px solid rgba(61, 214, 140, 0.22);
+}
+.db-fb-saved {
+  background: rgba(232, 64, 64, 0.12); color: #ff8080;
+  border: 1px solid rgba(232, 64, 64, 0.25);
+}
+
+.db-summary-card {
+  text-align: center; padding: 16px 8px;
+}
+.db-sum-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 100px;
+  background: rgba(132, 204, 22, 0.12); color: var(--accent);
+  border: 1px solid rgba(132, 204, 22, 0.25); margin-bottom: 16px;
+}
+.db-sum-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
+  letter-spacing: 2px; margin-bottom: 6px;
+}
+.db-sum-score {
+  font-size: 2.4rem; font-weight: 900; margin: 12px 0;
+  font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;
+}
+.db-sum-phrase {
+  font-size: 0.85rem; color: var(--muted); margin-bottom: 24px;
+}
+.db-sum-xp-badge {
+  background: rgba(61, 214, 140, 0.12); color: var(--green);
+  border: 1px solid rgba(61, 214, 140, 0.28);
+  font-size: 0.82rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; padding: 8px 20px; border-radius: 12px;
+  display: inline-block; margin-bottom: 28px;
+}
+
+.db-duo-grid {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  gap: 12px; align-items: center; margin-bottom: 20px;
+}
+.db-duo-box {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px; text-align: center;
+}
+.db-duo-lbl {
+  font-size: 0.65rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 1px; font-weight: 700; margin-bottom: 4px;
+}
+.db-duo-score {
+  font-size: 1.6rem; font-weight: 800;
+}
+
+.db-modal-overlay {
+  position: fixed; inset: 0; background: rgba(5, 7, 15, 0.88);
+  backdrop-filter: blur(8px); display: flex; align-items: center;
+  justify-content: center; z-index: 10000; opacity: 0;
+  pointer-events: none; transition: opacity 0.3s ease;
+}
+.db-modal-overlay.active {
+  opacity: 1; pointer-events: auto;
+}
+.db-modal-box {
+  background: #080c1a; border: 1px solid var(--border2);
+  padding: 32px; border-radius: 20px; max-width: 440px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center;
+}
+.db-modal-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
+  letter-spacing: 2px; margin-bottom: 24px; color: var(--accent);
+}
+.db-rules-list {
+  text-align: left; margin-bottom: 28px;
+  display: flex; flex-direction: column; gap: 14px;
+  list-style: none;
+}
+.db-rules-list li {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 0.88rem; color: var(--muted);
+}
+.db-rule-icon {
+  font-size: 1.1rem; line-height: 1;
+}
+.db-rules-list strong {
+  color: #fff;
+}
+.db-modal-close {
+  background: linear-gradient(135deg, var(--accent), #a3e635);
+  color: #1a2e05; border: none; padding: 12px 32px; border-radius: 12px;
+  font-size: 0.95rem; font-weight: 800; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 6px 20px rgba(132, 204, 22, 0.25);
+  text-transform: uppercase;
+}
+.db-modal-close:hover {
+  transform: translateY(-2px); box-shadow: 0 10px 24px rgba(132, 204, 22, 0.35);
+}
+
+.db-bottom-section {
+  margin-top: 24px;
+}
+.db-section-div {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.db-section-label {
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--accent3); white-space: nowrap;
+}
+.db-section-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(132, 204, 22, 0.25) 0%, transparent 100%);
+}
+
+.db-dash-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+@media (max-width: 600px) {
+  .db-dash-grid { grid-template-columns: 1fr; }
+}
+
+.db-dash-card {
+  background: rgba(255, 255, 255, 0.015); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; display: flex; flex-direction: column;
+}
+.db-dash-hdr {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.db-dash-icon {
+  font-size: 1.1rem;
+}
+.db-dash-lbl {
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted);
+}
+
+.db-streak-dots {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 4px;
+}
+.db-dot {
+  aspect-ratio: 1; border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+  transition: all 0.25s;
+}
+.db-dot.dot-empty {
+  background: rgba(255, 255, 255, 0.02);
+}
+.db-dot.dot-won {
+  background: var(--green); border-color: rgba(61, 214, 140, 0.4);
+  box-shadow: 0 0 8px rgba(61, 214, 140, 0.15);
+}
+.db-dot.dot-miss {
+  background: var(--accent2); border-color: rgba(232, 64, 64, 0.4);
+}
+.db-dot.dot-today {
+  border: 1.5px solid var(--accent); position: relative;
+  animation: dbTodayPulse 2s ease infinite;
+}
+@keyframes dbTodayPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.db-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.db-stat-item {
+  background: rgba(255, 255, 255, 0.012); border: 1px solid var(--border);
+  padding: 10px; border-radius: 10px; text-align: center;
+}
+.db-stat-val {
+  font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 2px;
+}
+.db-stat-name {
+  font-size: 0.6rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 1px; font-weight: 700;
+}
+
+.db-ad-box {
+  background: rgba(132, 204, 22, 0.04); border: 1px dashed rgba(132, 204, 22, 0.25);
+  padding: 12px; border-radius: 12px; text-align: center;
+  font-size: 0.78rem; color: var(--muted); margin: 12px 0;
+}
+.db-ad-go-btn {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border2);
+  color: #fff; padding: 6px 14px; border-radius: 8px;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; margin-top: 8px;
+}
+.db-ad-go-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);
+}
+`;

@@ -1106,7 +1106,7 @@ export default function WhoAreYa() {
                   <span className="wya-dash-icon">📅</span>
                   <span className="wya-dash-label">Last 30 Days</span>
                 </div>
-                <StreakDots history={history} puzzleDate={puzzleDate} gameOver={gameOver} won={won} />
+                <StreakDots history={history} puzzleDate={puzzleDate} gameOver={gameOver} won={won} xpAwarded={xpAwarded} attempts={guesses.length} />
                 <div className="wya-streak-legend">
                   <span><span className="wya-dot-sample win" />Guessed</span>
                   <span><span className="wya-dot-sample miss" />Missed</span>
@@ -1183,7 +1183,7 @@ function GuessCell({ cell }) {
   );
 }
 
-function StreakDots({ history, puzzleDate, gameOver, won }) {
+function StreakDots({ history, puzzleDate, gameOver, won, xpAwarded, attempts }) {
   const today = new Date();
   const dots = [];
   
@@ -1203,7 +1203,7 @@ function StreakDots({ history, puzzleDate, gameOver, won }) {
           xp = entry.score || 0;
         } else {
           cls = won ? 'win' : 'miss';
-          xp = won ? 25 : 0;
+          xp = xpAwarded !== null ? xpAwarded : (won ? (attempts ? (SCORES[attempts - 1] || 25) : 25) : 0);
         }
       } else {
         cls = 'today-pending';

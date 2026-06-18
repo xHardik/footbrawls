@@ -205,8 +205,13 @@ body{font-family:'DM Sans',sans-serif}
 .dt-main { max-width:580px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
 
 /* PAGE HEADER */
-.dt-page-header { text-align:center; margin-bottom:24px; }
-.dt-page-header h1 { font-family:'Bebas Neue',sans-serif; font-size:2.6rem; letter-spacing:1.5px; color:#fff; line-height:1; margin-bottom:4px; }
+.dt-page-header { text-align:left; margin-bottom:24px; }
+.dt-page-header h1 {
+  font-family:'Bebas Neue',sans-serif; font-size:2.6rem; letter-spacing:1.5px;
+  background:linear-gradient(135deg, var(--accent3), #2dd4bf);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text; line-height:1; margin-bottom:4px;
+}
 .dt-page-header p { font-size:.82rem; color:var(--muted); font-weight:500; }
 .dt-date-badge {
   display:inline-flex; align-items:center; gap:7px; margin-top:10px;
@@ -368,13 +373,13 @@ body{font-family:'DM Sans',sans-serif}
 .dt-dash-card-hdr { display:flex; align-items:center; gap:6px; margin-bottom:14px; }
 .dt-dash-icon { font-size:.95rem; }
 .dt-dash-label { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
-.dt-streak-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:5px; margin-bottom:12px; }
+.dt-streak-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:5px; margin-bottom:12px; flex:1; align-content:space-between; }
 .dt-streak-dot { aspect-ratio:1; border-radius:4px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); }
 .dt-streak-dot.win    { background:rgba(61,214,140,.18); border-color:rgba(61,214,140,.32); }
 .dt-streak-dot.miss   { background:rgba(232,64,64,.08); border-color:rgba(232,64,64,.18); }
 .dt-streak-dot.played { background:rgba(13,148,136,.14); border-color:var(--accent3); box-shadow:0 0 10px rgba(13,148,136,.2); }
 .dt-streak-dot.pending { background:rgba(13,148,136,.09); border-style:dashed; border-color:rgba(13,148,136,.38); }
-.dt-streak-legend { display:flex; gap:12px; font-size:.67rem; color:var(--muted); flex-wrap:wrap; }
+.dt-streak-legend { display:flex; gap:12px; font-size:.67rem; color:var(--muted); flex-wrap:wrap; margin-top:auto; }
 .dt-dot-sample { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:4px; vertical-align:middle; }
 .dt-dot-sample.win    { background:rgba(61,214,140,.18); border:1px solid var(--green); }
 .dt-dot-sample.miss   { background:rgba(232,64,64,.08); border:1px solid rgba(232,64,64,.18); }
@@ -735,11 +740,7 @@ export default function DailyTrivia() {
         <main className="dt-main">
           <header className="dt-page-header">
             <h1>Daily Trivia</h1>
-            <p>10 football questions · one chance per day</p>
-            <div className="dt-date-badge">
-              <span className="dt-date-dot" />
-              {todayLabel} · #{puzzleNumber}
-            </div>
+            <p>Daily Puzzle #{puzzleNumber} · 10 football questions · one chance per day</p>
           </header>
 
           {/* ── GAME ── */}

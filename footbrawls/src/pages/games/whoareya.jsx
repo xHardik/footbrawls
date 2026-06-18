@@ -467,11 +467,11 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 .wya-dot-sample.miss {background: rgba(232,64,64,.08); border: 1px solid rgba(232,64,64,0.18)}
 .wya-dot-sample.today {background: rgba(247,195,68,.14); border: 1px solid var(--accent)}
 .wya-stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
 }
 .wya-stat-item {
   background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px 12px; text-align: center; transition: border-color .2s,background .2s;
+  padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: border-color .2s,background .2s;
 }
 .wya-stat-item:hover {
   border-color: rgba(247,195,68,.22); background: rgba(247,195,68,.03);

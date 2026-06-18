@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getUser } from '../lib/user';
+import { getUser, saveUserLocally } from '../lib/user';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 
@@ -127,26 +127,27 @@ function injectFonts() {
 }
 
 function getTodayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return new Date().toISOString().split('T')[0];
 }
 
 function isGameDoneToday(key) {
   try {
-    const today = getTodayKey();
-    const data = JSON.parse(localStorage.getItem(key) || '{}');
-    if (data.date === today) return true;
-    if (data[today]) return true;
-    return false;
+    const raw = localStorage.getItem(key); if (!raw) return false;
+    const data = JSON.parse(raw);
+    const todayUTC = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const todayLocal = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    return data.date === todayUTC || data.date === todayLocal || Boolean(data[todayUTC]) || Boolean(data[todayLocal]);
   } catch { return false; }
 }
 
 export default function Layout({ children, hideMobileNav }) {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const user      = getUser();
+  const [user, setUser] = useState(() => getUser());
   const [guild, setGuild]         = useState(null);
   const [userXP, setUserXP]       = useState(0);
+  const [completedGames, setCompletedGames] = useState({});
 
   // Live guild data
   useEffect(() => {
@@ -159,12 +160,78 @@ export default function Layout({ children, hideMobileNav }) {
     return () => unsub();
   }, [user?.homeCountry]);
 
-  // Daily XP from localStorage
+  // Live user doc listener (Firestore sync)
   useEffect(() => {
-    const today = getTodayKey();
-    const userData = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
-    if (userData.dailyXPDate === today) setUserXP(userData.dailyXP || 0);
-  }, [location.pathname]);
+    if (!user?.userId) return;
+    const ref = doc(db, 'users', user.userId);
+    const unsub = onSnapshot(ref, snap => {
+      if (snap.exists()) {
+        const data = snap.data();
+        const today = getTodayKey();
+        const fresh = {
+          ...user,
+          totalXP: data.totalXP ?? user?.totalXP ?? 0,
+          dailyXP: data.dailyXPDate === today ? (data.dailyXP ?? 0) : 0,
+          dailyXPDate: data.dailyXPDate ?? null,
+          tier: data.tier ?? user?.tier ?? "lurker",
+        };
+        saveUserLocally(fresh);
+        setUser(fresh);
+        setUserXP(fresh.dailyXP);
+      }
+    }, () => {});
+    return () => unsub();
+  }, [user?.userId]);
+
+  // Sync state from localStorage periodically and on location changes
+  useEffect(() => {
+    const syncState = () => {
+      const today = getTodayKey();
+      const freshUser = getUser();
+      
+      let freshXP = 0;
+      if (freshUser && freshUser.dailyXPDate === today) {
+        freshXP = freshUser.dailyXP || 0;
+      }
+      
+      const newCompletions = {};
+      GAMES.forEach(game => {
+        newCompletions[game.key] = isGameDoneToday(game.key);
+      });
+
+      const completionsChanged = GAMES.some(game => newCompletions[game.key] !== completedGames[game.key]);
+      const userXPChanged = freshXP !== userXP;
+      const userChanged = 
+        freshUser?.totalXP !== user?.totalXP ||
+        freshUser?.dailyXP !== user?.dailyXP ||
+        freshUser?.dailyXPDate !== user?.dailyXPDate ||
+        freshUser?.tier !== user?.tier;
+
+      if (completionsChanged) {
+        setCompletedGames(newCompletions);
+      }
+      if (userXPChanged) {
+        setUserXP(freshXP);
+      }
+      if (userChanged) {
+        setUser(freshUser);
+      }
+    };
+
+    syncState();
+
+    const intervalId = setInterval(syncState, 1000);
+    
+    // Also sync on window focus/visibility change
+    window.addEventListener('focus', syncState);
+    document.addEventListener('visibilitychange', syncState);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', syncState);
+      document.removeEventListener('visibilitychange', syncState);
+    };
+  }, [completedGames, userXP, user, location.pathname]);
 
   // Inject CSS
   useEffect(() => {
@@ -251,7 +318,7 @@ export default function Layout({ children, hideMobileNav }) {
           <div className="ly-section-label">Games</div>
           <div className="ly-game-list">
             {GAMES.map(game => {
-              const done    = isGameDoneToday(game.key);
+              const done    = !!completedGames[game.key];
               const active  = location.pathname === game.path;
               const NavIcon = game.IconC;
               const textColor = game.color;

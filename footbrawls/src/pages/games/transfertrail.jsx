@@ -16,6 +16,30 @@ import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
 import { ClubLogo } from "../../lib/wikiAssets.jsx";
 
+// Initialize Google AdBreak queue safely
+const adBreak = (options) => {
+  if (window.adBreak) {
+    window.adBreak(options);
+  } else {
+    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
+    if (options.beforeAd) options.beforeAd();
+    setTimeout(() => {
+      if (options.type === 'reward') {
+        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to unlock hint: ${options.name}?`);
+        if (confirmReward) {
+          if (options.adViewed) options.adViewed();
+        } else {
+          if (options.adDismissed) options.adDismissed();
+        }
+      } else {
+        if (options.adViewed) options.adViewed();
+      }
+      if (options.afterAd) options.afterAd();
+      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
+    }, 1000);
+  }
+};
+
 // ── Config ────────────────────────────────────────────────────────────────────
 const PLAYERS_PER_GAME = 3;
 const MAX_ATTEMPTS     = 3;
@@ -329,7 +353,7 @@ function SearchDropdown({ players, onSelect, disabled }) {
               <span style={{fontSize:"1.1rem"}}>{p.flag || "🏳️"}</span>
               <div>
                 <div style={{fontWeight:700}}>{p.name}</div>
-                <div style={{fontSize:"0.68rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
+                <div style={{fontSize:"0.68rem",color:T.muted2}}>{p.position} · {p.country || p.nationality}</div>
               </div>
             </div>
           ))}
@@ -411,18 +435,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         ))}
       </div>
 
-      <button
-        onClick={onPlayAgain}
-        style={{
-          background:"rgba(61,214,140,0.12)",color:T.green,
-          border:"1px solid rgba(61,214,140,0.28)",borderRadius:12,
-          padding:"13px 28px",fontFamily:"'DM Sans',sans-serif",
-          fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
-          transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-        }}
-        onMouseEnter={e=>{e.currentTarget.style.background="rgba(61,214,140,0.22)";e.currentTarget.style.transform="translateY(-2px)"}}
-        onMouseLeave={e=>{e.currentTarget.style.background="rgba(61,214,140,0.12)";e.currentTarget.style.transform="none"}}
-      >↺ Play Again</button>
+      {/* Play Again button removed to enforce once-per-day play limit */}
     </div>
   );
 }
@@ -432,8 +445,8 @@ function loadHistoryAndStats(storageKey, puzzleDate) {
   try {
     const history = JSON.parse(localStorage.getItem(storageKey) || '{}');
     const allEntries = Object.values(history);
-    const bestXP = allEntries.length > 0 ? Math.max(...allEntries.map(e => e.xpAwarded || 0)) : 0;
-    const avgXP = allEntries.length > 0 ? Math.round(allEntries.reduce((s, e) => s + (e.xpAwarded || 0), 0) / allEntries.length) : 0;
+    const bestXP = allEntries.length > 0 ? Math.max(...allEntries.map(e => e.xpEarned ?? e.xpAwarded ?? 0)) : 0;
+    const avgXP = allEntries.length > 0 ? Math.round(allEntries.reduce((s, e) => s + (e.xpEarned ?? e.xpAwarded ?? 0), 0) / allEntries.length) : 0;
     
     let dayStreak = 0;
     const check = new Date(puzzleDate + "T00:00:00");
@@ -464,7 +477,7 @@ function loadHistoryAndStats(storageKey, puzzleDate) {
 }
 
 // ── StreakDots Subcomponent ───────────────────────────────────────────────────
-function StreakDots({ history, puzzleDate, gameOver, currentSolved }) {
+function StreakDots({ history, puzzleDate, gameOver, currentXP, currentSolved }) {
   const today = new Date();
   const dots = [];
   
@@ -479,13 +492,9 @@ function StreakDots({ history, puzzleDate, gameOver, currentSolved }) {
     if (isToday) {
       if (gameOver) {
         const entry = history[checkKey];
-        if (entry) {
-          cls = entry.score > 0 ? 'win' : 'miss';
-          label = entry.score ? '✓' : '✗';
-        } else {
-          cls = currentSolved ? 'win' : 'miss';
-          label = currentSolved ? '✓' : '✗';
-        }
+        const earned = entry ? (entry.xpEarned ?? entry.xpAwarded ?? 0) : currentXP;
+        cls = earned > 0 ? 'win' : 'miss';
+        label = String(earned);
       } else {
         cls = 'today-pending';
         label = null;
@@ -493,11 +502,12 @@ function StreakDots({ history, puzzleDate, gameOver, currentSolved }) {
     } else {
       const entry = history[checkKey];
       if (entry) {
-        cls = entry.score > 0 ? 'win' : 'miss';
-        label = entry.score ? '✓' : '✗';
+        const earned = entry.xpEarned ?? entry.xpAwarded ?? 0;
+        cls = earned > 0 ? 'win' : 'miss';
+        label = String(earned);
       } else {
         cls = 'miss';
-        label = '0';
+        label = '—';
       }
     }
     dots.push({ cls, label });
@@ -538,6 +548,8 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const [showModal, setShowModal]       = useState(false);
   const [xpAwarded, setXpAwarded]       = useState(0);
   const [revealed, setRevealed]         = useState({});
+  const [unlockedHints, setUnlockedHints] = useState({});
+  const [isAdLoading, setIsAdLoading]   = useState(false);
 
   useEffect(() => { injectFonts(); }, []);
 
@@ -560,21 +572,72 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         setGameOver(s.gameOver ?? false);
         setRevealed(s.revealed ?? {});
         setXpAwarded(s.xpAwarded ?? 0);
+        setUnlockedHints(s.unlockedHints ?? {});
       } catch {}
     }
   }, [stateKey]);
 
   function persist(updates) {
-    localStorage.setItem(stateKey, JSON.stringify(updates));
-    if (updates.gameOver) {
+    const fullState = {
+      currentIdx: updates.currentIdx ?? currentIdx,
+      xpEarned: updates.xpEarned ?? xpEarned,
+      streak: updates.streak ?? streak,
+      correctCount: updates.correctCount ?? correctCount,
+      gameOver: updates.gameOver ?? gameOver,
+      revealed: updates.revealed ?? revealed,
+      xpAwarded: updates.xpAwarded ?? xpAwarded,
+      unlockedHints: updates.unlockedHints ?? unlockedHints,
+    };
+    localStorage.setItem(stateKey, JSON.stringify(fullState));
+    if (fullState.gameOver) {
       const hist = JSON.parse(localStorage.getItem(storageKey) || "{}");
-      hist[puzzleDate] = { date: puzzleDate, completed: true, xpEarned: updates.xpEarned, xpAwarded: updates.xpAwarded };
+      hist[puzzleDate] = { 
+        date: puzzleDate, 
+        completed: true, 
+        xpEarned: fullState.xpEarned, 
+        xpAwarded: fullState.xpAwarded,
+        score: fullState.correctCount
+      };
       localStorage.setItem(storageKey, JSON.stringify(hist));
       setHistoryAndStats(loadHistoryAndStats(storageKey, puzzleDate));
     }
   }
 
   const currentPlayer = puzzlePlayers[currentIdx];
+
+  function triggerRewardedAdForHint() {
+    setIsAdLoading(true);
+    adBreak({
+      type: "reward",
+      name: `transfer-trail-hint-p${currentIdx}`,
+      beforeAd: () => {
+        setIsAdLoading(true);
+      },
+      afterAd: () => {
+        setIsAdLoading(false);
+      },
+      adDismissed: () => {
+        console.log("Ad dismissed. Hint not unlocked.");
+      },
+      adViewed: () => {
+        const updated = { ...unlockedHints, [currentIdx]: true };
+        setUnlockedHints(updated);
+        persist({
+          currentIdx,
+          xpEarned,
+          streak,
+          correctCount,
+          gameOver,
+          revealed,
+          xpAwarded,
+          unlockedHints: updated,
+        });
+      },
+      adBreakDone: () => {
+        setIsAdLoading(false);
+      }
+    });
+  }
 
   async function endGame(finalXpVal) {
     let xp = 0;
@@ -932,26 +995,58 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                     {MAX_ATTEMPTS - attempts} attempt{MAX_ATTEMPTS - attempts !== 1 ? "s" : ""} remaining
                   </div>
                 )}
+
+                {/* Hint Section */}
+                {!gameOver && currentPlayer && (
+                  <div style={{ marginTop: 20, width: "100%", maxWidth: 400, display: "flex", justifyContent: "center" }}>
+                    {unlockedHints[currentIdx] ? (
+                      <div style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        background: "rgba(247,195,68,0.08)",
+                        border: `1px solid ${T.gold}`,
+                        color: T.gold,
+                        fontSize: "0.85rem",
+                        textAlign: "center",
+                        fontWeight: 700,
+                        animation: "ttFadeUp 0.3s ease"
+                      }}>
+                        💡 HINT: {currentPlayer.flag} {currentPlayer.country || currentPlayer.nationality} · {currentPlayer.position}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={triggerRewardedAdForHint}
+                        disabled={isAdLoading}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: 12,
+                          background: "rgba(255,255,255,0.03)",
+                          border: `1px dashed ${T.border2}`,
+                          color: T.muted,
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          cursor: isAdLoading ? "default" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          transition: "all 0.2s"
+                        }}
+                        onMouseEnter={e => { if(!isAdLoading) { e.currentTarget.style.background = "rgba(26,111,255,0.08)"; e.currentTarget.style.borderColor = T.royal; e.currentTarget.style.color = "#fff"; } }}
+                        onMouseLeave={e => { if(!isAdLoading) { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = T.border2; e.currentTarget.style.color = T.muted; } }}
+                      >
+                        {isAdLoading ? "⏳ Loading Ad..." : "📺 Watch Ad for Hint"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Controls */}
             <div className="tt-controls" style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
-              <button
-                className="tt-control-btn"
-                onClick={skipPlayer}
-                style={{
-                  background:"rgba(247,195,68,0.1)",color:T.gold,
-                  border:"1px solid rgba(247,195,68,0.28)",borderRadius:10,
-                  padding:"12px 26px",fontFamily:"'DM Sans',sans-serif",
-                  fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
-                  transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-                  minWidth:140,
-                }}
-                onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,195,68,0.2)";e.currentTarget.style.transform="translateY(-2px)"}}
-                onMouseLeave={e=>{e.currentTarget.style.background="rgba(247,195,68,0.1)";e.currentTarget.style.transform="none"}}
-              >⏭ Skip Player</button>
-
               <button
                 className="tt-control-btn"
                 onClick={() => setShowModal(true)}
@@ -987,6 +1082,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 history={historyAndStats.history} 
                 puzzleDate={puzzleDate} 
                 gameOver={gameOver} 
+                currentXP={xpEarned}
                 currentSolved={correctCount > 0} 
               />
               <div className="tt-streak-legend">
@@ -1141,11 +1237,11 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         .tt-dot-sample.today { background: rgba(26,111,255,.14); border: 1px solid #1a6fff; }
         
         .tt-stats-grid {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+          flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
         }
         .tt-stat-item {
           background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-          padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+          padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: border-color .2s, background .2s;
         }
         .tt-stat-item:hover {
           border-color: rgba(26,111,255,.22); background: rgba(26,111,255,.03);

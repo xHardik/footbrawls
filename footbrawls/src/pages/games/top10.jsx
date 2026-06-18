@@ -9,6 +9,7 @@ import { awardXP } from '../../lib/xpEngine.js';
 import { TOP10_QUESTIONS } from '../../lib/questions.js';
 import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto, useClubWikiLogo } from '../../lib/wikiAssets.jsx';
+import { getActivePuzzleDate, getDailySeed } from '../../lib/dailySeed.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATS_KEY   = 'footbrawls_top10_stats';
@@ -46,8 +47,7 @@ function loadHistory() {
   catch { return {}; }
 }
 
-function saveStats(correctCount) {
-  const today = new Date().toISOString().split('T')[0];
+function saveStats(correctCount, today) {
   try {
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
     history[today] = { correct: correctCount };
@@ -188,7 +188,7 @@ body{font-family:'DM Sans',sans-serif}
 .t10-nav-btn:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); }
 
 /* MAIN */
-.t10-main { max-width:580px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
+.t10-main { width: 84%; max-width:980px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
 
 /* START SCREEN */
 .t10-start { text-align:left; padding:16px 8px; animation:fadeUp .5s ease both; }
@@ -411,7 +411,7 @@ body{font-family:'DM Sans',sans-serif}
   flex: 1; height: 1px; background: linear-gradient(to right, rgba(236,72,153,0.18), transparent);
 }
 .t10-dashboard-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  display: grid; grid-template-columns: 1fr; gap: 16px;
 }
 .t10-dash-card {
   background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,0.08);
@@ -479,7 +479,7 @@ body{font-family:'DM Sans',sans-serif}
 /* RESPONSIVE */
 @media(max-width:700px){
   .t10-nav { padding:0 14px; height:54px; }
-  .t10-main { padding:16px 12px 56px; }
+  .t10-main { width: 100%; padding:16px 12px 56px; }
   .t10-start-title { font-size:2.1rem; }
   .t10-result-breakdown { grid-template-columns: 1fr 1fr; }
   .t10-result-card { padding:28px 16px; }
@@ -494,7 +494,6 @@ export default function Top10Guess() {
 
   // States
   const [phase, setPhase]                 = useState('start'); // 'start' | 'game' | 'result'
-  const [activeQuestion, setActiveQuestion] = useState(null);
   const [revealed, setRevealed]           = useState(Array(10).fill(false));
   const [lives, setLives]                 = useState(3);
   const [query, setQuery]                 = useState("");
@@ -511,9 +510,50 @@ export default function Top10Guess() {
 
   const inputRef = useRef(null);
 
-  const todayObj = new Date();
-  const puzzleDate = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
+  const puzzleDate = getActivePuzzleDate();
+
+  const activeQuestion = useMemo(() => {
+    const seed = getDailySeed(puzzleDate);
+    const offset = 199;
+    const idx = (seed + offset) % TOP10_QUESTIONS.length;
+    return TOP10_QUESTIONS[idx];
+  }, [puzzleDate]);
+
   const isClubQuestion = activeQuestion?.question.toLowerCase().includes('club');
+
+  function persist(newRevealed, newLives, newWrongGuesses, newPhase, newXpAwarded = null) {
+    const key = `top10_${puzzleDate}_state`;
+    localStorage.setItem(key, JSON.stringify({
+      revealed: newRevealed,
+      lives: newLives,
+      wrongGuesses: newWrongGuesses,
+      phase: newPhase,
+      xpAwarded: newXpAwarded !== null ? newXpAwarded : xpAwarded,
+      hasWatchedAd: hasWatchedAd
+    }));
+  }
+
+  // Load saved state or check history
+  useEffect(() => {
+    const key = `top10_${puzzleDate}_state`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      const s = JSON.parse(saved);
+      setRevealed(s.revealed || Array(10).fill(false));
+      setLives(s.lives ?? 3);
+      setWrongGuesses(s.wrongGuesses || []);
+      setXpAwarded(s.xpAwarded ?? null);
+      setHasWatchedAd(s.hasWatchedAd === true);
+      setPhase(s.phase || 'start');
+    } else {
+      const hist = loadHistory();
+      if (hist[puzzleDate]) {
+        setPhase('result');
+        setRevealed(Array(10).fill(true));
+        setLives(3);
+      }
+    }
+  }, [puzzleDate]);
 
   // Inject CSS
   useEffect(() => {
@@ -566,11 +606,6 @@ export default function Top10Guess() {
 
   // Start a new session
   function startGame() {
-    // Pick a random question from top 10 question pool
-    const idx = Math.floor(Math.random() * TOP10_QUESTIONS.length);
-    const q = TOP10_QUESTIONS[idx];
-
-    setActiveQuestion(q);
     setRevealed(Array(10).fill(false));
     setLives(3);
     setQuery("");
@@ -580,6 +615,7 @@ export default function Top10Guess() {
     setHasWatchedAd(false);
     setShowAdOverlay(false);
     setPhase('game');
+    persist(Array(10).fill(false), 3, [], 'game', null);
 
     setTimeout(() => inputRef.current?.focus(), 100);
   }
@@ -609,6 +645,7 @@ export default function Top10Guess() {
         setRevealed(newRevealed);
         setFeedback({ text: `✓ Correct! "${activeQuestion.answers[foundIdx].name}" is on the list!`, cls: 'correct' });
         setQuery("");
+        persist(newRevealed, lives, wrongGuesses, 'game');
 
         // Check if won (all 10 revealed)
         if (newRevealed.every(Boolean)) {
@@ -626,6 +663,7 @@ export default function Top10Guess() {
       setLives(newLives);
       setFeedback({ text: `✗ Incorrect! "${guessStr}" is not on the list. -1 Life`, cls: 'wrong' });
       setQuery("");
+      persist(revealed, newLives, newWrong, 'game');
 
       if (newLives <= 0) {
         if (!hasWatchedAd) {
@@ -648,6 +686,14 @@ export default function Top10Guess() {
         setLives(1);
         setHasWatchedAd(true);
         setFeedback({ text: "📺 Ad viewed! +1 Extra Life restored. Keep guessing!", cls: "correct" });
+        localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
+          revealed: revealed,
+          lives: 1,
+          wrongGuesses: wrongGuesses,
+          phase: 'game',
+          xpAwarded: xpAwarded,
+          hasWatchedAd: true
+        }));
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     });
@@ -656,7 +702,7 @@ export default function Top10Guess() {
   async function endGame(finalRevealed, finalLives) {
     setPhase('result');
     const correctCount = finalRevealed.filter(Boolean).length;
-    const { stats: newStats, history: newHistory } = saveStats(correctCount);
+    const { stats: newStats, history: newHistory } = saveStats(correctCount, puzzleDate);
     setStats(newStats);
     setHistory(newHistory);
 
@@ -672,6 +718,14 @@ export default function Top10Guess() {
       }
     }
     setXpAwarded(awarded);
+    localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
+      revealed: finalRevealed,
+      lives: finalLives,
+      wrongGuesses: wrongGuesses,
+      phase: 'result',
+      xpAwarded: awarded,
+      hasWatchedAd: hasWatchedAd
+    }));
   }
 
   function handleShare() {
@@ -759,20 +813,6 @@ export default function Top10Guess() {
                 Type your guesses and reveal the board. You only have 3 lives!
               </div>
               <button className="t10-start-cta" onClick={startGame}>Start Guessing ⚡</button>
-
-              <div className="t10-start-stats">
-                {[
-                  { val: stats.played || '—', lbl: 'Games' },
-                  { val: stats.bestScore != null ? `${stats.bestScore}/10` : '—', lbl: 'Best Score' },
-                  { val: stats.avgScore ? `${stats.avgScore}` : '—', lbl: 'Avg Score' },
-                  { val: stats.streak || '—', lbl: 'Streak' },
-                ].map(s => (
-                  <div className="t10-start-stat" key={s.lbl}>
-                    <div className="t10-start-stat-val">{s.val}</div>
-                    <div className="t10-start-stat-lbl">{s.lbl}</div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
@@ -920,8 +960,7 @@ export default function Top10Guess() {
                   </div>
 
                   <div className="t10-result-actions">
-                    <button className="t10-btn primary" onClick={() => setPhase('start')}>Play Again ⚡</button>
-                    <button className="t10-btn secondary" onClick={handleShare}>Share result 📤</button>
+                    <button className="t10-btn primary" onClick={handleShare} style={{ flex: 1 }}>Share result 📤</button>
                   </div>
                 </div>
 
@@ -973,30 +1012,6 @@ export default function Top10Guess() {
                   <span><span className="t10-dot-sample played" />Today</span>
                 </div>
               </div>
-              <div className="t10-dash-card">
-                <div className="t10-dash-card-hdr">
-                  <span className="t10-dash-icon">📊</span>
-                  <span className="t10-dash-label">Your Stats</span>
-                </div>
-                <div className="t10-stats-grid">
-                  <div className="t10-stat-item">
-                    <div className="t10-stat-value">{stats.played || '—'}</div>
-                    <div className="t10-stat-name">Played</div>
-                  </div>
-                  <div className="t10-stat-item">
-                    <div className="t10-stat-value">{stats.won || '—'}</div>
-                    <div className="t10-stat-name">6+ Score</div>
-                  </div>
-                  <div className="t10-stat-item">
-                    <div className="t10-stat-value">{stats.bestScore != null ? `${stats.bestScore}/10` : '—'}</div>
-                    <div className="t10-stat-name">Best Score</div>
-                  </div>
-                  <div className="t10-stat-item">
-                    <div className="t10-stat-value">{stats.streak || '—'}</div>
-                    <div className="t10-stat-name">Streak</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -1008,12 +1023,11 @@ export default function Top10Guess() {
 
 // ─── Streak Dots ──────────────────────────────────────────────────────────────
 function StreakDots({ history, puzzleDate, phase }) {
-  const today = new Date();
   const dots  = [];
+  const base = new Date(puzzleDate + "T00:00:00Z");
   for (let i = 29; i >= 0; i--) {
-    const d   = new Date(today);
-    d.setDate(today.getDate() - i);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const d   = new Date(base.getTime() - i * 24 * 60 * 60 * 1000);
+    const key = d.toISOString().split('T')[0];
     const isToday = key === puzzleDate;
     let cls = '';
     if (isToday) {

@@ -15,19 +15,13 @@ const DAILY_KEY   = 'footbrawls_dribble';
 function getTodayKey() { return new Date().toISOString().split("T")[0]; }
 
 function loadStats() {
-  try {
-    return JSON.parse(localStorage.getItem(STATS_KEY)) || { played: 0, best: 0, avg: 0, streak: 0 };
-  } catch {
-    return { played: 0, best: 0, avg: 0, streak: 0 };
-  }
+  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { played: 0, best: 0, avg: 0, streak: 0 }; }
+  catch { return { played: 0, best: 0, avg: 0, streak: 0 }; }
 }
 
 function loadHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {};
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || {}; }
+  catch { return {}; }
 }
 
 function rand(s, n) {
@@ -41,14 +35,18 @@ function simBot(seed, who) {
   return Math.min(ROUNDS, w);
 }
 
+// ── FIX: always pick two ADJACENT zones so far-right never wraps to far-left ──
 function getGKZones(round) {
-  const z1 = Math.floor(rand(SEED + round * 17, 2) * 6);
-  let z2 = Math.floor(rand(SEED + round * 17, 3) * 6);
-  if (z2 === z1) z2 = (z1 + 1) % 6;
+  // Pick a start index 0–4 so the pair [z, z+1] is always adjacent, never wraps
+  const z1 = Math.floor(rand(SEED + round * 17, 2) * 5); // 0-4
+  const z2 = z1 + 1;                                      // always z1+1, max = 5
   return [z1, z2];
 }
 
-function zoneScreenX(i) { return 217 + i * 23 + 11; }
+// Zone X positions inside the goal (6 zones across 138 px starting at 211)
+// Each zone is 23 px wide; centre = 211 + i*23 + 11
+function zoneScreenX(i) { return 211 + i * 23 + 11; }
+function zoneScreenY()  { return 18; } // mid-height of goal bar
 
 const botScores = { buddy: simBot(SEED, 'buddy'), rival: simBot(SEED, 'rival') };
 
@@ -56,7 +54,7 @@ function initState() {
   return {
     phase: 'dribble',
     round: 0,
-    results: [], // Array of { dribbleWon: boolean, goal: boolean }
+    results: [],
     aiDefPick: null,
     playerPick: null,
     zonePick: null,
@@ -71,63 +69,110 @@ function initState() {
     gkX: 280, gkY: 42,
     gkDiveX: 280, gkDiveY: 42,
     gkDiving: false,
+    gkDiveDir: 0, // -1 left, 0 center, +1 right — for arm draw
   };
 }
 
-// ─── Canvas draw helpers (pure functions, take ctx + state) ────────────────
+// ─── Canvas draw helpers ────────────────────────────────────────────────────
 
 function drawField(ctx) {
-  ctx.canvas.width = 560; ctx.canvas.height = 320;
+  const W = 560, H = 320;
+  ctx.canvas.width = W; ctx.canvas.height = H;
+  // Striped grass
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i % 2 === 0 ? '#4a9e4a' : '#459645';
-    ctx.fillRect(i * 94, 0, 94, 320);
+    ctx.fillRect(i * 94, 0, 94, H);
   }
+  // Pitch boundary
   ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
   ctx.strokeRect(150, 10, 260, 300);
+  // Goal box fill
   ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fillRect(210, 10, 140, 10);
   ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2;
   ctx.strokeRect(210, 10, 140, 10);
+  // Goal posts
   ctx.fillStyle = '#fff';
   ctx.fillRect(208, 10, 4, 18); ctx.fillRect(348, 10, 4, 18);
   ctx.fillRect(210, 10, 140, 3);
+  // Centre arc
   ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(280, 320, 70, Math.PI, 0); ctx.stroke();
+  // Halfway line
   ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.moveTo(0, 210); ctx.lineTo(560, 210); ctx.stroke();
 }
 
 function drawGoalZones(ctx, st) {
+  const revealed = st.phase === 'shot_result';
   for (let i = 0; i < 6; i++) {
-    const x = 217 + i * 23;
+    const x = 211 + i * 23;
     const gkBlocked = st.gkZones.includes(i);
-    const reveal = st.phase === 'shot_result';
-    ctx.fillStyle = reveal && gkBlocked
-      ? 'rgba(232,64,64,0.45)'
-      : st.zonePick === i ? 'rgba(61,214,140,0.45)' : 'rgba(255,255,255,0.1)';
-    ctx.fillRect(x, 10, 22, 18);
-    ctx.strokeStyle = reveal && gkBlocked ? '#E84040' : st.zonePick === i ? '#3DD68C' : 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = st.zonePick === i ? 1.5 : 0.5;
-    ctx.strokeRect(x, 10, 22, 18);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    const isChosen  = st.zonePick === i;
+
+    let bg, stroke, lw;
+    if (revealed && gkBlocked && isChosen) {
+      // Player chose a blocked zone
+      bg = 'rgba(232,64,64,0.55)'; stroke = '#E84040'; lw = 2;
+    } else if (revealed && gkBlocked) {
+      bg = 'rgba(232,64,64,0.38)'; stroke = '#E84040'; lw = 1.5;
+    } else if (isChosen) {
+      bg = 'rgba(61,214,140,0.45)'; stroke = '#3DD68C'; lw = 2;
+    } else {
+      bg = 'rgba(255,255,255,0.08)'; stroke = 'rgba(255,255,255,0.25)'; lw = 0.5;
+    }
+
+    ctx.fillStyle = bg; ctx.fillRect(x, 10, 22, 18);
+    ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.strokeRect(x, 10, 22, 18);
+
+    // Zone label
+    ctx.fillStyle = revealed && gkBlocked ? '#ffaaaa' : isChosen ? '#3DD68C' : 'rgba(255,255,255,0.75)';
     ctx.font = '7px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(ZONE_SHORT[i], x + 11, 19);
   }
 }
 
+// ── FIX: draw GK covering BOTH blocked zones with arms extending to each ──
 function drawGK(ctx, st) {
-  const x = st.gkDiving ? st.gkDiveX : st.gkX;
-  const y = st.gkDiving ? st.gkDiveY : st.gkY;
-  ctx.fillStyle = '#ff9f1c';
-  ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = 'white'; ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('GK', x, y - 3);
   if (st.gkDiving) {
-    ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.lineTo(x - 34, y - 8); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + 16, y); ctx.lineTo(x + 34, y - 8); ctx.stroke();
+    // GK body sits between the two blocked zone centres
+    const x1 = zoneScreenX(st.gkZones[0]);
+    const x2 = zoneScreenX(st.gkZones[1]);
+    const midX = (x1 + x2) / 2;
+    const bodyY = st.gkDiveY;
+
+    // Draw arms reaching to each blocked zone
+    ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(midX, bodyY); ctx.lineTo(x1, bodyY - 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(midX, bodyY); ctx.lineTo(x2, bodyY - 4); ctx.stroke();
+
+    // Body circle
+    ctx.fillStyle = '#ff9f1c';
+    ctx.beginPath(); ctx.arc(midX, bodyY, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(midX, bodyY, 13, 0, Math.PI * 2); ctx.stroke();
+
+    // Gloves at zone endpoints
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x1, bodyY - 4, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x2, bodyY - 4, 5, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#1a1a2e'; ctx.font = 'bold 7px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('GK', midX, bodyY);
+  } else {
+    // Idle — centred in goal
+    const x = st.gkX, y = st.gkY;
+    ctx.fillStyle = '#ff9f1c';
+    ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'white'; ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('GK', x, y - 2);
+    // Idle arms out
+    ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x - 28, y - 5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 15, y); ctx.lineTo(x + 28, y - 5); ctx.stroke();
   }
 }
 
@@ -183,47 +228,34 @@ function drawScene(ctx, st) {
   drawBall(ctx, st.ballX, st.ballY);
 }
 
-// ─── StreakDots helper ────────────────
-
+// ─── StreakDots ─────────────────────────────────────────────────────────────
 function StreakDots({ history, today }) {
   const dots = [];
   const start = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
-
   for (let i = 0; i < 30; i++) {
     const day = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
     const key = day.toISOString().split('T')[0];
     const entry = history[key];
     const isToday = key === today;
-
-    let cls = 'dot-empty';
-    let label = 'No attempt';
-    let xp = 0;
-
+    let cls = 'dot-empty', label = 'No attempt', xp = 0;
     if (entry) {
       if (entry.completed) {
         cls = 'dot-won';
         xp = entry.xpAwarded ?? entry.xp ?? 0;
         label = `Scored: ${entry.score ?? entry.goals ?? 0}/5 (${xp} XP)`;
       } else {
-        cls = 'dot-miss';
-        label = 'Missed attempt';
+        cls = 'dot-miss'; label = 'Missed attempt';
       }
     }
-
     dots.push(
-      <div
-        key={key}
-        className={`db-dot ${cls} ${isToday ? 'dot-today' : ''}`}
-        title={`${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${label}`}
-      />
+      <div key={key} className={`db-dot ${cls} ${isToday ? 'dot-today' : ''}`}
+        title={`${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${label}`} />
     );
   }
-
   return <div className="db-streak-dots">{dots}</div>;
 }
 
-// ─── Main Component ────────────────
-
+// ─── Main Component ─────────────────────────────────────────────────────────
 export default function DribbleGauntlet() {
   const navigate = useNavigate();
   const user = getUser();
@@ -231,7 +263,7 @@ export default function DribbleGauntlet() {
   const stRef = useRef(initState());
   const rafRef = useRef(null);
   const [, forceRender] = useState(0);
-  
+
   const [alreadyPlayed, setAlreadyPlayed] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [xpAwarded, setXpAwarded] = useState(null);
@@ -241,7 +273,7 @@ export default function DribbleGauntlet() {
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [userXP, setUserXP] = useState(0);
   const [floatingXP, setFloatingXP] = useState(null);
-  
+
   const today = getTodayKey();
 
   const repaint = useCallback(() => {
@@ -255,11 +287,8 @@ export default function DribbleGauntlet() {
     forceRender(n => n + 1);
   }, [repaint]);
 
-  useEffect(() => {
-    repaint();
-  }, [repaint]);
+  useEffect(() => { repaint(); }, [repaint]);
 
-  // Load daily completed save and stats on mount
   useEffect(() => {
     if (!document.getElementById('db-css-injected')) {
       const s = document.createElement('style');
@@ -267,22 +296,15 @@ export default function DribbleGauntlet() {
       s.textContent = CSS;
       document.head.appendChild(s);
     }
-    
     const u = getUser();
-    if (u) {
-      setUserXP(u.totalXP || 0);
-    }
-    
+    if (u) setUserXP(u.totalXP || 0);
     const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
     if (dailySave[today] || history[today]) {
       setAlreadyPlayed(true);
       const entry = dailySave[today] || history[today];
       setXpAwarded(entry.xpAwarded ?? entry.xp ?? 0);
-      
-      // Setup state for results summary display
       const s = stRef.current;
       s.phase = 'summary';
-      // Reconstruct mock round entries matching their scored goals count
       const wins = entry.score ?? entry.goals ?? 0;
       s.results = Array(wins).fill({ dribbleWon: true, goal: true })
         .concat(Array(Math.max(0, 5 - wins)).fill({ dribbleWon: false, goal: false }));
@@ -290,7 +312,6 @@ export default function DribbleGauntlet() {
     }
   }, [history, today, repaint]);
 
-  // Google AdBreak helper
   const adBreak = (options) => {
     if (window.adBreak) {
       window.adBreak(options);
@@ -313,32 +334,19 @@ export default function DribbleGauntlet() {
   const triggerRewardedAdToRetakeRound = () => {
     setIsAdLoading(true);
     adBreak({
-      type: 'reward',
-      name: 'dribble-gauntlet-retake',
+      type: 'reward', name: 'dribble-gauntlet-retake',
       beforeAd: () => setIsAdLoading(true),
-      afterAd: () => setIsAdLoading(false),
+      afterAd:  () => setIsAdLoading(false),
       adDismissed: () => setIsAdLoading(false),
       adViewed: () => {
         const s = stRef.current;
-        if (s.results.length > 0) {
-          s.results.pop();
-        }
-        
+        if (s.results.length > 0) s.results.pop();
         Object.assign(s, {
-          phase: 'dribble',
-          aiDefPick: null,
-          playerPick: null,
-          zonePick: null,
-          feedback: null,
-          tackled: false,
-          shotPhase: false,
-          playerX: 280, playerY: 255,
-          ballX: 280, ballY: 265,
-          gkX: 280, gkY: 42,
-          gkDiveX: 280, gkDiveY: 42,
-          gkDiving: false,
+          phase: 'dribble', aiDefPick: null, playerPick: null,
+          zonePick: null, feedback: null, tackled: false, shotPhase: false,
+          playerX: 280, playerY: 255, ballX: 280, ballY: 265,
+          gkX: 280, gkY: 42, gkDiveX: 280, gkDiveY: 42, gkDiving: false,
         });
-        
         setHasWatchedAd(true);
         rerender();
       },
@@ -376,35 +384,29 @@ export default function DribbleGauntlet() {
     rafRef.current = requestAnimationFrame(step);
   };
 
-  const animateGKDive = (tx, ty, dur, cb) => {
+  // ── FIX: GK dives to midpoint between the TWO blocked zones ──
+  const animateGKDive = (dur, cb) => {
     const s = stRef.current;
+    const x1 = zoneScreenX(s.gkZones[0]);
+    const x2 = zoneScreenX(s.gkZones[1]);
+    const targetX = (x1 + x2) / 2;
+    const targetY = 20; // dive up to bar level
     const sx = s.gkX, sy = s.gkY;
     s.gkDiving = true;
     const start = performance.now();
     function step(now) {
       const p = Math.min(1, (now - start) / dur);
       const e = 1 - Math.pow(1 - p, 2);
-      s.gkDiveX = sx + (tx - sx) * e; s.gkDiveY = sy + (ty - sy) * e;
+      s.gkDiveX = sx + (targetX - sx) * e;
+      s.gkDiveY = sy + (targetY - sy) * e;
       repaint();
       rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
     }
     rafRef.current = requestAnimationFrame(step);
   };
 
-  // Gameplay actions
-  const pickDir = (d) => {
-    const s = stRef.current;
-    if (s.feedback || s.tackled) return;
-    s.playerPick = d;
-    rerender();
-  };
-
-  const pickZone = (z) => {
-    const s = stRef.current;
-    if (s.phase === 'shot_result') return;
-    s.zonePick = z;
-    rerender();
-  };
+  const pickDir  = (d) => { const s = stRef.current; if (s.feedback || s.tackled) return; s.playerPick = d; rerender(); };
+  const pickZone = (z) => { const s = stRef.current; if (s.phase === 'shot_result') return; s.zonePick = z; rerender(); };
 
   const dribble = () => {
     const s = stRef.current;
@@ -415,22 +417,15 @@ export default function DribbleGauntlet() {
     const tx = [140, 280, 420][s.playerPick];
 
     if (tackled) {
-      s.feedback = 'tackled';
-      s.tackled = true;
-      rerender();
+      s.feedback = 'tackled'; s.tackled = true; rerender();
       animateTo(tx, s.defY[s.playerPick] + 5, 380, () => {
-        s.results = [...s.results, { dribbleWon: false, goal: false }];
-        rerender();
+        s.results = [...s.results, { dribbleWon: false, goal: false }]; rerender();
       });
     } else {
-      s.feedback = 'beaten';
-      s.defBeaten[s.playerPick] = true;
+      s.feedback = 'beaten'; s.defBeaten[s.playerPick] = true;
       animateTo(tx, s.defY[s.playerPick] - 40, 380, () => {
         setTimeout(() => {
-          s.feedback = null;
-          s.shotPhase = true;
-          s.playerPick = null;
-          rerender();
+          s.feedback = null; s.shotPhase = true; s.playerPick = null; rerender();
         }, 250);
       });
     }
@@ -440,10 +435,10 @@ export default function DribbleGauntlet() {
     const s = stRef.current;
     if (s.zonePick === null) return;
     const gkBlocked = s.gkZones.includes(s.zonePick);
-    const diveTargetX = (zoneScreenX(s.gkZones[0]) + zoneScreenX(s.gkZones[1])) / 2;
-    animateGKDive(diveTargetX, 38, 350, () => {});
+    // GK dives to cover its two adjacent zones
+    animateGKDive(340, () => {});
     setTimeout(() => {
-      animateBallOnly(zoneScreenX(s.zonePick), 18, 420, () => {
+      animateBallOnly(zoneScreenX(s.zonePick), 15, 420, () => {
         s.phase = 'shot_result';
         s.feedback = gkBlocked ? 'saved' : 'goal';
         s.results = [...s.results, { dribbleWon: true, goal: !gkBlocked }];
@@ -453,77 +448,46 @@ export default function DribbleGauntlet() {
   };
 
   const saveStatsAndXP = async (resultsArray) => {
-    // Calculate total XP based on split: 2 XP per successful dribble, 3 XP per goal
-    let calculatedXP = 0;
-    let wins = 0;
+    let calculatedXP = 0, wins = 0;
     resultsArray.forEach(r => {
       if (r.dribbleWon) calculatedXP += 2;
-      if (r.goal) {
-        calculatedXP += 3;
-        wins++;
-      }
+      if (r.goal) { calculatedXP += 3; wins++; }
     });
-
     let earnedXP = 0;
     try {
       if (user?.userId) {
         const res = await awardXP(user.userId, 'dribble_correct', { rawXP: calculatedXP });
         earnedXP = res?.xpAwarded ?? calculatedXP;
-      } else {
-        earnedXP = calculatedXP;
-      }
-    } catch (err) {
-      console.warn("Failed to award XP:", err);
-      earnedXP = calculatedXP;
-    }
-
+      } else { earnedXP = calculatedXP; }
+    } catch { earnedXP = calculatedXP; }
     setXpAwarded(earnedXP);
-
-    // Save daily completion
     const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
     dailySave[today] = { completed: true, xpAwarded: earnedXP, score: wins };
     localStorage.setItem(DAILY_KEY, JSON.stringify(dailySave));
-
-    // Update history & stats
     const hist = loadHistory();
     hist[today] = { completed: true, xpAwarded: earnedXP, score: wins };
     const allEntries = Object.values(hist);
-
     const newStats = {
       played: allEntries.length,
       best:   Math.max(...allEntries.map(e => e.score ?? 0)),
       avg:    Math.round((allEntries.reduce((s, e) => s + (e.score ?? 0), 0) / allEntries.length) * 10) / 10,
       streak: 0,
     };
-
-    // Calculate streak
     const check = new Date(today + "T00:00:00");
     while (true) {
       const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
-      if (hist[k]) {
-        newStats.streak++;
-        check.setDate(check.getDate() - 1);
-      } else {
-        break;
-      }
+      if (hist[k]) { newStats.streak++; check.setDate(check.getDate() - 1); } else break;
     }
-
     localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
     localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-
-    setHistory(hist);
-    setStats(newStats);
+    setHistory(hist); setStats(newStats);
   };
 
   const nextRound = () => {
     const s = stRef.current;
     if (s.results.length >= ROUNDS) {
-      s.phase = 'summary';
-      rerender();
-      
-      if (!alreadyPlayed) {
-        saveStatsAndXP(s.results);
-      }
+      s.phase = 'summary'; rerender();
+      if (!alreadyPlayed) saveStatsAndXP(s.results);
       return;
     }
     s.round++;
@@ -538,63 +502,43 @@ export default function DribbleGauntlet() {
     rerender();
   };
 
-  const restart = () => {
-    stRef.current = initState();
-    setHasWatchedAd(false);
-    rerender();
-  };
+  const restart = () => { stRef.current = initState(); setHasWatchedAd(false); rerender(); };
 
   const s = stRef.current;
   const pw = s.results.filter(r => r.goal).length;
   const rv = Math.min(5, Math.max(0, 5 - pw));
   const yt = pw + botScores.buddy;
   const rt = rv + botScores.rival;
-  const w = yt > rt ? 'you' : yt < rt ? 'rival' : 'draw';
+  const w  = yt > rt ? 'you' : yt < rt ? 'rival' : 'draw';
 
   const feedbackMap = {
-    tackled: { cls: 'tackled', text: 'Tackled! Defender read your lane' },
-    beaten:  { cls: 'beaten',  text: 'Defender beaten! Select finishing zone' },
-    goal:    { cls: 'goal',    text: 'GOAL! Past the keeper (+3 XP)' },
-    saved:   { cls: 'saved',   text: 'Saved! GK diving blocked you' },
+    tackled: { cls: 'tackled', icon: '🛡️', text: 'Tackled! Defender read your lane' },
+    beaten:  { cls: 'beaten',  icon: '✅', text: 'Defender beaten! Pick your finish zone' },
+    goal:    { cls: 'goal',    icon: '⚽', text: 'GOAL! Past the keeper (+3 XP)' },
+    saved:   { cls: 'saved',   icon: '🧤', text: 'Saved! GK blocked that zone' },
   };
 
-  // Live XP calculations
-  const getLiveXPGained = (resultsArray, currentRoundState) => {
+  const getLiveXP = (results, state) => {
     let xp = 0;
-    resultsArray.forEach(r => {
-      if (r.dribbleWon) xp += 2;
-      if (r.goal) xp += 3;
-    });
-    if (currentRoundState.shotPhase || currentRoundState.phase === 'shot_result') {
-      if (currentRoundState.phase !== 'shot_result') {
-        xp += 2;
-      }
-    }
+    results.forEach(r => { if (r.dribbleWon) xp += 2; if (r.goal) xp += 3; });
+    if ((state.shotPhase || state.phase === 'shot_result') && state.phase !== 'shot_result') xp += 2;
     return xp;
   };
 
-  const liveXPGained = getLiveXPGained(s.results, s);
+  const liveXPGained = getLiveXP(s.results, s);
   const prevLiveXPRef = useRef(0);
-  
-  // Set initial ref to avoid mount trigger
-  useEffect(() => {
-    prevLiveXPRef.current = liveXPGained;
-  }, []);
-
+  useEffect(() => { prevLiveXPRef.current = liveXPGained; }, []);
   useEffect(() => {
     const diff = liveXPGained - prevLiveXPRef.current;
-    if (diff > 0) {
-      setFloatingXP({ text: `+${diff} XP`, key: Math.random() });
-    }
+    if (diff > 0) setFloatingXP({ text: `+${diff} XP`, key: Math.random() });
     prevLiveXPRef.current = liveXPGained;
   }, [liveXPGained]);
-
   useEffect(() => {
-    if (floatingXP) {
-      const timer = setTimeout(() => setFloatingXP(null), 1200);
-      return () => clearTimeout(timer);
-    }
+    if (floatingXP) { const t = setTimeout(() => setFloatingXP(null), 1200); return () => clearTimeout(t); }
   }, [floatingXP]);
+
+  // Blocked zone labels for hint text
+  const blockedHint = s.gkZones.map(i => ZONE_SHORT[i]).join(' & ');
 
   return (
     <div className="db-wrapper">
@@ -606,12 +550,21 @@ export default function DribbleGauntlet() {
         {showModal && (
           <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
             <div className="db-modal-box">
-              <h2 className="db-modal-title">⚽ Dribble Gauntlet</h2>
+              <div className="db-modal-icon">⚽</div>
+              <h2 className="db-modal-title">Dribble Gauntlet</h2>
               <ul className="db-rules-list">
-                <li><span className="db-rule-icon">🏃‍♂️</span><span><strong>Dribble Phase:</strong> Choose a lane (Left, Center, Right) to pass the defender. <strong>Beating them awards 2 XP.</strong></span></li>
-                <li><span className="db-rule-icon">🥅</span><span><strong>Goal Phase:</strong> Once beaten, pick one of the 6 goal target zones to strike. <strong>Scoring awards 3 XP.</strong></span></li>
-                <li><span className="db-rule-icon">🧤</span><span><strong>Keeper:</strong> Goalkeeper dives to cover 2 random zones. Score past them to make it a perfect attack!</span></li>
-                <li><span className="db-rule-icon">📺</span><span><strong>Retake:</strong> If you get tackled or saved, you can watch an ad once per game to retake the round.</span></li>
+                <li>
+                  <span className="db-rule-pill dribble">Dribble</span>
+                  <span>Pick a lane — Left, Center, or Right — to get past the defender. <strong>+2 XP</strong> for beating them.</span>
+                </li>
+                <li>
+                  <span className="db-rule-pill shoot">Shoot</span>
+                  <span>Choose one of 6 goal zones to strike. The GK always covers <strong>2 adjacent zones</strong>. <strong>+3 XP</strong> for a goal.</span>
+                </li>
+                <li>
+                  <span className="db-rule-pill retake">Retake</span>
+                  <span>Tackled or saved? Watch a short ad <strong>once per game</strong> to replay that round.</span>
+                </li>
               </ul>
               <button className="db-modal-close" onClick={() => setShowModal(false)}>Start Attack</button>
             </div>
@@ -621,98 +574,88 @@ export default function DribbleGauntlet() {
         {/* Nav */}
         <nav className="db-nav">
           <button className="db-logo" onClick={() => navigate('/')}>←</button>
-          <div className="db-nav-tag">
-            <span className="db-tag-dot" />
-            Dribble Gauntlet
-          </div>
+          <div className="db-nav-tag"><span className="db-tag-dot" />Dribble Gauntlet</div>
           <div className="db-nav-right">
             <button className="db-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>
         </nav>
 
-        {/* Main Content */}
+        {/* Main */}
         <div className="db-container">
-          
-          {/* Header Title with Live XP Pill */}
+
+          {/* Header */}
           <div className="db-page-header">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 16 }}>
+            <div className="db-header-row">
               <div>
                 <h1 className="db-page-title">Dribble Gauntlet</h1>
-                <p className="db-page-subtitle">Navigate past defenders, strike past goalkeeper</p>
+                <p className="db-page-subtitle">Navigate past defenders · Strike past the keeper</p>
               </div>
               <div className="db-live-xp-pill">
                 <span className="db-live-xp-icon">🏆</span>
-                <span className="db-live-xp-val">{userXP + liveXPGained}</span>
+                <span className="db-live-xp-val">{alreadyPlayed ? xpAwarded : liveXPGained}</span>
                 <span className="db-live-xp-lbl">XP</span>
-                {floatingXP && (
-                  <span key={floatingXP.key} className="db-xp-float">
-                    {floatingXP.text}
-                  </span>
-                )}
+                {floatingXP && <span key={floatingXP.key} className="db-xp-float">{floatingXP.text}</span>}
               </div>
             </div>
           </div>
 
           <div className="db-game-box">
             {s.phase === 'summary' ? (
+              /* ── SUMMARY ── */
               <div className="db-summary-card">
-                <span className="db-sum-badge">Session Done</span>
+                <span className="db-sum-badge">Session Complete</span>
                 <h2 className="db-sum-title" style={{ color: w === 'you' ? 'var(--green)' : w === 'rival' ? 'var(--accent2)' : 'var(--muted)' }}>
-                  {w === 'you' ? '🎉 Act 2 Won!' : w === 'rival' ? '💥 Act 2 Lost' : '🤝 Match Draw'}
+                  {w === 'you' ? '🎉 You Won!' : w === 'rival' ? '💥 Rivals Won' : '🤝 Draw'}
                 </h2>
-                <div className="db-sum-score">{pw} Goals Scored</div>
-                <p className="db-sum-phrase">
-                  You scored {pw} goals and beat defenders in {s.results.filter(r => r.dribbleWon).length} rounds.
-                </p>
-                
+                <div className="db-sum-score-row">
+                  <div className="db-sum-score-big">{pw}<span>/5</span></div>
+                  <div className="db-sum-score-sub">Goals Scored</div>
+                </div>
+
                 {xpAwarded !== null && (
                   <div className="db-sum-xp-badge">
-                    {xpAwarded > 0 ? `+${xpAwarded} XP Earned` : 'Daily XP limit reached'}
+                    {xpAwarded > 0 ? `+${xpAwarded} XP Earned` : 'Daily XP cap reached'}
                   </div>
                 )}
 
                 <div className="db-duo-grid">
-                  <div className="db-duo-box" style={{ borderColor: w === 'you' ? 'rgba(61,214,140,0.3)' : 'var(--border)' }}>
+                  <div className="db-duo-box" style={{ borderColor: w === 'you' ? 'rgba(61,214,140,0.35)' : 'var(--border)' }}>
                     <div className="db-duo-lbl">Your Duo</div>
                     <div className="db-duo-score" style={{ color: 'var(--green)' }}>{yt}</div>
                   </div>
-                  <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--muted)' }}>vs</div>
-                  <div className="db-duo-box" style={{ borderColor: w === 'rival' ? 'rgba(232,64,64,0.3)' : 'var(--border)' }}>
+                  <div className="db-duo-vs">vs</div>
+                  <div className="db-duo-box" style={{ borderColor: w === 'rival' ? 'rgba(232,64,64,0.35)' : 'var(--border)' }}>
                     <div className="db-duo-lbl">Rivals</div>
                     <div className="db-duo-score" style={{ color: 'var(--accent2)' }}>{rt}</div>
                   </div>
                 </div>
 
-                <div style={{ background: 'rgba(255,255,255,0.012)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', marginBottom: 20 }}>
+                <div className="db-breakdown">
                   {[
-                    { label: 'Your goals scored', val: `${pw}/${ROUNDS}`, color: 'var(--green)' },
-                    { label: 'Buddy bot goals',   val: `${botScores.buddy}/${ROUNDS}` },
-                    { label: 'Rival player goals',val: `${rv}/${ROUNDS}` },
-                    { label: 'Rival bot goals',   val: `${botScores.rival}/${ROUNDS}` },
+                    { label: 'Your goals', val: `${pw}/${ROUNDS}`, color: 'var(--green)' },
+                    { label: 'Buddy bot', val: `${botScores.buddy}/${ROUNDS}` },
+                    { label: 'Rival player', val: `${rv}/${ROUNDS}` },
+                    { label: 'Rival bot', val: `${botScores.rival}/${ROUNDS}` },
                   ].map(r => (
-                    <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.82rem', color: 'var(--muted)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div key={r.label} className="db-breakdown-row">
                       <span>{r.label}</span>
                       <span style={{ fontWeight: 700, color: r.color || '#fff' }}>{r.val}</span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <button className="db-action-btn db-btn-next" style={{ flex: 1 }} onClick={() => navigate('/')}>
-                    ← Home
-                  </button>
-                  <button className="db-action-btn db-btn-go" style={{ flex: 1.5 }} onClick={restart}>
-                    Play Again
-                  </button>
+                <div className="db-summary-actions">
+                  <button className="db-action-btn db-btn-next" onClick={() => navigate('/')}>← Home</button>
+                  <button className="db-action-btn db-btn-go" onClick={restart}>Play Again</button>
                 </div>
               </div>
             ) : (
               <>
                 {/* HUD */}
                 <div className="db-hud">
-                  <div className="db-hud-info">
+                  <div className="db-hud-left">
                     <span className="db-act-label">Act 2 · Standalone</span>
-                    <span className="db-game-title">Attack {s.round + 1} of {ROUNDS}</span>
+                    <span className="db-game-title">Attack {s.round + 1} / {ROUNDS}</span>
                   </div>
                   <div className="db-pips">
                     {Array.from({ length: ROUNDS }, (_, i) => {
@@ -728,64 +671,67 @@ export default function DribbleGauntlet() {
                   </div>
                 </div>
 
-                {/* Canvas Wrapper */}
+                {/* Canvas */}
                 <div className="db-canvas-wrapper">
                   <canvas ref={canvasRef} width={560} height={320} className="db-canvas" />
                 </div>
 
-                {/* Controls Area */}
+                {/* Controls */}
                 <div className="db-controls">
+                  {/* Feedback banner */}
                   {s.feedback && (
                     <div className={`db-feedback db-fb-${feedbackMap[s.feedback]?.cls}`}>
+                      <span className="db-fb-icon">{feedbackMap[s.feedback]?.icon}</span>
                       {feedbackMap[s.feedback]?.text}
                     </div>
                   )}
 
                   {s.tackled || s.phase === 'shot_result' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div className="db-post-round">
                       {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && (
                         <div className="db-ad-box">
-                          <p>Tackled or saved? Watch a quick ad to retake this round!</p>
-                          <button
-                            className="db-ad-go-btn"
-                            onClick={triggerRewardedAdToRetakeRound}
-                            disabled={isAdLoading}
-                          >
-                            📺 {isAdLoading ? 'Loading Ad...' : 'Retake Round'}
+                          <div className="db-ad-box-text">Watch a short ad to retake this round</div>
+                          <button className="db-ad-go-btn" onClick={triggerRewardedAdToRetakeRound} disabled={isAdLoading}>
+                            📺 {isAdLoading ? 'Loading…' : 'Retake Round'}
                           </button>
                         </div>
                       )}
-                      
                       <button className="db-action-btn db-btn-next" onClick={nextRound}>
-                        Next Attack
+                        {s.results.length >= ROUNDS ? 'See Results →' : 'Next Attack →'}
                       </button>
                     </div>
                   ) : !s.shotPhase ? (
-                    <>
-                      <div className="db-ctrl-label">Choose a lane to dribble (+2 XP)</div>
+                    /* Dribble phase */
+                    <div className="db-phase-block">
+                      <div className="db-ctrl-label">
+                        <span className="db-phase-badge dribble">Dribble</span>
+                        Choose a lane to beat the defender <span className="db-xp-hint">+2 XP</span>
+                      </div>
                       <div className="db-btn-row">
-                        {['← Left', '↑ Center', '→ Right'].map((lbl, i) => (
+                        {[{ label: '← Left', icon: '↙' }, { label: '↑ Center', icon: '↑' }, { label: '→ Right', icon: '↘' }].map((b, i) => (
                           <button
                             key={i}
                             className={`db-dir-btn ${s.playerPick === i ? 'selected' : ''}`}
                             onClick={() => pickDir(i)}
                             disabled={!!s.feedback}
                           >
-                            {lbl}
+                            <span className="db-dir-icon">{b.icon}</span>
+                            <span className="db-dir-label">{['Left', 'Center', 'Right'][i]}</span>
                           </button>
                         ))}
                       </div>
-                      <button
-                        className="db-action-btn db-btn-go"
-                        onClick={dribble}
-                        disabled={s.playerPick === null || !!s.feedback}
-                      >
+                      <button className="db-action-btn db-btn-go" onClick={dribble} disabled={s.playerPick === null || !!s.feedback}>
                         Dribble
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      <div className="db-ctrl-label">Pick Target Zone to Shoot (+3 XP)</div>
+                    /* Shot phase */
+                    <div className="db-phase-block">
+                      <div className="db-ctrl-label">
+                        <span className="db-phase-badge shoot">Shoot</span>
+                        Pick a goal zone <span className="db-xp-hint">+3 XP</span>
+                        <span className="db-gk-hint">GK covers: <strong>{blockedHint}</strong></span>
+                      </div>
                       <div className="db-finish-grid">
                         {ZONE_LABELS.map((_, i) => (
                           <button
@@ -797,27 +743,22 @@ export default function DribbleGauntlet() {
                           </button>
                         ))}
                       </div>
-                      <button
-                        className="db-action-btn db-btn-shoot"
-                        onClick={shoot}
-                        disabled={s.zonePick === null}
-                      >
+                      <button className="db-action-btn db-btn-shoot" onClick={shoot} disabled={s.zonePick === null}>
                         Shoot
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </>
             )}
           </div>
 
-          {/* Bottom section */}
+          {/* Dashboard */}
           <div className="db-bottom-section">
             <div className="db-section-div">
               <span className="db-section-label">Your Progress</span>
               <div className="db-section-line" />
             </div>
-            
             <div className="db-dash-grid">
               <div className="db-dash-card">
                 <div className="db-dash-hdr">
@@ -826,7 +767,6 @@ export default function DribbleGauntlet() {
                 </div>
                 <StreakDots history={history} today={today} />
               </div>
-              
               <div className="db-dash-card">
                 <div className="db-dash-hdr">
                   <span className="db-dash-icon">📊</span>
@@ -834,10 +774,10 @@ export default function DribbleGauntlet() {
                 </div>
                 <div className="db-stats-grid">
                   {[
-                    { val: stats.played ?? 0, name: "Played" },
-                    { val: stats.best   ?? 0, name: "Best Goals" },
-                    { val: stats.avg    ?? 0, name: "Avg Goals" },
-                    { val: stats.streak ?? 0, name: "Streak" },
+                    { val: stats.played ?? 0, name: 'Played' },
+                    { val: stats.best ?? 0,   name: 'Best Goals' },
+                    { val: stats.avg ?? 0,    name: 'Avg Goals' },
+                    { val: stats.streak ?? 0, name: 'Streak' },
                   ].map(item => (
                     <div key={item.name} className="db-stat-item">
                       <div className="db-stat-val">{item.val}</div>
@@ -855,8 +795,10 @@ export default function DribbleGauntlet() {
   );
 }
 
-// ─── Stylesheet ────────────────
+// ─── Stylesheet ─────────────────────────────────────────────────────────────
 const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;900&display=swap');
+
 .db-wrapper {
   --bg: #05070f;
   --surface: rgba(255,255,255,0.038);
@@ -867,511 +809,324 @@ const CSS = `
   --accent2: #E84040;
   --accent3: #84CC16;
   --green: #3DD68C;
-  --orange: #ffa400;
   --text: #F0F0F0;
   --muted: rgba(240,240,240,0.45);
-  --muted2: rgba(240,240,240,0.25);
   --card-radius: 16px;
 }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .db-page {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
   position: relative;
   overflow-x: hidden;
-  font-family: "Twemoji Country Flags", 'DM Sans', sans-serif;
 }
 
-.db-bg2 {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-}
+/* backgrounds */
+.db-bg2 { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .db-bg2::before {
-  content: '';
-  position: absolute; inset: 0;
+  content: ''; position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 8% -5%, rgba(132, 204, 22, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(61, 214, 140, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(132, 204, 22, 0.03) 0%, transparent 65%);
+    radial-gradient(ellipse 80% 60% at 8% -5%, rgba(132,204,22,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(61,214,140,0.06) 0%, transparent 55%);
 }
 .db-bg2::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: repeating-linear-gradient(
-    -45deg, transparent, transparent 48px,
-    rgba(255,255,255,0.008) 48px, rgba(255,255,255,0.008) 49px
-  );
+  content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(-45deg, transparent, transparent 48px, rgba(255,255,255,0.008) 48px, rgba(255,255,255,0.008) 49px);
 }
-
 .db-noise {
   position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
 
+/* nav */
 .db-nav {
   position: sticky; top: 0; z-index: 200;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 32px; height: 62px;
-  background: rgba(5, 7, 15, 0.82);
-  backdrop-filter: blur(24px) saturate(1.4);
-  border-bottom: 1px solid rgba(132, 204, 22, 0.15);
-  box-shadow: 0 4px 20px rgba(132, 204, 22, 0.15);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding: 0 24px; height: 58px;
+  background: rgba(5,7,15,0.85); backdrop-filter: blur(24px) saturate(1.4);
+  border-bottom: 1px solid rgba(132,204,22,0.15);
+  box-shadow: 0 4px 20px rgba(132,204,22,0.1);
 }
-
 .db-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem;
-  letter-spacing: 2px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px;
   background: linear-gradient(135deg, var(--accent), #a3e635);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  background-color: transparent;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  border: none; cursor: pointer; outline: none; background-color: transparent;
+  justify-self: start;
 }
-
 .db-nav-tag {
   display: flex; align-items: center; gap: 7px;
-  font-size: 0.72rem; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 2px;
-  color: var(--accent3);
-  background: rgba(132, 204, 22, 0.1);
-  border: 1px solid rgba(132, 204, 22, 0.28);
-  padding: 5px 14px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--accent3); background: rgba(132,204,22,0.1);
+  border: 1px solid rgba(132,204,22,0.28); padding: 5px 14px; border-radius: 100px;
 }
-
-.db-tag-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent3); animation: dbBlink 1.5s ease infinite;
-}
+.db-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); animation: dbBlink 1.5s ease infinite; }
 @keyframes dbBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-.db-nav-right {
-  display: flex; align-items: center; justify-content: flex-end;
-}
-
+.db-nav-right { display: flex; align-items: center; justify-content: flex-end; }
 .db-help-btn {
   background: var(--surface); border: 1px solid var(--border2); color: #fff;
-  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  padding: 7px 14px; border-radius: 10px; font-size: .78rem; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
 }
-.db-help-btn:hover {
-  background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .2);
-}
+.db-help-btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.22); }
 
+/* container */
 .db-container {
   max-width: 680px; margin: 0 auto;
   padding: 24px 16px 80px; position: relative; z-index: 10;
-  box-sizing: border-box;
 }
 
-.db-page-header {
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding-bottom: 16px;
-}
+/* header */
+.db-page-header { margin-bottom: 18px; }
+.db-header-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .db-page-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2.2rem;
-  letter-spacing: 2px;
+  font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.8rem, 5vw, 2.4rem);
+  letter-spacing: 2px; text-transform: uppercase; line-height: 1;
   background: linear-gradient(135deg, var(--accent), #a3e635);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1.1;
-  text-transform: uppercase;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.db-page-subtitle {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-top: 4px;
-}
+.db-page-subtitle { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
 
+/* xp pill */
 .db-live-xp-pill {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(132, 204, 22, 0.12);
-  border: 1px solid rgba(132, 204, 22, 0.28);
-  padding: 6px 16px;
-  border-radius: 100px;
-  box-shadow: 0 0 15px rgba(132, 204, 22, 0.1);
-  margin-bottom: 2px;
+  position: relative; display: flex; align-items: center; gap: 6px;
+  background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.28);
+  padding: 6px 16px; border-radius: 100px; white-space: nowrap; flex-shrink: 0;
 }
-.db-live-xp-icon {
-  font-size: 0.95rem;
-}
-.db-live-xp-val {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.25rem;
-  letter-spacing: 0.5px;
-  color: var(--accent);
-}
-.db-live-xp-lbl {
-  font-size: 0.65rem;
-  color: var(--muted);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
+.db-live-xp-icon { font-size: 0.9rem; }
+.db-live-xp-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 0.5px; color: var(--accent); }
+.db-live-xp-lbl { font-size: 0.62rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
 @keyframes xpFloat {
-  0% { transform: translateY(0) scale(0.8); opacity: 0; }
-  20% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+  0%   { transform: translateY(0) scale(0.8); opacity: 0; }
+  20%  { transform: translateY(-10px) scale(1.1); opacity: 1; }
   100% { transform: translateY(-30px) scale(0.9); opacity: 0; }
 }
 .db-xp-float {
-  position: absolute;
-  right: 12px;
-  color: var(--green);
-  font-weight: 900;
-  font-size: 1.05rem;
-  animation: xpFloat 1.2s forwards;
-  pointer-events: none;
-  z-index: 100;
+  position: absolute; right: 12px; color: var(--green); font-weight: 900;
+  font-size: 1rem; animation: xpFloat 1.2s forwards; pointer-events: none; z-index: 100;
 }
 
+/* game box */
 .db-game-box {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid var(--border);
-  border-radius: 20px; padding: 20px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  background: rgba(255,255,255,0.015); border: 1px solid var(--border);
+  border-radius: 20px; padding: 18px;
+  backdrop-filter: blur(8px); box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   margin-bottom: 24px;
 }
 
-.db-hud {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 16px;
-}
+/* hud */
+.db-hud { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.db-hud-left { display: flex; flex-direction: column; gap: 2px; }
+.db-act-label { font-size: 0.64rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+.db-game-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.db-pips { display: flex; gap: 5px; }
+.db-pip { width: 26px; height: 5px; border-radius: 3px; transition: background .3s; }
 
-.db-hud-info {
-  display: flex; flex-direction: column;
-}
-
-.db-act-label {
-  font-size: 0.68rem; color: var(--muted);
-  text-transform: uppercase; letter-spacing: .08em;
-  font-weight: 700; margin-bottom: 2px;
-}
-
-.db-game-title {
-  font-size: 1.15rem; font-weight: 700; color: var(--text);
-}
-
-.db-pips {
-  display: flex; gap: 6px;
-}
-.db-pip {
-  width: 24px; height: 5px; border-radius: 3px;
-  transition: background .3s;
-}
-
+/* canvas */
 .db-canvas-wrapper {
-  position: relative; border-radius: 16px; overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 15px rgba(132, 204, 22, 0.08);
-  margin-bottom: 20px;
+  position: relative; border-radius: 14px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 15px rgba(132,204,22,0.07);
+  margin-bottom: 18px;
 }
+.db-canvas { display: block; width: 100%; height: auto; }
 
-.db-canvas {
-  display: block; width: 100%; height: auto;
-}
+/* controls */
+.db-controls { display: flex; flex-direction: column; gap: 0; }
 
-.db-controls {
-  display: flex; flex-direction: column;
+.db-feedback {
+  display: flex; align-items: center; gap: 8px;
+  text-align: center; font-size: 0.82rem; font-weight: 700;
+  padding: 10px 16px; border-radius: 10px; margin-bottom: 14px;
+  text-transform: uppercase; letter-spacing: 0.5px; justify-content: center;
 }
+.db-fb-icon { font-size: 1rem; }
+.db-fb-tackled { background: rgba(232,64,64,0.1); color: #ff8080; border: 1px solid rgba(232,64,64,0.25); }
+.db-fb-beaten  { background: rgba(132,204,22,0.1); color: var(--accent); border: 1px solid rgba(132,204,22,0.22); }
+.db-fb-goal    { background: rgba(61,214,140,0.1); color: var(--green); border: 1px solid rgba(61,214,140,0.22); }
+.db-fb-saved   { background: rgba(232,64,64,0.1); color: #ff8080; border: 1px solid rgba(232,64,64,0.25); }
+
+.db-phase-block { display: flex; flex-direction: column; gap: 12px; }
 
 .db-ctrl-label {
-  font-size: 0.75rem; color: var(--muted); font-weight: 700;
-  margin-bottom: 10px; text-transform: uppercase; letter-spacing: .07em;
-  text-align: center;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  font-size: 0.75rem; color: var(--muted); font-weight: 600;
 }
-
-.db-btn-row {
-  display: flex; gap: 10px; margin-bottom: 16px;
+.db-phase-badge {
+  font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 100px;
 }
+.db-phase-badge.dribble { background: rgba(132,204,22,0.15); color: var(--accent); border: 1px solid rgba(132,204,22,0.3); }
+.db-phase-badge.shoot   { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.db-xp-hint { color: var(--accent); font-weight: 800; }
+.db-gk-hint { margin-left: auto; font-size: 0.7rem; color: var(--muted); }
+.db-gk-hint strong { color: #ffb3b3; }
 
+.db-btn-row { display: flex; gap: 8px; }
 .db-dir-btn {
-  flex: 1; padding: 14px 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border2);
-  border-radius: 12px; color: var(--text);
-  cursor: pointer; font-size: 0.85rem; font-weight: 700;
-  transition: all .2s; text-align: center;
+  flex: 1; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border2); border-radius: 12px;
+  color: var(--text); cursor: pointer; font-size: 0.8rem; font-weight: 700;
+  transition: all .2s;
 }
-.db-dir-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.2);
-}
-.db-dir-btn.selected {
-  border-color: var(--accent);
-  background: rgba(132, 204, 22, 0.12);
-  color: var(--accent);
-  box-shadow: 0 0 12px rgba(132, 204, 22, 0.15);
-}
+.db-dir-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+.db-dir-btn.selected { border-color: var(--accent); background: rgba(132,204,22,0.12); color: var(--accent); box-shadow: 0 0 12px rgba(132,204,22,0.12); }
+.db-dir-icon { font-size: 1.2rem; }
+.db-dir-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.db-finish-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 8px; margin-bottom: 16px;
-}
-
+.db-finish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .db-fin-btn {
-  padding: 12px 6px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border2);
-  border-radius: 10px; color: var(--text);
-  cursor: pointer; font-size: 0.78rem; font-weight: 700;
+  padding: 13px 6px; background: rgba(255,255,255,0.02); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); cursor: pointer; font-size: 0.78rem; font-weight: 700;
   transition: all .2s; text-align: center;
 }
-.db-fin-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.2);
-}
-.db-fin-btn.selected {
-  border-color: var(--green);
-  background: rgba(61, 214, 140, 0.15);
-  color: var(--green);
-  box-shadow: 0 0 12px rgba(61, 214, 140, 0.12);
-}
+.db-fin-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+.db-fin-btn.selected { border-color: var(--green); background: rgba(61,214,140,0.15); color: var(--green); box-shadow: 0 0 12px rgba(61,214,140,0.1); }
 
 .db-action-btn {
   width: 100%; padding: 14px; border: none; border-radius: 12px;
-  font-size: 0.92rem; font-weight: 800; cursor: pointer;
+  font-size: 0.9rem; font-weight: 800; cursor: pointer;
   transition: all 0.2s; letter-spacing: .04em; text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
 }
-.db-action-btn:hover:not(:disabled) {
-  transform: translateY(-2px); filter: brightness(1.15);
-}
-.db-action-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-.db-action-btn:disabled {
-  opacity: 0.5; cursor: not-allowed; transform: none;
-}
+.db-action-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.12); }
+.db-action-btn:active:not(:disabled) { transform: translateY(0); }
+.db-action-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
+.db-btn-go     { background: linear-gradient(135deg, var(--accent), #a3e635); color: #1a2e05; box-shadow: 0 6px 20px rgba(132,204,22,0.22); }
+.db-btn-shoot  { background: linear-gradient(135deg, var(--green), #10b981); color: #062f19; box-shadow: 0 6px 20px rgba(61,214,140,0.22); }
+.db-btn-next   { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border2); }
+.db-btn-next:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 
-.db-btn-go {
-  background: linear-gradient(135deg, var(--accent), #a3e635);
-  color: #1a2e05;
-  box-shadow: 0 6px 20px rgba(132, 204, 22, 0.25);
-}
-.db-btn-shoot {
-  background: linear-gradient(135deg, var(--green), #10b981);
-  color: #062f19;
-  box-shadow: 0 6px 20px rgba(61, 214, 140, 0.25);
-}
-.db-btn-next {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text); border: 1px solid var(--border2);
-}
-.db-btn-next:hover {
-  background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3);
-}
-
-.db-feedback {
-  text-align: center; font-size: 0.82rem; font-weight: 700;
-  padding: 10px 14px; border-radius: 10px; margin-bottom: 12px;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.db-fb-tackled {
-  background: rgba(232, 64, 64, 0.12); color: #ff8080;
-  border: 1px solid rgba(232, 64, 64, 0.25);
-}
-.db-fb-beaten {
-  background: rgba(132, 204, 22, 0.1); color: var(--accent);
-  border: 1px solid rgba(132, 204, 22, 0.22);
-}
-.db-fb-goal {
-  background: rgba(61, 214, 140, 0.1); color: var(--green);
-  border: 1px solid rgba(61, 214, 140, 0.22);
-}
-.db-fb-saved {
-  background: rgba(232, 64, 64, 0.12); color: #ff8080;
-  border: 1px solid rgba(232, 64, 64, 0.25);
-}
-
-.db-summary-card {
-  text-align: center; padding: 16px 8px;
-}
-.db-sum-badge {
-  display: inline-block; font-size: 0.65rem; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 2px;
-  padding: 5px 12px; border-radius: 100px;
-  background: rgba(132, 204, 22, 0.12); color: var(--accent);
-  border: 1px solid rgba(132, 204, 22, 0.25); margin-bottom: 16px;
-}
-.db-sum-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
-  letter-spacing: 2px; margin-bottom: 6px;
-}
-.db-sum-score {
-  font-size: 2.4rem; font-weight: 900; margin: 12px 0;
-  font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;
-}
-.db-sum-phrase {
-  font-size: 0.85rem; color: var(--muted); margin-bottom: 24px;
-}
-.db-sum-xp-badge {
-  background: rgba(61, 214, 140, 0.12); color: var(--green);
-  border: 1px solid rgba(61, 214, 140, 0.28);
-  font-size: 0.82rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 1px; padding: 8px 20px; border-radius: 12px;
-  display: inline-block; margin-bottom: 28px;
-}
-
-.db-duo-grid {
-  display: grid; grid-template-columns: 1fr auto 1fr;
-  gap: 12px; align-items: center; margin-bottom: 20px;
-}
-.db-duo-box {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px; text-align: center;
-}
-.db-duo-lbl {
-  font-size: 0.65rem; color: var(--muted); text-transform: uppercase;
-  letter-spacing: 1px; font-weight: 700; margin-bottom: 4px;
-}
-.db-duo-score {
-  font-size: 1.6rem; font-weight: 800;
-}
-
-.db-modal-overlay {
-  position: fixed; inset: 0; background: rgba(5, 7, 15, 0.88);
-  backdrop-filter: blur(8px); display: flex; align-items: center;
-  justify-content: center; z-index: 10000; opacity: 0;
-  pointer-events: none; transition: opacity 0.3s ease;
-}
-.db-modal-overlay.active {
-  opacity: 1; pointer-events: auto;
-}
-.db-modal-box {
-  background: #080c1a; border: 1px solid var(--border2);
-  padding: 32px; border-radius: 20px; max-width: 440px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center;
-}
-.db-modal-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
-  letter-spacing: 2px; margin-bottom: 24px; color: var(--accent);
-}
-.db-rules-list {
-  text-align: left; margin-bottom: 28px;
-  display: flex; flex-direction: column; gap: 14px;
-  list-style: none;
-}
-.db-rules-list li {
-  display: flex; align-items: flex-start; gap: 12px;
-  font-size: 0.88rem; color: var(--muted);
-}
-.db-rule-icon {
-  font-size: 1.1rem; line-height: 1;
-}
-.db-rules-list strong {
-  color: #fff;
-}
-.db-modal-close {
-  background: linear-gradient(135deg, var(--accent), #a3e635);
-  color: #1a2e05; border: none; padding: 12px 32px; border-radius: 12px;
-  font-size: 0.95rem; font-weight: 800; cursor: pointer;
-  transition: all 0.2s; box-shadow: 0 6px 20px rgba(132, 204, 22, 0.25);
-  text-transform: uppercase;
-}
-.db-modal-close:hover {
-  transform: translateY(-2px); box-shadow: 0 10px 24px rgba(132, 204, 22, 0.35);
-}
-
-.db-bottom-section {
-  margin-top: 24px;
-}
-.db-section-div {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-}
-.db-section-label {
-  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 2px; color: var(--accent3); white-space: nowrap;
-}
-.db-section-line {
-  flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(132, 204, 22, 0.25) 0%, transparent 100%);
-}
-
-.db-dash-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-}
-@media (max-width: 600px) {
-  .db-dash-grid { grid-template-columns: 1fr; }
-}
-
-.db-dash-card {
-  background: rgba(255, 255, 255, 0.015); border: 1px solid var(--border);
-  border-radius: 16px; padding: 16px; display: flex; flex-direction: column;
-}
-.db-dash-hdr {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
-}
-.db-dash-icon {
-  font-size: 1.1rem;
-}
-.db-dash-lbl {
-  font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--muted);
-}
-
-.db-streak-dots {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 4px;
-}
-.db-dot {
-  aspect-ratio: 1; border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
-  transition: all 0.25s;
-}
-.db-dot.dot-empty {
-  background: rgba(255, 255, 255, 0.02);
-}
-.db-dot.dot-won {
-  background: var(--green); border-color: rgba(61, 214, 140, 0.4);
-  box-shadow: 0 0 8px rgba(61, 214, 140, 0.15);
-}
-.db-dot.dot-miss {
-  background: var(--accent2); border-color: rgba(232, 64, 64, 0.4);
-}
-.db-dot.dot-today {
-  border: 1.5px solid var(--accent); position: relative;
-  animation: dbTodayPulse 2s ease infinite;
-}
-@keyframes dbTodayPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
-
-.db-stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-}
-.db-stat-item {
-  background: rgba(255, 255, 255, 0.012); border: 1px solid var(--border);
-  padding: 10px; border-radius: 10px; text-align: center;
-}
-.db-stat-val {
-  font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 2px;
-}
-.db-stat-name {
-  font-size: 0.6rem; color: var(--muted); text-transform: uppercase;
-  letter-spacing: 1px; font-weight: 700;
-}
+.db-post-round { display: flex; flex-direction: column; gap: 10px; }
 
 .db-ad-box {
-  background: rgba(132, 204, 22, 0.04); border: 1px dashed rgba(132, 204, 22, 0.25);
-  padding: 12px; border-radius: 12px; text-align: center;
-  font-size: 0.78rem; color: var(--muted); margin: 12px 0;
+  background: rgba(132,204,22,0.04); border: 1px dashed rgba(132,204,22,0.22);
+  padding: 12px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
+.db-ad-box-text { font-size: 0.76rem; color: var(--muted); }
 .db-ad-go-btn {
-  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border2);
-  color: #fff; padding: 6px 14px; border-radius: 8px;
-  font-size: 0.75rem; font-weight: 700; cursor: pointer;
-  transition: all 0.2s; margin-top: 8px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border2); color: #fff;
+  padding: 7px 14px; border-radius: 8px; font-size: 0.74rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
 }
-.db-ad-go-btn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);
+.db-ad-go-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+.db-ad-go-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* summary */
+.db-summary-card { text-align: center; padding: 8px 0; }
+.db-sum-badge {
+  display: inline-block; font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 2px; padding: 4px 12px; border-radius: 100px;
+  background: rgba(132,204,22,0.12); color: var(--accent);
+  border: 1px solid rgba(132,204,22,0.25); margin-bottom: 14px;
+}
+.db-sum-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px; margin-bottom: 12px; }
+.db-sum-score-row { margin-bottom: 16px; }
+.db-sum-score-big {
+  font-family: 'Bebas Neue', sans-serif; font-size: 4rem; letter-spacing: 1px;
+  color: var(--green); line-height: 1;
+}
+.db-sum-score-big span { font-size: 2rem; color: var(--muted); }
+.db-sum-score-sub { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+.db-sum-xp-badge {
+  display: inline-block; background: rgba(61,214,140,0.12); color: var(--green);
+  border: 1px solid rgba(61,214,140,0.28); font-size: 0.8rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1px; padding: 7px 20px;
+  border-radius: 12px; margin-bottom: 22px;
+}
+.db-duo-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 18px; }
+.db-duo-box { background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: border-color 0.3s; }
+.db-duo-lbl { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+.db-duo-score { font-size: 1.8rem; font-weight: 800; font-family: 'Bebas Neue', sans-serif; }
+.db-duo-vs { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.db-breakdown { background: rgba(255,255,255,0.012); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin-bottom: 20px; text-align: left; }
+.db-breakdown-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.db-breakdown-row:last-child { border-bottom: none; }
+.db-summary-actions { display: flex; gap: 12px; }
+.db-summary-actions .db-action-btn { flex: 1; }
+
+/* modal */
+.db-modal-overlay {
+  position: fixed; inset: 0; background: rgba(5,7,15,0.88); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.db-modal-overlay.active { opacity: 1; pointer-events: auto; }
+.db-modal-box {
+  background: #080c1a; border: 1px solid rgba(132,204,22,0.18);
+  padding: 32px 28px; border-radius: 22px; max-width: 440px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.db-modal-icon { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
+.db-modal-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px;
+  color: var(--accent); text-align: center; margin-bottom: 22px;
+}
+.db-rules-list { list-style: none; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
+.db-rules-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.86rem; color: var(--muted); }
+.db-rules-list strong { color: #fff; }
+.db-rule-pill {
+  flex-shrink: 0; font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; padding: 3px 9px; border-radius: 100px; margin-top: 1px;
+}
+.db-rule-pill.dribble { background: rgba(132,204,22,0.15); color: var(--accent); border: 1px solid rgba(132,204,22,0.3); }
+.db-rule-pill.shoot   { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
+.db-rule-pill.retake  { background: rgba(232,64,64,0.1); color: #ff8080; border: 1px solid rgba(232,64,64,0.25); }
+.db-modal-close {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, var(--accent), #a3e635); color: #1a2e05;
+  border: none; padding: 13px 32px; border-radius: 12px;
+  font-size: 0.92rem; font-weight: 800; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 6px 20px rgba(132,204,22,0.22); text-transform: uppercase;
+}
+.db-modal-close:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(132,204,22,0.32); }
+
+/* bottom dashboard */
+.db-bottom-section { margin-top: 8px; }
+.db-section-div { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.db-section-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--accent3); white-space: nowrap; }
+.db-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(132,204,22,0.25), transparent); }
+.db-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .db-dash-grid { grid-template-columns: 1fr; } }
+.db-dash-card {
+  background: rgba(255,255,255,0.015); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; display: flex; flex-direction: column;
+}
+.db-dash-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.db-dash-icon { font-size: 1rem; }
+.db-dash-lbl { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+
+.db-streak-dots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.db-dot { aspect-ratio: 1; border-radius: 6px; transition: all 0.2s; }
+.db-dot.dot-empty { background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+.db-dot.dot-won { background: rgba(61,214,140,0.7); border: 1px solid rgba(61,214,140,0.4); box-shadow: 0 0 6px rgba(61,214,140,0.15); }
+.db-dot.dot-miss { background: rgba(232,64,64,0.55); border: 1px solid rgba(232,64,64,0.35); }
+.db-dot.dot-today { border: 2px solid var(--accent); animation: dbTodayPulse 2s ease infinite; }
+@keyframes dbTodayPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+.db-stats-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
+.db-stat-item {
+  background: rgba(255,255,255,0.012); border: 1px solid var(--border);
+  padding: 10px; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+  transition: border-color 0.2s;
+}
+.db-stat-item:hover { border-color: rgba(132,204,22,0.2); }
+.db-stat-val { font-size: 1.3rem; font-weight: 800; color: var(--accent); margin-bottom: 2px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.5px; }
+.db-stat-name { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+
+/* responsive */
+@media (max-width: 480px) {
+  .db-nav { padding: 0 14px; height: 52px; }
+  .db-container { padding: 16px 12px 80px; }
+  .db-btn-row { gap: 6px; }
+  .db-finish-grid { gap: 6px; }
+  .db-header-row { flex-wrap: wrap; }
+  .db-ad-box { flex-direction: column; text-align: center; }
+  .db-summary-actions { flex-direction: column; }
 }
 `;

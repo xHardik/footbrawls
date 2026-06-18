@@ -24,7 +24,8 @@ const STREAK_XP = [0, 2, 4, 6, 8, 10, 13, 16, 19, 22, 25];
 const ATTRIBUTES = [
   { key: "age",         label: "Age",          unit: "yrs",  format: (v) => v },
   { key: "caps",        label: "Int'l Caps",   unit: "",     format: (v) => v },
-  { key: "goals",       label: "Career Goals", unit: "",     format: (v) => v },
+  { key: "goals",       label: "Int'l Goals",  unit: "",     format: (v) => v },
+  { key: "totGoals",    label: "Career Goals", unit: "",     format: (v) => v },
   { key: "marketValue", label: "Market Value", unit: "M€",   format: (v) => `€${v}M` },
 ];
 
@@ -1133,11 +1134,11 @@ const CSS = `
 .hl-dot-sample.today { background: rgba(79,142,247,.14); border: 1px solid var(--accent); }
 
 .hl-stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
 }
 .hl-stat-item {
   background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+  padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: border-color .2s, background .2s;
 }
 .hl-stat-item:hover {
   border-color: rgba(61,214,140,.22); background: rgba(61,214,140,.03);

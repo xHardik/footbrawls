@@ -438,10 +438,10 @@ html { scroll-behavior: smooth; }
 .wdl-ds-today{ background: rgba(168,85,247,0.4);  border: 1px solid var(--accent3); }
 
 /* ── STATS ── */
-.wdl-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.wdl-stats-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
 .wdl-stat-item {
   background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 12px; text-align: center;
+  border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; align-items: center;
   transition: border-color 0.2s, background 0.2s;
 }
 .wdl-stat-item:hover { border-color: rgba(168,85,247,0.22); background: rgba(168,85,247,0.03); }
@@ -532,8 +532,7 @@ html { scroll-behavior: smooth; }
 
 // ─── Stat helpers ─────────────────────────────────────────────────────────────
 function getToday() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return new Date().toISOString().split('T')[0];
 }
 function getXpFromScore(score) {
   if (score === 1000) return 25;

@@ -234,8 +234,11 @@ function getTodayKey() { return new Date().toISOString().split("T")[0]; }
 function isDoneToday(game) {
   try {
     const raw = localStorage.getItem(game.storageKey); if (!raw) return false;
-    const data = JSON.parse(raw); const today = getTodayKey();
-    return data.date === today || Boolean(data[today]);
+    const data = JSON.parse(raw);
+    const todayUTC = new Date().toISOString().split("T")[0];
+    const d = new Date();
+    const todayLocal = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    return data.date === todayUTC || data.date === todayLocal || Boolean(data[todayUTC]) || Boolean(data[todayLocal]);
   } catch { return false; }
 }
 
@@ -1378,7 +1381,7 @@ export default function Home() {
     castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
   };
 
-  const games     = useMemo(() => GAMES.map(g => ({ ...g, done: isDoneToday(g) })), []);
+  const games     = GAMES.map(g => ({ ...g, done: isDoneToday(g) }));
   const doneCount = games.filter(g => g.done).length;
   const dailyXP   = getDailyXP(user);
   const xpPct     = clampPct(dailyXP, DAILY_XP_CAP);

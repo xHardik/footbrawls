@@ -119,7 +119,7 @@ function RulesModal({ onClose }) {
         animation:"ttFadeUp 0.22s ease",
       }}
     >
-      <div style={{
+      <div className="tt-modal-box" style={{
         background:"#0c1020",border:`1px solid ${T.border2}`,
         borderRadius:22,padding:"40px 30px",
         maxWidth:500,width:"100%",maxHeight:"88vh",overflowY:"auto",
@@ -272,7 +272,7 @@ function SearchDropdown({ players, onSelect, disabled }) {
 
   function pick(player) {
     onSelect(player);
-    setQuery(player.name);
+    setQuery("");
     setOpen(false);
   }
 
@@ -312,16 +312,16 @@ function SearchDropdown({ players, onSelect, disabled }) {
         }}>
           {results.map(p => (
             <div
-              key={p.id}
+              key={p.name}
               onMouseDown={() => pick(p)}
-              onMouseEnter={() => setHovered(p.id)}
+              onMouseEnter={() => setHovered(p.name)}
               onMouseLeave={() => setHovered(null)}
               style={{
                 padding:"11px 14px",cursor:"pointer",
                 color:T.text,fontSize:"0.88rem",
                 borderBottom:`1px solid rgba(255,255,255,0.05)`,
-                background:hovered===p.id?"#131b36":"#0b0e1a",
-                paddingLeft:hovered===p.id?20:14,
+                background:hovered===p.name?"#131b36":"#0b0e1a",
+                paddingLeft:hovered===p.name?20:14,
                 transition:"all 0.14s",
                 display:"flex",alignItems:"center",gap:10,
               }}
@@ -362,7 +362,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
   const perfect = correctCount === PLAYERS_PER_GAME;
 
   return (
-    <div style={{
+    <div className="tt-result-card" style={{
       position:"relative",overflow:"hidden",
       background:perfect?"rgba(61,214,140,0.04)":"rgba(26,111,255,0.04)",
       border:`1px solid ${perfect?"rgba(61,214,140,0.28)":"rgba(26,111,255,0.28)"}`,
@@ -377,11 +377,11 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         Game Complete
       </div>
 
-      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.6rem",letterSpacing:2,marginBottom:8,color:T.text}}>
+      <div className="tt-result-title" style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.6rem",letterSpacing:2,marginBottom:8,color:T.text}}>
         {perfect ? "FLAWLESS GUESSING!" : "GAME OVER!"}
       </div>
 
-      <div style={{
+      <div className="tt-result-score" style={{
         fontFamily:"'Bebas Neue',sans-serif",fontSize:"4.8rem",letterSpacing:2,lineHeight:1,margin:"10px 0",
         background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
         WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
@@ -716,7 +716,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       {showModal && <RulesModal onClose={() => setShowModal(false)}/>}
 
       {/* ── NAV ── */}
-      <nav style={{
+      <nav className="tt-nav" style={{
         position:"sticky",top:0,zIndex:200,
         display:"grid",gridTemplateColumns:"1fr auto 1fr",
         alignItems:"center",padding:"0 28px",height:60,
@@ -726,6 +726,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         boxShadow:"0 10px 30px rgba(26,111,255,0.22)",
       }}>
         <button
+          className="tt-nav-logo"
           onClick={() => navigate("/")}
           style={{
             fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:3,
@@ -737,7 +738,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           }}
         >←</button>
 
-        <div style={{
+        <div className="tt-nav-tag" style={{
           display:"flex",alignItems:"center",gap:7,
           fontSize:"0.68rem",fontWeight:800,textTransform:"uppercase",letterSpacing:2,
           color:T.royal,background:"rgba(26,111,255,0.1)",
@@ -748,7 +749,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           Transfer Trail
         </div>
 
-        <div style={{display:"flex",justifyContent:"flex-end"}}>
+        <div className="tt-nav-right" style={{display:"flex",justifyContent:"flex-end"}}>
           <button
             onClick={() => setShowModal(true)}
             style={{
@@ -766,7 +767,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       </nav>
 
       {/* ── PAGE ── */}
-      <main style={{position:"relative",zIndex:1,maxWidth:980,margin:"0 auto",padding:"32px 22px 80px",boxSizing:"border-box"}}>
+      <main className="tt-main" style={{position:"relative",zIndex:1,maxWidth:980,margin:"0 auto",padding:"32px 22px 80px",boxSizing:"border-box"}}>
 
         {/* Header */}
         <div style={{marginBottom:22,animation:"ttFadeUp 0.45s ease"}}>
@@ -790,7 +791,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         ) : (
           <>
             {/* Player strip */}
-            <div style={{
+            <div className="tt-player-strip" style={{
               background:T.surface,border:`1px solid ${T.border}`,
               borderLeft:`3px solid ${T.royal}`,borderRadius:16,
               padding:"18px 22px",marginBottom:18,position:"relative",overflow:"hidden",
@@ -838,7 +839,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             </div>
 
             {/* Main grid */}
-            <div style={{
+            <div className="tt-main-grid" style={{
               display:"grid",
               gridTemplateColumns:"280px 1fr",
               gap:16,marginBottom:16,
@@ -846,7 +847,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             }}>
               <TransferHistory clubs={clubs}/>
 
-              <div style={{
+              <div className="tt-guessing-box" style={{
                 background:T.surface,border:`1px solid ${T.border}`,
                 borderRadius:14,padding:26,
                 display:"flex",flexDirection:"column",
@@ -865,6 +866,41 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                     onSelect={setSelected}
                     disabled={feedback === "correct"}
                   />
+                  {selected && (
+                    <div style={{
+                      marginTop: 10,
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      background: "rgba(26,111,255,0.08)",
+                      border: "1px solid rgba(26,111,255,0.22)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      width: "100%",
+                      boxSizing: "border-box",
+                      animation: "ttFadeUp 0.3s ease"
+                    }}>
+                      <span style={{ fontSize: "0.85rem", color: "#fff" }}>
+                        🎯 Selected: <strong>{selected.name}</strong>
+                      </span>
+                      <button
+                        onClick={() => setSelected(null)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "rgba(255,255,255,0.6)",
+                          fontSize: "1.1rem",
+                          cursor: "pointer",
+                          padding: "0 4px",
+                          lineHeight: 1
+                        }}
+                        title="Clear selection"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -900,8 +936,9 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             </div>
 
             {/* Controls */}
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
+            <div className="tt-controls" style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
               <button
+                className="tt-control-btn"
                 onClick={skipPlayer}
                 style={{
                   background:"rgba(247,195,68,0.1)",color:T.gold,
@@ -916,6 +953,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
               >⏭ Skip Player</button>
 
               <button
+                className="tt-control-btn"
                 onClick={() => setShowModal(true)}
                 style={{
                   background:T.surface,color:T.muted,
@@ -979,6 +1017,64 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       <style>{`
         @media (max-width: 700px) {
           .tt-main-grid { grid-template-columns: 1fr !important; }
+          .tt-nav {
+            padding: 0 12px !important;
+            height: 54px !important;
+            grid-template-columns: auto 1fr auto !important;
+            gap: 10px !important;
+          }
+          .tt-nav-logo {
+            font-size: 1.3rem !important;
+            letter-spacing: 1.5px !important;
+          }
+          .tt-nav-tag {
+            font-size: 0.62rem !important;
+            padding: 4px 10px !important;
+            letter-spacing: 1px !important;
+            justify-self: center;
+          }
+          .tt-nav-right {
+            justify-content: flex-end !important;
+          }
+          .tt-nav-right button {
+            padding: 5px 10px !important;
+            font-size: 0.7rem !important;
+          }
+          .tt-main {
+            padding: 16px 12px 60px !important;
+          }
+          .tt-player-strip {
+            padding: 14px 16px !important;
+            border-radius: 12px !important;
+          }
+          .tt-guessing-box {
+            padding: 20px 16px !important;
+            min-height: 300px !important;
+            border-radius: 12px !important;
+          }
+          .tt-controls {
+            gap: 8px !important;
+          }
+          .tt-control-btn {
+            flex: 1 !important;
+            min-width: 120px !important;
+            padding: 10px 16px !important;
+            font-size: 0.8rem !important;
+          }
+          .tt-result-card {
+            padding: 30px 16px !important;
+            border-radius: 16px !important;
+          }
+          .tt-result-title {
+            font-size: 1.9rem !important;
+          }
+          .tt-result-score {
+            font-size: 3.2rem !important;
+          }
+          .tt-modal-box {
+            padding: 28px 18px !important;
+            border-radius: 16px !important;
+          }
         }
         
         /* ── DASHBOARD / BOTTOM SECTION ── */

@@ -169,3 +169,134 @@ export const RAPID_FIRE_QUESTIONS = [
   { q: 'Which club did Bayer Leverkusen go the entire 2023-24 Bundesliga season unbeaten to deny?', type: 'fact', opts: ['Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Stuttgart'], ans: 0 },
   { q: 'How many times has Cristiano Ronaldo won the UEFA Champions League?', type: 'fact', opts: ['4', '5', '6', '7'], ans: 1 },
 ];
+
+export const TOP10_QUESTIONS = [
+  {
+    id: 't10_01',
+    question: "All-Time Premier League Top Goalscorers",
+    answers: [
+      { name: "Alan Shearer", value: "260 goals", accepts: ["alan shearer", "shearer"] },
+      { name: "Harry Kane", value: "213 goals", accepts: ["harry kane", "kane"] },
+      { name: "Wayne Rooney", value: "208 goals", accepts: ["wayne rooney", "rooney"] },
+      { name: "Andy Cole", value: "187 goals", accepts: ["andy cole", "andrew cole", "cole"] },
+      { name: "Sergio Agüero", value: "184 goals", accepts: ["sergio aguero", "aguero", "sergio agüero", "agüero"] },
+      { name: "Frank Lampard", value: "177 goals", accepts: ["frank lampard", "lampard"] },
+      { name: "Thierry Henry", value: "175 goals", accepts: ["thierry henry", "henry"] },
+      { name: "Robbie Fowler", value: "163 goals", accepts: ["robbie fowler", "fowler"] },
+      { name: "Jermain Defoe", value: "162 goals", accepts: ["jermain defoe", "defoe"] },
+      { name: "Mohamed Salah", value: "157 goals", accepts: ["mohamed salah", "salah", "mo salah"] }
+    ]
+  },
+  {
+    id: 't10_02',
+    question: "Clubs with the Most Champions League / European Cup Titles",
+    answers: [
+      { name: "Real Madrid", value: "15 titles", accepts: ["real madrid", "madrid"] },
+      { name: "AC Milan", value: "7 titles", accepts: ["ac milan", "milan"] },
+      { name: "Bayern Munich", value: "6 titles", accepts: ["bayern munich", "bayern", "munich", "bayern munchen"] },
+      { name: "Liverpool", value: "6 titles", accepts: ["liverpool"] },
+      { name: "Barcelona", value: "5 titles", accepts: ["barcelona", "barca"] },
+      { name: "Ajax", value: "4 titles", accepts: ["ajax"] },
+      { name: "Manchester United", value: "3 titles", accepts: ["manchester united", "man utd", "man united"] },
+      { name: "Inter Milan", value: "3 titles", accepts: ["inter milan", "inter", "internazionale", "inter de milan"] },
+      { name: "Juventus", value: "2 titles", accepts: ["juventus", "juve"] },
+      { name: "Chelsea", value: "2 titles", accepts: ["chelsea"] }
+    ]
+  },
+  {
+    id: 't10_03',
+    question: "Ballon d'Or Most Wins (Players)",
+    answers: [
+      { name: "Lionel Messi", value: "8 wins", accepts: ["lionel messi", "messi", "leo messi"] },
+      { name: "Cristiano Ronaldo", value: "5 wins", accepts: ["cristiano ronaldo", "ronaldo", "cristiano", "cr7"] },
+      { name: "Johan Cruyff", value: "3 wins", accepts: ["johan cruyff", "cruyff", "cruijff"] },
+      { name: "Michel Platini", value: "3 wins", accepts: ["michel platini", "platini"] },
+      { name: "Marco van Basten", value: "3 wins", accepts: ["marco van basten", "van basten"] },
+      { name: "Franz Beckenbauer", value: "2 wins", accepts: ["franz beckenbauer", "beckenbauer"] },
+      { name: "Ronaldo Nazário", value: "2 wins", accepts: ["ronaldo nazario", "ronaldo", "r9", "phenomenon"] },
+      { name: "Alfredo Di Stéfano", value: "2 wins", accepts: ["alfredo di stefano", "di stefano"] },
+      { name: "Kevin Keegan", value: "2 wins", accepts: ["kevin keegan", "keegan"] },
+      { name: "Karl-Heinz Rummenigge", value: "2 wins", accepts: ["karl-heinz rummenigge", "rummenigge"] }
+    ]
+  },
+  {
+    id: 't10_04',
+    question: "Most Expensive Football Transfers of All Time (Euros)",
+    answers: [
+      { name: "Neymar (Barcelona to PSG)", value: "€222m", accepts: ["neymar", "neymar jr"] },
+      { name: "Kylian Mbappé (Monaco to PSG)", value: "€180m", accepts: ["kylian mbappe", "mbappe", "mbappé"] },
+      { name: "Philippe Coutinho (Liverpool to Barcelona)", value: "€145m", accepts: ["philippe coutinho", "coutinho"] },
+      { name: "João Félix (Benfica to Atlético Madrid)", value: "€126m", accepts: ["joao felix", "felix", "joão felix", "joão félix"] },
+      { name: "Enzo Fernández (Benfica to Chelsea)", value: "€121m", accepts: ["enzo fernandez", "enzo", "fernandez"] },
+      { name: "Antoine Griezmann (Atlético Madrid to Barcelona)", value: "€120m", accepts: ["antoine griezmann", "griezmann"] },
+      { name: "Jack Grealish (Aston Villa to Man City)", value: "€117m", accepts: ["jack grealish", "grealish"] },
+      { name: "Cristiano Ronaldo (Real Madrid to Juventus)", value: "€117m", accepts: ["cristiano ronaldo", "ronaldo", "cr7"] },
+      { name: "Declan Rice (West Ham to Arsenal)", value: "€116.6m", accepts: ["declan rice", "rice"] },
+      { name: "Moisés Caicedo (Brighton to Chelsea)", value: "€116m", accepts: ["moises caicedo", "caicedo", "moisés caicedo"] }
+    ]
+  },
+  {
+    id: 't10_05',
+    question: "Players with the Most UEFA Champions League Appearances",
+    answers: [
+      { name: "Cristiano Ronaldo", value: "183 appearances", accepts: ["cristiano ronaldo", "ronaldo", "cr7"] },
+      { name: "Iker Casillas", value: "177 appearances", accepts: ["iker casillas", "casillas"] },
+      { name: "Lionel Messi", value: "163 appearances", accepts: ["lionel messi", "messi", "leo messi"] },
+      { name: "Karim Benzema", value: "152 appearances", accepts: ["karim benzema", "benzema"] },
+      { name: "Toni Kroos", value: "151 appearances", accepts: ["toni kroos", "kroos"] },
+      { name: "Thomas Müller", value: "151 appearances", accepts: ["thomas muller", "muller", "thomas müller", "müller"] },
+      { name: "Xavi", value: "151 appearances", accepts: ["xavi", "xavi / xavi hernandez", "xavi hernandez"] },
+      { name: "Ryan Giggs", value: "145 appearances", accepts: ["ryan giggs", "giggs"] },
+      { name: "Raúl", value: "142 appearances", accepts: ["raul", "raúl"] },
+      { name: "Sergio Ramos", value: "142 appearances", accepts: ["sergio ramos", "ramos"] }
+    ]
+  },
+  {
+    id: 't10_06',
+    question: "Clubs with the Most English Premier League / First Division Titles",
+    answers: [
+      { name: "Manchester United", value: "20 titles", accepts: ["manchester united", "man utd", "man united"] },
+      { name: "Liverpool", value: "19 titles", accepts: ["liverpool"] },
+      { name: "Arsenal", value: "13 titles", accepts: ["arsenal"] },
+      { name: "Manchester City", value: "10 titles", accepts: ["manchester city", "man city", "city"] },
+      { name: "Everton", value: "9 titles", accepts: ["everton"] },
+      { name: "Aston Villa", value: "7 titles", accepts: ["aston villa", "villa"] },
+      { name: "Sunderland", value: "6 titles", accepts: ["sunderland"] },
+      { name: "Chelsea", value: "6 titles", accepts: ["chelsea"] },
+      { name: "Newcastle United", value: "4 titles", accepts: ["newcastle united", "newcastle"] },
+      { name: "Sheffield Wednesday", value: "4 titles", accepts: ["sheffield wednesday", "wednesday"] }
+    ]
+  },
+  {
+    id: 't10_07',
+    question: "All-Time Top Scorers in FIFA World Cup History",
+    answers: [
+      { name: "Miroslav Klose", value: "16 goals", accepts: ["miroslav klose", "klose"] },
+      { name: "Ronaldo Nazário", value: "15 goals", accepts: ["ronaldo nazario", "ronaldo", "r9"] },
+      { name: "Gerd Müller", value: "14 goals", accepts: ["gerd muller", "muller", "gerd müller", "müller"] },
+      { name: "Just Fontaine", value: "13 goals", accepts: ["just fontaine", "fontaine"] },
+      { name: "Lionel Messi", value: "13 goals", accepts: ["lionel messi", "messi", "leo messi"] },
+      { name: "Pelé", value: "12 goals", accepts: ["pele", "pelé"] },
+      { name: "Sándor Kocsis", value: "11 goals", accepts: ["sandor kocsis", "kocsis", "sándor kocsis"] },
+      { name: "Jürgen Klinsmann", value: "11 goals", accepts: ["jurgen klinsmann", "klinsmann", "jürgen klinsmann"] },
+      { name: "Kylian Mbappé", value: "12 goals", accepts: ["kylian mbappe", "mbappe", "mbappé"] },
+      { name: "Gary Lineker", value: "10 goals", accepts: ["gary lineker", "lineker"] }
+    ]
+  },
+  {
+    id: 't10_08',
+    question: "All-Time Top Goalscorers for the Brazil National Team",
+    answers: [
+      { name: "Neymar", value: "79 goals", accepts: ["ney", "neymar", "neymar jr"] },
+      { name: "Pelé", value: "77 goals", accepts: ["pele", "pelé"] },
+      { name: "Ronaldo Nazário", value: "62 goals", accepts: ["ronaldo nazario", "ronaldo", "r9"] },
+      { name: "Romário", value: "55 goals", accepts: ["romario", "romário"] },
+      { name: "Zico", value: "48 goals", accepts: ["zico"] },
+      { name: "Bebeto", value: "39 goals", accepts: ["bebeto"] },
+      { name: "Rivaldo", value: "35 goals", accepts: ["rivaldo"] },
+      { name: "Jairzinho", value: "33 goals", accepts: ["jairzinho"] },
+      { name: "Ronaldinho", value: "33 goals", accepts: ["ronaldinho", "ronaldinho gaucho"] },
+      { name: "Ademir", value: "32 goals", accepts: ["ademir"] }
+    ]
+  }
+];

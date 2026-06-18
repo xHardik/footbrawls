@@ -11,11 +11,38 @@ import { TRIVIA_QUESTIONS } from '../../lib/questions.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const QUESTIONS_PER_DAY = 10;
-const SECONDS_PER_Q     = 25;
-const PTS_BY_speed      = [15, 13, 11, 9, 7, 5]; // bucket by seconds remaining
+const SECONDS_PER_Q     = 20;
 const SAVE_KEY          = 'footbrawls_dailytrivia';
 const STATS_KEY         = 'footbrawls_dailytrivia_stats';
 const HISTORY_KEY       = 'footbrawls_dailytrivia_history';
+
+function getMultiplier(consecutive) {
+  if (consecutive <= 1) return 1.0;
+  if (consecutive === 2) return 1.2;
+  if (consecutive === 3) return 1.5;
+  if (consecutive === 4) return 1.8;
+  if (consecutive === 5) return 2.0;
+  if (consecutive === 6) return 2.5;
+  return 3.0; // 7+ capped
+}
+
+function getMaxPossibleScore(count) {
+  let total = 0;
+  for (let i = 1; i <= count; i++) {
+    total += 1000 * getMultiplier(i);
+  }
+  return total;
+}
+
+function calculateXP(score, maxScore) {
+  const pct = (score / maxScore) * 100;
+  if (pct >= 80) return 25;
+  if (pct >= 70) return 22;
+  if (pct >= 50) return 18;
+  if (pct >= 30) return 12;
+  if (pct >= 15) return 8;
+  return 5;
+}
 
 const CATEGORY_META = {
   history:   { label: 'History',   icon: '🏆', color: '#F7C344', bg: 'rgba(247,195,68,.12)',  border: 'rgba(247,195,68,.3)'  },
@@ -69,9 +96,11 @@ function pickDailyQuestions(date) {
 }
 
 // ─── Scoring ──────────────────────────────────────────────────────────────────
-function calcPoints(timeLeft) {
-  const idx = Math.max(0, Math.min(PTS_BY_speed.length - 1, Math.floor((SECONDS_PER_Q - timeLeft) / (SECONDS_PER_Q / PTS_BY_speed.length))));
-  return PTS_BY_speed[idx];
+function calcPoints(timeLeft, consecutive) {
+  const elapsed = SECONDS_PER_Q - timeLeft;
+  const base = Math.max(100, 1000 - elapsed * 50);
+  const mult = getMultiplier(consecutive);
+  return Math.round(base * mult);
 }
 
 // ─── Persistence ─────────────────────────────────────────────────────────────
@@ -444,6 +473,7 @@ export default function DailyTrivia() {
   const [current, setCurrent]       = useState(0);
   const [answers, setAnswers]       = useState([]);  // true/false per question
   const [score, setScore]           = useState(0);
+  const [combo, setCombo]           = useState(0);
   const [timeLeft, setTimeLeft]     = useState(SECONDS_PER_Q);
   const [answered, setAnswered]     = useState(false);
   const [chosenIdx, setChosenIdx]   = useState(null);
@@ -485,6 +515,16 @@ export default function DailyTrivia() {
       setAnswers(save.answers);
       setScore(save.score || 0);
       setCurrent(save.answers.length);
+      // Calculate initial combo from trailing true values in save.answers
+      let currentCombo = 0;
+      for (let i = save.answers.length - 1; i >= 0; i--) {
+        if (save.answers[i]) {
+          currentCombo++;
+        } else {
+          break;
+        }
+      }
+      setCombo(currentCombo);
       setPhase('game');
     } else {
       setPhase('game');
@@ -555,15 +595,27 @@ export default function DailyTrivia() {
     const q          = questions[current];
     const isTimeout  = idx === null;
     const isCorrect  = !isTimeout && idx === q.ans;
-    const pts        = isCorrect ? calcPoints(timeLeft) : 0;
+    
+    let pts = 0;
+    let newCombo = 0;
+    if (isCorrect) {
+      newCombo = combo + 1;
+      pts = calcPoints(timeLeft, newCombo);
+    }
     const newAnswers = [...answers, isCorrect];
     const newScore   = score + pts;
 
     let fb;
-    if (isCorrect)    fb = { text: `✓ Correct! +${pts} pts`, cls: 'correct' };
-    else if (isTimeout) fb = { text: `⏱ Time's up! The answer was: ${q.opts[q.ans]}`, cls: 'timeout' };
-    else              fb = { text: `✗ Wrong. Correct: ${q.opts[q.ans]}`, cls: 'wrong' };
+    if (isCorrect) {
+      const mult = getMultiplier(newCombo);
+      fb = { text: `✓ Correct! +${pts} pts (Combo ${mult}x)`, cls: 'correct' };
+    } else if (isTimeout) {
+      fb = { text: `⏱ Time's up! The answer was: ${q.opts[q.ans]} (Combo Broken)`, cls: 'timeout' };
+    } else {
+      fb = { text: `✗ Wrong. Correct: ${q.opts[q.ans]} (Combo Broken)`, cls: 'wrong' };
+    }
 
+    setCombo(newCombo);
     setFeedback(fb);
     setScore(newScore);
     setAnswers(newAnswers);
@@ -591,7 +643,9 @@ export default function DailyTrivia() {
       let awarded = 0;
       if (user?.userId) {
         try {
-          const res = await awardXP(user.userId, 'dailytrivia_complete', { rawXP: 25 });
+          const maxPossible = getMaxPossibleScore(questions.length);
+          const computedXP = calculateXP(finalScore, maxPossible);
+          const res = await awardXP(user.userId, 'dailytrivia_complete', { rawXP: computedXP });
           awarded = res?.xpAwarded ?? 0;
         } catch (e) { console.error('[DailyTrivia] awardXP error:', e); }
       }
@@ -714,6 +768,13 @@ export default function DailyTrivia() {
                     <div className="dt-hud-val" style={{ color: '#fff' }}>{correct}</div>
                     <div className="dt-hud-lbl">Correct</div>
                   </div>
+                  <div className="dt-hud-sep" />
+                  <div className="dt-hud-item">
+                    <div className="dt-hud-val" style={{ color: combo > 0 ? 'var(--accent)' : 'var(--muted)' }}>
+                      {combo > 0 ? `${getMultiplier(combo)}x` : '—'}
+                    </div>
+                    <div className="dt-hud-lbl">Combo</div>
+                  </div>
                 </div>
 
                 <div className="dt-timer-wrap">
@@ -793,7 +854,7 @@ export default function DailyTrivia() {
                 )}
 
                 <div className="dt-score-big">{score}</div>
-                <div className="dt-score-lbl">out of {QUESTIONS_PER_DAY * PTS_BY_speed[0]} max pts</div>
+                <div className="dt-score-lbl">out of {getMaxPossibleScore(QUESTIONS_PER_DAY)} max pts</div>
 
                 <div className="dt-result-breakdown">
                   <div className="dt-rb-item">
@@ -949,12 +1010,13 @@ function HowToPlayModal({ show, onClose }) {
         <h2 className="dt-modal-title">📋 How to Play</h2>
         <ul className="dt-rules-list">
           <li><strong>📅 Daily:</strong> A fresh set of 10 questions drops every day at midnight — one attempt only</li>
-          <li><strong>⏱ Timer:</strong> You have 25 seconds per question. Answer fast for maximum points</li>
-          <li><strong>⚡ Speed scoring:</strong> Fastest correct answers earn up to 15 pts; slower answers earn less, down to 5</li>
+          <li><strong>⏱ Timer:</strong> You have 20 seconds per question. Answer fast for maximum points</li>
+          <li><strong>⚡ Speed scoring:</strong> Scoring decays from 1000 points by 50 points per elapsed second (floor at 100 points)</li>
+          <li><strong>🔥 Combo multiplier:</strong> Get consecutive correct answers to build a combo multiplier: 1st = 1x, 2nd = 1.2x, 3rd = 1.5x, 4th = 1.8x, 5th = 2x, 6th = 2.5x, 7th+ = 3.0x</li>
+          <li><strong>🚫 Combo break:</strong> Wrong answers or timeouts reset your combo multiplier to 0</li>
           <li><strong>🏷️ Categories:</strong> History · Transfers · Records · Tactics · Players · Stadiums · Managers · Rules</li>
           <li><strong>🟢 / 🔴 Dots:</strong> Progress dots track each answer — green for correct, red for wrong</li>
           <li><strong>🏆 Win condition:</strong> 7 or more correct counts as a win and extends your streak</li>
-          <li><strong>📤 Share:</strong> Copy your emoji grid and challenge friends after you finish</li>
         </ul>
         <button className="dt-modal-close" onClick={onClose}>🚀 Got It!</button>
       </div>

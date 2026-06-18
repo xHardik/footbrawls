@@ -13,7 +13,7 @@ import MatchPredictor from './pages/games/matchpredictor';
 import PenaltyNerve from './pages/games/penaltynerve';
 import DribbleGauntlet from './pages/games/dribble';
 import DailyTrivia from './pages/games/dailytrivia';
-import RapidFire from './pages/games/rapidfire';
+import Top10Guess from './pages/games/top10';
 import Raid from './pages/Raid';
 
 function RequireUser({ children }) {
@@ -38,7 +38,7 @@ export default function App() {
         <Route path="/games/penaltynerve" element={<RequireUser><Layout hideMobileNav><PenaltyNerve /></Layout></RequireUser>} />
         <Route path="/games/dribble" element={<RequireUser><Layout hideMobileNav><DribbleGauntlet /></Layout></RequireUser>} />
         <Route path="/games/dailytrivia" element={<RequireUser><Layout hideMobileNav><DailyTrivia /></Layout></RequireUser>} />
-        <Route path="/games/rapidfire" element={<RequireUser><Layout hideMobileNav><RapidFire /></Layout></RequireUser>} />
+        <Route path="/games/top10" element={<RequireUser><Layout hideMobileNav><Top10Guess /></Layout></RequireUser>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

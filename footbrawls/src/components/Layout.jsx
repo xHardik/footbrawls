@@ -108,7 +108,7 @@ const GAMES = [
   { name: 'Daily Trivia',   path: '/games/dailytrivia',   IconC: Icon.Question,  xp: 25,  key: 'footbrawls_dailytrivia',   color: '#0D9488' },
   { name: 'Penalty Nerve',  path: '/games/penaltynerve',  IconC: Icon.Flame,     xp: 25,  key: 'footbrawls_penaltynerve',   color: '#E84040' },
   { name: 'Dribble Gauntlet',path: '/games/dribble',       IconC: Icon.Dribble,   xp: 25,  key: 'footbrawls_dribble',        color: '#84CC16' },
-  { name: 'Rapid Fire',     path: '/games/rapidfire',     IconC: Icon.Lightning, xp: 25,  key: 'footbrawls_rapidfire',      color: '#EC4899' },
+  { name: 'Top 10 Guess',   path: '/games/top10',         IconC: Icon.Lightning, xp: 25,  key: 'footbrawls_top10_history',  color: '#EC4899' },
 ];
 
 const CURSE_COLORS = {

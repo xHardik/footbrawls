@@ -213,7 +213,7 @@ const GAMES = [
   { id:"higherLower",   Icon:Icon.Chart,    name:"Higher or Lower",  tag:"Stats",       desc:"Trust your stat instinct — call who ranks higher before the streak snaps.",           xp:25,  route:"/games/higherlower",    color:C.green,  meta:["10 Rounds","High Pressure"], storageKey:"footbrawls_higherlower",    theme:"stats"       },
   { id:"transferTrail", Icon:Icon.Network,  name:"Transfer Trail",   tag:"Career Trail",desc:"Connect two players through shared clubs in the fewest possible hops.",               xp:25,  route:"/games/transfertrail",  color:C.blue,   meta:["Fewest Steps","Mid Diff"],   storageKey:"footbrawls_transfertrail",  theme:"transfers"   },
   { id:"dailyTrivia",   Icon:Icon.Question, name:"Daily Trivia",     tag:"Knowledge",   desc:"10 football IQ questions, fresh every day. How much do you really know?",             xp:25,  route:"/games/dailytrivia",    color:C.teal,   meta:["10 Questions","Daily"],      storageKey:"footbrawls_dailytrivia",    theme:"trivia"      },
-  { id:"rapidFire",    Icon:Icon.Lightning, name:"Rapid Fire",       tag:"Speed",       desc:"Answer as many football questions as possible before the 60-second clock runs out.",  xp:25,  route:"/games/rapidfire",      color:C.pink,   meta:["60 Seconds","Reflex"],       storageKey:"footbrawls_rapidfire",      theme:"rapid"       },
+  { id:"top10",        Icon:Icon.Lightning, name:"Top 10 Guess",     tag:"Trivia List", desc:"Guess the top 10 list for a football category with only 3 lives.",  xp:25,  route:"/games/top10",          color:C.pink,   meta:["3 Lives","Top 10"],         storageKey:"footbrawls_top10_history",  theme:"rapid"       },
   { id:"dribbleGaunt", Icon:Icon.Dribble,  name:"Dribble Gauntlet", tag:"Arcade",      desc:"Navigate past defenders in this skill-based dribbling challenge. 5 levels of pain.",  xp:25,  route:"/games/dribble",        color:C.lime,   meta:["5 Levels","Arcade"],         storageKey:"footbrawls_dribble",        theme:"training"    },
 ];
 
@@ -448,7 +448,7 @@ function BroadcastTicker({ doneCount, gamesTotal, dailyXP, guildName }) {
     `⚽ ${doneCount}/${gamesTotal} games completed today`,
     `🏆 ${dailyXP} XP earned today`,
     `🛡 ${guildName} — fortress active`,
-    `⚡ Rapid Fire — fastest fingers win`,
+    `📊 Top 10 Guess — guess the statistics`,
     `🔥 Penalty Nerve — can you keep your cool?`,
     `📡 World Chat is live — join the banter`,
   ];

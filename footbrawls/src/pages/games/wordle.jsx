@@ -219,16 +219,16 @@ html { scroll-behavior: smooth; }
 }
 
 /* ── LEGEND ── */
-.wdl-legend { display: flex; gap: 16px; justify-content: flex-start; margin-bottom: 24px; flex-wrap: wrap; }
-.wdl-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); }
-.wdl-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+.wdl-legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; width: 100%; text-align: center; }
+.wdl-legend-item { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.72rem; color: var(--muted); }
+.wdl-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
 /* ── BOARD ── */
 .wdl-board {
   display: flex; flex-direction: column; gap: 8px;
-  margin-bottom: 28px; align-items: flex-start; position: relative; z-index: 1;
+  margin-bottom: 28px; align-items: center; position: relative; z-index: 1;
 }
-.wdl-row { display: flex; gap: 8px; justify-content: flex-start; }
+.wdl-row { display: flex; gap: 8px; justify-content: center; }
 
 /* ── TILES ── */
 .wdl-tile {
@@ -290,21 +290,6 @@ html { scroll-behavior: smooth; }
 }
 .wdl-btn-back    { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
 .wdl-btn-back:hover { color: var(--text); border-color: var(--border2); transform: translateY(-2px); }
-.wdl-btn-share {
-  background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(79,142,247,0.18));
-  color: var(--accent3); border: 1px solid rgba(168,85,247,0.3);
-  position: relative; overflow: hidden;
-}
-.wdl-btn-share:hover {
-  background: linear-gradient(135deg, rgba(168,85,247,0.28), rgba(79,142,247,0.28));
-  border-color: rgba(168,85,247,0.55); transform: translateY(-2px);
-}
-.wdl-share-copied {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: rgba(61,214,140,0.92); color: #000; font-weight: 800; font-size: 0.78rem;
-  border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.wdl-share-copied.show { opacity: 1; }
 
 /* ── RESULT CARD ── */
 .wdl-result {
@@ -740,7 +725,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [stats,     setStats]     = useState(loadStats);
   const [history,   setHistory]   = useState(loadHistory);
   const [revealing, setRevealing] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
   
   // Rewarded ad states
   const [maxGuesses, setMaxGuesses] = useState(MAX_GUESSES);
@@ -930,21 +914,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     });
   }
 
-  function handleShare() {
-    const attemptsLabel = solved ? `${guesses.length}/${maxGuesses}` : `X/${maxGuesses}`;
-    const emoji = guesses.map(g =>
-      g.results.map(r => r === "correct" ? "🟩" : r === "present" ? "🟨" : "⬛").join("")
-    ).join("\n");
-    const text = `Footbrawls Wordle ${attemptsLabel}\n${emoji}\nfootbrawls.gg`;
-    if (navigator.share) {
-      navigator.share({ text });
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
-        setShareCopied(true);
-        setTimeout(() => setShareCopied(false), 2000);
-      });
-    }
-  }
 
   const remaining = maxGuesses - guesses.length;
 
@@ -1145,12 +1114,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         {/* ── CONTROLS ── */}
         <div className="wdl-controls">
           <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
-          {gameOver && (
-            <button className="wdl-btn wdl-btn-share" onClick={handleShare}>
-              📤 Share Score
-              <span className={`wdl-share-copied${shareCopied ? " show" : ""}`}>✓ Copied!</span>
-            </button>
-          )}
         </div>
 
         {/* ── RESULT CARD ── */}
@@ -1171,7 +1134,6 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             )}
 
             <div className="wdl-result-actions">
-              <button className="wdl-btn wdl-btn-share" onClick={handleShare}>📤 Share</button>
               <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
             </div>
           </div>

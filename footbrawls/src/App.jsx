@@ -32,7 +32,7 @@ export default function App() {
         <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
         <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
         <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
-        <Route path="/games/transfertrail" element={<RequireUser><Layout hideMobileNav><TransferTrail /></Layout></RequireUser>} />
+        <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />
         <Route path="/games/higherlower" element={<RequireUser><Layout hideMobileNav><HigherOrLower /></Layout></RequireUser>} />
         <Route path="/games/matchpredictor" element={<RequireUser><Layout hideMobileNav><MatchPredictor /></Layout></RequireUser>} />
         <Route path="/games/penaltynerve" element={<RequireUser><Layout hideMobileNav><PenaltyNerve /></Layout></RequireUser>} />

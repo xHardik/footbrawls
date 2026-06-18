@@ -15,6 +15,7 @@ import { getDailySeed, getDailyPlayer, getActivePuzzleDate } from "../../lib/dai
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 import { PLAYERS } from "../../lib/players.js";
+import { usePlayerWikiPhoto } from "../../lib/wikiAssets.jsx";
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 25;
@@ -57,6 +58,44 @@ function getResultPhrase(streak) {
   if (streak < 6)  return "Solid effort — you know your football!";
   if (streak < 9)  return "Impressive! You're a genuine football stats expert.";
   return "LEGENDARY! Almost a perfect run. Outstanding!";
+}
+
+function loadHistoryAndStats() {
+  try {
+    const history = JSON.parse(localStorage.getItem('footbrawls_higherlower') || '{}');
+    const allEntries = Object.values(history);
+    
+    const bestStreak = allEntries.length > 0 ? Math.max(...allEntries.map(e => e.streak || 0)) : 0;
+    const avgStreak = allEntries.length > 0 ? Math.round(allEntries.reduce((s, e) => s + (e.streak || 0), 0) / allEntries.length * 10) / 10 : 0;
+    
+    let dayStreak = 0;
+    const today = getActivePuzzleDate();
+    const check = new Date(today + "T00:00:00");
+    while (true) {
+      const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
+      if (history[k]) {
+        dayStreak++;
+        check.setDate(check.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    
+    return {
+      history,
+      stats: {
+        played: allEntries.length,
+        bestStreak,
+        avgStreak,
+        dayStreak
+      }
+    };
+  } catch (e) {
+    return {
+      history: {},
+      stats: { played: 0, bestStreak: 0, avgStreak: 0, dayStreak: 0 }
+    };
+  }
 }
 
 // ─── Ad helper ────────────────────────────────────────────────────────────────
@@ -116,9 +155,14 @@ function PlayerCard({ player, attr, revealed, isRight, animState }) {
   if (revealed && animState === "correct") cardClass += " hl-correct";
   else if (revealed && animState === "wrong") cardClass += " hl-wrong";
 
+  const photo = usePlayerWikiPhoto(player?.name);
+
   return (
     <div className={cardClass}>
-      <div className="hl-player-emoji">{player?.flag || "⚽"}</div>
+      <div className="hl-player-photo-wrapper">
+        <img src={photo} alt={player?.name} className="hl-player-img" />
+        <div className="hl-player-flag-badge">{player?.flag}</div>
+      </div>
       <div className="hl-player-name">{player?.name}</div>
       <div className="hl-player-stat-type">{attr.label}</div>
       {revealed || !isRight ? (
@@ -159,6 +203,58 @@ function StreakBar({ streak }) {
   );
 }
 
+function StreakDots({ history, puzzleDate, gameOver, currentStreak }) {
+  const today = new Date();
+  const dots = [];
+  
+  for (let i = 29; i >= 0; i--) {
+    const checkDate = new Date(today);
+    checkDate.setDate(today.getDate() - i);
+    const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,"0")}-${String(checkDate.getDate()).padStart(2,"0")}`;
+    const isToday = checkKey === puzzleDate;
+
+    let cls = 'miss';
+    let label = '—';
+    if (isToday) {
+      if (gameOver) {
+        const entry = history[checkKey];
+        if (entry) {
+          cls = entry.streak > 0 ? 'win' : 'miss';
+          label = entry.streak || '0';
+        } else {
+          cls = currentStreak > 0 ? 'win' : 'miss';
+          label = currentStreak || '0';
+        }
+      } else {
+        cls = 'today-pending';
+        label = null;
+      }
+    } else {
+      const entry = history[checkKey];
+      if (entry) {
+        cls = entry.streak > 0 ? 'win' : 'miss';
+        label = entry.streak || '0';
+      } else {
+        cls = 'miss';
+        label = '0';
+      }
+    }
+    dots.push({ cls, label });
+  }
+
+  const last30Dots = dots.slice(-30);
+
+  return (
+    <div className="hl-streak-dots">
+      {last30Dots.map((dot, i) => (
+        <div key={i} className={`hl-streak-dot ${dot.cls}`}>
+          {dot.label !== null ? dot.label : ""}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
@@ -170,6 +266,13 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const [animState, setAnimState] = useState(null); // "correct" | "wrong"
   const [xpAwarded, setXpAwarded] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [historyAndStats, setHistoryAndStats] = useState(() => loadHistoryAndStats());
+  const [msg, setMsg] = useState(null);
+
+  function showMsg(text, type = "info", duration = 2800) {
+    setMsg({ text, type });
+    setTimeout(() => setMsg(null), duration);
+  }
 
   // Rewarded ad states
   const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
@@ -183,7 +286,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       beforeAd: () => setIsAdLoading(true),
       afterAd:  () => setIsAdLoading(false),
       adDismissed: () => {
-        // ad dismissed — do nothing
+        showMsg("Ad dismissed. Streak not saved.", "error");
       },
       adViewed: () => {
         const nextRound = round + 1;
@@ -193,6 +296,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         setGameOver(false);
         setHasWatchedReviveAd(true);
         persist({ round: nextRound, streak, gameOver: false, xpAwarded, hasWatchedReviveAd: true });
+        showMsg("Streak saved! Keep going!", "success");
       },
       adBreakDone: () => setIsAdLoading(false),
     });
@@ -209,17 +313,20 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       setStreak(s.streak);
       setGameOver(s.gameOver);
       setXpAwarded(s.xpAwarded);
-      if (s.hasWatchedReviveAd) setHasWatchedReviveAd(s.hasWatchedReviveAd);
+      setHasWatchedReviveAd(s.hasWatchedReviveAd === true);
     }
   }, []);
 
-  // Inject CSS
+  // Inject CSS & Config H5 games ads
   useEffect(() => {
     if (!document.getElementById("hl-css")) {
       const s = document.createElement("style");
       s.id = "hl-css";
       s.textContent = CSS;
       document.head.appendChild(s);
+    }
+    if (window.adConfig) {
+      window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
     }
   }, []);
 
@@ -230,12 +337,21 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   function persist(updates) {
     const puzzleDate = getActivePuzzleDate();
     const key = `hl_${puzzleDate}_state`;
-    localStorage.setItem(key, JSON.stringify({ hasWatchedReviveAd, ...updates }));
+    const watchedAd = updates.hasOwnProperty('hasWatchedReviveAd') ? updates.hasWatchedReviveAd : hasWatchedReviveAd;
+    localStorage.setItem(key, JSON.stringify({ hasWatchedReviveAd: watchedAd, ...updates }));
 
     if (updates.gameOver) {
       const hlHistory = JSON.parse(localStorage.getItem('footbrawls_higherlower') || '{}');
       hlHistory[puzzleDate] = { completed: true, streak: updates.streak, xpAwarded: updates.xpAwarded };
       localStorage.setItem('footbrawls_higherlower', JSON.stringify(hlHistory));
+      setHistoryAndStats(loadHistoryAndStats());
+    } else if (updates.hasOwnProperty('gameOver') && !updates.gameOver) {
+      const hlHistory = JSON.parse(localStorage.getItem('footbrawls_higherlower') || '{}');
+      if (hlHistory[puzzleDate]) {
+        delete hlHistory[puzzleDate];
+        localStorage.setItem('footbrawls_higherlower', JSON.stringify(hlHistory));
+        setHistoryAndStats(loadHistoryAndStats());
+      }
     }
   }
 
@@ -301,29 +417,25 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       {/* ── NAV ── */}
       <nav className="hl-nav">
         <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>
-        <div className="hl-nav-center-tag">
+        <div className="hl-nav-tag">
           <span className="hl-tag-dot" />
           Higher or Lower
         </div>
         <div className="hl-nav-right">
-          <button className="hl-nav-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
+          <button className="hl-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
       </nav>
 
       {/* ── PAGE ── */}
       <main className="hl-page">
 
+        {/* Messages */}
+        {msg && <div className={`hl-msg hl-msg-${msg.type}`}>{msg.text}</div>}
+
         {/* Page header */}
         <div className="hl-page-header">
           <h1>Higher or Lower</h1>
           <p>Football Stats Edition — build the longest streak!</p>
-        </div>
-
-        {/* Puzzle bar */}
-        <div className="hl-puzzle-bar">
-          <div className="hl-puzzle-bar-item">📅 <strong>{getPuzzleDateLabel()}</strong></div>
-          <div className="hl-puzzle-bar-sep" />
-          <div className="hl-puzzle-bar-item">🧩 Puzzle <strong>#{getPuzzleNumber()}</strong></div>
         </div>
 
         {/* Score row */}
@@ -393,7 +505,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             {/* ── REWARDED AD — Save Streak ── */}
             {!hasWatchedReviveAd && (
               <div className="hl-ad-section">
-                <p className="hl-ad-hint">Streak ended? Watch an ad to save your streak and keep going!</p>
+                <p className="hl-ad-hint">Streak ended? Watch a quick ad to revive and keep your streak going!</p>
                 <button
                   type="button"
                   className="hl-ad-btn"
@@ -401,7 +513,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
                   disabled={isAdLoading}
                 >
                   <span className="hl-ad-btn-icon">▶</span>
-                  <span>{isAdLoading ? 'LOADING AD...' : 'SAVE STREAK'}</span>
+                  <span>{isAdLoading ? 'LOADING AD...' : 'WATCH AD TO REVIVE'}</span>
                 </button>
               </div>
             )}
@@ -412,6 +524,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
                 onClick={() => {
                   setRound(0); setStreak(0); setGameOver(false);
                   setRevealed(false); setAnimState(null); setXpAwarded(0); setHasWatchedReviveAd(false);
+                  persist({ round: 0, streak: 0, gameOver: false, xpAwarded: 0, hasWatchedReviveAd: false });
                 }}
               >
                 ↺ Play Again
@@ -419,6 +532,42 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             </div>
           </div>
         )}
+
+        {/* Dashboard / Progress */}
+        <div className="hl-bottom-section">
+          <div className="hl-section-divider">
+            <span className="hl-section-label">Your Progress</span>
+            <div className="hl-section-line" />
+          </div>
+          <div className="hl-dashboard-grid">
+            {/* Streak Card */}
+            <div className="hl-dash-card">
+              <div className="hl-dash-card-hdr">
+                <span className="hl-dash-icon">📅</span>
+                <span className="hl-dash-label">Last 30 Days</span>
+              </div>
+              <StreakDots history={historyAndStats.history} puzzleDate={getActivePuzzleDate()} gameOver={gameOver} currentStreak={streak} />
+              <div className="hl-streak-legend">
+                <span><span className="hl-dot-sample win" />Played</span>
+                <span><span className="hl-dot-sample miss" />Missed</span>
+                <span><span className="hl-dot-sample today" />Today</span>
+              </div>
+            </div>
+            {/* Stats Card */}
+            <div className="hl-dash-card">
+              <div className="hl-dash-card-hdr">
+                <span className="hl-dash-icon">📊</span>
+                <span className="hl-dash-label">Your Stats</span>
+              </div>
+              <div className="hl-stats-grid">
+                <div className="hl-stat-item"><div className="hl-stat-value">{historyAndStats.stats.played || '—'}</div><div className="hl-stat-name">Played</div></div>
+                <div className="hl-stat-item"><div className="hl-stat-value">{historyAndStats.stats.bestStreak || '—'}</div><div className="hl-stat-name">Best Streak</div></div>
+                <div className="hl-stat-item"><div className="hl-stat-value">{historyAndStats.stats.avgStreak || '—'}</div><div className="hl-stat-name">Avg Streak</div></div>
+                <div className="hl-stat-item"><div className="hl-stat-value">{historyAndStats.stats.dayStreak || '—'}</div><div className="hl-stat-name">Day Streak</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </main>
     </div>
@@ -456,11 +605,11 @@ const CSS = `
 
 /* ── BACKGROUND ── */
 .hl-bg-layer {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 60% at 8% -5%,  rgba(232,64,64,0.1)   0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(247,195,68,0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(79,142,247,0.05) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 60% at 8% -5%,  rgba(61,214,140,0.22)   0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 95% 105%, rgba(61,214,140,0.15) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(61,214,140,0.1) 0%, transparent 65%),
     #05070f;
 }
 .hl-bg-layer::after {
@@ -472,7 +621,7 @@ const CSS = `
   );
 }
 .hl-noise {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.022;
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
@@ -484,70 +633,51 @@ const CSS = `
 
 /* ── NAV ── */
 .hl-nav {
-  position: sticky; top: 0; z-index: 200;
-  display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: center; padding: 0 32px; height: 62px;
-  background: rgba(5,7,15,0.82);
-  backdrop-filter: blur(24px) saturate(1.4);
-  border-bottom: 1px solid rgba(232,64,64,0.12);
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px; padding: 0 24px; position: relative; z-index: 10;
+  border-bottom: 1px solid rgba(61, 214, 140, 0.25);
+  background: rgba(5,7,15,0.7); backdrop-filter: blur(12px);
+  box-shadow: 0 4px 25px rgba(61, 214, 140, 0.28);
 }
 
 .hl-nav-logo {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 3px;
-  background: linear-gradient(100deg, var(--accent) 0%, #ffe9a0 50%, var(--accent) 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  text-decoration: none; white-space: nowrap;
-  animation: hlLogoShimmer 4s linear infinite;
-  background-color: transparent; border: none; outline: none; cursor: pointer;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--green);
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+  outline: none;
+  display: flex;
+  align-items: center;
+  text-shadow: 0 0 10px rgba(61, 214, 140, 0.5);
 }
-@keyframes hlLogoShimmer { from{background-position:0% center} to{background-position:200% center} }
 
-.hl-nav-center-tag {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 0.72rem; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 2px;
-  color: var(--accent2);
-  background: rgba(232,64,64,0.1); border: 1px solid rgba(232,64,64,0.28);
-  padding: 5px 14px; border-radius: 100px;
+.hl-nav-tag {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--muted); border: 1px solid rgba(61, 214, 140, 0.28); padding: 5px 12px;
+  border-radius: 100px; display: flex; align-items: center; gap: 6px;
+  background: rgba(61, 214, 140, 0.02);
 }
+
 .hl-tag-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--accent2); animation: hlBlink 1.5s ease infinite;
-  flex-shrink: 0;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  box-shadow: 0 0 8px var(--green);
 }
-@keyframes hlBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-.hl-nav-right { display: flex; align-items: center; justify-content: flex-end; }
-.hl-nav-help-wrap { position: relative; display: flex; align-items: center; }
-.hl-nav-help-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 1px solid var(--border2); background: var(--surface);
-  color: var(--muted); font-family: 'DM Sans', sans-serif;
-  font-size: 1rem; font-weight: 700; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
+.hl-nav-right {
+  display: flex; gap: 8px;
 }
-.hl-nav-help-btn:hover {
-  background: rgba(232,64,64,0.12); border-color: rgba(232,64,64,0.4);
-  color: var(--accent2); transform: scale(1.1);
+
+.hl-nav-btn {
+  background: var(--surface); border: 1px solid var(--border); color: #fff;
+  padding: 8px 14px; border-radius: 10px; font-size: .8rem; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+  outline: none;
 }
-.hl-nav-help-tooltip {
-  position: absolute; right: calc(100% + 10px); top: 50%;
-  transform: translateY(-50%) translateX(4px);
-  background: rgba(10,14,30,0.96); border: 1px solid rgba(232,64,64,0.25);
-  color: var(--accent2); font-size: 0.72rem; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase;
-  padding: 5px 12px; border-radius: 8px;
-  white-space: nowrap; pointer-events: none;
-  opacity: 0; transition: opacity 0.15s, transform 0.15s;
-}
-.hl-nav-help-tooltip::after {
-  content: ''; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
-  border: 5px solid transparent; border-left-color: rgba(232,64,64,0.25);
-}
-.hl-nav-help-wrap:hover .hl-nav-help-tooltip {
-  opacity: 1; transform: translateY(-50%) translateX(0);
+.hl-nav-btn:hover {
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2);
 }
 
 /* ── PAGE ── */
@@ -562,23 +692,10 @@ const CSS = `
   font-family: 'Bebas Neue', sans-serif;
   font-size: clamp(2.2rem, 5vw, 3.2rem);
   letter-spacing: 2px; line-height: 1; margin-bottom: 5px;
+  color: var(--green);
+  text-shadow: 0 0 10px rgba(61, 214, 140, 0.8), 0 0 25px rgba(61, 214, 140, 0.45);
 }
 .hl-page-header p { color: var(--muted); font-size: 0.88rem; }
-
-/* ── PUZZLE BAR ── */
-.hl-puzzle-bar {
-  display: flex; align-items: center; gap: 0;
-  margin-bottom: 24px; width: fit-content;
-  background: rgba(232,64,64,0.05); border: 1px solid rgba(232,64,64,0.15);
-  border-radius: 12px; overflow: hidden;
-  animation: hlFadeUp 0.5s ease 0.05s both;
-}
-.hl-puzzle-bar-item {
-  display: flex; align-items: center; gap: 7px;
-  padding: 9px 16px; font-size: 0.77rem; color: var(--muted);
-}
-.hl-puzzle-bar-item strong { color: var(--accent2); font-weight: 700; }
-.hl-puzzle-bar-sep { width: 1px; align-self: stretch; background: rgba(232,64,64,0.15); }
 
 /* ── SCORE ROW ── */
 .hl-score-row {
@@ -591,10 +708,13 @@ const CSS = `
   border-radius: 18px; padding: 18px 22px;
   position: relative; overflow: hidden;
 }
-.hl-score-current { border-left: 3px solid var(--accent2); }
+.hl-score-current {
+  border-left: 3px solid var(--green);
+  box-shadow: 0 4px 20px rgba(61, 214, 140, 0.15), inset 0 0 12px rgba(255,255,255,0.01);
+}
 .hl-score-current::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(232,64,64,0.06), transparent 60%);
+  background: linear-gradient(90deg, rgba(61,214,140,0.06), transparent 60%);
   pointer-events: none;
 }
 .hl-score-best { border-left: 3px solid var(--accent); }
@@ -609,13 +729,15 @@ const CSS = `
 }
 .hl-score-value-current {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 1px; line-height: 1;
-  background: linear-gradient(135deg, var(--accent2), #ff8080);
+  background: linear-gradient(135deg, var(--green), #a3ffda);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(61,214,140,0.6));
 }
 .hl-score-value-best {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 1px; line-height: 1;
   background: linear-gradient(135deg, var(--accent), #ffd700);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(247,195,68,0.5));
 }
 
 /* ── PROMPT ── */
@@ -640,33 +762,67 @@ const CSS = `
 
 .hl-player-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 36px 28px; min-height: 360px;
+  border-radius: 20px; padding: 36px 28px; min-height: 390px;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 10px; text-align: center;
+  gap: 12px; text-align: center;
   position: relative; overflow: hidden;
   transition: transform 0.3s ease, border-color 0.3s, box-shadow 0.3s;
 }
 .hl-player-card::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(79,142,247,0.05), transparent 60%);
+  background: linear-gradient(135deg, rgba(61,214,140,0.03), transparent 60%);
   pointer-events: none;
 }
+.hl-player-card:hover {
+  transform: translateY(-4px); border-color: rgba(61,214,140,0.25);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 15px rgba(61,214,140,0.08);
+}
 .hl-player-card-left { border-left: 3px solid var(--accent3); }
-.hl-player-card-left::before { background: linear-gradient(135deg, rgba(79,142,247,0.08), transparent 60%); }
-
-.hl-player-card.hl-correct {
-  border-color: var(--green); box-shadow: 0 0 32px rgba(61,214,140,0.2);
-  animation: hlCorrectPop 0.5s ease;
+.hl-player-card-left::before {
+  background: linear-gradient(135deg, rgba(79,142,247,0.05), transparent 60%);
 }
-.hl-player-card.hl-wrong {
-  border-color: var(--accent2); box-shadow: 0 0 32px rgba(232,64,64,0.25);
-  animation: hlWrongShake 0.5s ease;
+.hl-player-card-left:hover { border-color: rgba(79,142,247,0.3); }
+
+.hl-correct { border-color: var(--green) !important; background: rgba(61,214,140,0.07) !important; animation: hlCorrectPop 0.4s ease; }
+.hl-wrong   { border-color: var(--accent2) !important; background: rgba(232,64,64,0.07) !important; animation: hlWrongShake 0.4s ease; }
+
+.hl-player-photo-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.hl-player-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: var(--surface2);
+}
+.hl-player-flag-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 1.5rem;
+  background: rgba(12, 16, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.hl-player-emoji { font-size: 3rem; animation: hlFloatEmoji 3s ease-in-out infinite; }
 .hl-player-name {
   font-family: 'Bebas Neue', sans-serif; font-size: 1.65rem; letter-spacing: 1px; line-height: 1;
+  color: var(--green);
+  text-shadow: 0 0 10px rgba(61, 214, 140, 0.25);
 }
 .hl-player-stat-type {
   font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 700;
@@ -676,10 +832,14 @@ const CSS = `
   background: linear-gradient(135deg, var(--accent), #ffd700);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   filter: drop-shadow(0 0 14px rgba(247,195,68,0.3));
+  line-height: 1.1;
+  padding: 4px 10px;
 }
 .hl-hidden-value {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem;
   letter-spacing: 6px; color: rgba(255,255,255,0.18);
+  line-height: 1.1;
+  padding: 4px 10px;
 }
 .hl-player-club {
   font-size: 0.72rem; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.5px;
@@ -725,8 +885,8 @@ const CSS = `
 }
 .hl-streak-pip.active {
   width: 13px; height: 13px;
-  background: var(--accent); border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(247,195,68,0.8);
+  background: var(--green); border-color: var(--green);
+  box-shadow: 0 0 12px rgba(61, 214, 140, 0.95);
 }
 .hl-streak-text {
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
@@ -750,83 +910,74 @@ const CSS = `
 
 .hl-btn-higher {
   background: linear-gradient(135deg, #11998e, var(--green));
-  color: #000; box-shadow: 0 6px 20px rgba(61,214,140,0.28);
+  color: #000; box-shadow: 0 6px 22px rgba(61,214,140,0.45);
 }
-.hl-btn-higher:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(61,214,140,0.42); }
+.hl-btn-higher:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(61,214,140,0.55); }
 .hl-btn-lower {
   background: linear-gradient(135deg, var(--accent2), #ff6a00);
-  color: #fff; box-shadow: 0 6px 20px rgba(232,64,64,0.28);
+  color: #fff; box-shadow: 0 6px 22px rgba(232,64,64,0.45);
 }
-.hl-btn-lower:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(232,64,64,0.42); }
+.hl-btn-lower:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(232,64,64,0.55); }
 
 .hl-btn-restart {
   background: rgba(61,214,140,0.12); color: var(--green);
   border: 1px solid rgba(61,214,140,0.28);
 }
-.hl-btn-restart:hover { background: rgba(61,214,140,0.22); transform: translateY(-2px); }
+.hl-btn-restart:hover { background: rgba(61,214,140,0.2); border-color: rgba(61,214,140,0.4); transform: translateY(-2px); }
 
 /* ── RESULT CARD ── */
 .hl-result-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 22px; padding: 48px 40px; text-align: center;
-  margin-bottom: 24px; animation: hlFadeUp 0.5s ease;
-  position: relative; overflow: hidden;
+  border-radius: 24px; padding: 48px 40px; text-align: center;
+  position: relative; overflow: hidden; margin-bottom: 24px;
+  animation: hlFadeUp 0.5s ease both;
 }
 .hl-result-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3));
-  border-radius: 22px 22px 0 0;
+  background: linear-gradient(90deg, var(--green), var(--accent), var(--accent3));
+  border-radius: 24px 24px 0 0;
 }
 .hl-result-badge {
-  display: inline-flex; align-items: center; gap: 7px;
-  background: rgba(232,64,64,0.1); border: 1px solid rgba(232,64,64,0.3);
-  color: var(--accent2); font-size: 0.7rem; font-weight: 800;
-  letter-spacing: 2px; text-transform: uppercase;
-  padding: 5px 14px; border-radius: 100px; margin-bottom: 14px;
+  display: inline-block; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--green); background: rgba(61,214,140,0.12);
+  padding: 5px 14px; border-radius: 100px; border: 1px solid rgba(61,214,140,0.25);
+  margin-bottom: 18px;
 }
-.hl-result-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 2px; margin-bottom: 6px;
-}
-.hl-result-score {
-  font-family: 'Bebas Neue', sans-serif; font-size: 5.5rem; letter-spacing: 2px;
-  background: linear-gradient(135deg, var(--accent2), var(--accent) 60%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  line-height: 1; margin: 12px 0 0 0;
-  filter: drop-shadow(0 0 22px rgba(232,64,64,0.4));
-  animation: hlScorePulse 2.5s ease-in-out infinite;
-}
-.hl-result-score-label {
-  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 2px; color: var(--muted); margin-bottom: 12px;
-}
-@keyframes hlScorePulse {
-  0%,100%{filter:drop-shadow(0 0 20px rgba(232,64,64,0.4))}
-  50%    {filter:drop-shadow(0 0 44px rgba(232,64,64,0.75))}
-}
-.hl-result-phrase { color: var(--muted); font-size: 1rem; margin-bottom: 28px; line-height: 1.6; }
-.hl-result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.hl-result-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 1.5px; margin-bottom: 12px; color: #fff; }
+.hl-result-score { font-family: 'Bebas Neue', sans-serif; font-size: 6rem; line-height: 0.9; color: var(--green); text-shadow: 0 0 20px rgba(61,214,140,0.4); }
+.hl-result-score-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 24px; }
+.hl-result-phrase { font-size: 0.95rem; color: var(--muted); max-width: 440px; margin: 0 auto 32px; line-height: 1.6; }
+.hl-result-actions { display: flex; gap: 12px; justify-content: center; }
 
 .hl-xp-badge-earned {
-  display: inline-flex; align-items: center;
-  background: rgba(247,195,68,0.1); border: 1px solid rgba(247,195,68,0.3);
-  border-radius: 99px; padding: 6px 18px;
-  font-size: 0.8rem; font-weight: 800; color: var(--accent);
-  letter-spacing: 1px; box-shadow: 0 0 10px rgba(247,195,68,0.1);
-  margin-bottom: 20px;
+  font-family: 'Space Mono', monospace; font-size: 0.85rem; font-weight: 700;
+  color: var(--green); border: 1px solid rgba(61,214,140,0.3);
+  background: rgba(61,214,140,0.08); padding: 8px 18px; border-radius: 10px;
+  width: fit-content; margin: 0 auto 24px;
 }
 
-/* ── AD SECTION ── */
-.hl-ad-section {
-  margin-top: 18px; padding-top: 18px;
-  border-top: 1px solid var(--border); margin-bottom: 20px;
+/* ── MESSAGE ── */
+.hl-msg {
+  border-radius: var(--card-radius); padding: 13px 20px;
+  font-size: 0.88rem; font-weight: 700; text-align: center;
+  margin-bottom: 18px; animation: hlFadeUp 0.3s ease; border: 1px solid;
+  position: relative; z-index: 5;
 }
-.hl-ad-hint { font-size: 0.8rem; color: var(--muted); margin: 0 0 12px 0; }
+.hl-msg-error   { background: rgba(232,64,64,0.1);  color: #ff8080;        border-color: rgba(232,64,64,0.35); }
+.hl-msg-success { background: rgba(61,214,140,0.1);  color: var(--green);   border-color: rgba(61,214,140,0.35); }
+.hl-msg-info    { background: rgba(79,142,247,0.1);  color: var(--accent3); border-color: rgba(79,142,247,0.35); }
+
+/* ── REWARDED AD AREA ── */
+.hl-ad-section {
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 18px; padding: 22px; margin-bottom: 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.hl-ad-hint { font-size: 0.82rem; color: var(--muted); line-height: 1.5; text-align: center; }
 .hl-ad-btn {
-  background: var(--accent); border: none; border-radius: 12px;
-  color: #060810; padding: 12px 18px; font-weight: 900; cursor: pointer;
-  font-size: 0.78rem; font-family: 'DM Sans', sans-serif;
-  text-transform: uppercase; letter-spacing: 1.5px;
-  box-shadow: 0 4px 14px rgba(247,195,68,0.25); width: 100%;
+  background: var(--accent); color: #000; border: none; border-radius: 10px;
+  padding: 11px 24px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 800;
+  letter-spacing: 0.5px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: all 0.2s;
 }
@@ -843,45 +994,125 @@ const CSS = `
 }
 @keyframes hlFadeIn { from{opacity:0} to{opacity:1} }
 .hl-modal-box {
-  background: #0c1020; border: 1px solid rgba(232,64,64,0.18);
+  background: #0c1020; border: 1px solid rgba(61,214,140,0.22);
   border-radius: 24px; padding: 44px 36px;
   max-width: 560px; width: 100%; max-height: 88vh; overflow-y: auto;
   position: relative; animation: hlModalUp 0.32s cubic-bezier(0.4,0,0.2,1);
 }
 .hl-modal-box::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3));
+  background: linear-gradient(90deg, var(--green), var(--accent), var(--accent3));
   border-radius: 24px 24px 0 0;
 }
 @keyframes hlModalUp { from{opacity:0;transform:translateY(28px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
 .hl-modal-box::-webkit-scrollbar { width: 5px; }
-.hl-modal-box::-webkit-scrollbar-thumb { background: rgba(232,64,64,0.3); border-radius: 5px; }
+.hl-modal-box::-webkit-scrollbar-thumb { background: rgba(61,214,140,0.3); border-radius: 5px; }
 .hl-modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.3rem; letter-spacing: 2px; text-align: center; margin-bottom: 26px; }
 .hl-rules-list { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 9px; }
 .hl-rules-list li {
   background: var(--surface); border: 1px solid var(--border);
-  border-left: 3px solid rgba(232,64,64,0.45); border-radius: 12px;
+  border-left: 3px solid rgba(61,214,140,0.45); border-radius: 12px;
   padding: 13px 16px; font-size: 0.9rem; line-height: 1.6;
   transition: border-color 0.2s, transform 0.2s;
 }
-.hl-rules-list li:hover { border-left-color: var(--accent2); transform: translateX(4px); }
+.hl-rules-list li:hover { border-left-color: var(--green); transform: translateX(4px); }
 .hl-rule-icon { margin-right: 8px; }
 .hl-scoring-box {
-  background: rgba(247,195,68,0.05); border: 1px solid rgba(247,195,68,0.18);
-  border-radius: 14px; padding: 18px; margin-bottom: 22px;
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 28px;
 }
-.hl-scoring-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; text-align: center; }
-.hl-scoring-item { display: flex; justify-content: space-between; padding: 7px 0; font-size: 0.86rem; border-bottom: 1px solid var(--border); }
+.hl-scoring-box h3 { font-size: 0.77rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
+.hl-scoring-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .hl-scoring-item:last-child { border-bottom: none; }
-.hl-scoring-value { color: var(--accent); font-weight: 700; }
+.hl-scoring-value { font-weight: 700; color: var(--green); }
 .hl-btn-primary {
-  background: var(--accent2); color: #fff; font-weight: 800;
-  width: 100%; justify-content: center; padding: 14px; font-size: 0.92rem;
-  border-radius: 12px; border: none; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; text-transform: uppercase; letter-spacing: 1px;
-  transition: all 0.22s ease; display: flex; align-items: center;
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #11998e, var(--green)); color: #000;
+  font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 800;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
 }
-.hl-btn-primary:hover { background: #ff6060; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,64,64,0.3); }
+.hl-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(61,214,140,0.4); }
+
+/* ── DASHBOARD / BOTTOM SECTION ── */
+.hl-bottom-section {
+  margin-top: 50px;
+  animation: hlFadeUp 0.5s ease 0.2s both;
+}
+.hl-section-divider {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+}
+.hl-section-label {
+  font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px; color: var(--muted);
+}
+.hl-section-line {
+  flex: 1; height: 1px; background: linear-gradient(to right, rgba(61,214,140,0.18), transparent);
+}
+.hl-dashboard-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.hl-dash-card {
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; display: flex; flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.hl-dash-card-hdr {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 14px;
+}
+.hl-dash-icon {
+  font-size: .95rem;
+}
+.hl-dash-label {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted);
+}
+.hl-streak-dots {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 4px; margin-bottom: 16px;
+}
+.hl-streak-dot {
+  aspect-ratio: 1; border-radius: 6px; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace; font-size: 0.52rem; font-weight: 700;
+}
+.hl-streak-dot.win {
+  background: rgba(61,214,140,.18); border-color: rgba(61,214,140,.32); color: #3DD68C;
+  box-shadow: 0 0 6px rgba(61,214,140,0.15);
+}
+.hl-streak-dot.miss {
+  background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18); color: #ff8080;
+}
+.hl-streak-dot.today-pending {
+  background: rgba(79,142,247,.09); border-style: dashed; border-color: rgba(79,142,247,.38);
+}
+.hl-streak-legend {
+  display: flex; gap: 13px; font-size: .68rem; color: var(--muted); align-items: center; flex-wrap: wrap;
+  margin-top: auto;
+}
+.hl-dot-sample {
+  display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: middle;
+}
+.hl-dot-sample.win { background: rgba(61,214,140,.18); border: 1px solid var(--green); }
+.hl-dot-sample.miss { background: rgba(232,64,64,.08); border: 1px solid rgba(232,64,64,0.18); }
+.hl-dot-sample.today { background: rgba(79,142,247,.14); border: 1px solid var(--accent); }
+
+.hl-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.hl-stat-item {
+  background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+}
+.hl-stat-item:hover {
+  border-color: rgba(61,214,140,.22); background: rgba(61,214,140,.03);
+}
+.hl-stat-value {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 1px; color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+.hl-stat-name {
+  font-size: .62rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px;
+}
 
 /* ── ANIMATIONS ── */
 @keyframes hlFadeUp    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -893,22 +1124,32 @@ const CSS = `
 @media (max-width: 768px) {
   .hl-nav { padding: 0 12px; height: 54px; }
   .hl-nav-logo { font-size: 1.3rem; }
-  .hl-nav-center-tag { font-size: 0.58rem; padding: 4px 9px; gap: 4px; letter-spacing: 1.5px; }
-  .hl-nav-help-btn { width: 30px; height: 30px; font-size: 0.88rem; }
+  .hl-nav-tag { font-size: 0.58rem; padding: 4px 9px; gap: 4px; letter-spacing: 1.5px; }
+  .hl-nav-btn { font-size: 0.8rem; padding: 6px 12px; }
   .hl-page { padding: 18px 16px 56px; }
   .hl-page-header h1 { font-size: 1.9rem; }
   .hl-game-area { grid-template-columns: 1fr; gap: 12px; }
   .hl-vs-divider { margin: 4px 0; }
   .hl-vs-divider::before, .hl-vs-divider::after { display: none; }
-  .hl-player-card { min-height: 220px; padding: 24px 20px; }
+  .hl-player-card { min-height: 240px; padding: 24px 20px; gap: 8px; }
+  .hl-player-photo-wrapper { width: 80px; height: 80px; }
+  .hl-player-flag-badge { font-size: 1.15rem; width: 26px; height: 26px; }
   .hl-player-emoji { font-size: 2.2rem; }
   .hl-player-name  { font-size: 1.4rem; }
-  .hl-player-value, .hl-hidden-value { font-size: 2.2rem; }
+  .hl-player-value, .hl-hidden-value { font-size: 2.2rem; line-height: 1.1; padding: 2px 6px; }
   .hl-buttons { flex-direction: column; }
   .hl-btn-higher, .hl-btn-lower { width: 100%; }
   .hl-result-card { padding: 28px 20px; }
   .hl-result-score { font-size: 3.8rem; }
   .hl-modal-box { padding: 28px 20px; }
+}
+@media (max-width: 600px) {
+  .hl-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .hl-streak-dots {
+    gap: 6px;
+  }
 }
 @media (max-width: 480px) {
   .hl-page { padding: 14px 12px 52px; }
@@ -919,8 +1160,8 @@ const CSS = `
 @media (max-width: 380px) {
   .hl-nav { height: 50px; }
   .hl-nav-logo { font-size: 1.25rem; letter-spacing: 2px; }
-  .hl-nav-center-tag { font-size: 0.55rem; padding: 3px 8px; letter-spacing: 1px; }
-  .hl-nav-help-btn { width: 26px; height: 26px; font-size: 0.8rem; }
+  .hl-nav-tag { font-size: 0.55rem; padding: 3px 8px; letter-spacing: 1px; }
+  .hl-nav-btn { font-size: 0.75rem; padding: 5px 10px; }
   .hl-player-name { font-size: 1.2rem; }
 }
 `;

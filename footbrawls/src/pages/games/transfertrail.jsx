@@ -2,7 +2,7 @@
  * TransferTrail.jsx
  * Show a player's club transfer history — user guesses WHO the player is.
  * 3 players per session, scoring system, streak bonuses.
- * Matches the transfer.html (Crickingo) mechanic adapted for FootBrawls.
+ * Royal blue theme for FootBrawls.
  *
  * Storage key: footbrawls_transfertrail
  * Props: players (default PLAYERS), userId, onComplete
@@ -14,15 +14,16 @@ import { getActivePuzzleDate } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
+import { ClubLogo } from "../../lib/wikiAssets.jsx";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const PLAYERS_PER_GAME = 3;
-const MAX_ATTEMPTS     = 3;           // guesses per player
-const SCORE_TABLE      = [250, 300, 350]; // per correct player (streak-based)
-const PERFECT_BONUS    = 100;
-const TOTAL_XP         = 20;
+const MAX_ATTEMPTS     = 3;
+const XP_TABLE         = [5, 10, 10];
+const PERFECT_BONUS_XP = 5;
+const TOTAL_XP         = 25;
 
-// ── Seeded daily puzzle — pick 3 players deterministically ───────────────────
+// ── Seeded daily puzzle ───────────────────────────────────────────────────────
 function seededRandom(seed) {
   let s = seed;
   return () => {
@@ -32,10 +33,8 @@ function seededRandom(seed) {
 }
 
 function getDailyPlayers(players, dateStr) {
-  // Only include players that actually have a clubs array with 2+ entries
   const eligible = players.filter(p => Array.isArray(p.clubs) && p.clubs.length >= 2);
   if (eligible.length < PLAYERS_PER_GAME) return eligible.slice(0, PLAYERS_PER_GAME);
-
   const seed = dateStr.split("-").reduce((a, n) => a * 100 + parseInt(n), 0);
   const rng  = seededRandom(seed);
   const pool = [...eligible];
@@ -49,42 +48,42 @@ function getDailyPlayers(players, dateStr) {
 
 // ── Font injection ────────────────────────────────────────────────────────────
 function injectFonts() {
-  if (document.getElementById("tt2-fonts")) return;
+  if (document.getElementById("tt-fonts")) return;
   const l = document.createElement("link");
-  l.id = "tt2-fonts"; l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=Space+Mono:wght@400;700&display=swap";
+  l.id = "tt-fonts"; l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&display=swap";
   document.head.appendChild(l);
 }
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens — Royal Blue theme ─────────────────────────────────────────
 const T = {
-  bg:      "#05070f",
-  surface: "rgba(255,255,255,0.038)",
-  surf2:   "rgba(255,255,255,0.065)",
-  border:  "rgba(255,255,255,0.08)",
-  border2: "rgba(255,255,255,0.13)",
-  gold:    "#F7C344",
-  red:     "#E84040",
-  blue:    "#4F8EF7",
-  green:   "#3DD68C",
-  teal:    "#2DD4BF",
-  purple:  "#A855F7",
-  text:    "#F0F0F0",
+  bg:      "#04080f",
+  surface: "rgba(255,255,255,0.035)",
+  surf2:   "rgba(255,255,255,0.06)",
+  border:  "rgba(20,80,200,0.2)",
+  border2: "rgba(20,80,200,0.35)",
+  royal:   "#1a6fff",
+  royalHover: "#3a85ff",
+  royalLight: "#7ab8ff",
+  gold:    "#f7c344",
+  red:     "#e84040",
+  green:   "#3dd68c",
+  teal:    "#2dd4bf",
+  text:    "#f0f0f0",
   muted:   "rgba(240,240,240,0.45)",
-  muted2:  "rgba(240,240,240,0.25)",
+  muted2:  "rgba(240,240,240,0.28)",
 };
 
-// ── CSS keyframes (injected once) ─────────────────────────────────────────────
+// ── CSS keyframes ─────────────────────────────────────────────────────────────
 const KEYFRAMES = `
-  @keyframes tt2FadeUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes tt2Shimmer  { from{background-position:0% center} to{background-position:200% center} }
-  @keyframes tt2Blink    { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  @keyframes tt2Spin     { to{transform:rotate(360deg)} }
-  @keyframes tt2ScorePop { 0%{transform:scale(0.7);opacity:0} 60%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
-  @keyframes tt2Correct  { 0%{background:rgba(61,214,140,0.25)} 100%{background:rgba(61,214,140,0.07)} }
-  @keyframes tt2Wrong    { 0%,20%,40%,60%,80%{transform:translateX(-6px)} 10%,30%,50%,70%,90%{transform:translateX(6px)} 100%{transform:translateX(0)} }
-  @keyframes tt2DropDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes tt2ScorePulse { 0%,100%{filter:drop-shadow(0 0 18px rgba(79,142,247,0.4))} 50%{filter:drop-shadow(0 0 38px rgba(79,142,247,0.75))} }
+  @keyframes ttFadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes ttShimmer  { from{background-position:0% center} to{background-position:200% center} }
+  @keyframes ttBlink    { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes ttSpin     { to{transform:rotate(360deg)} }
+  @keyframes ttScorePop { 0%{transform:scale(0.7);opacity:0} 60%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
+  @keyframes ttWrong    { 0%,20%,40%,60%,80%{transform:translateX(-6px)} 10%,30%,50%,70%,90%{transform:translateX(6px)} 100%{transform:translateX(0)} }
+  @keyframes ttDropDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes ttPulse    { 0%,100%{filter:drop-shadow(0 0 18px rgba(26,111,255,0.4))} 50%{filter:drop-shadow(0 0 38px rgba(26,111,255,0.75))} }
 `;
 
 // ── Background ────────────────────────────────────────────────────────────────
@@ -92,22 +91,17 @@ function BgLayers() {
   return (
     <>
       <div style={{
-        position:"fixed",inset:0,zIndex:0,pointerEvents:"none",
+        position:"absolute",inset:0,zIndex:0,pointerEvents:"none",
         background:`
-          radial-gradient(ellipse 80% 60% at 8% -5%,  rgba(247,195,68,0.07) 0%, transparent 55%),
-          radial-gradient(ellipse 60% 50% at 95% 105%,rgba(79,142,247,0.08) 0%, transparent 55%),
-          radial-gradient(ellipse 50% 40% at 50% 50%, rgba(232,64,64,0.04)  0%, transparent 65%),
+          radial-gradient(ellipse 70% 50% at 15% 0%,  rgba(16,80,200,0.18)  0%, transparent 55%),
+          radial-gradient(ellipse 60% 40% at 90% 105%,rgba(0,60,180,0.14)   0%, transparent 55%),
+          radial-gradient(ellipse 50% 40% at 50% 50%, rgba(26,111,255,0.05) 0%, transparent 65%),
           ${T.bg}
         `,
       }}/>
       <div style={{
-        position:"fixed",inset:0,zIndex:0,pointerEvents:"none",
-        backgroundImage:"repeating-linear-gradient(-45deg,transparent,transparent 48px,rgba(255,255,255,0.007) 48px,rgba(255,255,255,0.007) 49px)",
-      }}/>
-      <div style={{
-        position:"fixed",inset:0,zIndex:0,pointerEvents:"none",opacity:0.02,
-        backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-        backgroundSize:"200px",
+        position:"absolute",inset:0,zIndex:0,pointerEvents:"none",
+        backgroundImage:"repeating-linear-gradient(-45deg,transparent,transparent 48px,rgba(255,255,255,0.006) 48px,rgba(255,255,255,0.006) 49px)",
       }}/>
     </>
   );
@@ -122,55 +116,52 @@ function RulesModal({ onClose }) {
         position:"fixed",inset:0,zIndex:9999,
         background:"rgba(0,0,0,0.82)",backdropFilter:"blur(14px)",
         display:"flex",alignItems:"center",justifyContent:"center",padding:20,
-        animation:"tt2FadeUp 0.22s ease",
+        animation:"ttFadeUp 0.22s ease",
       }}
     >
       <div style={{
-        background:"#0c1020",border:"1px solid rgba(79,142,247,0.18)",
-        borderRadius:24,padding:"40px 32px",
-        maxWidth:520,width:"100%",maxHeight:"88vh",overflowY:"auto",
-        position:"relative",animation:"tt2FadeUp 0.32s cubic-bezier(0.4,0,0.2,1)",
+        background:"#0c1020",border:`1px solid ${T.border2}`,
+        borderRadius:22,padding:"40px 30px",
+        maxWidth:500,width:"100%",maxHeight:"88vh",overflowY:"auto",
+        position:"relative",animation:"ttFadeUp 0.3s cubic-bezier(0.4,0,0.2,1)",
       }}>
-        {/* Top bar */}
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#4F8EF7,#F7C344,#E84040)",borderRadius:"24px 24px 0 0"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#1a6fff,#f7c344,#e84040)",borderRadius:"22px 22px 0 0"}}/>
 
-        <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.2rem",letterSpacing:2,textAlign:"center",marginBottom:24,color:T.text}}>
+        <h2 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.1rem",letterSpacing:2,textAlign:"center",marginBottom:22,color:T.text}}>
           🔄 How to Play
         </h2>
 
-        <ul style={{listStyle:"none",padding:0,margin:"0 0 20px",display:"flex",flexDirection:"column",gap:8}}>
-          {[
-            ["📋","A player's club transfer history is shown — teams they played for"],
-            ["🔍","Search and select the player's name from the dropdown"],
-            ["✅","Submit your guess to see if you're correct"],
-            ["🔥","Get all 3 correct for streak bonuses and max score!"],
-            ["⏭️","Skip if you don't know — but you'll lose your streak"],
-            ["🏆","3 players per puzzle — new puzzle every day!"],
-          ].map(([icon, text]) => (
-            <li key={text} style={{
-              background:T.surface,border:`1px solid ${T.border}`,
-              borderLeft:"3px solid rgba(79,142,247,0.45)",
-              borderRadius:12,padding:"12px 16px",
-              fontSize:"0.88rem",lineHeight:1.6,color:T.muted,
-            }}>
-              <span style={{marginRight:8}}>{icon}</span>{text}
-            </li>
-          ))}
-        </ul>
+        {[
+          ["📋","A player's club transfer history is shown — teams they played for over their career."],
+          ["🔍","Search and select the player's name from the dropdown list."],
+          ["✅","Submit your guess — you get 3 attempts per player!"],
+          ["🔥","Get all 3 correct for streak bonuses and the maximum score!"],
+          ["⏭️","Skip if you're stuck — but you'll lose your current streak."],
+          ["🏆","3 players per puzzle — a new puzzle drops every day!"],
+        ].map(([icon, text]) => (
+          <div key={text} style={{
+            background:T.surface,border:`1px solid ${T.border}`,
+            borderLeft:`3px solid rgba(26,111,255,0.45)`,
+            borderRadius:10,padding:"11px 14px",marginBottom:8,
+            fontSize:"0.85rem",lineHeight:1.6,color:T.muted,
+          }}>
+            <span style={{marginRight:8}}>{icon}</span>{text}
+          </div>
+        ))}
 
-        <div style={{background:"rgba(79,142,247,0.05)",border:"1px solid rgba(79,142,247,0.18)",borderRadius:14,padding:18,marginBottom:22}}>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.1rem",letterSpacing:1,color:T.blue,marginBottom:12,textAlign:"center"}}>
-            💰 SCORING — MAX 1000 PTS
+        <div style={{background:"rgba(26,111,255,0.05)",border:`1px solid ${T.border2}`,borderRadius:14,padding:18,margin:"18px 0 20px"}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:1,color:T.royal,marginBottom:12,textAlign:"center"}}>
+            🌟 XP REWARDS — MAX 30 XP
           </div>
           {[
-            ["1st Correct Guess",        "+250 pts"],
-            ["2nd Correct (Streak)",     "+300 pts"],
-            ["3rd Correct (Streak)",     "+350 pts"],
-            ["Perfect Completion (3/3)", "+100 pts"],
+            ["1st Correct Guess",        "+5 XP"],
+            ["2nd Correct (Streak)",     "+10 XP"],
+            ["3rd Correct (Streak)",     "+10 XP"],
+            ["Perfect Completion (3/3)", "+5 XP"],
           ].map(([label, val]) => (
-            <div key={label} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",fontSize:"0.85rem",borderBottom:`1px solid ${T.border}`,color:T.muted}}>
+            <div key={label} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:"0.82rem",borderBottom:`1px solid ${T.border}`,color:T.muted}}>
               <span>{label}</span>
-              <span style={{color:T.blue,fontWeight:700}}>{val}</span>
+              <span style={{color:T.royal,fontWeight:700}}>{val}</span>
             </div>
           ))}
         </div>
@@ -178,14 +169,13 @@ function RulesModal({ onClose }) {
         <button
           onClick={onClose}
           style={{
-            width:"100%",padding:"14px",background:T.blue,border:"none",
+            width:"100%",padding:"13px",background:T.royal,border:"none",
             borderRadius:12,color:"#fff",fontFamily:"'DM Sans',sans-serif",
-            fontSize:"0.92rem",fontWeight:800,textTransform:"uppercase",letterSpacing:1,
-            cursor:"pointer",transition:"all 0.22s",
-            boxShadow:"0 6px 20px rgba(79,142,247,0.28)",
+            fontSize:"0.9rem",fontWeight:800,textTransform:"uppercase",letterSpacing:1,
+            cursor:"pointer",boxShadow:"0 6px 20px rgba(26,111,255,0.3)",transition:"all 0.22s",
           }}
-          onMouseEnter={e=>e.currentTarget.style.background="#70a8ff"}
-          onMouseLeave={e=>e.currentTarget.style.background=T.blue}
+          onMouseEnter={e=>e.currentTarget.style.background=T.royalHover}
+          onMouseLeave={e=>e.currentTarget.style.background=T.royal}
         >
           🚀 Start Playing
         </button>
@@ -199,12 +189,12 @@ function TransferHistory({ clubs }) {
   return (
     <div style={{
       background:T.surface,border:`1px solid ${T.border}`,
-      borderRadius:16,padding:22,
-      maxHeight:420,overflowY:"auto",
+      borderRadius:14,padding:20,
+      maxHeight:400,overflowY:"auto",
     }}>
       <div style={{
-        fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.05rem",letterSpacing:2,
-        color:T.blue,marginBottom:18,display:"flex",alignItems:"center",gap:8,
+        fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.95rem",letterSpacing:2,
+        color:T.royal,marginBottom:16,display:"flex",alignItems:"center",gap:8,
       }}>
         <span>📋</span> Transfer History
       </div>
@@ -212,34 +202,39 @@ function TransferHistory({ clubs }) {
       {clubs.map((entry, i) => {
         const clubName = typeof entry === "string" ? entry : entry.club;
         const years    = typeof entry === "object" && entry.years ? entry.years : null;
+        const cleanClubName = clubName.replace(/\s*\(loan\)\s*/i, "").trim();
         return (
           <div
             key={i}
             style={{
+              display:"flex",alignItems:"center",gap:12,
               background:"rgba(255,255,255,0.04)",border:`1px solid ${T.border}`,
-              borderLeft:"3px solid rgba(79,142,247,0.4)",
-              borderRadius:12,padding:"14px 16px",marginBottom:10,
+              borderLeft:`3px solid rgba(26,111,255,0.35)`,
+              borderRadius:10,padding:"10px 14px",marginBottom:8,
               transition:"border-color 0.2s,transform 0.2s,background 0.2s",
-              animation:`tt2FadeUp 0.35s ease ${i * 0.06}s both`,
+              animation:`ttFadeUp 0.35s ease ${i * 0.06}s both`,
               cursor:"default",
             }}
             onMouseEnter={e=>{
-              e.currentTarget.style.borderLeftColor=T.blue;
-              e.currentTarget.style.background="rgba(79,142,247,0.06)";
+              e.currentTarget.style.borderLeftColor=T.royal;
+              e.currentTarget.style.background="rgba(26,111,255,0.07)";
               e.currentTarget.style.transform="translateX(4px)";
             }}
             onMouseLeave={e=>{
-              e.currentTarget.style.borderLeftColor="rgba(79,142,247,0.4)";
+              e.currentTarget.style.borderLeftColor="rgba(26,111,255,0.35)";
               e.currentTarget.style.background="rgba(255,255,255,0.04)";
               e.currentTarget.style.transform="translateX(0)";
             }}
           >
-            {years && (
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.05rem",letterSpacing:1,color:T.gold,marginBottom:3}}>
-                {years}
-              </div>
-            )}
-            <div style={{fontSize:"0.9rem",color:T.text,fontWeight:500}}>{clubName}</div>
+            <ClubLogo club={cleanClubName} size={30} style={{ flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }} />
+            <div style={{ flex:1, minWidth:0 }}>
+              {years && (
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.95rem",letterSpacing:1,color:T.gold,marginBottom:2}}>
+                  {years}
+                </div>
+              )}
+              <div style={{fontSize:"0.88rem",color:T.text,fontWeight:500,wordBreak:"break-word"}}>{clubName}</div>
+            </div>
           </div>
         );
       })}
@@ -267,7 +262,6 @@ function SearchDropdown({ players, onSelect, disabled }) {
     setOpen(results.length > 0 && focused);
   }, [results, focused]);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e) {
       if (dropRef.current && !dropRef.current.contains(e.target)) setOpen(false);
@@ -287,19 +281,19 @@ function SearchDropdown({ players, onSelect, disabled }) {
       <input
         ref={inputRef}
         value={query}
-        onChange={e => { setQuery(e.target.value); }}
+        onChange={e => setQuery(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 150)}
         placeholder="🔍 Type player name..."
         disabled={disabled}
         style={{
           width:"100%",boxSizing:"border-box",
-          padding:"14px 18px",
-          fontFamily:"'DM Sans',sans-serif",fontSize:"0.95rem",
+          padding:"13px 16px",
+          fontFamily:"'DM Sans',sans-serif",fontSize:"0.92rem",
           background:focused ? T.surf2 : T.surface,
-          border:`1px solid ${focused ? T.blue : T.border2}`,
-          borderRadius:16,color:T.text,outline:"none",
-          boxShadow:focused?"0 0 0 3px rgba(79,142,247,0.12)":"none",
+          border:`1px solid ${focused ? T.royal : T.border2}`,
+          borderRadius:14,color:T.text,outline:"none",
+          boxShadow:focused?"0 0 0 3px rgba(26,111,255,0.14)":"none",
           transition:"all 0.2s",
           opacity:disabled?0.5:1,
           cursor:disabled?"not-allowed":"text",
@@ -310,11 +304,11 @@ function SearchDropdown({ players, onSelect, disabled }) {
         <div style={{
           position:"absolute",top:"calc(100% + 6px)",left:0,right:0,
           background:"#0b0e1a",
-          border:"1px solid rgba(79,142,247,0.4)",
-          borderRadius:16,
-          boxShadow:"0 20px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(79,142,247,0.15)",
-          zIndex:999,maxHeight:260,overflowY:"auto",
-          animation:"tt2DropDown 0.18s ease",
+          border:`1px solid rgba(26,111,255,0.4)`,
+          borderRadius:14,
+          boxShadow:"0 20px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(26,111,255,0.12)",
+          zIndex:999,maxHeight:240,overflowY:"auto",
+          animation:"ttDropDown 0.18s ease",
         }}>
           {results.map(p => (
             <div
@@ -323,19 +317,19 @@ function SearchDropdown({ players, onSelect, disabled }) {
               onMouseEnter={() => setHovered(p.id)}
               onMouseLeave={() => setHovered(null)}
               style={{
-                padding:"12px 16px",cursor:"pointer",
-                color:T.text,fontSize:"0.9rem",
-                borderBottom:`1px solid rgba(255,255,255,0.06)`,
+                padding:"11px 14px",cursor:"pointer",
+                color:T.text,fontSize:"0.88rem",
+                borderBottom:`1px solid rgba(255,255,255,0.05)`,
                 background:hovered===p.id?"#131b36":"#0b0e1a",
-                paddingLeft:hovered===p.id?22:16,
-                transition:"all 0.15s",
+                paddingLeft:hovered===p.id?20:14,
+                transition:"all 0.14s",
                 display:"flex",alignItems:"center",gap:10,
               }}
             >
               <span style={{fontSize:"1.1rem"}}>{p.flag || "🏳️"}</span>
               <div>
                 <div style={{fontWeight:700}}>{p.name}</div>
-                <div style={{fontSize:"0.7rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
+                <div style={{fontSize:"0.68rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
               </div>
             </div>
           ))}
@@ -351,93 +345,173 @@ function Feedback({ state, message }) {
   const isCorrect = state === "correct";
   return (
     <div style={{
-      marginTop:16,padding:"13px 20px",borderRadius:12,
-      fontSize:"0.92rem",fontWeight:700,textAlign:"center",
+      marginTop:14,padding:"12px 18px",borderRadius:10,
+      fontSize:"0.9rem",fontWeight:700,textAlign:"center",
       background:isCorrect?"rgba(61,214,140,0.1)":"rgba(232,64,64,0.1)",
       color:isCorrect?T.green:"#ff8080",
-      border:`1px solid ${isCorrect?"rgba(61,214,140,0.38)":"rgba(232,64,64,0.38)"}`,
-      animation:isCorrect?"tt2FadeUp 0.3s ease":"tt2Wrong 0.4s ease",
+      border:`1px solid ${isCorrect?"rgba(61,214,140,0.35)":"rgba(232,64,64,0.35)"}`,
+      animation:isCorrect?"ttFadeUp 0.3s ease":"ttWrong 0.4s ease",
     }}>
       {message}
     </div>
   );
 }
 
-// ── Result / Game Over card ───────────────────────────────────────────────────
-function ResultCard({ score, correctCount, players: puzzlePlayers, onPlayAgain }) {
+// ── Result Card ───────────────────────────────────────────────────────────────
+function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain }) {
   const perfect = correctCount === PLAYERS_PER_GAME;
-  const pct     = Math.round((score / (1000)) * 100);
 
   return (
     <div style={{
       position:"relative",overflow:"hidden",
-      background:perfect?"rgba(61,214,140,0.04)":"rgba(79,142,247,0.04)",
-      border:`1px solid ${perfect?"rgba(61,214,140,0.3)":"rgba(79,142,247,0.28)"}`,
-      borderRadius:22,padding:"48px 32px",textAlign:"center",
-      animation:"tt2FadeUp 0.5s ease",
-      boxShadow:perfect?"0 8px 40px rgba(61,214,140,0.08)":"0 8px 40px rgba(79,142,247,0.08)",
+      background:perfect?"rgba(61,214,140,0.04)":"rgba(26,111,255,0.04)",
+      border:`1px solid ${perfect?"rgba(61,214,140,0.28)":"rgba(26,111,255,0.28)"}`,
+      borderRadius:20,padding:"44px 28px",textAlign:"center",
+      animation:"ttFadeUp 0.5s ease",
+      boxShadow:perfect?"0 8px 40px rgba(61,214,140,0.07)":"0 8px 40px rgba(26,111,255,0.07)",
     }}>
-      {/* Top gradient bar */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#4F8EF7,#F7C344,#E84040)",borderRadius:"22px 22px 0 0"}}/>
-      <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(255,255,255,0.025),transparent 60%)",borderRadius:22,pointerEvents:"none"}}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#1a6fff,#f7c344,#e84040)",borderRadius:"20px 20px 0 0"}}/>
+      <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(255,255,255,0.02),transparent 60%)",borderRadius:20,pointerEvents:"none"}}/>
 
-      {/* Badge */}
-      <div style={{display:"inline-flex",alignItems:"center",gap:7,background:"rgba(79,142,247,0.1)",border:"1px solid rgba(79,142,247,0.3)",color:T.blue,fontSize:"0.7rem",fontWeight:800,letterSpacing:2,textTransform:"uppercase",padding:"5px 14px",borderRadius:100,marginBottom:14}}>
+      <div style={{display:"inline-flex",alignItems:"center",gap:7,background:"rgba(26,111,255,0.1)",border:`1px solid rgba(26,111,255,0.3)`,color:T.royal,fontSize:"0.68rem",fontWeight:800,letterSpacing:2,textTransform:"uppercase",padding:"5px 14px",borderRadius:100,marginBottom:14}}>
         Game Complete
       </div>
 
-      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.8rem",letterSpacing:2,marginBottom:8,color:T.text}}>
-        {perfect ? "PERFECT SCORE!" : "GAME OVER!"}
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"2.6rem",letterSpacing:2,marginBottom:8,color:T.text}}>
+        {perfect ? "FLAWLESS GUESSING!" : "GAME OVER!"}
       </div>
 
-      {/* Score */}
       <div style={{
-        fontFamily:"'Bebas Neue',sans-serif",
-        fontSize:"5rem",letterSpacing:2,lineHeight:1,margin:"12px 0",
-        background:"linear-gradient(135deg,#4F8EF7,#a0d0ff 60%)",
+        fontFamily:"'Bebas Neue',sans-serif",fontSize:"4.8rem",letterSpacing:2,lineHeight:1,margin:"10px 0",
+        background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
         WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-        filter:"drop-shadow(0 0 22px rgba(79,142,247,0.4))",
-        animation:"tt2ScorePulse 2.5s ease-in-out infinite, tt2ScorePop 0.5s ease",
+        animation:"ttPulse 2.5s ease-in-out infinite, ttScorePop 0.5s ease",
       }}>
-        {score} <span style={{fontSize:"2.5rem",opacity:0.6}}>/</span> 1000
+        +{xpEarned} <span style={{fontSize:"2.4rem",opacity:0.55}}>XP</span>
       </div>
 
-      <div style={{fontSize:"1rem",color:T.muted,marginBottom:28,lineHeight:1.6}}>
+      <div style={{fontSize:"0.92rem",color:T.muted,marginBottom:26,lineHeight:1.6}}>
         {correctCount} of {PLAYERS_PER_GAME} players guessed correctly
-        {perfect && " — FLAWLESS!"}
+        {perfect && " — +5 XP FLAWLESS BONUS!"}
       </div>
 
-      {/* Player reveal */}
-      <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:16,padding:"18px 20px",marginBottom:24,textAlign:"left"}}>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.95rem",letterSpacing:2,color:T.muted2,marginBottom:14}}>TODAY'S PLAYERS</div>
+      <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,padding:"16px 18px",marginBottom:22,textAlign:"left"}}>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"0.88rem",letterSpacing:2,color:T.muted2,marginBottom:12}}>TODAY'S PLAYERS</div>
         {puzzlePlayers.map((p, i) => (
-          <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<puzzlePlayers.length-1?`1px solid ${T.border}`:"none"}}>
+          <div key={p.name} style={{display:"flex",alignItems:"center",gap:12,padding:"9px 0",borderBottom:i<puzzlePlayers.length-1?`1px solid ${T.border}`:"none"}}>
             <span style={{fontSize:"1.2rem"}}>{p.flag || "🏳️"}</span>
             <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:"0.9rem",color:T.text}}>{p.name}</div>
-              <div style={{fontSize:"0.68rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
+              <div style={{fontWeight:700,fontSize:"0.88rem",color:T.text}}>{p.name}</div>
+              <div style={{fontSize:"0.67rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
             </div>
-            <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.65rem",fontWeight:700,padding:"3px 10px",borderRadius:99,background:SCORE_TABLE[i]>0?"rgba(61,214,140,0.1)":"rgba(232,64,64,0.1)",color:SCORE_TABLE[i]>0?T.green:"#ff8080"}}>
-              {i === 0 ? "+250" : i === 1 ? "+300" : "+350"} pts
+            <div style={{fontFamily:"monospace",fontSize:"0.65rem",fontWeight:700,padding:"3px 10px",borderRadius:99,background:"rgba(61,214,140,0.1)",color:T.green}}>
+              {i === 0 ? "+5" : i === 1 ? "+10" : "+10"} XP
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-        <button
-          onClick={onPlayAgain}
-          style={{
-            background:"rgba(61,214,140,0.12)",color:T.green,
-            border:"1px solid rgba(61,214,140,0.28)",borderRadius:12,
-            padding:"13px 28px",fontFamily:"'DM Sans',sans-serif",
-            fontSize:"0.9rem",fontWeight:700,cursor:"pointer",
-            transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-          }}
-          onMouseEnter={e=>{e.currentTarget.style.background="rgba(61,214,140,0.22)";e.currentTarget.style.transform="translateY(-2px)"}}
-          onMouseLeave={e=>{e.currentTarget.style.background="rgba(61,214,140,0.12)";e.currentTarget.style.transform="none"}}
-        >↺ Play Again</button>
-      </div>
+      <button
+        onClick={onPlayAgain}
+        style={{
+          background:"rgba(61,214,140,0.12)",color:T.green,
+          border:"1px solid rgba(61,214,140,0.28)",borderRadius:12,
+          padding:"13px 28px",fontFamily:"'DM Sans',sans-serif",
+          fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
+          transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
+        }}
+        onMouseEnter={e=>{e.currentTarget.style.background="rgba(61,214,140,0.22)";e.currentTarget.style.transform="translateY(-2px)"}}
+        onMouseLeave={e=>{e.currentTarget.style.background="rgba(61,214,140,0.12)";e.currentTarget.style.transform="none"}}
+      >↺ Play Again</button>
+    </div>
+  );
+}
+
+// ── Stats History Loader ──────────────────────────────────────────────────────
+function loadHistoryAndStats(storageKey, puzzleDate) {
+  try {
+    const history = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    const allEntries = Object.values(history);
+    const bestXP = allEntries.length > 0 ? Math.max(...allEntries.map(e => e.xpAwarded || 0)) : 0;
+    const avgXP = allEntries.length > 0 ? Math.round(allEntries.reduce((s, e) => s + (e.xpAwarded || 0), 0) / allEntries.length) : 0;
+    
+    let dayStreak = 0;
+    const check = new Date(puzzleDate + "T00:00:00");
+    while (true) {
+      const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
+      if (history[k]) {
+        dayStreak++;
+        check.setDate(check.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return {
+      history,
+      stats: {
+        played: allEntries.length,
+        bestScore: bestXP,
+        avgScore: avgXP,
+        dayStreak
+      }
+    };
+  } catch (e) {
+    return {
+      history: {},
+      stats: { played: 0, bestScore: 0, avgScore: 0, dayStreak: 0 }
+    };
+  }
+}
+
+// ── StreakDots Subcomponent ───────────────────────────────────────────────────
+function StreakDots({ history, puzzleDate, gameOver, currentSolved }) {
+  const today = new Date();
+  const dots = [];
+  
+  for (let i = 29; i >= 0; i--) {
+    const checkDate = new Date(today);
+    checkDate.setDate(today.getDate() - i);
+    const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth()+1).padStart(2,"0")}-${String(checkDate.getDate()).padStart(2,"0")}`;
+    const isToday = checkKey === puzzleDate;
+
+    let cls = 'miss';
+    let label = '—';
+    if (isToday) {
+      if (gameOver) {
+        const entry = history[checkKey];
+        if (entry) {
+          cls = entry.score > 0 ? 'win' : 'miss';
+          label = entry.score ? '✓' : '✗';
+        } else {
+          cls = currentSolved ? 'win' : 'miss';
+          label = currentSolved ? '✓' : '✗';
+        }
+      } else {
+        cls = 'today-pending';
+        label = null;
+      }
+    } else {
+      const entry = history[checkKey];
+      if (entry) {
+        cls = entry.score > 0 ? 'win' : 'miss';
+        label = entry.score ? '✓' : '✗';
+      } else {
+        cls = 'miss';
+        label = '0';
+      }
+    }
+    dots.push({ cls, label });
+  }
+
+  const last30Dots = dots.slice(-30);
+
+  return (
+    <div className="tt-streak-dots">
+      {last30Dots.map((dot, i) => (
+        <div key={i} className={`tt-streak-dot ${dot.cls}`}>
+          {dot.label !== null ? dot.label : ""}
+        </div>
+      ))}
     </div>
   );
 }
@@ -447,45 +521,40 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const navigate = useNavigate();
   const puzzleDate  = getActivePuzzleDate();
   const storageKey  = "footbrawls_transfertrail";
-  const stateKey    = `tt2_state_${puzzleDate}`;
+  const stateKey    = `tt_state_${puzzleDate}`;
+  const [historyAndStats, setHistoryAndStats] = useState(() => loadHistoryAndStats(storageKey, puzzleDate));
 
-  // Daily puzzle players
   const puzzlePlayers = useMemo(() => getDailyPlayers(players, puzzleDate), [players, puzzleDate]);
 
-  // Game state
   const [currentIdx, setCurrentIdx]     = useState(0);
-  const [selected, setSelected]         = useState(null);   // player object from dropdown
-  const [attempts, setAttempts]         = useState(0);      // guesses for current player
-  const [feedback, setFeedback]         = useState(null);   // "correct" | "wrong" | null
+  const [selected, setSelected]         = useState(null);
+  const [attempts, setAttempts]         = useState(0);
+  const [feedback, setFeedback]         = useState(null);
   const [feedbackMsg, setFeedbackMsg]   = useState("");
-  const [score, setScore]               = useState(0);
-  const [streak, setStreak]             = useState(0);      // consecutive correct
+  const [xpEarned, setXpEarned]         = useState(0);
+  const [streak, setStreak]             = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [gameOver, setGameOver]         = useState(false);
   const [showModal, setShowModal]       = useState(false);
   const [xpAwarded, setXpAwarded]       = useState(0);
-
-  // Revealed player flags (when skipped or out of attempts)
   const [revealed, setRevealed]         = useState({});
 
   useEffect(() => { injectFonts(); }, []);
 
-  // Inject keyframes
   useEffect(() => {
-    if (document.getElementById("tt2-keyframes")) return;
+    if (document.getElementById("tt-keyframes")) return;
     const s = document.createElement("style");
-    s.id = "tt2-keyframes"; s.textContent = KEYFRAMES;
+    s.id = "tt-keyframes"; s.textContent = KEYFRAMES;
     document.head.appendChild(s);
   }, []);
 
-  // Load saved state
   useEffect(() => {
     const saved = localStorage.getItem(stateKey);
     if (saved) {
       try {
         const s = JSON.parse(saved);
         setCurrentIdx(s.currentIdx ?? 0);
-        setScore(s.score ?? 0);
+        setXpEarned(s.xpEarned ?? 0);
         setStreak(s.streak ?? 0);
         setCorrectCount(s.correctCount ?? 0);
         setGameOver(s.gameOver ?? false);
@@ -497,54 +566,63 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
 
   function persist(updates) {
     localStorage.setItem(stateKey, JSON.stringify(updates));
-    // Mark as completed in the main storage key
     if (updates.gameOver) {
       const hist = JSON.parse(localStorage.getItem(storageKey) || "{}");
-      hist[puzzleDate] = { date: puzzleDate, completed: true, score: updates.score, xpAwarded: updates.xpAwarded };
+      hist[puzzleDate] = { date: puzzleDate, completed: true, xpEarned: updates.xpEarned, xpAwarded: updates.xpAwarded };
       localStorage.setItem(storageKey, JSON.stringify(hist));
+      setHistoryAndStats(loadHistoryAndStats(storageKey, puzzleDate));
     }
   }
 
   const currentPlayer = puzzlePlayers[currentIdx];
 
+  async function endGame(finalXpVal) {
+    let xp = 0;
+    const user = getUser();
+    const uid  = userId || user?.userId;
+    if (uid) {
+      const res = await awardXP(uid, "transferTrail_correct", { rawXP: finalXpVal });
+      xp = res?.xpAwarded ?? finalXpVal;
+    } else {
+      xp = finalXpVal;
+    }
+    setXpAwarded(xp);
+    setGameOver(true);
+    persist({ 
+      currentIdx: currentIdx + 1, 
+      xpEarned: finalXpVal, 
+      streak: 0, 
+      correctCount, 
+      gameOver: true, 
+      revealed, 
+      xpAwarded: xp 
+    });
+    if (onComplete) onComplete({ gameId: "transferTrail", solved: finalXpVal > 0, xpAwarded: xp });
+  }
+
   async function submitGuess() {
     if (!selected) return;
-
-    const isCorrect = selected.id === currentPlayer.id;
+    const isCorrect = selected.name.toLowerCase() === currentPlayer.name.toLowerCase();
     const newAttempts = attempts + 1;
 
     if (isCorrect) {
-      // Award score based on streak position
-      const points = SCORE_TABLE[streak] ?? 250;
-      const newScore     = score + points;
-      const newStreak    = streak + 1;
-      const newCorrect   = correctCount + 1;
-      const isLast       = currentIdx === PLAYERS_PER_GAME - 1;
-      const newPerfect   = isLast && newCorrect === PLAYERS_PER_GAME;
-      const finalScore   = newPerfect ? newScore + PERFECT_BONUS : newScore;
+      const xpPoints   = XP_TABLE[streak] ?? 5;
+      const newXpEarned = xpEarned + xpPoints;
+      const newStreak = streak + 1;
+      const newCorrect = correctCount + 1;
+      const isLast    = currentIdx === PLAYERS_PER_GAME - 1;
+      const newPerfect = isLast && newCorrect === PLAYERS_PER_GAME;
+      const finalXp = newPerfect ? newXpEarned + PERFECT_BONUS_XP : newXpEarned;
 
       setFeedback("correct");
-      setFeedbackMsg(`✅ Correct! +${points} pts${newPerfect ? ` +${PERFECT_BONUS} bonus!` : ""}`);
-      setScore(newPerfect ? finalScore : newScore);
+      setFeedbackMsg(`✅ Correct! +${xpPoints} XP${newPerfect ? ` +${PERFECT_BONUS_XP} XP bonus!` : ""}`);
+      setXpEarned(newPerfect ? finalXp : newXpEarned);
       setStreak(newStreak);
       setCorrectCount(newCorrect);
 
       if (isLast) {
-        // Game over — award XP
-        let xp = 0;
-        const user = getUser();
-        const uid  = userId || user?.userId;
-        if (uid) {
-          const res = await awardXP(uid, "transferTrail_correct", { rawXP: TOTAL_XP });
-          xp = res?.xpAwarded ?? TOTAL_XP;
-        } else {
-          xp = TOTAL_XP;
-        }
-        setXpAwarded(xp);
         setTimeout(() => {
-          setGameOver(true);
-          persist({ currentIdx: currentIdx + 1, score: newPerfect ? finalScore : newScore, streak: newStreak, correctCount: newCorrect, gameOver: true, revealed, xpAwarded: xp });
-          if (onComplete) onComplete({ gameId: "transferTrail", solved: true, score: newPerfect ? finalScore : newScore, xpAwarded: xp });
+          endGame(finalXp);
         }, 1200);
       } else {
         setTimeout(() => {
@@ -553,27 +631,24 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           setAttempts(0);
           setFeedback(null);
           setFeedbackMsg("");
-          persist({ currentIdx: currentIdx + 1, score: newScore, streak: newStreak, correctCount: newCorrect, gameOver: false, revealed, xpAwarded: 0 });
+          persist({ currentIdx: currentIdx + 1, xpEarned: newXpEarned, streak: newStreak, correctCount: newCorrect, gameOver: false, revealed, xpAwarded: 0 });
         }, 1200);
       }
     } else {
-      // Wrong guess
       const isLastAttempt = newAttempts >= MAX_ATTEMPTS;
       const isLastPlayer  = currentIdx === PLAYERS_PER_GAME - 1;
 
       setFeedback("wrong");
       setFeedbackMsg(isLastAttempt ? `❌ It was ${currentPlayer.name}!` : `❌ Wrong! ${MAX_ATTEMPTS - newAttempts} attempt${MAX_ATTEMPTS - newAttempts !== 1 ? "s" : ""} left`);
       setAttempts(newAttempts);
-      setStreak(0); // reset streak on wrong
+      setStreak(0);
 
       if (isLastAttempt) {
-        const newRevealed = { ...revealed, [currentPlayer.id]: true };
+        const newRevealed = { ...revealed, [currentPlayer.name]: true };
         setRevealed(newRevealed);
         if (isLastPlayer) {
           setTimeout(() => {
-            setGameOver(true);
-            persist({ currentIdx: currentIdx + 1, score, streak: 0, correctCount, gameOver: true, revealed: newRevealed, xpAwarded: 0 });
-            if (onComplete) onComplete({ gameId: "transferTrail", solved: false, score, xpAwarded: 0 });
+            endGame(xpEarned);
           }, 1500);
         } else {
           setTimeout(() => {
@@ -582,7 +657,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             setAttempts(0);
             setFeedback(null);
             setFeedbackMsg("");
-            persist({ currentIdx: currentIdx + 1, score, streak: 0, correctCount, gameOver: false, revealed: newRevealed, xpAwarded: 0 });
+            persist({ currentIdx: currentIdx + 1, xpEarned, streak: 0, correctCount, gameOver: false, revealed: newRevealed, xpAwarded: 0 });
           }, 1500);
         }
       } else {
@@ -592,14 +667,12 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }
 
   function skipPlayer() {
-    const newRevealed = { ...revealed, [currentPlayer.id]: true };
+    const newRevealed = { ...revealed, [currentPlayer.name]: true };
     setRevealed(newRevealed);
     setStreak(0);
     const isLast = currentIdx === PLAYERS_PER_GAME - 1;
     if (isLast) {
-      setGameOver(true);
-      persist({ currentIdx: currentIdx + 1, score, streak: 0, correctCount, gameOver: true, revealed: newRevealed, xpAwarded: 0 });
-      if (onComplete) onComplete({ gameId: "transferTrail", solved: false, score, xpAwarded: 0 });
+      endGame(xpEarned);
     } else {
       setFeedback("wrong");
       setFeedbackMsg(`⏭ Skipped — it was ${currentPlayer.name}`);
@@ -609,14 +682,14 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         setAttempts(0);
         setFeedback(null);
         setFeedbackMsg("");
-        persist({ currentIdx: currentIdx + 1, score, streak: 0, correctCount, gameOver: false, revealed: newRevealed, xpAwarded: 0 });
+        persist({ currentIdx: currentIdx + 1, xpEarned, streak: 0, correctCount, gameOver: false, revealed: newRevealed, xpAwarded: 0 });
       }, 1400);
     }
   }
 
   function handlePlayAgain() {
     localStorage.removeItem(stateKey);
-    setCurrentIdx(0); setScore(0); setStreak(0); setCorrectCount(0);
+    setCurrentIdx(0); setXpEarned(0); setStreak(0); setCorrectCount(0);
     setGameOver(false); setRevealed({}); setSelected(null);
     setAttempts(0); setFeedback(null); setFeedbackMsg(""); setXpAwarded(0);
   }
@@ -625,21 +698,17 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
     return (
       <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:T.bg,color:T.muted,fontFamily:"'DM Sans',sans-serif"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{width:18,height:18,border:`2px solid ${T.blue}`,borderTopColor:"transparent",borderRadius:"50%",animation:"tt2Spin 0.8s linear infinite"}}/>
+          <div style={{width:18,height:18,border:`2px solid ${T.royal}`,borderTopColor:"transparent",borderRadius:"50%",animation:"ttSpin 0.8s linear infinite"}}/>
           Loading puzzle…
         </div>
       </div>
     );
   }
 
-  // Date display
   const dateStr = new Date(puzzleDate + "T00:00:00").toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
   const launch  = new Date("2026-01-01T00:00:00");
   const diff    = Math.max(1, Math.floor((new Date(puzzleDate + "T00:00:00") - launch) / 86400000) + 1);
-
-  const clubs = currentPlayer
-    ? (currentPlayer.clubs || [currentPlayer.club]).filter(Boolean)
-    : [];
+  const clubs   = currentPlayer ? (currentPlayer.clubs || [currentPlayer.club]).filter(Boolean) : [];
 
   return (
     <div style={{position:"relative",minHeight:"100vh",background:T.bg,fontFamily:"'DM Sans',sans-serif",color:T.text,overflowX:"hidden"}}>
@@ -650,31 +719,32 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       <nav style={{
         position:"sticky",top:0,zIndex:200,
         display:"grid",gridTemplateColumns:"1fr auto 1fr",
-        alignItems:"center",padding:"0 28px",height:62,
-        background:"rgba(5,7,15,0.85)",
-        backdropFilter:"blur(24px) saturate(1.4)",
-        borderBottom:"1px solid rgba(79,142,247,0.12)",
+        alignItems:"center",padding:"0 28px",height:60,
+        background:"rgba(4,8,15,0.88)",
+        backdropFilter:"blur(22px) saturate(1.4)",
+        borderBottom:`1px solid rgba(26,111,255,0.25)`,
+        boxShadow:"0 10px 30px rgba(26,111,255,0.22)",
       }}>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           style={{
-            fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.7rem",letterSpacing:3,
-            background:"linear-gradient(100deg,#F7C344 0%,#ffe9a0 50%,#F7C344 100%)",
+            fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:3,
+            background:`linear-gradient(90deg,${T.royal} 0%,${T.royalLight} 50%,${T.royal} 100%)`,
             backgroundSize:"200% auto",
             WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-            animation:"tt2Shimmer 4s linear infinite",cursor:"pointer",
-            border:"none",outline:"none",textAlign:"left",padding:0
+            animation:"ttShimmer 4s linear infinite",cursor:"pointer",
+            border:"none",outline:"none",textAlign:"left",padding:0,
           }}
         >←</button>
 
         <div style={{
           display:"flex",alignItems:"center",gap:7,
-          fontSize:"0.7rem",fontWeight:800,textTransform:"uppercase",letterSpacing:2,
-          color:T.blue,background:"rgba(79,142,247,0.1)",
-          border:"1px solid rgba(79,142,247,0.28)",
+          fontSize:"0.68rem",fontWeight:800,textTransform:"uppercase",letterSpacing:2,
+          color:T.royal,background:"rgba(26,111,255,0.1)",
+          border:`1px solid rgba(26,111,255,0.28)`,
           padding:"5px 14px",borderRadius:100,
         }}>
-          <div style={{width:6,height:6,borderRadius:"50%",background:T.blue,animation:"tt2Blink 1.5s ease infinite"}}/>
+          <div style={{width:5,height:5,borderRadius:"50%",background:T.royal,animation:"ttBlink 1.5s ease infinite"}}/>
           Transfer Trail
         </div>
 
@@ -682,21 +752,13 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           <button
             onClick={() => setShowModal(true)}
             style={{
-              background: T.surface,
-              border: `1px solid ${T.border2 || 'rgba(255,255,255,0.1)'}`,
-              color: "#fff",
-              padding: "8px 14px",
-              borderRadius: "10px",
-              fontSize: ".8rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s",
+              background:T.surface,border:`1px solid ${T.border2}`,
+              color:"#fff",padding:"7px 13px",borderRadius:9,
+              fontSize:"0.78rem",fontWeight:700,cursor:"pointer",
+              display:"flex",alignItems:"center",gap:5,transition:"all 0.2s",
             }}
-            onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.08)";e.currentTarget.style.borderColor="rgba(255,255,255,0.2)"}}
-            onMouseLeave={e=>{e.currentTarget.style.background=T.surface;e.currentTarget.style.borderColor=T.border2}}
+            onMouseEnter={e=>{e.currentTarget.style.background=T.surf2}}
+            onMouseLeave={e=>{e.currentTarget.style.background=T.surface}}
           >
             ❓ Help
           </button>
@@ -704,129 +766,104 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       </nav>
 
       {/* ── PAGE ── */}
-      <main style={{position:"relative",zIndex:1,maxWidth:1000,margin:"0 auto",padding:"36px 24px 80px",boxSizing:"border-box"}}>
+      <main style={{position:"relative",zIndex:1,maxWidth:980,margin:"0 auto",padding:"32px 22px 80px",boxSizing:"border-box"}}>
 
-        {/* Page header */}
-        <div style={{marginBottom:24,animation:"tt2FadeUp 0.5s ease"}}>
-          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2.2rem,5vw,3.2rem)",letterSpacing:2,lineHeight:1,marginBottom:5,color:T.text}}>
+        {/* Header */}
+        <div style={{marginBottom:22,animation:"ttFadeUp 0.45s ease"}}>
+          <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2rem,5vw,3rem)",letterSpacing:2,lineHeight:1,marginBottom:4,color:T.text}}>
             Transfer History
           </h1>
-          <p style={{color:T.muted,fontSize:"0.88rem",margin:0}}>
+          <p style={{color:T.muted,fontSize:"0.85rem",margin:0}}>
             {gameOver ? "Today's puzzle complete — come back tomorrow!" : "Guess the player from their club transfer history"}
           </p>
         </div>
 
-        {/* Puzzle bar */}
-        <div style={{
-          display:"flex",alignItems:"center",marginBottom:24,width:"fit-content",
-          background:"rgba(79,142,247,0.05)",border:"1px solid rgba(79,142,247,0.15)",
-          borderRadius:12,overflow:"hidden",animation:"tt2FadeUp 0.5s ease 0.05s both",
-        }}>
-          {[
-            { icon:"📅", label: dateStr },
-            { icon:"🧩", label: `Puzzle #${diff}` },
-          ].map(({icon, label}, i) => (
-            <div key={label} style={{
-              display:"flex",alignItems:"center",gap:7,
-              padding:"9px 16px",fontSize:"0.77rem",color:T.muted,
-              borderRight:i===0?"1px solid rgba(79,142,247,0.15)":"none",
-            }}>
-              {icon} <strong style={{color:T.blue,fontWeight:700}}>{label}</strong>
-            </div>
-          ))}
-        </div>
+
 
         {gameOver ? (
           <ResultCard
-            score={score}
+            xpEarned={xpEarned}
             correctCount={correctCount}
             players={puzzlePlayers}
             onPlayAgain={handlePlayAgain}
           />
         ) : (
           <>
-            {/* Player X of 3 box */}
+            {/* Player strip */}
             <div style={{
-              marginBottom:20,animation:"tt2FadeUp 0.5s ease 0.08s both",
+              background:T.surface,border:`1px solid ${T.border}`,
+              borderLeft:`3px solid ${T.royal}`,borderRadius:16,
+              padding:"18px 22px",marginBottom:18,position:"relative",overflow:"hidden",
+              animation:"ttFadeUp 0.45s ease 0.07s both",
             }}>
-              <div style={{
-                background:T.surface,border:`1px solid ${T.border}`,
-                borderLeft:`3px solid ${T.blue}`,borderRadius:18,
-                padding:"20px 24px",position:"relative",overflow:"hidden",
-              }}>
-                <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,rgba(79,142,247,0.06),transparent 60%)",pointerEvents:"none"}}/>
-                <div style={{display:"flex",alignItems:"center",gap:16,position:"relative",zIndex:1}}>
-                  <div style={{
-                    width:52,height:52,borderRadius:"50%",
-                    background:"rgba(79,142,247,0.12)",border:"2px solid rgba(79,142,247,0.3)",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    fontSize:"1.5rem",flexShrink:0,
-                    boxShadow:"0 0 16px rgba(79,142,247,0.15)",
-                  }}>🔄</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.65rem",letterSpacing:1,lineHeight:1,marginBottom:4,color:T.text}}>
-                      Who is this player?
-                    </div>
-                    <div style={{fontSize:"0.72rem",color:T.muted,textTransform:"uppercase",letterSpacing:1}}>
-                      Player {currentIdx + 1} of {PLAYERS_PER_GAME}
-                      {attempts > 0 && ` · Attempt ${attempts}/${MAX_ATTEMPTS}`}
-                    </div>
+              <div style={{position:"absolute",inset:0,background:`linear-gradient(90deg,rgba(26,111,255,0.07),transparent 60%)`,pointerEvents:"none"}}/>
+              <div style={{display:"flex",alignItems:"center",gap:14,position:"relative",zIndex:1}}>
+                <div style={{
+                  width:48,height:48,borderRadius:"50%",
+                  background:"rgba(26,111,255,0.12)",border:`2px solid rgba(26,111,255,0.3)`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:"1.4rem",flexShrink:0,
+                }}>🔄</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.5rem",letterSpacing:1,lineHeight:1,marginBottom:3,color:T.text}}>
+                    Who is this player?
                   </div>
-                  {/* Score */}
-                  <div style={{textAlign:"right",flexShrink:0}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.8rem",letterSpacing:1,color:T.blue,lineHeight:1}}>{score}</div>
-                    <div style={{fontSize:"0.58rem",color:T.muted2,letterSpacing:1,textTransform:"uppercase"}}>pts</div>
+                  <div style={{fontSize:"0.7rem",color:T.muted,textTransform:"uppercase",letterSpacing:1}}>
+                    Player {currentIdx + 1} of {PLAYERS_PER_GAME}
+                    {attempts > 0 && ` · Attempt ${attempts}/${MAX_ATTEMPTS}`}
                   </div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.75rem",letterSpacing:1,color:T.royal,lineHeight:1}}>{xpEarned}</div>
+                  <div style={{fontSize:"0.56rem",color:T.muted2,letterSpacing:1,textTransform:"uppercase"}}>XP</div>
                 </div>
               </div>
             </div>
 
-            {/* Player progress dots */}
-            <div style={{display:"flex",gap:8,marginBottom:20,alignItems:"center"}}>
+            {/* Progress bar */}
+            <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
               {puzzlePlayers.map((p, i) => (
-                <div key={p.id} style={{
-                  flex:1,height:6,borderRadius:99,
+                <div key={p.name} style={{
+                  flex:1,height:5,borderRadius:99,
                   background: i < currentIdx
-                    ? revealed[p.id] ? "rgba(232,64,64,0.5)" : "linear-gradient(90deg,#3DD68C,#2DD4BF)"
+                    ? revealed[p.name] ? "rgba(232,64,64,0.5)" : "linear-gradient(90deg,#3dd68c,#2dd4bf)"
                     : i === currentIdx
-                    ? "linear-gradient(90deg,#4F8EF7,#a0d0ff)"
+                    ? `linear-gradient(90deg,${T.royal},${T.royalLight})`
                     : "rgba(255,255,255,0.06)",
-                  boxShadow: i === currentIdx ? "0 0 8px rgba(79,142,247,0.4)" : "none",
+                  boxShadow: i === currentIdx ? `0 0 7px rgba(26,111,255,0.45)` : "none",
                   transition:"all 0.35s ease",
                 }}/>
               ))}
-              <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.68rem",fontWeight:700,color:T.muted2,whiteSpace:"nowrap"}}>{currentIdx + 1}/{PLAYERS_PER_GAME}</span>
+              <span style={{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:700,color:T.muted2,whiteSpace:"nowrap"}}>{currentIdx + 1}/{PLAYERS_PER_GAME}</span>
             </div>
 
-            {/* Main 2-col layout */}
+            {/* Main grid */}
             <div style={{
               display:"grid",
-              gridTemplateColumns:"300px 1fr",
-              gap:20,marginBottom:20,
-              animation:"tt2FadeUp 0.5s ease 0.12s both",
+              gridTemplateColumns:"280px 1fr",
+              gap:16,marginBottom:16,
+              animation:"ttFadeUp 0.45s ease 0.1s both",
             }}>
-              {/* Left: Transfer history */}
               <TransferHistory clubs={clubs}/>
 
-              {/* Right: Guess area */}
               <div style={{
                 background:T.surface,border:`1px solid ${T.border}`,
-                borderRadius:16,padding:28,
+                borderRadius:14,padding:26,
                 display:"flex",flexDirection:"column",
                 justifyContent:"center",alignItems:"center",
-                minHeight:380,position:"relative",overflow:"visible",
+                minHeight:360,position:"relative",overflow:"visible",
               }}>
-                <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(79,142,247,0.04),transparent 60%)",pointerEvents:"none",borderRadius:16}}/>
+                <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,rgba(26,111,255,0.04),transparent 60%)`,pointerEvents:"none",borderRadius:14}}/>
 
-                <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.35rem",letterSpacing:2,color:T.text,marginBottom:22,position:"relative",zIndex:1}}>
+                <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.25rem",letterSpacing:2,color:T.text,marginBottom:20,position:"relative",zIndex:1}}>
                   Who is this player?
                 </h3>
 
-                <div style={{width:"100%",maxWidth:420,position:"relative",zIndex:9999,isolation:"isolate"}}>
+                <div style={{width:"100%",maxWidth:400,position:"relative",zIndex:9999,isolation:"isolate"}}>
                   <SearchDropdown
                     players={players}
                     onSelect={setSelected}
-                    disabled={!!feedback && feedback === "correct"}
+                    disabled={feedback === "correct"}
                   />
                 </div>
 
@@ -834,20 +871,20 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                   onClick={submitGuess}
                   disabled={!selected}
                   style={{
-                    marginTop:16,
-                    background:selected?"#4F8EF7":"rgba(79,142,247,0.15)",
+                    marginTop:14,
+                    background:selected?T.royal:"rgba(26,111,255,0.15)",
                     color:selected?"#fff":"rgba(255,255,255,0.3)",
                     border:"none",borderRadius:12,
                     fontFamily:"'DM Sans',sans-serif",
-                    fontSize:"0.92rem",fontWeight:800,
-                    padding:"13px 40px",cursor:selected?"pointer":"default",
+                    fontSize:"0.9rem",fontWeight:800,
+                    padding:"12px 38px",cursor:selected?"pointer":"default",
                     textTransform:"uppercase",letterSpacing:1,
-                    boxShadow:selected?"0 6px 20px rgba(79,142,247,0.28)":"none",
+                    boxShadow:selected?"0 6px 20px rgba(26,111,255,0.3)":"none",
                     transition:"all 0.22s ease",
                     position:"relative",zIndex:1,
                   }}
-                  onMouseEnter={e=>{ if(selected){e.currentTarget.style.background="#70a8ff";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 10px 28px rgba(79,142,247,0.42)"} }}
-                  onMouseLeave={e=>{ if(selected){e.currentTarget.style.background="#4F8EF7";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 20px rgba(79,142,247,0.28)"} }}
+                  onMouseEnter={e=>{ if(selected){e.currentTarget.style.background=T.royalHover;e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 10px 28px rgba(26,111,255,0.44)"} }}
+                  onMouseLeave={e=>{ if(selected){e.currentTarget.style.background=T.royal;e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 20px rgba(26,111,255,0.3)"} }}
                 >
                   Submit Guess
                 </button>
@@ -855,7 +892,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 <Feedback state={feedback} message={feedbackMsg}/>
 
                 {attempts > 0 && !feedback && (
-                  <div style={{marginTop:12,fontSize:"0.78rem",color:T.muted2,textTransform:"uppercase",letterSpacing:1}}>
+                  <div style={{marginTop:10,fontSize:"0.75rem",color:T.muted2,textTransform:"uppercase",letterSpacing:1}}>
                     {MAX_ATTEMPTS - attempts} attempt{MAX_ATTEMPTS - attempts !== 1 ? "s" : ""} remaining
                   </div>
                 )}
@@ -863,46 +900,170 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             </div>
 
             {/* Controls */}
-            <div style={{display:"flex",gap:12,flexWrap:"wrap",justifyContent:"center",animation:"tt2FadeUp 0.5s ease 0.18s both"}}>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
               <button
                 onClick={skipPlayer}
                 style={{
-                  background:"rgba(247,195,68,0.12)",color:T.gold,
-                  border:"1px solid rgba(247,195,68,0.28)",borderRadius:12,
-                  padding:"13px 28px",fontFamily:"'DM Sans',sans-serif",
-                  fontSize:"0.9rem",fontWeight:700,cursor:"pointer",
+                  background:"rgba(247,195,68,0.1)",color:T.gold,
+                  border:"1px solid rgba(247,195,68,0.28)",borderRadius:10,
+                  padding:"12px 26px",fontFamily:"'DM Sans',sans-serif",
+                  fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
                   transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-                  minWidth:150,
+                  minWidth:140,
                 }}
-                onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,195,68,0.22)";e.currentTarget.style.borderColor="rgba(247,195,68,0.5)";e.currentTarget.style.transform="translateY(-2px)"}}
-                onMouseLeave={e=>{e.currentTarget.style.background="rgba(247,195,68,0.12)";e.currentTarget.style.borderColor="rgba(247,195,68,0.28)";e.currentTarget.style.transform="none"}}
+                onMouseEnter={e=>{e.currentTarget.style.background="rgba(247,195,68,0.2)";e.currentTarget.style.transform="translateY(-2px)"}}
+                onMouseLeave={e=>{e.currentTarget.style.background="rgba(247,195,68,0.1)";e.currentTarget.style.transform="none"}}
               >⏭ Skip Player</button>
 
               <button
                 onClick={() => setShowModal(true)}
                 style={{
                   background:T.surface,color:T.muted,
-                  border:`1px solid ${T.border}`,borderRadius:12,
-                  padding:"13px 28px",fontFamily:"'DM Sans',sans-serif",
-                  fontSize:"0.9rem",fontWeight:700,cursor:"pointer",
+                  border:`1px solid ${T.border}`,borderRadius:10,
+                  padding:"12px 26px",fontFamily:"'DM Sans',sans-serif",
+                  fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
                   transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-                  minWidth:150,
+                  minWidth:140,
                 }}
-                onMouseEnter={e=>{e.currentTarget.style.color=T.text;e.currentTarget.style.borderColor=T.border2;e.currentTarget.style.transform="translateY(-2px)"}}
-                onMouseLeave={e=>{e.currentTarget.style.color=T.muted;e.currentTarget.style.borderColor=T.border;e.currentTarget.style.transform="none"}}
+                onMouseEnter={e=>{e.currentTarget.style.color=T.text;e.currentTarget.style.transform="translateY(-2px)"}}
+                onMouseLeave={e=>{e.currentTarget.style.color=T.muted;e.currentTarget.style.transform="none"}}
               >? How to Play</button>
             </div>
           </>
         )}
 
+        {/* Dashboard / Progress */}
+        <div className="tt-bottom-section">
+          <div className="tt-section-divider">
+            <span className="tt-section-label">Your Progress</span>
+            <div className="tt-section-line" />
+          </div>
+          <div className="tt-dashboard-grid">
+            {/* Streak Card */}
+            <div className="tt-dash-card">
+              <div className="tt-dash-card-hdr">
+                <span className="tt-dash-icon">📅</span>
+                <span className="tt-dash-label">Last 30 Days</span>
+              </div>
+              <StreakDots 
+                history={historyAndStats.history} 
+                puzzleDate={puzzleDate} 
+                gameOver={gameOver} 
+                currentSolved={correctCount > 0} 
+              />
+              <div className="tt-streak-legend">
+                <span><span className="tt-dot-sample win" />Solved</span>
+                <span><span className="tt-dot-sample miss" />Missed</span>
+                <span><span className="tt-dot-sample today" />Today</span>
+              </div>
+            </div>
+            {/* Stats Card */}
+            <div className="tt-dash-card">
+              <div className="tt-dash-card-hdr">
+                <span className="tt-dash-icon">📊</span>
+                <span className="tt-dash-label">Your Stats</span>
+              </div>
+              <div className="tt-stats-grid">
+                <div className="tt-stat-item"><div className="tt-stat-value">{historyAndStats.stats.played || '—'}</div><div className="tt-stat-name">Played</div></div>
+                <div className="tt-stat-item"><div className="tt-stat-value">{historyAndStats.stats.bestScore !== undefined ? `${historyAndStats.stats.bestScore} XP` : '—'}</div><div className="tt-stat-name">Best XP</div></div>
+                <div className="tt-stat-item"><div className="tt-stat-value">{historyAndStats.stats.avgScore !== undefined ? `${historyAndStats.stats.avgScore} XP` : '—'}</div><div className="tt-stat-name">Avg XP</div></div>
+                <div className="tt-stat-item"><div className="tt-stat-value">{historyAndStats.stats.dayStreak || '—'}</div><div className="tt-stat-name">Day Streak</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </main>
 
-      {/* Responsive styles */}
+      {/* Responsive & Dashboard Styling */}
       <style>{`
-        @media (max-width: 768px) {
-          .tt2-layout { grid-template-columns: 1fr !important; }
+        @media (max-width: 700px) {
+          .tt-main-grid { grid-template-columns: 1fr !important; }
         }
-        @keyframes tt2ScorePulse { 0%,100%{filter:drop-shadow(0 0 18px rgba(79,142,247,0.4))} 50%{filter:drop-shadow(0 0 38px rgba(79,142,247,0.75))} }
+        
+        /* ── DASHBOARD / BOTTOM SECTION ── */
+        .tt-bottom-section {
+          margin-top: 50px;
+          animation: ttFadeUp 0.5s ease 0.2s both;
+        }
+        .tt-section-divider {
+          display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+        }
+        .tt-section-label {
+          font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 800;
+          text-transform: uppercase; letter-spacing: 2px; color: rgba(240,240,240,0.45);
+        }
+        .tt-section-line {
+          flex: 1; height: 1px; background: linear-gradient(to right, rgba(26,111,255,0.18), transparent);
+        }
+        .tt-dashboard-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        }
+        .tt-dash-card {
+          background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 16px; padding: 18px; display: flex; flex-direction: column;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+        .tt-dash-card-hdr {
+          display: flex; align-items: center; gap: 6px; margin-bottom: 14px;
+        }
+        .tt-dash-icon {
+          font-size: .95rem;
+        }
+        .tt-dash-label {
+          font-size: .68rem; font-weight: 800; text-transform: uppercase;
+          letter-spacing: 1px; color: rgba(240,240,240,0.45);
+        }
+        .tt-streak-dots {
+          display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 4px; margin-bottom: 16px;
+        }
+        .tt-streak-dot {
+          aspect-ratio: 1; border-radius: 6px; background: rgba(255,255,255,.03);
+          border: 1px solid rgba(255,255,255,.05);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Space Mono', monospace; font-size: 0.52rem; font-weight: 700;
+        }
+        .tt-streak-dot.win {
+          background: rgba(61,214,140,.18); border-color: rgba(61,214,140,.32); color: #3dd68c;
+          box-shadow: 0 0 6px rgba(61,214,140,0.15);
+        }
+        .tt-streak-dot.miss {
+          background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18); color: #ff8080;
+        }
+        .tt-streak-dot.today-pending {
+          background: rgba(26,111,255,.09); border-style: dashed; border-color: rgba(26,111,255,.38);
+        }
+        .tt-streak-legend {
+          display: flex; gap: 13px; font-size: .68rem; color: rgba(240,240,240,0.45); align-items: center; flex-wrap: wrap;
+          margin-top: auto;
+        }
+        .tt-dot-sample {
+          display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: middle;
+        }
+        .tt-dot-sample.win { background: rgba(61,214,140,.18); border: 1px solid #3dd68c; }
+        .tt-dot-sample.miss { background: rgba(232,64,64,.08); border: 1px solid rgba(232,64,64,0.18); }
+        .tt-dot-sample.today { background: rgba(26,111,255,.14); border: 1px solid #1a6fff; }
+        
+        .tt-stats-grid {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .tt-stat-item {
+          background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+          padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+        }
+        .tt-stat-item:hover {
+          border-color: rgba(26,111,255,.22); background: rgba(26,111,255,.03);
+        }
+        .tt-stat-value {
+          font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 1px; color: #fff;
+          text-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+        }
+        .tt-stat-name {
+          font-size: .62rem; font-weight: 700; color: rgba(240,240,240,0.45); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px;
+        }
+        @media (max-width: 768px) {
+          .tt-dashboard-grid { grid-template-columns: 1fr; }
+        }
       `}</style>
     </div>
   );

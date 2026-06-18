@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine.js';
+import { RAPID_FIRE_QUESTIONS } from '../../lib/questions.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATS_KEY   = 'footbrawls_rapidfire_stats';
@@ -42,66 +43,6 @@ if (typeof window !== 'undefined') {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-// ─── Question Bank ────────────────────────────────────────────────────────────
-// All questions are harder — niche stats, exact seasons, lesser-known facts.
-const ALL_QUESTIONS = [
-  // Nationality / country
-  { q: 'Achraf Hakimi was born in Madrid but represents which nation?', type: 'country', opts: ['Spain', 'Morocco', 'Algeria', 'France'], ans: 1 },
-  { q: 'Lautaro Martínez wears the armband for which national team?', type: 'country', opts: ['Uruguay', 'Colombia', 'Chile', 'Argentina'], ans: 3 },
-  { q: 'João Félix holds a passport from which country?', type: 'country', opts: ['Spain', 'Brazil', 'Portugal', 'Cape Verde'], ans: 2 },
-  { q: 'Khvicha Kvaratskhelia represents which former Soviet republic?', type: 'country', opts: ['Armenia', 'Azerbaijan', 'Ukraine', 'Georgia'], ans: 3 },
-  { q: 'Florian Wirtz plays international football for which nation?', type: 'country', opts: ['Austria', 'Switzerland', 'Germany', 'Netherlands'], ans: 2 },
-  { q: 'Rúben Dias plays international football for which country?', type: 'country', opts: ['Spain', 'Brazil', 'Portugal', 'Angola'], ans: 2 },
-  { q: 'Which nation does Julián Álvarez represent?', type: 'country', opts: ['Mexico', 'Colombia', 'Uruguay', 'Argentina'], ans: 3 },
-  { q: 'Wataru Endō captains which national side?', type: 'country', opts: ['South Korea', 'China', 'Japan', 'Australia'], ans: 2 },
-  { q: 'Federico Valverde was born in Montevideo and represents…', type: 'country', opts: ['Argentina', 'Uruguay', 'Paraguay', 'Chile'], ans: 1 },
-  { q: 'Brahim Díaz switched international allegiance from Spain to which country?', type: 'country', opts: ['Algeria', 'Tunisia', 'Senegal', 'Morocco'], ans: 3 },
-
-  // Club / transfer
-  { q: 'Erling Haaland left Borussia Dortmund for Manchester City in which year?', type: 'club', opts: ['2021', '2022', '2023', '2024'], ans: 1 },
-  { q: 'From which club did Chelsea sign Enzo Fernández in January 2023?', type: 'club', opts: ['River Plate', 'Ajax', 'Benfica', 'PSV'], ans: 2 },
-  { q: 'Before joining Arsenal, Declan Rice was captain of which club?', type: 'club', opts: ['Tottenham', 'West Ham United', 'Everton', 'Leicester City'], ans: 1 },
-  { q: 'Jude Bellingham moved to Real Madrid from which Bundesliga club?', type: 'club', opts: ['RB Leipzig', 'Bayern Munich', 'Bayer Leverkusen', 'Borussia Dortmund'], ans: 3 },
-  { q: 'Which club sold Gavi through its famous La Masia academy?', type: 'club', opts: ['Real Madrid', 'Atlético Madrid', 'Barcelona', 'Valencia'], ans: 2 },
-  { q: 'Alejandro Garnacho joined Manchester United\'s academy from which city\'s club?', type: 'club', opts: ['Barcelona', 'Atlético Madrid', 'Real Madrid', 'Getafe'], ans: 1 },
-  { q: 'Kylian Mbappé spent a loan season early in his career at which club?', type: 'club', opts: ['Nice', 'Monaco', 'Caen', 'Lens'], ans: 1 },
-  { q: 'Mohamed Salah was at which Italian club before joining Liverpool?', type: 'club', opts: ['Inter Milan', 'AC Milan', 'Juventus', 'Roma'], ans: 3 },
-  { q: 'Victor Osimhen joined Napoli from which French club?', type: 'club', opts: ['Marseille', 'Lyon', 'Lille', 'Nice'], ans: 2 },
-  { q: 'Which club did Pedri leave to join Barcelona as a 17-year-old?', type: 'club', opts: ['Villarreal', 'Las Palmas', 'Sporting Gijón', 'Granada'], ans: 1 },
-  { q: 'Lamine Yamal is a product of which club\'s academy?', type: 'club', opts: ['Real Madrid', 'Atlético Madrid', 'Espanyol', 'Barcelona'], ans: 3 },
-  { q: 'Which English club did Ivan Toney leave to join Al-Ahli in 2024?', type: 'club', opts: ['Crystal Palace', 'Brentford', 'Nottingham Forest', 'Fulham'], ans: 1 },
-
-  // Position / role
-  { q: 'What position does Trent Alexander-Arnold typically play for Liverpool?', type: 'position', opts: ['Left-back', 'Centre-back', 'Right-back', 'Defensive midfielder'], ans: 2 },
-  { q: 'Rodri plays as what kind of midfielder for Manchester City?', type: 'position', opts: ['Attacking midfielder', 'Defensive midfielder', 'Box-to-box', 'Second striker'], ans: 1 },
-  { q: 'In what position does Lautaro Martínez play at Inter Milan?', type: 'position', opts: ['False 9', 'Centre-forward', 'Left winger', 'Attacking midfielder'], ans: 1 },
-  { q: 'Dani Carvajal plays in which position for Real Madrid?', type: 'position', opts: ['Left-back', 'Right-back', 'Central midfielder', 'Left winger'], ans: 1 },
-  { q: 'Joshua Kimmich can play right-back but predominantly plays as what at Bayern Munich?', type: 'position', opts: ['Attacking midfielder', 'Winger', 'Defensive midfielder', 'Sweeper'], ans: 2 },
-  { q: 'Rúben Dias is an elite practitioner of which position?', type: 'position', opts: ['Goalkeeper', 'Defensive midfielder', 'Centre-back', 'Right-back'], ans: 2 },
-  { q: 'Bukayo Saka usually starts from which flank for Arsenal?', type: 'position', opts: ['Left wing', 'Right wing', 'Left-back', 'Centre-forward'], ans: 1 },
-  { q: 'What is Casemiro\'s primary position?', type: 'position', opts: ['Centre-back', 'Right midfielder', 'Defensive midfielder', 'Attacking midfielder'], ans: 2 },
-
-  // Facts / stats / records
-  { q: 'How many Ballon d\'Or awards has Lionel Messi won as of 2024?', type: 'fact', opts: ['6', '7', '8', '9'], ans: 2 },
-  { q: 'Erling Haaland scored how many Premier League goals in his debut season (2022-23)?', type: 'fact', opts: ['30', '33', '36', '38'], ans: 2 },
-  { q: 'Which player won the 2023 Ballon d\'Or?', type: 'fact', opts: ['Kylian Mbappé', 'Erling Haaland', 'Vinicius Jr.', 'Lionel Messi'], ans: 3 },
-  { q: 'Which player won the 2024 Ballon d\'Or?', type: 'fact', opts: ['Vinicius Jr.', 'Rodri', 'Erling Haaland', 'Kylian Mbappé'], ans: 1 },
-  { q: 'In which year did Man City complete an unprecedented English treble?', type: 'fact', opts: ['2019', '2021', '2022', '2023'], ans: 3 },
-  { q: 'Which club has won the most UEFA Champions League titles?', type: 'fact', opts: ['Barcelona', 'AC Milan', 'Real Madrid', 'Bayern Munich'], ans: 2 },
-  { q: 'Who holds the record for most goals scored in a single World Cup tournament?', type: 'fact', opts: ['Ronaldo (Brazil)', 'Miroslav Klose', 'Gerd Müller', 'Just Fontaine'], ans: 3 },
-  { q: 'What is the maximum squad size allowed in a FIFA World Cup final tournament?', type: 'fact', opts: ['23', '25', '26', '28'], ans: 2 },
-  { q: 'Who was the first player ever to win five Ballon d\'Or awards?', type: 'fact', opts: ['Cristiano Ronaldo', 'Lionel Messi', 'Ronaldo (Brazil)', 'Zinedine Zidane'], ans: 1 },
-  { q: 'Which stadium has the largest official capacity in world football?', type: 'fact', opts: ['Camp Nou', 'Wembley', 'Narendra Modi Stadium', 'Rungrado 1st of May'], ans: 3 },
-  { q: 'Kylian Mbappé became the youngest French player to score at a World Cup at what age?', type: 'fact', opts: ['18', '19', '20', '21'], ans: 1 },
-  { q: 'Who scored the fastest hat-trick in Premier League history (2 min 56 sec)?', type: 'fact', opts: ['Robbie Fowler', 'Sadio Mané', 'Sergio Agüero', 'Michael Owen'], ans: 1 },
-  { q: 'Which country has won the Copa América the most times?', type: 'fact', opts: ['Brazil', 'Argentina', 'Uruguay', 'Chile'], ans: 1 },
-  { q: 'VAR was introduced at which FIFA World Cup?', type: 'fact', opts: ['2014', '2018', '2022', '2010'], ans: 1 },
-  { q: 'Which league does Al-Nassr compete in?', type: 'fact', opts: ['UAE Pro League', 'Saudi Pro League', 'Qatar Stars League', 'Egyptian Premier League'], ans: 1 },
-  { q: 'Lamine Yamal became the youngest scorer in Euro history at what age at Euro 2024?', type: 'fact', opts: ['16', '17', '18', '15'], ans: 0 },
-  { q: 'Which club did Bayer Leverkusen go the entire 2023-24 Bundesliga season unbeaten to deny?', type: 'fact', opts: ['Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Stuttgart'], ans: 0 },
-  { q: 'How many times has Cristiano Ronaldo won the UEFA Champions League?', type: 'fact', opts: ['4', '5', '6', '7'], ans: 1 },
-];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function shuffle(arr) {
   const a = [...arr];
@@ -113,12 +54,17 @@ function shuffle(arr) {
 }
 
 function buildQuestions(count) {
-  return shuffle(ALL_QUESTIONS).slice(0, Math.min(count, ALL_QUESTIONS.length));
+  return shuffle(RAPID_FIRE_QUESTIONS).slice(0, Math.min(count, RAPID_FIRE_QUESTIONS.length));
 }
 
 function loadStats() {
   try { return JSON.parse(localStorage.getItem(STATS_KEY)) || { played: 0, bestScore: 0, avgAcc: 0, streak: 0 }; }
   catch { return { played: 0, bestScore: 0, avgAcc: 0, streak: 0 }; }
+}
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}'); }
+  catch { return {}; }
 }
 
 function saveStats(score, accuracy) {
@@ -140,8 +86,8 @@ function saveStats(score, accuracy) {
     }
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-    return stats;
-  } catch { return loadStats(); }
+    return { stats, history };
+  } catch { return { stats: loadStats(), history: {} }; }
 }
 
 // ─── Injected CSS ──────────────────────────────────────────────────────────────
@@ -151,7 +97,7 @@ const CSS = `
 :root {
   --bg:#05070f; --surface:rgba(255,255,255,.038); --border:rgba(255,255,255,.08);
   --border2:rgba(255,255,255,.14); --accent:#F7C344; --accent2:#E84040;
-  --accent3:#4F8EF7; --green:#3DD68C; --text:#F0F0F0;
+  --accent3:#EC4899; --green:#3DD68C; --text:#F0F0F0;
   --muted:rgba(240,240,240,.45); --muted2:rgba(240,240,240,.25);
   --card-radius:16px; --dd:#060a1a; --orange:#F97316;
 }
@@ -439,6 +385,92 @@ body{font-family:'DM Sans',sans-serif}
 @media(max-width:400px){
   .rf-diff-grid { flex-direction:column; align-items:center; }
 }
+
+/* ── DASHBOARD / BOTTOM SECTION ── */
+.rf-bottom-section {
+  margin-top: 50px;
+  animation: fadeUp 0.5s ease 0.2s both;
+}
+.rf-section-divider {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+}
+.rf-section-label {
+  font-size: 0.65rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 2px; color: rgba(240,240,240,0.45);
+}
+.rf-section-line {
+  flex: 1; height: 1px; background: linear-gradient(to right, rgba(236,72,153,0.18), transparent);
+}
+.rf-dashboard-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.rf-dash-card {
+  background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 18px; display: flex; flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+.rf-dash-card-hdr {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 14px;
+}
+.rf-dash-icon {
+  font-size: .95rem;
+}
+.rf-dash-label {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(240,240,240,0.45);
+}
+.rf-streak-dots {
+  display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 4px; margin-bottom: 16px;
+}
+.rf-streak-dot {
+  aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.rf-streak-dot.win {
+  background: rgba(236,72,153,.18); border-color: rgba(236,72,153,.32);
+  box-shadow: 0 0 6px rgba(236,72,153,0.15);
+}
+.rf-streak-dot.miss {
+  background: rgba(232,64,64,.08); border-color: rgba(232,64,64,.18);
+}
+.rf-streak-dot.played {
+  background: rgba(236,72,153,.14); border-color: var(--accent3); box-shadow:0 0 10px rgba(236,72,153,.2);
+}
+.rf-streak-dot.pending {
+  background: rgba(236,72,153,.09); border-style: dashed; border-color: rgba(236,72,153,.38);
+}
+.rf-streak-legend {
+  display: flex; gap: 13px; font-size: .68rem; color: rgba(240,240,240,0.45); align-items: center; flex-wrap: wrap;
+  margin-top: auto;
+}
+.rf-dot-sample {
+  display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 4px; vertical-align: middle;
+}
+.rf-dot-sample.win { background: rgba(236,72,153,.18); border: 1px solid #EC4899; }
+.rf-dot-sample.miss { background: rgba(232,64,64,.08); border: 1px solid rgba(232,64,64,0.18); }
+.rf-dot-sample.played { background: rgba(236,72,153,.14); border: 1px solid var(--accent3); }
+
+.rf-stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.rf-stat-item {
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+}
+.rf-stat-item:hover {
+  border-color: rgba(236,72,153,.22); background: rgba(236,72,153,.03);
+}
+.rf-stat-value {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.75rem; letter-spacing: 1px;
+  background: linear-gradient(135deg,var(--accent3),#fff 80%); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 3px;
+}
+.rf-stat-name {
+  font-size: .62rem; font-weight: 700; color: rgba(240,240,240,0.45); text-transform: uppercase; letter-spacing: .5px; margin-top: 1px;
+}
+@media (max-width: 768px) {
+  .rf-dashboard-grid { grid-template-columns: 1fr; }
+}
 `;
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -457,9 +489,19 @@ export default function RapidFire() {
   const [feedback, setFeedback]     = useState(null); // { text, cls }
   const [gameOver, setGameOver]     = useState(false);
   const [xpAwarded, setXpAwarded]   = useState(null);
-  const [stats, setStats]           = useState(loadStats);
+  const [stats, setStats]           = useState(() => {
+    const loaded = loadStats();
+    return loaded.stats ? loaded.stats : loaded;
+  });
+  const [history, setHistory]       = useState(() => {
+    const loaded = loadStats();
+    return loaded.history ? loaded.history : loadHistory();
+  });
   const [showModal, setShowModal]   = useState(false);
   const [msg, setMsg]               = useState(null);
+
+  const todayObj = new Date();
+  const puzzleDate = `${todayObj.getFullYear()}-${String(todayObj.getMonth()+1).padStart(2,'0')}-${String(todayObj.getDate()).padStart(2,'0')}`;
 
   const timerRef = useRef(null);
 
@@ -570,8 +612,9 @@ export default function RapidFire() {
       stopTimer();
       const correct  = allAnswers.filter(Boolean).length;
       const accuracy = Math.round((correct / questions.length) * 100);
-      const newStats = saveStats(finalScore, accuracy);
+      const { stats: newStats, history: newHistory } = saveStats(finalScore, accuracy);
       setStats(newStats);
+      setHistory(newHistory);
 
       const user = getUser();
       let awarded = 0;
@@ -657,7 +700,10 @@ export default function RapidFire() {
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
         {/* NAV */}
-        <nav className="rf-nav">
+        <nav className="rf-nav" style={{
+          boxShadow: "0 10px 30px rgba(236, 72, 153, 0.22)",
+          borderBottom: "1px solid rgba(236, 72, 153, 0.25)"
+        }}>
           <button className="rf-nav-logo" onClick={() => navigate('/')}>←</button>
           <div className="rf-nav-tag">
             <span className="rf-fire-dot" />
@@ -852,10 +898,85 @@ export default function RapidFire() {
               </div>
             );
           })()}
+          {/* ── DASHBOARD ── */}
+          <div className="rf-bottom-section" style={{ marginTop: 28 }}>
+            <div className="rf-section-divider">
+              <span className="rf-section-label">Your Progress</span>
+              <div className="rf-section-line" />
+            </div>
+            <div className="rf-dashboard-grid">
+              <div className="rf-dash-card">
+                <div className="rf-dash-card-hdr">
+                  <span className="rf-dash-icon">📅</span>
+                  <span className="rf-dash-label">Last 30 Days</span>
+                </div>
+                <StreakDots history={history} puzzleDate={puzzleDate} phase={phase} />
+                <div className="rf-streak-legend">
+                  <span><span className="rf-dot-sample win" />60%+ Acc</span>
+                  <span><span className="rf-dot-sample miss" />Under 60%</span>
+                  <span><span className="rf-dot-sample played" />Today</span>
+                </div>
+              </div>
+              <div className="rf-dash-card">
+                <div className="rf-dash-card-hdr">
+                  <span className="rf-dash-icon">📊</span>
+                  <span className="rf-dash-label">Your Stats</span>
+                </div>
+                <div className="rf-stats-grid">
+                  <div className="rf-stat-item">
+                    <div className="rf-stat-value">{stats.played || '—'}</div>
+                    <div className="rf-stat-name">Played</div>
+                  </div>
+                  <div className="rf-stat-item">
+                    <div className="rf-stat-value">{stats.bestScore || '—'}</div>
+                    <div className="rf-stat-name">Best Score</div>
+                  </div>
+                  <div className="rf-stat-item">
+                    <div className="rf-stat-value">{stats.avgAcc ? `${stats.avgAcc}%` : '—'}</div>
+                    <div className="rf-stat-name">Avg Acc</div>
+                  </div>
+                  <div className="rf-stat-item">
+                    <div className="rf-stat-value">{stats.streak || '—'}</div>
+                    <div className="rf-stat-name">Streak</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
         </main>
       </div>
     </>
+  );
+}
+
+// ─── Streak Dots ──────────────────────────────────────────────────────────────
+function StreakDots({ history, puzzleDate, phase }) {
+  const today = new Date();
+  const dots  = [];
+  for (let i = 29; i >= 0; i--) {
+    const d   = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const isToday = key === puzzleDate;
+    let cls = '';
+    if (isToday) {
+      const e = history[key];
+      if (e) {
+        cls = e.accuracy >= 60 ? 'win' : 'miss';
+      } else {
+        cls = (phase === 'result') ? 'played' : 'pending';
+      }
+    } else {
+      const e = history[key];
+      cls = e ? (e.accuracy >= 60 ? 'win' : 'miss') : 'miss';
+    }
+    dots.push(cls);
+  }
+  return (
+    <div className="rf-streak-dots">
+      {dots.map((cls, i) => <div key={i} className={`rf-streak-dot ${cls}`} />)}
+    </div>
   );
 }
 

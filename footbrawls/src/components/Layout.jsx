@@ -102,13 +102,13 @@ const Icon = {
 const GAMES = [
   { name: 'Who Are Ya?',    path: '/games/whoareya',      IconC: Icon.Person,    xp: 25,  key: 'footbrawls_whoareya',      color: '#F97316' },
   { name: 'Player Wordle',  path: '/games/wordle',        IconC: Icon.Puzzle,    xp: 25,  key: 'footbrawls_wordle_history', color: '#A855F7' },
-  { name: 'Higher or Lower',path: '/games/higherlower',   IconC: Icon.Chart,     xp: 25,  key: 'footbrawls_higherlower' },
-  { name: 'Transfer Trail', path: '/games/transfertrail', IconC: Icon.Network,   xp: 25,  key: 'footbrawls_transfertrail' },
+  { name: 'Higher or Lower',path: '/games/higherlower',   IconC: Icon.Chart,     xp: 25,  key: 'footbrawls_higherlower',   color: '#3DD68C' },
+  { name: 'Transfer Trail', path: '/games/transfertrail', IconC: Icon.Network,   xp: 25,  key: 'footbrawls_transfertrail', color: '#1A6FFF' },
   { name: 'Match Predictor',path: '/games/matchpredictor',IconC: Icon.Target,    xp: 50,  key: 'footbrawls_matchpredictor', color: '#F7C344' },
-  { name: 'Daily Trivia',   path: '/games/dailytrivia',   IconC: Icon.Question,  xp: 25,  key: 'footbrawls_dailytrivia' },
+  { name: 'Daily Trivia',   path: '/games/dailytrivia',   IconC: Icon.Question,  xp: 25,  key: 'footbrawls_dailytrivia',   color: '#0D9488' },
   { name: 'Penalty Nerve',  path: '/games/penaltynerve',  IconC: Icon.Flame,     xp: 25,  key: 'footbrawls_penaltynerve',   color: '#E84040' },
-  { name: 'Dribble Gauntlet',path: '/games/dribble',       IconC: Icon.Dribble,   xp: 25,  key: 'footbrawls_dribble' },
-  { name: 'Rapid Fire',     path: '/games/rapidfire',     IconC: Icon.Lightning, xp: 25,  key: 'footbrawls_rapidfire' },
+  { name: 'Dribble Gauntlet',path: '/games/dribble',       IconC: Icon.Dribble,   xp: 25,  key: 'footbrawls_dribble',        color: '#84CC16' },
+  { name: 'Rapid Fire',     path: '/games/rapidfire',     IconC: Icon.Lightning, xp: 25,  key: 'footbrawls_rapidfire',      color: '#EC4899' },
 ];
 
 const CURSE_COLORS = {
@@ -255,11 +255,16 @@ export default function Layout({ children, hideMobileNav }) {
               const active  = location.pathname === game.path;
               const NavIcon = game.IconC;
               const textColor = game.color;
+              const activeColor = game.color || '#F7C344';
               return (
                 <div
                   key={game.path}
                   className={`ly-game-item ${active ? 'active' : ''}`}
                   onClick={() => navigate(game.path)}
+                  style={active ? {
+                    backgroundColor: `${activeColor}1a`,
+                    borderColor: activeColor
+                  } : {}}
                 >
                   <span className="ly-game-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 20, height: 20 }}>
                     <NavIcon size={16} color={textColor || (active ? C.accent : 'rgba(242,242,244,0.5)')} />
@@ -356,7 +361,7 @@ const CSS = `
   font-size: 14px;
   fontWeight: 700;
   marginBottom: 4px;
-  color: #F2F2F4;
+  color: #3DD68C;
 }
 
 .ly-user-meta {

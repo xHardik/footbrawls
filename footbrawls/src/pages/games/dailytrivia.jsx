@@ -2,12 +2,12 @@
 // Football "Daily Trivia" — Footbrawls edition
 // One 10-question quiz per day, seeded by date. Includes streak tracking,
 // XP integration, AdBreak midrolls, and category scoring breakdown.
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { TRIVIA_QUESTIONS } from '../../lib/questions.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const QUESTIONS_PER_DAY = 10;
@@ -50,119 +50,6 @@ if (typeof window !== 'undefined') {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-// ─── Full Question Bank ───────────────────────────────────────────────────────
-const QUESTION_BANK = [
-  // HISTORY
-  { id: 'h01', cat: 'history', q: 'Which nation has won the FIFA World Cup the most times?', opts: ['Germany', 'Italy', 'Brazil', 'Argentina'], ans: 2 },
-  { id: 'h02', cat: 'history', q: 'In what year was the first FIFA World Cup held?', opts: ['1926', '1928', '1930', '1934'], ans: 2 },
-  { id: 'h03', cat: 'history', q: 'Which club won the inaugural UEFA Champions League in 1956?', opts: ['Barcelona', 'Real Madrid', 'Juventus', 'AC Milan'], ans: 1 },
-  { id: 'h04', cat: 'history', q: 'England won the World Cup only once — in which year?', opts: ['1962', '1966', '1970', '1974'], ans: 1 },
-  { id: 'h05', cat: 'history', q: 'Which player scored the "Hand of God" goal at the 1986 World Cup?', opts: ['Pelé', 'Diego Maradona', 'Ronaldo', 'Zinedine Zidane'], ans: 1 },
-  { id: 'h06', cat: 'history', q: 'Germany and which other nation played the longest-running World Cup final rivalry before 2022?', opts: ['Brazil', 'Argentina', 'Italy', 'Netherlands'], ans: 1 },
-  { id: 'h07', cat: 'history', q: 'Which club became the first English side to win the European Cup in 1968?', opts: ['Liverpool', 'Tottenham', 'Manchester United', 'Arsenal'], ans: 2 },
-  { id: 'h08', cat: 'history', q: 'At which World Cup did Zinedine Zidane head-butt Marco Materazzi in the final?', opts: ['1998', '2002', '2006', '2010'], ans: 2 },
-  { id: 'h09', cat: 'history', q: 'Who scored the winning penalty for Portugal in the 2016 Euro final — it wasn\'t Ronaldo (he was injured)?', opts: ['Nani', 'Éder', 'Quaresma', 'João Mário'], ans: 1 },
-  { id: 'h10', cat: 'history', q: 'Which nation hosted the first Women\'s FIFA World Cup in 1991?', opts: ['USA', 'Germany', 'China', 'Sweden'], ans: 2 },
-  { id: 'h11', cat: 'history', q: 'What was the score in the infamous "Disgrace of Gijón" World Cup match in 1982?', opts: ['1-0', '2-0', '3-0', '1-1'], ans: 0 },
-  { id: 'h12', cat: 'history', q: 'Who is the all-time top scorer in FIFA World Cup history?', opts: ['Ronaldo (Brazil)', 'Miroslav Klose', 'Gerd Müller', 'Just Fontaine'], ans: 1 },
-  { id: 'h13', cat: 'history', q: 'Which club won five consecutive European Cups from 1956 to 1960?', opts: ['AC Milan', 'Benfica', 'Real Madrid', 'Internazionale'], ans: 2 },
-  { id: 'h14', cat: 'history', q: 'Leicester City\'s miraculous Premier League title was won in which season?', opts: ['2014-15', '2015-16', '2016-17', '2013-14'], ans: 1 },
-  { id: 'h15', cat: 'history', q: 'Which Brazilian scored a hat-trick at the 1970 World Cup final?', opts: ['Pelé', 'Rivelino', 'Jairzinho', 'Tostão'], ans: 0 },
-
-  // TRANSFERS
-  { id: 't01', cat: 'transfer', q: 'What was the world-record transfer fee when Neymar moved from Barcelona to PSG in 2017?', opts: ['€150m', '€180m', '€200m', '€222m'], ans: 3 },
-  { id: 't02', cat: 'transfer', q: 'Which club did Cristiano Ronaldo join when he left Real Madrid in 2018?', opts: ['PSG', 'Juventus', 'Manchester City', 'Inter Milan'], ans: 1 },
-  { id: 't03', cat: 'transfer', q: 'From which club did Manchester United sign Bruno Fernandes in January 2020?', opts: ['Porto', 'Benfica', 'Sporting CP', 'Braga'], ans: 2 },
-  { id: 't04', cat: 'transfer', q: 'In what year did Gareth Bale first move to Real Madrid from Tottenham?', opts: ['2012', '2013', '2014', '2015'], ans: 1 },
-  { id: 't05', cat: 'transfer', q: 'Which club sold Jack Grealish to Manchester City for £100m in 2021?', opts: ['Nottingham Forest', 'Derby County', 'Aston Villa', 'Wolves'], ans: 2 },
-  { id: 't06', cat: 'transfer', q: 'Enzo Fernández joined Chelsea for a British-record fee from which club?', opts: ['Ajax', 'River Plate', 'Benfica', 'Flamengo'], ans: 2 },
-  { id: 't07', cat: 'transfer', q: 'Which club did Antoine Griezmann leave to join Barcelona in 2019?', opts: ['PSG', 'Lyon', 'Atletico Madrid', 'Monaco'], ans: 2 },
-  { id: 't08', cat: 'transfer', q: 'Romelu Lukaku became the most expensive Belgian player ever when he joined which club for £97.5m in 2021?', opts: ['Manchester United', 'Inter Milan', 'Chelsea', 'PSG'], ans: 2 },
-  { id: 't09', cat: 'transfer', q: 'For what reported fee did Real Madrid sign Jude Bellingham from Borussia Dortmund?', opts: ['€80m', '€103m', '€103m', '€120m'], ans: 2 },
-  { id: 't10', cat: 'transfer', q: 'Which club signed Karim Benzema after he left Real Madrid in 2023?', opts: ['PSG', 'Inter Miami', 'Al-Ittihad', 'Al-Nassr'], ans: 2 },
-  { id: 't11', cat: 'transfer', q: 'Which South American club sold Vinicius Jr. to Real Madrid when he was just 16?', opts: ['Santos', 'Flamengo', 'Palmeiras', 'Cruzeiro'], ans: 1 },
-  { id: 't12', cat: 'transfer', q: 'Zlatan Ibrahimović joined AC Milan permanently in 2020 from which club?', opts: ['LA Galaxy', 'PSG', 'Manchester United', 'Inter Milan'], ans: 2 },
-
-  // RECORDS
-  { id: 'r01', cat: 'records', q: 'How many Ballon d\'Or awards has Lionel Messi won in total as of 2024?', opts: ['6', '7', '8', '9'], ans: 2 },
-  { id: 'r02', cat: 'records', q: 'Erling Haaland scored how many Premier League goals in his debut 2022-23 season?', opts: ['30', '33', '36', '38'], ans: 2 },
-  { id: 'r03', cat: 'records', q: 'Which player holds the record for the most Premier League appearances?', opts: ['Ryan Giggs', 'Gareth Barry', 'James Milner', 'Frank Lampard'], ans: 1 },
-  { id: 'r04', cat: 'records', q: 'Cristiano Ronaldo has won the UEFA Champions League how many times?', opts: ['4', '5', '6', '7'], ans: 1 },
-  { id: 'r05', cat: 'records', q: 'Just Fontaine scored how many goals at the 1958 World Cup — still a single-tournament record?', opts: ['11', '12', '13', '15'], ans: 2 },
-  { id: 'r06', cat: 'records', q: 'The fastest goal in Premier League history was scored in how many seconds?', opts: ['7.69', '9.82', '10.54', '12.4'], ans: 0 },
-  { id: 'r07', cat: 'records', q: 'Which club won Bundesliga titles for a record nine consecutive seasons (2013-2022)?', opts: ['Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen', 'Bayern Munich'], ans: 3 },
-  { id: 'r08', cat: 'records', q: 'Who scored the fastest hat-trick in Premier League history (2 min 56 sec)?', opts: ['Robbie Fowler', 'Sadio Mané', 'Sergio Agüero', 'Alan Shearer'], ans: 1 },
-  { id: 'r09', cat: 'records', q: 'Which nation has the most Copa América titles?', opts: ['Brazil', 'Argentina', 'Uruguay', 'Chile'], ans: 1 },
-  { id: 'r10', cat: 'records', q: 'Bayer Leverkusen went unbeaten for how many Bundesliga games in 2023-24?', opts: ['32', '34', '36', '38'], ans: 1 },
-  { id: 'r11', cat: 'records', q: 'Lamine Yamal\'s goal at Euro 2024 made him the youngest scorer in Euros history, at what age?', opts: ['15', '16', '17', '18'], ans: 1 },
-  { id: 'r12', cat: 'records', q: 'What is the highest number of goals scored in a single UEFA Champions League group stage game?', opts: ['10', '11', '12', '14'], ans: 2 },
-
-  // TACTICS
-  { id: 'tc01', cat: 'tactics', q: 'What does the "False 9" position refer to in modern football?', opts: ['A goalkeeper who plays outfield', 'A striker who drops deep to create space', 'A winger who cuts inside', 'A defender who pushes forward'], ans: 1 },
-  { id: 'tc02', cat: 'tactics', q: 'Which formation is also known as the "Christmas Tree"?', opts: ['4-3-2-1', '3-4-3', '4-2-3-1', '5-3-2'], ans: 0 },
-  { id: 'tc03', cat: 'tactics', q: 'What is the primary job of a "Libero" in football?', opts: ['Man-marking a striker', 'Sweeping behind the defensive line', 'Pressing high up the pitch', 'Covering the right flank'], ans: 1 },
-  { id: 'tc04', cat: 'tactics', q: 'Pep Guardiola\'s Barcelona teams were famous for which possession-based tactical system?', opts: ['Tiki-taka', 'Gegenpress', 'Park the bus', 'Catenaccio'], ans: 0 },
-  { id: 'tc05', cat: 'tactics', q: 'The "Gegenpress" tactic was closely associated with which manager?', opts: ['Pep Guardiola', 'José Mourinho', 'Jürgen Klopp', 'Carlo Ancelotti'], ans: 2 },
-  { id: 'tc06', cat: 'tactics', q: '"Catenaccio" is a defensive system most associated with which country?', opts: ['Spain', 'Germany', 'Italy', 'Brazil'], ans: 2 },
-  { id: 'tc07', cat: 'tactics', q: 'What is an "inverted winger"?', opts: ['A winger who plays on the opposite foot and cuts inward', 'A winger who only defends', 'A forward who drops to left back', 'A winger who switches sides each half'], ans: 0 },
-  { id: 'tc08', cat: 'tactics', q: 'In a 4-3-3, how many defensive players are there (excluding goalkeeper)?', opts: ['3', '4', '5', '6'], ans: 1 },
-  { id: 'tc09', cat: 'tactics', q: 'What is the "pressing trap" tactic designed to do?', opts: ['Draw the opponent offside', 'Force the opponent into a predetermined zone to win the ball', 'Tire out the opponent by running without the ball', 'Create 2v1 situations on the wings'], ans: 1 },
-  { id: 'tc10', cat: 'tactics', q: 'Which Italian club pioneered the use of a "three-at-the-back" system in the late 1980s and early 1990s?', opts: ['Juventus', 'Inter Milan', 'AC Milan', 'Roma'], ans: 2 },
-
-  // PLAYERS
-  { id: 'p01', cat: 'players', q: 'Which country does Rodri (Rodrigo Hernández) play international football for?', opts: ['Argentina', 'Portugal', 'Spain', 'Brazil'], ans: 2 },
-  { id: 'p02', cat: 'players', q: 'Khvicha Kvaratskhelia — nicknamed "Kvaradona" — plays for which national team?', opts: ['Armenia', 'Ukraine', 'Azerbaijan', 'Georgia'], ans: 3 },
-  { id: 'p03', cat: 'players', q: 'Which club did Pedri leave at age 17 to join FC Barcelona?', opts: ['Villarreal', 'Las Palmas', 'Getafe', 'Osasuna'], ans: 1 },
-  { id: 'p04', cat: 'players', q: 'Brahim Díaz switched international allegiance from Spain to which nation?', opts: ['Algeria', 'Tunisia', 'Morocco', 'Egypt'], ans: 2 },
-  { id: 'p05', cat: 'players', q: 'Who won the 2024 Ballon d\'Or?', opts: ['Vinicius Jr.', 'Erling Haaland', 'Rodri', 'Kylian Mbappé'], ans: 2 },
-  { id: 'p06', cat: 'players', q: 'Florian Wirtz came through the academy of which Bundesliga club?', opts: ['Bayern Munich', 'Borussia Dortmund', 'Bayer Leverkusen', 'RB Leipzig'], ans: 2 },
-  { id: 'p07', cat: 'players', q: 'Which position does Trent Alexander-Arnold play?', opts: ['Left-back', 'Centre-back', 'Right-back', 'Defensive midfielder'], ans: 2 },
-  { id: 'p08', cat: 'players', q: 'Federico Valverde was born in Montevideo and plays for which national team?', opts: ['Argentina', 'Uruguay', 'Paraguay', 'Chile'], ans: 1 },
-  { id: 'p09', cat: 'players', q: 'Victor Osimhen joined Napoli from which French club?', opts: ['Marseille', 'Nice', 'Lille', 'Lyon'], ans: 2 },
-  { id: 'p10', cat: 'players', q: 'Alejandro Garnacho developed at Manchester United having left which Spanish club\'s youth academy?', opts: ['Real Madrid', 'Atlético Madrid', 'Getafe', 'Rayo Vallecano'], ans: 1 },
-  { id: 'p11', cat: 'players', q: 'Wataru Endō captains which national team?', opts: ['South Korea', 'China', 'Australia', 'Japan'], ans: 3 },
-  { id: 'p12', cat: 'players', q: 'Which player is nicknamed "La Pulga" (The Flea)?', opts: ['Neymar', 'Lionel Messi', 'Andrés Iniesta', 'Cesc Fàbregas'], ans: 1 },
-  { id: 'p13', cat: 'players', q: 'Joshua Kimmich can play right-back, but which position does he predominantly fill at Bayern Munich?', opts: ['Attacking midfielder', 'Left winger', 'Defensive midfielder', 'Centre-back'], ans: 2 },
-  { id: 'p14', cat: 'players', q: 'Lamine Yamal represents which country?', opts: ['Morocco', 'France', 'Spain', 'Algeria'], ans: 2 },
-  { id: 'p15', cat: 'players', q: 'Who was named Player of the Tournament at the 2022 FIFA World Cup?', opts: ['Kylian Mbappé', 'Lionel Messi', 'Julián Álvarez', 'Luka Modric'], ans: 1 },
-
-  // STADIUMS
-  { id: 's01', cat: 'stadiums', q: 'In which city is the Santiago Bernabéu stadium located?', opts: ['Barcelona', 'Seville', 'Valencia', 'Madrid'], ans: 3 },
-  { id: 's02', cat: 'stadiums', q: 'The Maracanã stadium is in which Brazilian city?', opts: ['São Paulo', 'Brasília', 'Rio de Janeiro', 'Salvador'], ans: 2 },
-  { id: 's03', cat: 'stadiums', q: 'Which stadium hosted the 2022 FIFA World Cup final?', opts: ['Al Bayt Stadium', 'Khalifa International Stadium', 'Lusail Stadium', 'Al Janoub Stadium'], ans: 2 },
-  { id: 's04', cat: 'stadiums', q: 'What is the name of Borussia Dortmund\'s iconic stadium?', opts: ['Allianz Arena', 'Signal Iduna Park', 'Red Bull Arena', 'Commerzbank Arena'], ans: 1 },
-  { id: 's05', cat: 'stadiums', q: 'Camp Nou is being redeveloped — which club plays there?', opts: ['Atlético Madrid', 'Real Madrid', 'FC Barcelona', 'Valencia'], ans: 2 },
-  { id: 's06', cat: 'stadiums', q: 'Which stadium is known as "The Theatre of Dreams"?', opts: ['Anfield', 'Stamford Bridge', 'Old Trafford', 'Tottenham Hotspur Stadium'], ans: 2 },
-  { id: 's07', cat: 'stadiums', q: 'The Allianz Arena is home to which German club?', opts: ['Borussia Dortmund', 'RB Leipzig', 'Bayer Leverkusen', 'Bayern Munich'], ans: 3 },
-  { id: 's08', cat: 'stadiums', q: 'Which stadium has the largest capacity in world football?', opts: ['Camp Nou', 'Wembley', 'Narendra Modi Stadium', 'Rungrado 1st of May'], ans: 3 },
-  { id: 's09', cat: 'stadiums', q: 'Anfield is home to which Premier League club?', opts: ['Manchester City', 'Everton', 'Liverpool', 'Newcastle United'], ans: 2 },
-  { id: 's10', cat: 'stadiums', q: 'Where did the 2023 UEFA Champions League final take place?', opts: ['Wembley', 'Atatürk Olympic Stadium', 'Olimpico', 'Stade de France'], ans: 0 },
-
-  // MANAGERS
-  { id: 'm01', cat: 'managers', q: 'Which manager led Liverpool to Champions League glory in 2019?', opts: ['Brendan Rodgers', 'Rafa Benítez', 'Jürgen Klopp', 'Kenny Dalglish'], ans: 2 },
-  { id: 'm02', cat: 'managers', q: 'Who is the most decorated manager in English football history by trophies won?', opts: ['José Mourinho', 'Pep Guardiola', 'Alex Ferguson', 'Arsène Wenger'], ans: 2 },
-  { id: 'm03', cat: 'managers', q: 'Pep Guardiola won the treble with Barcelona, Bayern Munich, and Manchester City. Which came first?', opts: ['Bayern Munich treble', 'Barcelona treble', 'Manchester City treble', 'He has not won with Bayern'], ans: 1 },
-  { id: 'm04', cat: 'managers', q: 'José Mourinho famously dubbed himself "The Special One" in 2004 at which club?', opts: ['Inter Milan', 'Real Madrid', 'Chelsea', 'Manchester United'], ans: 2 },
-  { id: 'm05', cat: 'managers', q: 'Which manager guided Argentina to their 2022 World Cup triumph?', opts: ['Gerardo Martino', 'Edgardo Bauza', 'Lionel Scaloni', 'Jorge Sampaoli'], ans: 2 },
-  { id: 'm06', cat: 'managers', q: 'Xabi Alonso led Bayer Leverkusen to their first-ever Bundesliga title in which season?', opts: ['2022-23', '2023-24', '2024-25', '2021-22'], ans: 1 },
-  { id: 'm07', cat: 'managers', q: 'Who managed France when they won the 2018 World Cup?', opts: ['Raymond Domenech', 'Laurent Blanc', 'Didier Deschamps', 'Guy Roux'], ans: 2 },
-  { id: 'm08', cat: 'managers', q: 'Carlo Ancelotti has won the Champions League with how many different clubs?', opts: ['2', '3', '4', '1'], ans: 1 },
-  { id: 'm09', cat: 'managers', q: 'Which manager\'s "Gegenpressing" system made Liverpool into Premier League and European champions?', opts: ['Pep Guardiola', 'Jürgen Klopp', 'Thomas Tuchel', 'Roberto Mancini'], ans: 1 },
-  { id: 'm10', cat: 'managers', q: 'Mikel Arteta played for Arsenal and managed which club before returning to the Emirates?', opts: ['Everton', 'Manchester City', 'PSG', 'Villarreal'], ans: 1 },
-
-  // RULES
-  { id: 'ru01', cat: 'rules', q: 'How many substitutes is a team allowed to use in a standard FIFA-approved match?', opts: ['3', '4', '5', '6'], ans: 2 },
-  { id: 'ru02', cat: 'rules', q: 'VAR (Video Assistant Referee) was first used at which World Cup?', opts: ['2014', '2018', '2022', '2010'], ans: 1 },
-  { id: 'ru03', cat: 'rules', q: 'How many minutes is added for each substitution made in a game under current IFAB rules?', opts: ['30 seconds', '1 minute', '2 minutes', 'None — it is umpire\'s discretion'], ans: 1 },
-  { id: 'ru04', cat: 'rules', q: 'What is the minimum distance an opposition player must stand from the ball at a free kick?', opts: ['7.3 m', '9.15 m', '10 m', '11 m'], ans: 1 },
-  { id: 'ru05', cat: 'rules', q: 'Under the offside rule, which body parts are used to judge offside position?', opts: ['Any body part except hands/arms', 'Only the feet', 'Any body part except the head', 'Head and torso only'], ans: 0 },
-  { id: 'ru06', cat: 'rules', q: 'What happens if a goalkeeper saves a penalty but is judged to have moved off the line too early?', opts: ['Goal awarded', 'Penalty is retaken', 'Free kick to the attacking team', 'Yellow card only'], ans: 1 },
-  { id: 'ru07', cat: 'rules', q: 'How long does each half of extra time last?', opts: ['10 minutes', '15 minutes', '20 minutes', '30 minutes'], ans: 1 },
-  { id: 'ru08', cat: 'rules', q: 'A player receives a straight red card. How many matches is the standard suspension?', opts: ['1', '2', '3', '5'], ans: 2 },
-  { id: 'ru09', cat: 'rules', q: 'When was the back-pass rule introduced — making it illegal for a goalkeeper to pick up a deliberate pass from a teammate?', opts: ['1988', '1990', '1992', '1994'], ans: 2 },
-  { id: 'ru10', cat: 'rules', q: 'How large is a standard football goal (in metres, width × height)?', opts: ['6.4m × 2.2m', '7.32m × 2.44m', '8m × 2.5m', '7m × 2.4m'], ans: 1 },
-];
-
 // ─── Date-seeded shuffle ──────────────────────────────────────────────────────
 function seededRand(seed) {
   // Simple LCG seeded by date string
@@ -172,7 +59,7 @@ function seededRand(seed) {
 
 function pickDailyQuestions(date) {
   const rand    = seededRand(date);
-  const bank    = [...QUESTION_BANK];
+  const bank    = [...TRIVIA_QUESTIONS];
   // Shuffle using seeded random so the same date always picks the same 10
   for (let i = bank.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
@@ -237,7 +124,7 @@ const CSS = `
 :root {
   --bg:#05070f; --surface:rgba(255,255,255,.038); --border:rgba(255,255,255,.08);
   --border2:rgba(255,255,255,.14); --accent:#F7C344; --accent2:#E84040;
-  --accent3:#4F8EF7; --green:#3DD68C; --text:#F0F0F0;
+  --accent3:#0D9488; --green:#3DD68C; --text:#F0F0F0;
   --muted:rgba(240,240,240,.45); --orange:#F97316;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -252,7 +139,7 @@ body{font-family:'DM Sans',sans-serif}
   position:absolute; inset:0; pointer-events:none; z-index:0;
   background:
     radial-gradient(circle at 8% 15%, rgba(249,115,22,0.05) 0%, transparent 44%),
-    radial-gradient(circle at 92% 85%, rgba(79,142,247,0.04) 0%, transparent 44%);
+    radial-gradient(circle at 92% 85%, rgba(13,148,136,0.04) 0%, transparent 44%);
 }
 .dt-noise {
   position:absolute; inset:0; pointer-events:none; z-index:1; opacity:.017;
@@ -456,22 +343,22 @@ body{font-family:'DM Sans',sans-serif}
 .dt-streak-dot { aspect-ratio:1; border-radius:4px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); }
 .dt-streak-dot.win    { background:rgba(61,214,140,.18); border-color:rgba(61,214,140,.32); }
 .dt-streak-dot.miss   { background:rgba(232,64,64,.08); border-color:rgba(232,64,64,.18); }
-.dt-streak-dot.played { background:rgba(247,195,68,.14); border-color:var(--accent); box-shadow:0 0 10px rgba(247,195,68,.2); }
-.dt-streak-dot.pending { background:rgba(79,142,247,.09); border-style:dashed; border-color:rgba(79,142,247,.38); }
+.dt-streak-dot.played { background:rgba(13,148,136,.14); border-color:var(--accent3); box-shadow:0 0 10px rgba(13,148,136,.2); }
+.dt-streak-dot.pending { background:rgba(13,148,136,.09); border-style:dashed; border-color:rgba(13,148,136,.38); }
 .dt-streak-legend { display:flex; gap:12px; font-size:.67rem; color:var(--muted); flex-wrap:wrap; }
 .dt-dot-sample { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:4px; vertical-align:middle; }
 .dt-dot-sample.win    { background:rgba(61,214,140,.18); border:1px solid var(--green); }
 .dt-dot-sample.miss   { background:rgba(232,64,64,.08); border:1px solid rgba(232,64,64,.18); }
-.dt-dot-sample.played { background:rgba(247,195,68,.14); border:1px solid var(--accent); }
+.dt-dot-sample.played { background:rgba(13,148,136,.14); border:1px solid var(--accent3); }
 .dt-stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .dt-stat-item {
   background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:12px;
   padding:14px 12px; text-align:center; transition:border-color .2s, background .2s;
 }
-.dt-stat-item:hover { border-color:rgba(247,195,68,.22); background:rgba(247,195,68,.03); }
+.dt-stat-item:hover { border-color:rgba(13,148,136,.22); background:rgba(13,148,136,.03); }
 .dt-stat-value {
   font-family:'Bebas Neue',sans-serif; font-size:1.75rem; letter-spacing:1px;
-  background:linear-gradient(135deg,var(--accent),#fff 80%); -webkit-background-clip:text;
+  background:linear-gradient(135deg,var(--accent3),#fff 80%); -webkit-background-clip:text;
   -webkit-text-fill-color:transparent; background-clip:text; line-height:1; margin-bottom:3px;
 }
 .dt-stat-name { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
@@ -777,7 +664,10 @@ export default function DailyTrivia() {
 
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
-        <nav className="dt-nav">
+        <nav className="dt-nav" style={{
+          boxShadow: "0 10px 30px rgba(13, 148, 136, 0.22)",
+          borderBottom: "1px solid rgba(13, 148, 136, 0.25)"
+        }}>
           <button className="dt-nav-logo" onClick={() => navigate('/')}>←</button>
           <div className="dt-nav-tag">
             <span className="dt-fire-dot" />

@@ -64,7 +64,7 @@ export function useClubWikiLogo(clubName) {
     else if (clubName === 'Bayern Munich') wikiQuery = 'FC_Bayern_Munich';
     else if (clubName === 'Aston Villa') wikiQuery = 'Aston_Villa_F.C.';
     else if (clubName === 'Man City') wikiQuery = 'Manchester_City_F.C.';
-    else if (clubName === 'Man United') wikiQuery = 'Manchester_United_F.C.';
+    else if (clubName === 'Man United' || clubName === 'Manchester United') wikiQuery = 'Manchester_United_F.C.';
     else if (clubName === 'Atletico Madrid') wikiQuery = 'Atlético_Madrid';
     else if (clubName === 'Chelsea') wikiQuery = 'Chelsea_F.C.';
     else if (clubName === 'Liverpool') wikiQuery = 'Liverpool_F.C.';
@@ -73,6 +73,22 @@ export function useClubWikiLogo(clubName) {
     else if (clubName === 'Bayer Leverkusen') wikiQuery = 'Bayer_04_Leverkusen';
     else if (clubName === 'AC Milan') wikiQuery = 'A.C._Milan';
     else if (clubName === 'Inter Miami') wikiQuery = 'Inter_Miami_CF';
+    else if (clubName === 'Juventus') wikiQuery = 'Juventus_F.C.';
+    else if (clubName === 'Tottenham') wikiQuery = 'Tottenham_Hotspur_F.C.';
+    else if (clubName === 'Al Nassr') wikiQuery = 'Al_Nassr_FC';
+    else if (clubName === 'Roma') wikiQuery = 'A.S._Roma';
+    else if (clubName === 'Galatasaray') wikiQuery = 'Galatasaray_S.K._(football)';
+    else if (clubName === 'Borussia Dortmund' || clubName === 'Dortmund') wikiQuery = 'Borussia_Dortmund';
+    else if (clubName === 'Benfica') wikiQuery = 'S.L._Benfica';
+    else if (clubName === 'Sporting CP') wikiQuery = 'Sporting_CP';
+    else if (clubName === 'Monaco') wikiQuery = 'AS_Monaco_FC';
+    else if (clubName === 'Napoli') wikiQuery = 'S.S.C._Napoli';
+    else if (clubName === 'Ajax') wikiQuery = 'AFC_Ajax';
+    else if (clubName === 'Marseille') wikiQuery = 'Olympique_de_Marseille';
+    else if (clubName === 'Lyon') wikiQuery = 'Olympique_Lyonnais';
+    else if (clubName === 'Everton') wikiQuery = 'Everton_F.C.';
+    else if (clubName === 'Udinese') wikiQuery = 'Udinese_Calcio';
+    else if (clubName === 'PSV') wikiQuery = 'PSV_Eindhoven';
 
     fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiQuery)}`)
       .then((res) => res.json())

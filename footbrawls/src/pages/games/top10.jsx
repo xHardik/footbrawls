@@ -411,7 +411,7 @@ body{font-family:'DM Sans',sans-serif}
   flex: 1; height: 1px; background: linear-gradient(to right, rgba(236,72,153,0.18), transparent);
 }
 .t10-dashboard-grid {
-  display: grid; grid-template-columns: 1fr; gap: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
 }
 .t10-dash-card {
   background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,0.08);
@@ -458,11 +458,11 @@ body{font-family:'DM Sans',sans-serif}
 .t10-dot-sample.played { background: rgba(236,72,153,.14); border: 1px solid var(--accent3); }
 
 .t10-stats-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px;
 }
 .t10-stat-item {
   background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-  padding: 14px 12px; text-align: center; transition: border-color .2s, background .2s;
+  padding: 14px 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: border-color .2s, background .2s;
 }
 .t10-stat-item:hover {
   border-color: rgba(236,72,153,.22); background: rgba(236,72,153,.03);
@@ -1010,6 +1010,30 @@ export default function Top10Guess() {
                   <span><span className="t10-dot-sample win" />6+ Solved</span>
                   <span><span className="t10-dot-sample miss" />Under 6</span>
                   <span><span className="t10-dot-sample played" />Today</span>
+                </div>
+              </div>
+              <div className="t10-dash-card">
+                <div className="t10-dash-card-hdr">
+                  <span className="t10-dash-icon">📊</span>
+                  <span className="t10-dash-label">Your Stats</span>
+                </div>
+                <div className="t10-stats-grid">
+                  <div className="t10-stat-item">
+                    <div className="t10-stat-value">{stats.played || '—'}</div>
+                    <div className="t10-stat-name">Played</div>
+                  </div>
+                  <div className="t10-stat-item">
+                    <div className="t10-stat-value">{stats.bestScore != null ? `${stats.bestScore}/10` : '—'}</div>
+                    <div className="t10-stat-name">Best Score</div>
+                  </div>
+                  <div className="t10-stat-item">
+                    <div className="t10-stat-value">{stats.avgScore ? `${stats.avgScore}` : '—'}</div>
+                    <div className="t10-stat-name">Avg Score</div>
+                  </div>
+                  <div className="t10-stat-item">
+                    <div className="t10-stat-value">{stats.streak || '—'}</div>
+                    <div className="t10-stat-name">Streak</div>
+                  </div>
                 </div>
               </div>
             </div>

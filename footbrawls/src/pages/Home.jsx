@@ -313,6 +313,10 @@ const GlobalStyles = () => (
     @media (max-width: 768px) {
       .home-top-nav-xp { display: none !important; }
     }
+    .footer-link:hover {
+      color: #F7C344 !important;
+      text-shadow: 0 0 8px rgba(247, 195, 68, 0.35);
+    }
   `}</style>
 );
 
@@ -445,37 +449,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
   );
 }
 
-// ── BROADCAST TICKER ──────────────────────────────────────────────────────────
-function BroadcastTicker({ doneCount, gamesTotal, dailyXP, guildName }) {
-  const items = [
-    `⚽ ${doneCount}/${gamesTotal} games completed today`,
-    `🏆 ${dailyXP} XP earned today`,
-    `🛡 ${guildName} — fortress active`,
-    `📊 Top 10 Guess — guess the statistics`,
-    `🔥 Penalty Nerve — can you keep your cool?`,
-    `📡 World Chat is live — join the banter`,
-  ];
-  const content = items.join("   ·   ");
-  return (
-    <div style={{
-      overflow:"hidden", height:28, background:"rgba(247,195,68,0.06)",
-      borderBottom:"1px solid rgba(247,195,68,0.12)",
-      borderTop:"1px solid rgba(247,195,68,0.08)",
-      display:"flex", alignItems:"center",
-    }}>
-      <div style={{
-        display:"flex", alignItems:"center", whiteSpace:"nowrap",
-        animation:"broadcastTicker 28s linear infinite",
-        fontFamily:"'Space Mono',monospace", fontSize:"0.52rem",
-        color:C.muted, letterSpacing:0.8,
-        gap:0,
-      }}>
-        <span style={{marginRight:60}}>{content}</span>
-        <span>{content}</span>
-      </div>
-    </div>
-  );
-}
+
 
 // ── HERO SECTION WITH STADIUM BACKGROUND ─────────────────────────────────────
 // Drop-in replacement for your existing HeroSection component.
@@ -1242,7 +1216,386 @@ function ActionButtons({ onRaid, onFriends }) {
   );
 }
 
-// ── BOTTOM NAV ────────────────────────────────────────────────────────────────
+// ── FOOTER COMPONENT ─────────────────────────────────────────────────────────
+// SVG icon set for footer (no emojis)
+const FooterIcons = {
+  Stadium: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <ellipse cx="12" cy="10" rx="9" ry="5"/>
+      <path d="M3 10v6c0 2.76 4.03 5 9 5s9-2.24 9-5v-6"/>
+      <path d="M8 10v8M16 10v8M12 10v9"/>
+    </svg>
+  ),
+  Mail: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <path d="M2 7l10 7 10-7"/>
+    </svg>
+  ),
+  Shield: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z"/>
+    </svg>
+  ),
+  Scroll: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+      <path d="M14 2v6h6M9 13h6M9 17h4"/>
+    </svg>
+  ),
+  Ball: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 2a10 10 0 000 20M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10M2 12h20"/>
+      <path d="M4.9 6h14.2M4.9 18h14.2"/>
+    </svg>
+  ),
+  ChevRight: () => (
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6"/>
+    </svg>
+  ),
+  ArrowUpRight: () => (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M7 17L17 7M17 7H7M17 7v10"/>
+    </svg>
+  ),
+};
+
+function Footer({ navigate }) {
+  const [hoveredLink, setHoveredLink] = useState(null);
+  const [hoveredSocial, setHoveredSocial] = useState(null);
+
+  const navLinks = [
+    { label: "About Us",         path: "/about",   Icon: FooterIcons.Stadium },
+    { label: "Contact Us",       path: "/contact", Icon: FooterIcons.Mail    },
+    { label: "Privacy Policy",   path: "/privacy", Icon: FooterIcons.Shield  },
+    { label: "Terms of Service", path: "/terms",   Icon: FooterIcons.Scroll  },
+  ];
+
+  const socials = [
+    {
+      id: "discord", label: "Discord", href: "https://discord.gg/footbrawls",
+      color: "#5865F2", bg: "rgba(88,101,242,0.12)", border: "rgba(88,101,242,0.35)",
+      svg: (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>),
+    },
+    {
+      id: "twitter", label: "Twitter / X", href: "https://twitter.com/footbrawls",
+      color: "#1DA1F2", bg: "rgba(29,161,242,0.12)", border: "rgba(29,161,242,0.35)",
+      svg: (<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>),
+    },
+  ];
+
+  const stats = [
+    { val: "9",    label: "Daily\nGames",    color: C.gold  },
+    { val: "195+", label: "Nations\nUnited", color: C.blue  },
+    { val: "∞",    label: "XP\nDaily",       color: C.green },
+  ];
+
+  return (
+    <>
+      {/* ══════════════════════════════════════════════════
+          FOOTER SECTION — fully isolated visual block
+      ══════════════════════════════════════════════════ */}
+      <div style={{
+        marginTop: "64px",
+        marginLeft: "-24px",
+        marginRight: "-24px",
+        position: "relative",
+      }}>
+        {/* Top pitch-line row — marks the boundary of the footer section */}
+        <div style={{
+          height: "52px",
+          background: "linear-gradient(180deg, rgba(5,8,15,0) 0%, rgba(247,195,68,0.04) 100%)",
+          borderTop: "2px solid rgba(247,195,68,0.4)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "14px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Horizontal dashes flanking the motif */}
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(247,195,68,0.18))", marginLeft: 24 }}/>
+          <div style={{
+            width: 30, height: 30, borderRadius: "50%",
+            border: "1px solid rgba(247,195,68,0.28)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <div style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(247,195,68,0.45)" }}/>
+          </div>
+          <span style={{
+            fontFamily: "'Space Mono', monospace",
+            fontSize: "0.56rem", fontWeight: 700,
+            color: "rgba(247,195,68,0.32)", letterSpacing: "5px",
+            textTransform: "uppercase", whiteSpace: "nowrap",
+          }}>FOOTBRAWLS ARENA</span>
+          <div style={{
+            width: 30, height: 30, borderRadius: "50%",
+            border: "1px solid rgba(247,195,68,0.28)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <div style={{ width: 9, height: 9, borderRadius: "50%", background: "rgba(247,195,68,0.45)" }}/>
+          </div>
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(247,195,68,0.18), transparent)", marginRight: 24 }}/>
+        </div>
+      </div>
+
+      {/* ── Footer body ── */}
+      <footer style={{
+        position: "relative",
+        marginLeft: "-24px",
+        marginRight: "-24px",
+        overflow: "hidden",
+        background: "linear-gradient(180deg, rgba(4,6,12,0.98) 0%, #03050d 100%)",
+        borderTop: "1px solid rgba(255,255,255,0.03)",
+      }}>
+        {/* Footballer silhouette – right */}
+        <div style={{ position: "absolute", right: 0, bottom: 0, width: 240, height: 380, zIndex: 0, pointerEvents: "none" }}>
+          <div style={{
+            position: "absolute", right: -10, bottom: -10, width: 300, height: 320, borderRadius: "50%",
+            background: "radial-gradient(ellipse at 60% 80%, rgba(247,195,68,.06) 0%, transparent 65%)",
+            filter: "blur(32px)",
+          }}/>
+          <svg viewBox="0 0 280 440" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style={{ position: "absolute", bottom: 0, right: 0, width: "100%", height: "100%", opacity: .07 }}>
+            <ellipse cx="164" cy="46" rx="22" ry="24" fill="#F7C344"/>
+            <rect x="156" y="67" width="13" height="15" rx="4" fill="#F7C344"/>
+            <path d="M128 84C121 86 114 103 112 126L116 180L154 187L192 178L196 124C194 101 186 85 179 84L164 80L151 79Z" fill="#F7C344"/>
+            <path d="M128 91C115 87 97 76 86 63C80 56 78 50 82 46C86 42 92 45 97 51L120 84Z" fill="#F7C344"/>
+            <path d="M179 91C192 95 209 105 219 118C225 126 223 134 217 136C211 138 205 132 199 124L183 95Z" fill="#F7C344"/>
+            <path d="M120 178C116 199 112 237 110 270L125 271L138 236L145 200Z" fill="#F7C344"/>
+            <path d="M108 269C102 270 93 275 89 282C87 288 91 292 99 292L132 289L132 269Z" fill="#F7C344"/>
+            <path d="M163 178C169 199 180 235 195 258L209 251L192 223L181 193Z" fill="#F7C344"/>
+            <path d="M193 255C205 271 220 286 230 298L240 288L222 275L207 249Z" fill="#F7C344"/>
+            <path d="M228 298C223 308 219 317 223 324C227 329 238 329 247 322C255 316 257 308 251 303L241 291Z" fill="#F7C344"/>
+            <circle cx="74" cy="318" r="29" fill="none" stroke="#F7C344" strokeWidth="2" opacity=".5"/>
+            <line x1="240" y1="272" x2="268" y2="255" stroke="#F7C344" strokeWidth="1.3" opacity=".18" strokeDasharray="4 7"/>
+            <line x1="234" y1="285" x2="265" y2="274" stroke="#F7C344" strokeWidth=".9" opacity=".12" strokeDasharray="3 8"/>
+          </svg>
+        </div>
+
+        {/* Goalkeeper silhouette – left */}
+        <div style={{ position: "absolute", left: 0, bottom: 0, width: 240, height: 380, zIndex: 0, pointerEvents: "none" }}>
+          <div style={{
+            position: "absolute", left: -10, bottom: -10, width: 300, height: 320, borderRadius: "50%",
+            background: "radial-gradient(ellipse at 40% 80%, rgba(61,214,140,.06) 0%, transparent 65%)",
+            filter: "blur(32px)",
+          }}/>
+          <svg viewBox="0 0 280 440" fill="none" xmlns="http://www.w3.org/2000/svg"
+            style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "100%", opacity: .07 }}>
+            <ellipse cx="116" cy="116" rx="21" ry="23" fill="#F7C344"/>
+            <rect x="111" y="137" width="10" height="15" rx="3" fill="#F7C344"/>
+            <path d="M96 150 C96 150 136 140 136 140 C136 140 176 150 176 150 L166 220 L136 225 L106 220 Z" fill="#F7C344"/>
+            <path d="M96 155 C70 145 40 135 15 130 C8 128 3 124 5 118 C8 112 17 114 26 118 L86 145 Z" fill="#F7C344"/>
+            <path d="M176 155 C202 145 232 135 257 130 C264 128 269 124 267 118 C264 112 255 114 246 118 L186 145 Z" fill="#F7C344"/>
+            <ellipse cx="10" cy="125" rx="8" ry="12" fill="#F7C344"/>
+            <ellipse cx="262" cy="125" rx="8" ry="12" fill="#F7C344"/>
+            <path d="M106 220 C96 245 80 280 70 310 C66 316 68 322 75 324 C82 326 90 320 94 312 L121 240 Z" fill="#F7C344"/>
+            <path d="M166 220 C176 245 192 280 202 310 C206 316 204 322 197 324 C190 326 182 320 178 312 L151 240 Z" fill="#F7C344"/>
+            <circle cx="136" cy="50" r="24" fill="none" stroke="#F7C344" strokeWidth="2" opacity=".5"/>
+            <path d="M136 26C141 34 144 45 136 52C128 45 131 34 136 26Z" fill="#F7C344" opacity=".35"/>
+          </svg>
+        </div>
+
+        {/* Main body */}
+        <div style={{
+          position: "relative", zIndex: 1,
+          backdropFilter: "blur(32px)",
+          padding: "52px 48px 36px",
+        }}>
+
+          {/* Stats row */}
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "44px",
+          }}>
+            {stats.map((s, i) => (
+              <div key={i} style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                padding: "16px 44px",
+                borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+              }}>
+                <span style={{
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  fontSize: "2.2rem", letterSpacing: "3px",
+                  color: s.color, lineHeight: 1,
+                }}>{s.val}</span>
+                <span style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: "0.58rem", fontWeight: 700,
+                  color: "rgba(242,242,244,0.25)",
+                  textTransform: "uppercase", letterSpacing: "1.5px",
+                  whiteSpace: "pre", textAlign: "center", marginTop: "5px", lineHeight: "1.5",
+                }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "40px" }} />
+
+          {/* Two-column: Brand left, Links right */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1.6fr 1fr",
+            gap: "60px",
+            alignItems: "start",
+            marginBottom: "40px",
+          }}>
+
+            {/* Brand block */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Logo */}
+              <div
+                onClick={() => navigate("/")}
+                style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", width: "fit-content" }}
+              >
+                <div style={{
+                  width: 36, height: 36,
+                  background: "linear-gradient(135deg, rgba(247,195,68,0.16) 0%, rgba(247,195,68,0.04) 100%)",
+                  border: "1px solid rgba(247,195,68,0.28)",
+                  borderRadius: "9px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: C.gold,
+                }}>
+                  <FooterIcons.Ball />
+                </div>
+                <span style={{
+                  fontFamily: "'Bebas Neue', sans-serif",
+                  fontSize: "1.6rem", letterSpacing: "3px",
+                  background: "linear-gradient(110deg, #ffe680 0%, #F7C344 50%, #e8a800 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>FOOTBRAWLS</span>
+              </div>
+
+              <p style={{
+                margin: 0,
+                color: "rgba(242,242,244,0.3)",
+                fontSize: "0.82rem", lineHeight: "1.72",
+                fontFamily: "'Syne', sans-serif", maxWidth: "300px",
+              }}>
+                The ultimate football guild battle simulator. Play daily seeded puzzles, earn XP, and defend your nation's castle in the global arena.
+              </p>
+
+              {/* Social buttons */}
+              <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                {socials.map(s => (
+                  <a
+                    key={s.id} href={s.href} target="_blank" rel="noreferrer"
+                    onMouseEnter={() => setHoveredSocial(s.id)}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "7px",
+                      padding: "7px 14px",
+                      background: hoveredSocial === s.id ? s.bg : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${hoveredSocial === s.id ? s.border : "rgba(255,255,255,0.07)"}`,
+                      borderRadius: "9px",
+                      color: hoveredSocial === s.id ? s.color : "rgba(242,242,244,0.36)",
+                      textDecoration: "none",
+                      fontSize: "0.72rem",
+                      fontFamily: "'Space Mono', monospace", fontWeight: 700,
+                      letterSpacing: "0.5px", transition: "all 0.2s",
+                    }}
+                  >
+                    {s.svg}{s.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Nav links */}
+            <div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: "0.6rem", fontWeight: 700,
+                letterSpacing: "2.5px", color: "rgba(242,242,244,0.18)",
+                textTransform: "uppercase", marginBottom: "14px",
+              }}>Arena</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                {navLinks.map((link, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => navigate(link.path)}
+                    onMouseEnter={() => setHoveredLink(idx)}
+                    onMouseLeave={() => setHoveredLink(null)}
+                    style={{
+                      background: hoveredLink === idx ? "rgba(247,195,68,0.04)" : "none",
+                      border: "1px solid",
+                      borderColor: hoveredLink === idx ? "rgba(247,195,68,0.12)" : "transparent",
+                      borderRadius: "8px",
+                      padding: "8px 10px",
+                      display: "flex", alignItems: "center", gap: "10px",
+                      cursor: "pointer", textAlign: "left", transition: "all 0.18s",
+                    }}
+                  >
+                    <span style={{
+                      color: hoveredLink === idx ? C.gold : "rgba(242,242,244,0.3)",
+                      transition: "color 0.18s", display: "flex",
+                    }}>
+                      <link.Icon />
+                    </span>
+                    <span style={{
+                      fontSize: "0.78rem",
+                      fontFamily: "'Space Mono', monospace", fontWeight: 700,
+                      color: hoveredLink === idx ? C.gold : "rgba(242,242,244,0.42)",
+                      textTransform: "uppercase", letterSpacing: "0.8px",
+                      transition: "color 0.18s", flex: 1,
+                    }}>{link.label}</span>
+                    {hoveredLink === idx && (
+                      <span style={{ color: C.gold }}><FooterIcons.ChevRight /></span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div style={{
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            paddingTop: "20px",
+            display: "flex", justifyContent: "space-between",
+            alignItems: "center", flexWrap: "wrap", gap: "10px",
+          }}>
+            <span style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: "0.66rem", color: "rgba(242,242,244,0.18)",
+              letterSpacing: "0.5px",
+            }}>
+              © {new Date().getFullYear()} Footbrawls · All rights reserved
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <span style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: "0.62rem", color: "rgba(242,242,244,0.14)",
+                letterSpacing: "1px", textTransform: "uppercase",
+              }}>Made for Champions</span>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "5px",
+                padding: "4px 10px",
+                background: "rgba(61,214,140,0.05)",
+                border: "1px solid rgba(61,214,140,0.14)",
+                borderRadius: "99px",
+              }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: C.green, boxShadow: `0 0 6px ${C.green}` }} />
+                <span style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: "0.6rem", color: C.green,
+                  fontWeight: 700, letterSpacing: "0.5px",
+                }}>LIVE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+}
+
 function BottomNav({ active, navigate, onUnavailable }) {
   const [pressed,setPressed]=useState(null);
   const items=[
@@ -1399,8 +1752,7 @@ export default function Home() {
       <TopNav user={user} dailyXP={dailyXP} xpPct={xpPct} navigate={navigate}/>
 
       <div style={{position:"relative", zIndex:1, flex:1, width:"100%", maxWidth:920, margin:"0 auto", boxSizing:"border-box"}}>
-        {/* Broadcast ticker */}
-        <BroadcastTicker doneCount={doneCount} gamesTotal={games.length} dailyXP={dailyXP} guildName={guild.name}/>
+
 
         {/* Hero */}
         <HeroSection user={user} dailyXP={dailyXP} xpPct={xpPct} doneCount={doneCount} gamesTotal={games.length} guild={guild} navigate={navigate}/>
@@ -1441,6 +1793,7 @@ export default function Home() {
           <SectionDivider label="World Chat" right="ALL NATIONS LIVE" color={C.green}/>
           <WorldChat messages={worldChat} user={user} navigate={navigate}/>
 
+          <Footer navigate={navigate}/>
           <div style={{height:8}}/>
         </div>
       </div>

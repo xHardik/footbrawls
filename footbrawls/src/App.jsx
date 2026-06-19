@@ -15,6 +15,10 @@ import DribbleGauntlet from './pages/games/dribble';
 import DailyTrivia from './pages/games/dailytrivia';
 import Top10Guess from './pages/games/top10';
 import Raid from './pages/Raid';
+import AboutUs from './pages/AboutUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import ContactUs from './pages/ContactUs';
 
 function RequireUser({ children }) {
   const user = getUser();
@@ -39,6 +43,10 @@ export default function App() {
         <Route path="/games/dribble" element={<RequireUser><Layout hideMobileNav><DribbleGauntlet /></Layout></RequireUser>} />
         <Route path="/games/dailytrivia" element={<RequireUser><Layout hideMobileNav><DailyTrivia /></Layout></RequireUser>} />
         <Route path="/games/top10" element={<RequireUser><Layout hideMobileNav><Top10Guess /></Layout></RequireUser>} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

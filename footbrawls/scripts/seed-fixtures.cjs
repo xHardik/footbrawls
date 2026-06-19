@@ -46,7 +46,7 @@ const FIXTURES = [
   // Jun 18 · Atlanta (EDT = UTC-4) · noon ET = 16:00Z
   { id:"gs_A3", home:"Czechia",      away:"South Africa", kickoff:"2026-06-18T16:00:00Z", stage:"Group A - MD2", done:false },
   // Jun 18 · Zapopan (CDT = UTC-5) · 9PM local = 02:00Z Jun 19
-  { id:"gs_A4", home:"Mexico",       away:"South Korea",  kickoff:"2026-06-19T02:00:00Z", stage:"Group A - MD2", done:false },
+  { id:"gs_A4", home:"Mexico",       away:"South Korea",  kickoff:"2026-06-19T02:00:00Z", stage:"Group A - MD2", done:true,  hs:1, as:0 },
   // Jun 24 · Mexico City (CDT = UTC-5) · 7PM local = 00:00Z Jun 25 (simultaneous MD3)
   { id:"gs_A5", home:"Czechia",      away:"Mexico",       kickoff:"2026-06-25T00:00:00Z", stage:"Group A - MD3", done:false },
   // Jun 24 · Guadalupe (CDT = UTC-5) · 7PM local = 00:00Z Jun 25 (simultaneous MD3)

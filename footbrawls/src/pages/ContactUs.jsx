@@ -22,6 +22,35 @@ function injectFonts() {
   document.head.appendChild(l);
 }
 
+function injectStyles() {
+  if (document.getElementById("fb-contact-css")) return;
+  const s = document.createElement("style");
+  s.id = "fb-contact-css";
+  s.textContent = `
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+    }
+    @media (max-width: 640px) {
+      .contact-header-title {
+        font-size: 3.2rem !important;
+        letter-spacing: 3px !important;
+      }
+      .contact-header-desc {
+        font-size: 0.88rem !important;
+      }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
 function FootballerRight() {
   return (
     <div style={{ position: 'fixed', right: 0, bottom: 0, width: 300, height: 460, zIndex: 0, pointerEvents: 'none' }}>
@@ -94,7 +123,7 @@ export default function ContactUs() {
   const [submitted, setSubmitted] = useState(false);
   const [focused, setFocused] = useState(null);
 
-  useEffect(() => { injectFonts(); }, []);
+  useEffect(() => { injectFonts(); injectStyles(); }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -167,21 +196,21 @@ export default function ContactUs() {
               Support · Online
             </span>
           </div>
-          <h1 style={{
+          <h1 className="contact-header-title" style={{
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: "4.8rem", letterSpacing: "5px",
             background: "linear-gradient(110deg, #ffe680 0%, #F7C344 50%, #e8a800 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             margin: "0 0 6px 0", lineHeight: 1,
           }}>CONTACT US</h1>
-          <p style={{
+          <p className="contact-header-desc" style={{
             fontFamily: "'Syne', sans-serif", fontSize: "0.95rem",
             color: C.muted, margin: 0, maxWidth: "420px", lineHeight: "1.6",
           }}>Reach the Footbrawls Arena support team. We respond within 24 hours.</p>
         </div>
 
         {/* Two-col layout */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: "20px" }}>
+        <div className="contact-grid">
 
           {/* Left: Email + Social */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

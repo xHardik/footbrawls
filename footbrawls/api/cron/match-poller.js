@@ -67,6 +67,7 @@ const TEAM_NAME_TO_CODE = {
   'Curaçao': 'CUW',
   'Czechia': 'CZE',
   'DR Congo': 'COD',
+  'Democratic Republic of the Congo': 'COD',
   'Ecuador': 'ECU',
   'Egypt': 'EGY',
   'England': 'ENG',
@@ -179,50 +180,50 @@ function generateMockMatchResult(homeTeam, awayTeam) {
   return { homeScore, awayScore, scorers };
 }
 
-// ─── API-Football fetch ───────────────────────────────────────────────────────
-async function fetchFixtures(live = false) {
-  const url = live
-    ? `https://v3.football.api-sports.io/fixtures?live=all&league=${WC_2026_LEAGUE_ID}&season=2026`
-    : `https://v3.football.api-sports.io/fixtures?league=${WC_2026_LEAGUE_ID}&season=2026&next=10`;
-
-  const res = await fetch(url, {
-    headers: { 'x-apisports-key': API_FOOTBALL_KEY },
-  });
-  if (!res.ok) throw new Error(`API-Football error ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return data.response || [];
-}
-
-// ─── Map API response to Firestore doc ───────────────────────────────────────
-function mapFixtureToDoc(fixture) {
-  const f      = fixture.fixture;
-  const teams  = fixture.teams;
-  const goals  = fixture.goals;
-  const status = f.status.short; // NS, 1H, HT, 2H, FT, AET, PEN
+// ─── API-Football fetch (reconfigured for free worldcup26.ir API) ─────────────
+function mapGameToDoc(g) {
+  // local_date is MM/DD/YYYY HH:mm
+  const [dStr, tStr] = g.local_date.split(' ');
+  const [m, d, y] = dStr.split('/');
+  const [hr, min] = tStr.split(':');
+  
+  // Parse kickoff time (assume local_date time is EDT/CDT etc. or treat as UTC)
+  const kickoffDate = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr), parseInt(min)));
+  
+  const status = g.finished === 'TRUE' ? 'FT' : (g.time_elapsed === 'notstarted' ? 'NS' : 'LIVE');
 
   const scorers = [];
-  if (fixture.events && Array.isArray(fixture.events)) {
-    fixture.events.forEach(ev => {
-      if (ev.type === 'Goal' && ev.player && ev.player.name && ev.team && ev.team.name) {
-        scorers.push(`${ev.player.name} (${ev.team.name})`);
-      }
-    });
+  if (g.home_scorers && g.home_scorers !== 'null') {
+    try {
+      const clean = g.home_scorers.replace(/[\{\}]/g, '').replace(/[“”"']/g, '');
+      clean.split(',').forEach(s => {
+        if (s.trim()) scorers.push(`${s.trim()} (${g.home_team_name_en})`);
+      });
+    } catch (e) {}
+  }
+  if (g.away_scorers && g.away_scorers !== 'null') {
+    try {
+      const clean = g.away_scorers.replace(/[\{\}]/g, '').replace(/[“”"']/g, '');
+      clean.split(',').forEach(s => {
+        if (s.trim()) scorers.push(`${s.trim()} (${g.away_team_name_en})`);
+      });
+    } catch (e) {}
   }
 
   return {
-    fixtureId:     String(f.id),
-    homeTeam:      teams.home.name,
-    awayTeam:      teams.away.name,
-    homeTeamLogo:  teams.home.logo,
-    awayTeamLogo:  teams.away.logo,
-    kickoffAt:     Timestamp.fromMillis(f.timestamp * 1000),
-    stage:         fixture.league.round,
+    fixtureId:     String(g.id),
+    homeTeam:      g.home_team_name_en || g.home_team_label || 'TBD',
+    awayTeam:      g.away_team_name_en || g.away_team_label || 'TBD',
+    homeTeamLogo:  `https://media.api-sports.io/football/teams/${g.home_team_id}.png`,
+    awayTeamLogo:  `https://media.api-sports.io/football/teams/${g.away_team_id}.png`,
+    kickoffAt:     Timestamp.fromDate(kickoffDate),
+    stage:         g.type === 'group' ? `Group ${g.group} - MD${g.matchday}` : g.group,
     status,
-    homeScore:     goals.home ?? 0,
-    awayScore:     goals.away ?? 0,
-    isLive:        ['1H','HT','2H','ET','BT','P','INT'].includes(status),
-    isComplete:    ['FT','AET','PEN'].includes(status),
-    locksAt:       Timestamp.fromMillis((f.timestamp - 3600) * 1000),
+    homeScore:     parseInt(g.home_score) || 0,
+    awayScore:     parseInt(g.away_score) || 0,
+    isLive:        status === 'LIVE',
+    isComplete:    status === 'FT',
+    locksAt:       Timestamp.fromMillis(kickoffDate.getTime() - 3600 * 1000),
     updatedAt:     FieldValue.serverTimestamp(),
     scorers,
   };
@@ -307,31 +308,17 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore, scorers 
     const scoreCorrect  = pred.predictedScore?.home === homeScore &&
                           pred.predictedScore?.away === awayScore;
 
-    // Check if scorer is correct (support 'No Goals' prediction if score is 0-0)
+    // Check if scorer is correct
     let scorerCorrect = false;
     if (homeScore + awayScore === 0) {
       scorerCorrect = pred.predictedScorer === 'No Goals';
     } else if (scorers && scorers.length > 0) {
-      if (pred.predictedScorer && pred.predictedScorer.endsWith(' - Someone Else')) {
-        const team = pred.predictedScorer.split(' - Someone Else')[0];
-        const teamPlayers = MOCK_TEAM_PLAYERS[team] || [];
-        scorerCorrect = scorers.some(s => {
-          if (s.includes(' (')) {
-            const parts = s.split(' (');
-            const name = parts[0];
-            const t = parts[1].replace(')', '');
-            return t === team && !teamPlayers.includes(name);
-          }
-          return false;
-        });
-      } else {
-        scorerCorrect = scorers.some(s => {
-          if (s.includes(' (')) {
-            return s.split(' (')[0] === pred.predictedScorer;
-          }
-          return s === pred.predictedScorer;
-        });
-      }
+      scorerCorrect = scorers.some(s => {
+        if (s.includes(' (')) {
+          return s.split(' (')[0] === pred.predictedScorer;
+        }
+        return s === pred.predictedScorer;
+      });
     }
 
     const xpAwarded     = (resultCorrect ? 15 : 0) + (scorerCorrect ? 5 : 0);
@@ -376,67 +363,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 0. Auto-resolve any fixtures that have kickoff in the past but are still marked as not completed
-    const now = new Date();
-    // A match is complete if it started more than 2 hours ago
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const pastSnap = await db.collection('fixtures')
-      .where('isComplete', '==', false)
-      .where('kickoffAt', '<=', Timestamp.fromDate(twoHoursAgo))
-      .get();
-
-    const resolvedOffline = [];
-    if (!pastSnap.empty) {
-      const offlineBatch = db.batch();
-      for (const doc of pastSnap.docs) {
-        const fixture = doc.data();
-        const { homeScore, awayScore, scorers } = generateMockMatchResult(fixture.homeTeam, fixture.awayTeam);
-        const updatedDoc = {
-          ...fixture,
-          homeScore,
-          awayScore,
-          scorers,
-          status: 'FT',
-          isComplete: true,
-          isLive: false,
-          updatedAt: FieldValue.serverTimestamp(),
-        };
-        offlineBatch.set(doc.ref, updatedDoc, { merge: true });
-        resolvedOffline.push(updatedDoc);
+    const resFeeds = await fetch("https://worldcup26.ir/get/games", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       }
-      await offlineBatch.commit();
-      console.log(`[Offline Auto-Resolve] Completed ${resolvedOffline.length} past matches.`);
-      for (const match of resolvedOffline) {
-        await triggerCurseBlessing(match);
-        await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore, match.scorers || []);
-      }
-    }
-    // 1. Check for live matches
-    const liveFixtures     = await fetchFixtures(true);
-    const hasLive          = liveFixtures.length > 0;
+    });
+    if (!resFeeds.ok) throw new Error(`HTTP error ${resFeeds.status}`);
+    
+    const data = await resFeeds.json();
+    const games = data.games || [];
 
-    // 2. If nothing live, fetch upcoming to keep schedule fresh
-    const upcomingFixtures = hasLive ? [] : await fetchFixtures(false);
-
-    // 3. Merge + dedupe
-    const allFixtures = [...new Map(
-      [...liveFixtures, ...upcomingFixtures].map(f => [f.fixture.id, f])
-    ).values()];
-
-    if (allFixtures.length === 0) {
+    if (games.length === 0) {
       return res.status(200).json({ ok: true, message: 'No fixtures to update' });
     }
 
     const batch         = db.batch();
     const justCompleted = [];
 
-    for (const fixture of allFixtures) {
-      const mapped = mapFixtureToDoc(fixture);
+    for (const g of games) {
+      const mapped = mapGameToDoc(g);
       const ref    = db.collection('fixtures').doc(mapped.fixtureId);
 
-      // FIX: admin SDK uses .exists (property) not .exists() (method)
       const existing = await ref.get();
-      if (existing.exists && existing.data().isLive && mapped.isComplete) {
+      // If a match is complete, but was either not in our database or not marked as complete yet:
+      const isNewlyCompleted = mapped.isComplete && (!existing.exists || !existing.data().isComplete);
+      if (isNewlyCompleted) {
         justCompleted.push({ ...existing.data(), ...mapped });
       }
 
@@ -445,7 +396,7 @@ export default async function handler(req, res) {
 
     await batch.commit();
 
-    // 4. Trigger curse/blessing + resolve predictions
+    // Trigger curse/blessing + resolve predictions
     for (const match of justCompleted) {
       await triggerCurseBlessing(match);
       await resolveMatchPredictions(match.fixtureId, match.homeScore, match.awayScore, match.scorers || []);
@@ -453,8 +404,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       ok:               true,
-      fixturesUpdated:  allFixtures.length,
-      liveMatches:      liveFixtures.length,
+      fixturesUpdated:  games.length,
       justCompleted:    justCompleted.length,
     });
   } catch (err) {

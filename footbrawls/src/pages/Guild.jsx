@@ -205,9 +205,10 @@ function CastleTab({ guild, user }) {
   const maxHp           = levelConfig.hpCap;
   const levelPct        = getLevelProgress(hp, guildLevel);
   const hpDisplay       = getHPDisplay(hp, guildLevel);
-  const curseStatus     = guild?.status           ?? "neutral";
-  const blessedSecs     = guild?.blessedUntil
-    ? Math.max(0, Math.floor((guild.blessedUntil.toMillis() - Date.now()) / 1000))
+  const curseStatus     = guild?.currentCurse || guild?.currentBlessing || "neutral";
+  const expiryTime      = guild?.curseExpiresAt;
+  const blessedSecs     = expiryTime
+    ? Math.max(0, Math.floor((expiryTime.toMillis() - Date.now()) / 1000))
     : 18000;
   const raidWins        = guild?.curseRaidWins    ?? 0;
   const raidWinsNeeded  = guild?.curseRaidWinsNeeded ?? 3;
@@ -331,20 +332,20 @@ function CastleTab({ guild, user }) {
   );
 }
 
-function RanksTab({ leaderboard, currentUserId }) {
+function RanksTab({ overallLeaderboard = [], currentUserId }) {
   const medals = ["🥇","🥈","🥉"];
   return (
     <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
       <div>
-        <div className="fb-section-hdr"><span className="fb-section-label">Today's Top Earners</span><div className="fb-section-line"/></div>
+        <div className="fb-section-hdr"><span className="fb-section-label">Guild Standings (All-Time)</span><div className="fb-section-line"/></div>
         <div style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
-          {leaderboard.length===0 && (
+          {overallLeaderboard.length===0 && (
             <div style={{ padding:"32px 16px", textAlign:"center" }}>
-              <div style={{ fontSize:32, marginBottom:10 }}>🚀</div>
-              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.65rem", color:"var(--muted)", letterSpacing:1 }}>No XP earned yet — be first!</div>
+              <div style={{ fontSize:32, marginBottom:10 }}>🛡️</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.65rem", color:"var(--muted)", letterSpacing:1 }}>No members found in this guild.</div>
             </div>
           )}
-          {leaderboard.map((m,i) => {
+          {overallLeaderboard.map((m,i) => {
             const tier = getTier(m.totalXP);
             const isMe = m.userId===currentUserId;
             return (
@@ -353,12 +354,13 @@ function RanksTab({ leaderboard, currentUserId }) {
                 <span style={{ fontSize:18, flexShrink:0 }}>{m.flag||"🏳️"}</span>
                 <span style={{ flex:1, fontSize:"0.82rem", fontWeight:isMe?700:600, color:isMe?"var(--green)":"var(--text)", fontFamily:"'Syne',sans-serif", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{m.nickname}{isMe?" (you)":""}</span>
                 <span style={{ fontSize:"0.58rem", fontWeight:700, padding:"2px 7px", borderRadius:99, color:tier.color, background:tier.color+"22", border:"1px solid "+tier.color+"44", fontFamily:"'Space Mono',monospace", flexShrink:0, letterSpacing:0.5 }}>{tier.label}</span>
-                <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.1rem", color:"var(--accent)", flexShrink:0, letterSpacing:1, marginLeft:8 }}>+{m.dailyXP??0}</span>
+                <span style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.1rem", color:"var(--accent)", flexShrink:0, letterSpacing:1, marginLeft:8 }}>{m.totalXP??0} XP</span>
               </div>
             );
           })}
         </div>
       </div>
+
       <div>
         <div className="fb-section-hdr"><span className="fb-section-label">Tier Requirements</span><div className="fb-section-line"/></div>
         <div style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
@@ -446,7 +448,7 @@ export default function Guild() {
 const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
   const [guild,          setGuild]    = useState(null);
   const [guildLoading,   setGuildLoading] = useState(true);
-  const [leaderboard,    setLeaderboard]  = useState([]);
+  const [overallLeaderboard, setOverallLeaderboard] = useState([]);
   const [tab,            setTab]          = useState("chat");
   const [toast,          setToast]        = useState(""); // ← lifted from BottomNav
 
@@ -481,19 +483,20 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
     return unsub;
   }, [user.homeCountry]);
 
-  // Leaderboard listener
+  // Overall Guild Leaderboard listener
   useEffect(() => {
     if (!user?.homeCountry) return;
-    const today = new Date().toISOString().split("T")[0];
     const q = query(
       collection(db, "users"),
-      where("homeCountry", "==", user.homeCountry),
-      where("dailyXPDate", "==", today),
-      orderBy("dailyXP", "desc"),
-      limit(10),
+      where("homeCountry", "==", user.homeCountry)
     );
     const unsub = onSnapshot(q,
-      snap => setLeaderboard(snap.docs.map(d => ({id:d.id,...d.data()}))),
+      snap => {
+        const sorted = snap.docs
+          .map(d => ({id:d.id,...d.data()}))
+          .sort((a,b) => (b.totalXP || 0) - (a.totalXP || 0));
+        setOverallLeaderboard(sorted);
+      },
       () => {},
     );
     return unsub;
@@ -532,7 +535,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
           <>
             {tab==="chat"   && <ChatTab   user={user} guild={guild} tier={tier} canChat={canChat} />}
             {tab==="castle" && <CastleTab guild={guild} user={user} />}
-            {tab==="ranks"  && <RanksTab  leaderboard={leaderboard} currentUserId={user.userId} />}
+            {tab==="ranks"  && <RanksTab  overallLeaderboard={overallLeaderboard} currentUserId={user.userId} />}
           </>
         )}
       </div>

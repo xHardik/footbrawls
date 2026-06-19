@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, getDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, getDoc, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine';
 
@@ -15,7 +15,7 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'gs_A1', home:'Mexico',       away:'South Africa',          kickoff:'2026-06-11T18:00:00Z', stage:'Group A · MD1', done:true,  hs:2, as:0 },
   { id:'gs_A2', home:'South Korea',  away:'Czechia',               kickoff:'2026-06-11T23:00:00Z', stage:'Group A · MD1', done:true,  hs:2, as:1 },
   { id:'gs_A3', home:'Czechia',      away:'South Africa',          kickoff:'2026-06-18T16:00:00Z', stage:'Group A · MD2', done:false },
-  { id:'gs_A4', home:'Mexico',       away:'South Korea',           kickoff:'2026-06-19T02:00:00Z', stage:'Group A · MD2', done:false },
+  { id:'gs_A4', home:'Mexico',       away:'South Korea',           kickoff:'2026-06-19T02:00:00Z', stage:'Group A · MD2', done:true,  hs:1, as:0 },
   { id:'gs_A5', home:'Czechia',      away:'Mexico',                kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:false },
   { id:'gs_A6', home:'South Africa', away:'South Korea',           kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:false },
   // GROUP B
@@ -281,6 +281,7 @@ export default function MatchPredictor() {
   const user = getUser();
 
   const [fixtures, setFixtures]       = useState([]);
+  const [dbFixtures, setDbFixtures]   = useState([]);
   const [selected, setSelected]       = useState(null);
   const [predictions, setPredictions] = useState({});
   const [pickedWinner, setPickedWinner]   = useState(null);
@@ -295,6 +296,29 @@ export default function MatchPredictor() {
   const [showModal, setShowModal]         = useState(false);
   const [insightVotes, setInsightVotes]   = useState(null);
   const [insightSource, setInsightSource] = useState('Footbrawls Users');
+
+  useEffect(() => {
+    const q = query(collection(db, 'fixtures'), orderBy('kickoffAt', 'asc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          home: data.homeTeam,
+          away: data.awayTeam,
+          kickoff: data.kickoffAt?.toMillis ? new Date(data.kickoffAt.toMillis()).toISOString() : data.kickoffAt,
+          stage: data.stage,
+          done: data.isComplete || false,
+          hs: data.homeScore,
+          as: data.awayScore
+        };
+      });
+      setDbFixtures(list);
+    }, (err) => {
+      console.error("Failed to fetch full fixtures schedule from db:", err);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     if (!document.getElementById('mp2-css')) {
@@ -514,8 +538,8 @@ export default function MatchPredictor() {
     return { home, draw, away };
   }
 
-  const scheduledGroups = groupByDate(ALL_FIXTURES_SCHEDULE);
-  const filteredSchedule = ALL_FIXTURES_SCHEDULE.filter(f => {
+  const mergedSchedule = dbFixtures.length > 0 ? dbFixtures : ALL_FIXTURES_SCHEDULE;
+  const filteredSchedule = mergedSchedule.filter(f => {
     if (scheduleFilter === 'upcoming') return !f.done;
     if (scheduleFilter === 'results')  return f.done;
     return true;

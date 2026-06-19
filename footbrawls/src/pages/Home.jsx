@@ -317,6 +317,59 @@ const GlobalStyles = () => (
       color: #F7C344 !important;
       text-shadow: 0 0 8px rgba(247, 195, 68, 0.35);
     }
+    
+    /* Responsive Footer Styles */
+    .footer-container {
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(32px);
+      padding: 52px 48px 36px;
+    }
+    .footer-stats-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 44px;
+    }
+    .footer-stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 44px;
+      border-left: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-main-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 60px;
+      align-items: start;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 768px) {
+      .footer-main-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+    }
+    @media (max-width: 640px) {
+      .footer-container {
+        padding: 36px 20px 24px;
+      }
+      .footer-stats-row {
+        flex-direction: column;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+      .footer-stat-item {
+        padding: 8px 16px;
+        border-left: none;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        width: 100%;
+      }
+      .footer-stat-item:last-child {
+        border-bottom: none;
+      }
+    }
   `}</style>
 );
 
@@ -1298,10 +1351,9 @@ function Footer({ navigate }) {
           FOOTER SECTION — fully isolated visual block
       ══════════════════════════════════════════════════ */}
       <div style={{
-        marginTop: "64px",
-        marginLeft: "-24px",
-        marginRight: "-24px",
+        marginTop: "0",
         position: "relative",
+        width: "100%",
       }}>
         {/* Top pitch-line row — marks the boundary of the footer section */}
         <div style={{
@@ -1347,8 +1399,7 @@ function Footer({ navigate }) {
       {/* ── Footer body ── */}
       <footer style={{
         position: "relative",
-        marginLeft: "-24px",
-        marginRight: "-24px",
+        width: "100%",
         overflow: "hidden",
         background: "linear-gradient(180deg, rgba(4,6,12,0.98) 0%, #03050d 100%)",
         borderTop: "1px solid rgba(255,255,255,0.03)",
@@ -1402,24 +1453,12 @@ function Footer({ navigate }) {
         </div>
 
         {/* Main body */}
-        <div style={{
-          position: "relative", zIndex: 1,
-          backdropFilter: "blur(32px)",
-          padding: "52px 48px 36px",
-        }}>
+        <div className="footer-container">
 
           {/* Stats row */}
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "44px",
-          }}>
+          <div className="footer-stats-row">
             {stats.map((s, i) => (
-              <div key={i} style={{
-                display: "flex", flexDirection: "column", alignItems: "center",
-                padding: "16px 44px",
-                borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
-              }}>
+              <div key={i} className="footer-stat-item">
                 <span style={{
                   fontFamily: "'Bebas Neue', sans-serif",
                   fontSize: "2.2rem", letterSpacing: "3px",
@@ -1439,13 +1478,7 @@ function Footer({ navigate }) {
           <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "40px" }} />
 
           {/* Two-column: Brand left, Links right */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1.6fr 1fr",
-            gap: "60px",
-            alignItems: "start",
-            marginBottom: "40px",
-          }}>
+          <div className="footer-main-grid">
 
             {/* Brand block */}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -1793,10 +1826,10 @@ export default function Home() {
           <SectionDivider label="World Chat" right="ALL NATIONS LIVE" color={C.green}/>
           <WorldChat messages={worldChat} user={user} navigate={navigate}/>
 
-          <Footer navigate={navigate}/>
-          <div style={{height:8}}/>
         </div>
       </div>
+
+      <Footer navigate={navigate}/>
 
       <BottomNav active="home" navigate={navigate} onUnavailable={showSoon}/>
       <Toast message={toast}/>

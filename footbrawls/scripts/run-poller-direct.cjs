@@ -6,6 +6,9 @@ const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestor
 const path = require('path');
 const fs = require('fs');
 
+// Load environment variables
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
+
 // Initialize Firebase Admin
 const saPath = path.join(__dirname, '..', 'serviceAccountKey.json');
 if (fs.existsSync(saPath)) {
@@ -33,52 +36,10 @@ const TEAM_NAME_TO_CODE = {
   'USA': 'USA', 'Uruguay': 'URU', 'Uzbekistan': 'UZB',
 };
 
-function mapGameToDoc(g) {
-  // local_date is MM/DD/YYYY HH:mm
-  const [dStr, tStr] = g.local_date.split(' ');
-  const [m, d, y] = dStr.split('/');
-  const [hr, min] = tStr.split(':');
-  
-  // Parse kickoff time (assume local_date time is EDT/CDT etc. or treat as UTC)
-  const kickoffDate = new Date(Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), parseInt(hr), parseInt(min)));
-  
-  const status = g.finished === 'TRUE' ? 'FT' : (g.time_elapsed === 'notstarted' ? 'NS' : 'LIVE');
-
-  const scorers = [];
-  if (g.home_scorers && g.home_scorers !== 'null') {
-    try {
-      const clean = g.home_scorers.replace(/[\{\}]/g, '').replace(/[“”"']/g, '');
-      clean.split(',').forEach(s => {
-        if (s.trim()) scorers.push(`${s.trim()} (${g.home_team_name_en})`);
-      });
-    } catch (e) {}
-  }
-  if (g.away_scorers && g.away_scorers !== 'null') {
-    try {
-      const clean = g.away_scorers.replace(/[\{\}]/g, '').replace(/[“”"']/g, '');
-      clean.split(',').forEach(s => {
-        if (s.trim()) scorers.push(`${s.trim()} (${g.away_team_name_en})`);
-      });
-    } catch (e) {}
-  }
-
-  return {
-    fixtureId:     String(g.id),
-    homeTeam:      g.home_team_name_en || g.home_team_label || 'TBD',
-    awayTeam:      g.away_team_name_en || g.away_team_label || 'TBD',
-    homeTeamLogo:  `https://media.api-sports.io/football/teams/${g.home_team_id}.png`,
-    awayTeamLogo:  `https://media.api-sports.io/football/teams/${g.away_team_id}.png`,
-    kickoffAt:     Timestamp.fromDate(kickoffDate),
-    stage:         g.type === 'group' ? `Group ${g.group} - MD${g.matchday}` : g.group,
-    status,
-    homeScore:     parseInt(g.home_score) || 0,
-    awayScore:     parseInt(g.away_score) || 0,
-    isLive:        status === 'LIVE',
-    isComplete:    status === 'FT',
-    locksAt:       Timestamp.fromMillis(kickoffDate.getTime() - 3600 * 1000),
-    updatedAt:     FieldValue.serverTimestamp(),
-    scorers,
-  };
+function getCountryCode(teamName) {
+  if (!teamName) return null;
+  const clean = teamName.replace(/\b(FC|football club|national team|national football team)\b/gi, '').trim();
+  return TEAM_NAME_TO_CODE[clean] || TEAM_NAME_TO_CODE[teamName] || null;
 }
 
 async function triggerCurseBlessing(match) {
@@ -139,42 +100,96 @@ async function triggerCurseBlessing(match) {
 }
 
 async function run() {
-  console.log("Running manual 2026 API poller (worldcup26.ir)...");
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY;
+  if (!apiKey) {
+    console.error("Missing FOOTBALL_DATA_API_KEY environment variable in .env.local!");
+    process.exit(1);
+  }
+
+  console.log("Running manual 2026 API poller (api.football-data.org)...");
   try {
-    const res = await fetch("https://worldcup26.ir/get/games", {
+    const res = await fetch("https://api.football-data.org/v4/competitions/WC/matches", {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        "X-Auth-Token": apiKey
       }
     });
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     
     const data = await res.json();
-    const games = data.games || [];
-    console.log(`Fetched ${games.length} games from free World Cup 2026 API.`);
+    const games = data.matches || [];
+    console.log(`Fetched ${games.length} games from football-data.org API.`);
 
     if (games.length === 0) {
       console.log("No games found.");
       return;
     }
 
+    // Fetch existing database fixtures
+    const existingSnap = await db.collection('fixtures').get();
+    const existingDocs = existingSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
     const batch = db.batch();
     const justCompleted = [];
+    let updatedCount = 0;
 
     for (const g of games) {
-      const mapped = mapGameToDoc(g);
-      const ref    = db.collection('fixtures').doc(mapped.fixtureId);
+      const apiHomeCode = getCountryCode(g.homeTeam?.name);
+      const apiAwayCode = getCountryCode(g.awayTeam?.name);
 
-      const existing = await ref.get();
-      const isNewlyCompleted = mapped.isComplete && (!existing.exists || !existing.data().isComplete);
-      if (isNewlyCompleted) {
-        justCompleted.push({ ...existing.data(), ...mapped });
+      if (!apiHomeCode || !apiAwayCode) {
+        continue;
       }
 
-      batch.set(ref, mapped, { merge: true });
+      // Match to existing DB fixture by comparing country codes
+      const matchedFixture = existingDocs.find(f => {
+        const dbHomeCode = TEAM_NAME_TO_CODE[f.homeTeam];
+        const dbAwayCode = TEAM_NAME_TO_CODE[f.awayTeam];
+        return dbHomeCode === apiHomeCode && dbAwayCode === apiAwayCode;
+      });
+
+      if (!matchedFixture) {
+        continue;
+      }
+
+      const isLive = g.status === 'IN_PLAY' || g.status === 'PAUSED';
+      const isComplete = g.status === 'FINISHED';
+      const status = isComplete ? 'FT' : (isLive ? 'LIVE' : 'NS');
+
+      const homeScore = typeof g.score?.fullTime?.home === 'number' ? g.score.fullTime.home : 0;
+      const awayScore = typeof g.score?.fullTime?.away === 'number' ? g.score.fullTime.away : 0;
+
+      const scorers = [];
+      const isNewlyCompleted = isComplete && !matchedFixture.isComplete;
+
+      const ref = db.collection('fixtures').doc(matchedFixture.id);
+      const updateData = {
+        homeScore,
+        awayScore,
+        status,
+        isLive,
+        isComplete,
+        scorers,
+        updatedAt: FieldValue.serverTimestamp()
+      };
+
+      if (isNewlyCompleted) {
+        justCompleted.push({
+          ...matchedFixture,
+          ...updateData,
+          fixtureId: matchedFixture.id
+        });
+      }
+
+      batch.update(ref, updateData);
+      updatedCount++;
     }
 
-    await batch.commit();
-    console.log(`Synced ${games.length} matches to Firestore successfully.`);
+    if (updatedCount > 0) {
+      await batch.commit();
+      console.log(`Synced ${updatedCount} matches to Firestore successfully.`);
+    } else {
+      console.log("No matching fixtures to update.");
+    }
 
     for (const match of justCompleted) {
       await triggerCurseBlessing(match);

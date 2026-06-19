@@ -21,16 +21,18 @@
 //  Group K: Portugal, DR Congo, Uzbekistan, Colombia
 //  Group L: England, Croatia, Ghana, Panama
 
-const { initializeApp, cert, applicationDefault } = require("firebase-admin/app");
+const { initializeApp, cert, applicationDefault, getApps } = require("firebase-admin/app");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const path = require("path");
 const fs   = require("fs");
 
-const saPath = path.join(__dirname, "..", "serviceAccountKey.json");
-if (fs.existsSync(saPath)) {
-  initializeApp({ credential: cert(require(saPath)) });
-} else {
-  initializeApp({ credential: applicationDefault() });
+if (getApps().length === 0) {
+  const saPath = path.join(__dirname, "..", "serviceAccountKey.json");
+  if (fs.existsSync(saPath)) {
+    initializeApp({ credential: cert(require(saPath)) });
+  } else {
+    initializeApp({ credential: applicationDefault() });
+  }
 }
 
 const db = getFirestore();
@@ -299,12 +301,13 @@ async function seed() {
     total += chunk.length;
     console.log(`✅ ${total}/${FIXTURES.length} written`);
   }
-
-  console.log("🎉 Done! All fixtures seeded.");
-  process.exit(0);
 }
 
-seed().catch(err => {
-  console.error("❌", err.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed().catch(err => {
+    console.error("❌", err.message);
+    process.exit(1);
+  });
+}
+
+module.exports = { FIXTURES };

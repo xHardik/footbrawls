@@ -721,7 +721,20 @@ if (typeof window !== "undefined") {
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
-  const target     = players.length ? getDailyPlayer(players, "wordle", puzzleDate) : null;
+  const target = useMemo(() => {
+    if (!players.length) return null;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          const idx = (session.raidSeed + 101) % players.length;
+          return players[idx];
+        }
+      }
+    } catch (e) {}
+    return getDailyPlayer(players, "wordle", puzzleDate);
+  }, [players, puzzleDate]);
   const targetName = (target?.name || "").toUpperCase().replace(/\s.*/, "");
 
   const navigate = useNavigate();
@@ -732,16 +745,17 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [gameOver,  setGameOver]  = useState(false);
   const [solved,    setSolved]    = useState(false);
   const [xpAwarded, setXpAwarded] = useState(0);
+  const [isRaid,    setIsRaid]    = useState(false);
   const [score,     setScore]     = useState(0);
   const [msg,       setMsg]       = useState(null);
   const [hint,      setHint]      = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [stats,     setStats]     = useState(loadStats);
   const [history,   setHistory]   = useState(loadHistory);
-  const [revealing, setRevealing] = useState(false);
+  const [maxGuesses, setMaxGuesses] = useState(6);
+  const [revealing,  setRevealing]  = useState(false);
   
   // Rewarded ad states
-  const [maxGuesses, setMaxGuesses] = useState(MAX_GUESSES);
   const [rewardHints, setRewardHints] = useState([]);
   const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
@@ -763,6 +777,33 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   // Load saved state
   useEffect(() => {
     if (!targetName) return;
+
+    let raid = false;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          raid = true;
+        }
+      }
+    } catch (e) {}
+
+    setIsRaid(raid);
+
+    if (raid) {
+      setGuesses([]);
+      setSolved(false);
+      setScore(0);
+      setXpAwarded(0);
+      setGameOver(false);
+      setShowModal(false);
+      setMaxGuesses(6);
+      setHasWatchedExtraTryAd(false);
+      setRewardHints([]);
+      return;
+    }
+
     const saved = JSON.parse(localStorage.getItem(`footbrawls_wordle_${puzzleDate}`) || "null");
     if (saved) {
       setGuesses(saved.guesses || []);
@@ -812,26 +853,28 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     if (over) {
       const calcScore = won ? (XP_BY_GUESS[newGuesses.length] ?? 0) : 0;
       let xp = calcScore;
-      if (won) {
+      if (won || isRaid) {
         const user = getUser();
         if (user?.userId) {
-          const r = await awardXP(user.userId, "wordle_correct", { rawXP: calcScore });
+          const r = await awardXP(user.userId, "wordle_correct", { rawXP: calcScore, guessNumber: newGuesses.length, solved: won });
           xp = r?.xpAwarded ?? calcScore;
         }
       }
       setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
-      const { stats: s, history: h } = saveResult(puzzleDate, won, xp);
-      setStats(s); setHistory(h);
-      localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
-        guesses: newGuesses,
-        solved: won,
-        score: xp,
-        xpAwarded: xp,
-        gameOver: true,
-        maxGuesses,
-        hasWatchedExtraTryAd,
-        rewardHints
-      }));
+      if (!isRaid) {
+        const { stats: s, history: h } = saveResult(puzzleDate, won, xp);
+        setStats(s); setHistory(h);
+        localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
+          guesses: newGuesses,
+          solved: won,
+          score: xp,
+          xpAwarded: xp,
+          gameOver: true,
+          maxGuesses,
+          hasWatchedExtraTryAd,
+          rewardHints
+        }));
+      }
     }
 
     setTimeout(() => inputRef.current?.focus(), 100);
@@ -974,7 +1017,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         </div>
 
         {/* ── EXTRA TRY REWARDED AD ── */}
-        {gameOver && !solved && !hasWatchedExtraTryAd && (
+        {gameOver && !solved && !hasWatchedExtraTryAd && !isRaid && (
           <div style={{
             margin: "0 auto 20px",
             padding: "20px 24px",
@@ -1099,7 +1142,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
           )}
 
-          {!gameOver && (
+          {!gameOver && !isRaid && (
             <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
               <button
                 className="wdl-btn"

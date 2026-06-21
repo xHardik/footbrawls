@@ -1,6 +1,6 @@
 /**
  * scoreNorm.js
- * Normalises all 6 solo game raw scores to a 0–10 float.
+ * Normalises all solo game raw scores to a 0–100 scale.
  * Used by RaidAct1 to compare duo performance fairly across different games.
  *
  * Each game has different raw scoring — this file is the single source of
@@ -10,78 +10,86 @@
 /**
  * WHO ARE YA?
  * Raw: guessNumber 1–8 (1 = first guess, 8 = last chance)
- * Score logic: fewer guesses = higher score
- *   guess 1 → 10.0, guess 2 → 8.5, ..., guess 8 → 2.0, failed → 0
+ * Score: divide 100 by 8 rounds/attempts = 12.5 per round.
+ *   Each unused attempt (plus the successful one) contributes to score.
  */
 export function normWhoAreYa(guessNumber, solved) {
   if (!solved) return 0;
-  const map = { 1: 10, 2: 8.5, 3: 7, 4: 5.5, 5: 4, 6: 3, 7: 2.5, 8: 2 };
-  return map[guessNumber] ?? 0;
+  return (8 - guessNumber + 1) * 12.5;
 }
 
 /**
  * PLAYER WORDLE
- * Raw: guessNumber 1–6 (same as Wordle standard)
- * Score: same decay as Who Are Ya? scaled to 6 guesses
- *   guess 1 → 10.0, guess 6 → 2.0, failed → 0
+ * Raw: guessNumber 1–6
+ * Score: divide 100 by 6 rounds/attempts = 16.67 per round.
  */
 export function normWordle(guessNumber, solved) {
   if (!solved) return 0;
-  const map = { 1: 10, 2: 8, 3: 6, 4: 4.5, 5: 3, 6: 2 };
-  return map[guessNumber] ?? 0;
+  return Number(((6 - guessNumber + 1) * (100 / 6)).toFixed(2));
 }
 
 /**
  * HIGHER OR LOWER
- * Raw: streak (consecutive correct comparisons in one session)
- * Max streak expected: ~10 (player pool bounded)
- * Score: streak / maxStreak * 10, capped at 10
+ * Score: 10 points for every correct comparison (streak).
  */
 export function normHigherLower(streak) {
-  const MAX_STREAK = 10;
-  return Math.min(10, (streak / MAX_STREAK) * 10);
+  return (streak || 0) * 10;
 }
 
 /**
  * TRANSFER TRAIL
- * Raw: stepsUsed (how many transfers to get from A → B)
- * Fewer steps = better
- * 1 step = 10, 2 = 8, 3 = 6.5, 4 = 5, 5 = 3.5, 6+ = 2, failed = 0
+ * Raw: stepsUsed 1–6
+ * Score: divide 100 by 6 rounds/attempts = 16.67 per round.
  */
 export function normTransferTrail(stepsUsed, solved) {
   if (!solved) return 0;
-  const map = { 1: 10, 2: 8, 3: 6.5, 4: 5, 5: 3.5, 6: 2 };
-  return map[stepsUsed] ?? 2;
+  return Number(((6 - stepsUsed + 1) * (100 / 6)).toFixed(2));
+}
+
+/**
+ * TOP 10 GUESS
+ * Score: 10 points for every correct guess.
+ */
+export function normTop10(correctCount) {
+  return (correctCount || 0) * 10;
 }
 
 /**
  * MATCH PREDICTOR
- * Raw: xpAwarded (0–100) per PRD XP table
- *   correct result = 30, +scorer = 20, +exact score = 50
- * Score: xpAwarded / 100 * 10
+ * Score: Keep raw XP reward out of 100.
  */
 export function normMatchPredictor(xpAwarded) {
-  return Math.min(10, (xpAwarded / 100) * 10);
+  return xpAwarded || 0;
 }
 
 /**
  * PENALTY NERVE
- * Raw: goalsScored out of 5 penalties (standard round) or more in sudden death
- * For raid: only the standard 5-kick round is scored
- * 5/5 → 10, 4/5 → 8, 3/5 → 6, 2/5 → 4, 1/5 → 2, 0/5 → 0
+ * Score: divide 100 by 5 kicks/rounds = 20 points per goal.
  */
 export function normPenaltyNerve(goalsScored, totalKicks = 5) {
-  return Math.min(10, (goalsScored / totalKicks) * 10);
+  const kicks = totalKicks || 5;
+  return Number((goalsScored * (100 / kicks)).toFixed(2));
 }
 
 /**
  * Universal dispatcher — call from RaidAct1 with the game result object.
- * @param {string} gameId — one of: whoAreYa | wordle | higherLower | transferTrail | matchPredictor | penaltyNerve
+ * @param {string} gameId — one of: whoAreYa | wordle | higherLower | transferTrail | matchPredictor | penaltyNerve | top10
  * @param {Object} result — game-specific result payload
- * @returns {number} normalised score 0.0–10.0
+ * @returns {number} normalised score 0.0–100.0
  */
 export function normScore(gameId, result) {
-  switch (gameId) {
+  if (!result) return 0;
+  const cleanId = gameId ? gameId.toLowerCase().replace('_correct', '').replace('_complete', '') : '';
+  let canonicalId = gameId;
+  if (cleanId === 'whoareya') canonicalId = 'whoAreYa';
+  else if (cleanId === 'wordle') canonicalId = 'wordle';
+  else if (cleanId === 'higherlower') canonicalId = 'higherLower';
+  else if (cleanId === 'transfertrail') canonicalId = 'transferTrail';
+  else if (cleanId === 'matchpredictor') canonicalId = 'matchPredictor';
+  else if (cleanId === 'penaltynerve') canonicalId = 'penaltyNerve';
+  else if (cleanId === 'top10') canonicalId = 'top10';
+
+  switch (canonicalId) {
     case "whoAreYa":
       return normWhoAreYa(result.guessNumber, result.solved);
     case "wordle":
@@ -94,6 +102,8 @@ export function normScore(gameId, result) {
       return normMatchPredictor(result.xpAwarded);
     case "penaltyNerve":
       return normPenaltyNerve(result.goalsScored, result.totalKicks);
+    case "top10":
+      return normTop10(result.correctCount ?? result.correct ?? 0);
     default:
       console.warn(`[scoreNorm] Unknown gameId: ${gameId}`);
       return 0;

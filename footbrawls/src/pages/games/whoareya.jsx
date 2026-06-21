@@ -711,6 +711,7 @@ export default function WhoAreYa() {
   const [showModal, setShowModal]     = useState(false);
   const [animKey, setAnimKey]         = useState(0);
   const [xpAwarded, setXpAwarded]     = useState(null);
+  const [isRaid, setIsRaid]           = useState(false);
   
   // Rewarded ad hint state
   const [unlockedHints, setUnlockedHints] = useState({ position: false, country: false, club: false });
@@ -742,19 +743,44 @@ export default function WhoAreYa() {
 
   // Load state
   useEffect(() => {
-    const player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
-    setTarget(player);
+    let player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
+    let raid = false;
     try {
-      const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
-      if (saved.date === puzzleDate) {
-        setGuesses(saved.guesses || []);
-        setGuessedNames((saved.guesses || []).map(g => g.cells[0].name));
-        setGameOver(!!saved.gameOver);
-        setWon(!!saved.won);
-        setXpAwarded(saved.xpAwarded ?? null);
-        setUnlockedHints(saved.unlockedHints || { position: false, country: false, club: false });
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          raid = true;
+          // Pick a random player from ALL players pool using the raid seed
+          const idx = (session.raidSeed + 997) % PLAYERS.length;
+          player = PLAYERS[idx];
+        }
       }
-    } catch (_) {}
+    } catch (e) {}
+
+    setTarget(player);
+    setIsRaid(raid);
+
+    if (raid) {
+      setGuesses([]);
+      setGuessedNames([]);
+      setGameOver(false);
+      setWon(false);
+      setXpAwarded(null);
+      setUnlockedHints({ position: false, country: false, club: false });
+    } else {
+      try {
+        const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
+        if (saved.date === puzzleDate) {
+          setGuesses(saved.guesses || []);
+          setGuessedNames((saved.guesses || []).map(g => g.cells[0].name));
+          setGameOver(!!saved.gameOver);
+          setWon(!!saved.won);
+          setXpAwarded(saved.xpAwarded ?? null);
+          setUnlockedHints(saved.unlockedHints || { position: false, country: false, club: false });
+        }
+      } catch (_) {}
+    }
   }, [puzzleDate]);
 
   // Dropdown filtering
@@ -819,9 +845,9 @@ export default function WhoAreYa() {
       let finalXP = 0;
       
       const user = getUser();
-      if (isWin && user?.userId) {
+      if ((isWin || isRaid) && user?.userId) {
         try {
-          const res = await awardXP(user.userId, 'whoareya_correct', { rawXP: rawScore });
+          const res = await awardXP(user.userId, 'whoareya_correct', { rawXP: rawScore, guessNumber: newGuesses.length, solved: isWin });
           finalXP = res?.xpAwarded ?? rawScore;
         } catch (e) {
           console.error('[WhoAreYa] awardXP failed:', e);
@@ -830,32 +856,36 @@ export default function WhoAreYa() {
       }
       setXpAwarded(finalXP);
 
-      try {
-        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
-          date: puzzleDate, 
-          guesses: newGuesses, 
-          won: isWin, 
-          score: rawScore, 
-          gameOver: true,
-          xpAwarded: finalXP,
-          unlockedHints
-        }));
-      } catch (_) {}
+      if (!isRaid) {
+        try {
+          localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+            date: puzzleDate, 
+            guesses: newGuesses, 
+            won: isWin, 
+            score: rawScore, 
+            gameOver: true,
+            xpAwarded: finalXP,
+            unlockedHints
+          }));
+        } catch (_) {}
 
-      const { stats: s, history: h } = saveResult(puzzleDate, isWin, finalXP);
-      setStats(s); setHistory(h);
+        const { stats: s, history: h } = saveResult(puzzleDate, isWin, finalXP);
+        setStats(s); setHistory(h);
+      }
     } else {
       // Just save incremental progress
-      try {
-        localStorage.setItem('footbrawls_whoareya', JSON.stringify({
-          date: puzzleDate,
-          guesses: newGuesses,
-          won: false,
-          score: 0,
-          gameOver: false,
-          unlockedHints
-        }));
-      } catch (_) {}
+      if (!isRaid) {
+        try {
+          localStorage.setItem('footbrawls_whoareya', JSON.stringify({
+            date: puzzleDate,
+            guesses: newGuesses,
+            won: false,
+            score: 0,
+            gameOver: false,
+            unlockedHints
+          }));
+        } catch (_) {}
+      }
     }
   }
 
@@ -949,6 +979,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.position}    
               onClick={() => triggerRewardedAdForHint('position')}
               loading={loadingKey === 'position'}
+              isRaid={isRaid}
             />
             <HintPill 
               icon="🌍" 
@@ -957,6 +988,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.country} 
               onClick={() => triggerRewardedAdForHint('country')}
               loading={loadingKey === 'country'}
+              isRaid={isRaid}
             />
             <HintPill 
               icon="🏢" 
@@ -965,6 +997,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.club}   
               onClick={() => triggerRewardedAdForHint('club')}
               loading={loadingKey === 'club'}
+              isRaid={isRaid}
             />
           </div>
 
@@ -1136,16 +1169,17 @@ export default function WhoAreYa() {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
-function HintPill({ icon, label, value, revealed, onClick, loading }) {
+function HintPill({ icon, label, value, revealed, onClick, loading, isRaid }) {
+  const showClickable = !revealed && !loading && !isRaid;
   return (
     <div 
-      className={`wya-hint-pill${revealed ? ' revealed' : ' locked clickable'}`}
-      onClick={(!revealed && !loading) ? onClick : undefined}
+      className={`wya-hint-pill${revealed ? ' revealed' : (showClickable ? ' locked clickable' : ' locked')}`}
+      onClick={showClickable ? onClick : undefined}
     >
       <span className="hp-icon">{icon}</span>
       <span className="hp-label">{label}</span>
       <span className="hp-val">
-        {revealed ? value : (loading ? 'Loading...' : 'Tap to unlock 📺')}
+        {revealed ? value : (loading ? 'Loading...' : (isRaid ? 'Locked' : 'Tap to unlock 📺'))}
       </span>
     </div>
   );

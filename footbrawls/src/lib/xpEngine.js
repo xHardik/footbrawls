@@ -9,6 +9,7 @@ import {
   runTransaction, serverTimestamp
 } from 'firebase/firestore';
 import { checkUpgrade, getXPMultiplier, getHPCap } from './guildLevels';
+import { normScore } from './scoreNorm';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,50 @@ function getTodayUTC() {
 // ─── Core XP Award Function ───────────────────────────────────────────────────
 
 export async function awardXP(userId, source, opts = {}) {
+  // ─── CENTRAL RAID INTERCEPTION ──────────────────────────────────────────────
+  const raidSessionStr = typeof window !== 'undefined' ? localStorage.getItem('active_raid_session') : null;
+  if (raidSessionStr) {
+    try {
+      const session = JSON.parse(raidSessionStr);
+      if (session && session.active) {
+        let rawScore = opts.rawXP ?? 0;
+        let normalized = rawScore;
+        
+        if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
+          normalized = normScore(source, opts);
+          session.scores.act1 = {
+            gameId: source,
+            rawScore,
+            normalized
+          };
+          session.currentAct = 2;
+        } else if (source === 'dribble_correct') {
+          const wins = Math.min(5, Math.max(0, Math.round(rawScore / 5)));
+          session.scores.act2 = {
+            gameId: source,
+            rawScore,
+            wins
+          };
+          session.currentAct = 3;
+        } else if (source === 'penaltyNerve_all5') {
+          const goals = Math.min(5, Math.max(0, Math.round(rawScore / 5)));
+          session.scores.act3 = {
+            gameId: source,
+            rawScore,
+            goals
+          };
+          session.currentAct = 4;
+        }
+        
+        localStorage.setItem('active_raid_session', JSON.stringify(session));
+        window.location.href = '/raid';
+        return { xpAwarded: 0, raidIntercepted: true };
+      }
+    } catch (e) {
+      console.warn('[xpEngine] Raid session interception error:', e);
+    }
+  }
+
   const userRef = doc(db, 'users', userId);
 
   const result = await runTransaction(db, async (t) => {

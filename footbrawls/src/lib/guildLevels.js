@@ -117,14 +117,40 @@ export function checkUpgrade(castleHP, currentLevel) {
 }
 
 /**
+ * Check if a guild's curse or blessing is expired based on curseExpiresAt.
+ */
+export function isCurseExpired(guildDoc) {
+  if (!guildDoc) return true;
+  if (guildDoc.currentCurse === 'death_curse') return false;
+
+  const expiry = guildDoc.curseExpiresAt;
+  if (!expiry) return false; // Default to false if expiry timestamp isn't set yet
+
+  let expiryMs = 0;
+  if (typeof expiry.toMillis === 'function') {
+    expiryMs = expiry.toMillis();
+  } else if (expiry.seconds) {
+    expiryMs = expiry.seconds * 1000;
+  } else if (expiry._seconds) {
+    expiryMs = expiry._seconds * 1000;
+  } else {
+    expiryMs = new Date(expiry).getTime();
+  }
+
+  return Date.now() > expiryMs;
+}
+
+/**
  * Get the XP multiplier for a guild considering level perks + curse/blessing state.
  * Used by xpEngine to calculate final XP awarded.
  */
 export function getXPMultiplier(guildDoc) {
   const level      = guildDoc?.guildLevel || 1;
   const levelConf  = getGuildLevel(level);
-  const curse      = guildDoc?.currentCurse    || null;
-  const blessing   = guildDoc?.currentBlessing || null;
+  
+  const expired    = isCurseExpired(guildDoc);
+  const curse      = (expired && guildDoc?.currentCurse !== 'death_curse') ? null : (guildDoc?.currentCurse || null);
+  const blessing   = expired ? null : (guildDoc?.currentBlessing || null);
 
   // Passive bonus always applies at level 5
   let multiplier = 1.0 + levelConf.perks.passiveXPBonus;

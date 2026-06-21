@@ -1,53 +1,51 @@
 import { collection, doc, getDocs, query, where, limit, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { BUDDY_TIMEOUT_MS } from './raidConstants';
 import { COUNTRIES } from './countries';
 import { seededRandom } from './dailySeed';
 
-const BOT_BUDDY_NAMES = [
-  'ShadowStriker', 'MidnightWinger', 'GhostPasser', 'IronBoot', 'SwiftKeeper',
-  'NeonNinja', 'TurboTackle', 'SilentCaptain', 'BlazeForward', 'SteelWall',
-];
-
-const BOT_RIVAL_NAMES = [
-  'DarkDefender', 'RogueRaider', 'ChaosKeeper', 'StormStriker', 'VenomVolley',
-  'PhantomPress', 'CursedCaptain', 'RaidReaper', 'FortBreaker', 'HexHandler',
+const REALISTIC_BOT_NAMES = [
+  'GoalHunter_9', 'PitchWizard_88', 'TikiTakaMaster', 'BacklineBoss_4', 'GoldenBoot_22',
+  'FinoAllaFine_7', 'SambaJoker', 'US_SoccerFan', 'ElTri_Champs', 'Kaiser_Franz',
+  'NutmegSensation', 'CleanSheetPro', 'BicycleKick_10', 'StretfordEnd_99', 'GelbGelb',
+  'GamerX_Footy', 'RedDevils_Pro', 'VikingGoals', 'ApexPredator_9', 'SoloDribbler',
+  'GloveSave_1', 'ChampsLeagueX', 'UltraUltras', 'KloppoVibes', 'TheSpecialOne',
+  'FalseNine_10', ' Gegenpresser', 'Capitano_3', 'Panenka_Special', 'BoxToBox_8'
 ];
 
 function pickRandom(arr, seed, idx = 0) {
   return arr[Math.floor(seededRandom(seed, idx) * arr.length)];
 }
 
-/**
- * Creates a bot buddy + rival duo when no human match is found within 45s.
- */
 export function createBotRivalDuo(user, seed = Date.now()) {
-  const buddyName  = pickRandom(BOT_BUDDY_NAMES, seed, 1);
   const rivalPool  = COUNTRIES.filter(c => c.code !== user.homeCountry);
-  const r1Country  = pickRandom(rivalPool, seed, 2);
-  const r2Country  = pickRandom(rivalPool.filter(c => c.code !== r1Country.code), seed, 3);
+  const rivalCountry = pickRandom(rivalPool, seed, 2);
+
+  const baseXP = user.totalXP || 1000;
 
   const buddy = {
     userId:      `bot_buddy_${seed}`,
-    nickname:    buddyName,
+    nickname:    pickRandom(REALISTIC_BOT_NAMES, seed, 1),
     flag:        user.flag || '🏳️',
     homeCountry: user.homeCountry,
+    totalXP:     Math.max(100, Math.floor(baseXP * (0.8 + seededRandom(seed, 10) * 0.4))),
     isBot:       true,
   };
 
   const rivals = [
     {
       userId:      `bot_rival_1_${seed}`,
-      nickname:    pickRandom(BOT_RIVAL_NAMES, seed, 4),
-      flag:        r1Country.flag,
-      homeCountry: r1Country.code,
+      nickname:    pickRandom(REALISTIC_BOT_NAMES, seed, 4),
+      flag:        rivalCountry.flag,
+      homeCountry: rivalCountry.code,
+      totalXP:     Math.max(100, Math.floor(baseXP * (0.9 + seededRandom(seed, 11) * 0.3))),
       isBot:       true,
     },
     {
       userId:      `bot_rival_2_${seed}`,
-      nickname:    pickRandom(BOT_RIVAL_NAMES, seed, 5),
-      flag:        r2Country.flag,
-      homeCountry: r2Country.code,
+      nickname:    pickRandom(REALISTIC_BOT_NAMES, seed, 5),
+      flag:        rivalCountry.flag,
+      homeCountry: rivalCountry.code,
+      totalXP:     Math.max(100, Math.floor(baseXP * (0.7 + seededRandom(seed, 12) * 0.5))),
       isBot:       true,
     },
   ];
@@ -70,6 +68,7 @@ async function tryFirestoreMatch(user, raidType) {
       nickname:     user.nickname,
       flag:         user.flag,
       homeCountry:  user.homeCountry,
+      totalXP:      user.totalXP || 0,
       raidType,
       waitingSince: serverTimestamp(),
       status:       'waiting',
@@ -79,6 +78,7 @@ async function tryFirestoreMatch(user, raidType) {
       collection(db, 'raidQueue'),
       where('status', '==', 'waiting'),
       where('raidType', '==', raidType),
+      where('homeCountry', '==', user.homeCountry),
       limit(10),
     );
     const snap = await getDocs(q);
@@ -95,6 +95,7 @@ async function tryFirestoreMatch(user, raidType) {
       nickname:    buddyData.nickname,
       flag:        buddyData.flag,
       homeCountry: buddyData.homeCountry,
+      totalXP:     buddyData.totalXP || 1000,
       isBot:       false,
     };
 
@@ -115,20 +116,14 @@ async function tryFirestoreMatch(user, raidType) {
   }
 }
 
-/**
- * Search for a raid buddy. Resolves with a matched duo after up to 45s,
- * falling back to bot buddy + bot rivals.
- *
- * @param {Object} user
- * @param {string} raidType — normal | challenge | training
- * @param {Function} [onProgress] — ({ elapsed, remaining, status })
- */
 export function findBuddy(user, raidType, onProgress) {
   return new Promise((resolve) => {
     const start   = Date.now();
     let settled   = false;
     let pollTimer = null;
     let tickTimer = null;
+
+    const timeoutDuration = Math.floor(Math.random() * 8000) + 4000;
 
     const finish = (match) => {
       if (settled) return;
@@ -141,16 +136,16 @@ export function findBuddy(user, raidType, onProgress) {
 
     tickTimer = setInterval(() => {
       const elapsed   = Date.now() - start;
-      const remaining = Math.max(0, BUDDY_TIMEOUT_MS - elapsed);
+      const remaining = Math.max(0, timeoutDuration - elapsed);
       onProgress?.({ elapsed, remaining, status: remaining > 0 ? 'searching' : 'fallback' });
 
-      if (elapsed >= BUDDY_TIMEOUT_MS) {
+      if (elapsed >= timeoutDuration) {
         finish(createBotRivalDuo(user, Date.now()));
       }
     }, 400);
 
     pollTimer = setInterval(async () => {
-      if (settled || Date.now() - start >= BUDDY_TIMEOUT_MS) return;
+      if (settled || Date.now() - start >= timeoutDuration) return;
       const match = await tryFirestoreMatch(user, raidType);
       if (match) finish(match);
     }, 3000);

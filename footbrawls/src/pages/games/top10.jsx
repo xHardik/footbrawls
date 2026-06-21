@@ -504,6 +504,7 @@ export default function Top10Guess() {
   const [msg, setMsg]                     = useState(null);
   const [hasWatchedAd, setHasWatchedAd]   = useState(false);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
+  const [isRaid, setIsRaid]               = useState(false);
 
   const [stats, setStats]                 = useState(loadStats);
   const [history, setHistory]             = useState(loadHistory);
@@ -513,7 +514,16 @@ export default function Top10Guess() {
   const puzzleDate = getActivePuzzleDate();
 
   const activeQuestion = useMemo(() => {
-    const seed = getDailySeed(puzzleDate);
+    let seed = getDailySeed(puzzleDate);
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          seed = session.raidSeed;
+        }
+      }
+    } catch (e) {}
     const offset = 199;
     const idx = (seed + offset) % TOP10_QUESTIONS.length;
     return TOP10_QUESTIONS[idx];
@@ -522,6 +532,7 @@ export default function Top10Guess() {
   const isClubQuestion = activeQuestion?.question.toLowerCase().includes('club');
 
   function persist(newRevealed, newLives, newWrongGuesses, newPhase, newXpAwarded = null) {
+    if (isRaid) return;
     const key = `top10_${puzzleDate}_state`;
     localStorage.setItem(key, JSON.stringify({
       revealed: newRevealed,
@@ -535,6 +546,29 @@ export default function Top10Guess() {
 
   // Load saved state or check history
   useEffect(() => {
+    let isRaid = false;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          isRaid = true;
+        }
+      }
+    } catch (e) {}
+
+    setIsRaid(isRaid);
+
+    if (isRaid) {
+      setPhase('game');
+      setRevealed(Array(10).fill(false));
+      setLives(1);
+      setWrongGuesses([]);
+      setXpAwarded(null);
+      setHasWatchedAd(false);
+      return;
+    }
+
     const key = `top10_${puzzleDate}_state`;
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -576,14 +610,14 @@ export default function Top10Guess() {
     if (qNorm.length < 2) return [];
 
     // Suggestions pool: 1. Active question answers (so they are always suggestible!)
-    const activeQuestionAnswers = activeQuestion?.answers.map(ans => ({
-      name: ans.name.split(' (')[0], // strip any details like transfers/goals
+    const activeQuestionAnswers = activeQuestion?.answers?.map(ans => ({
+      name: ans?.name ? ans.name.split(' (')[0] : '',
       type: isClubQuestion ? 'club' : 'player'
-    })) || [];
+    })).filter(item => item.name) || [];
 
     // 2. Player names and popular clubs
-    const playerSuggestions = PLAYERS.map(p => ({ name: p.name, type: 'player' }));
-    const clubSuggestions = POPULAR_CLUBS.map(c => ({ name: c, type: 'club' }));
+    const playerSuggestions = (PLAYERS || []).map(p => ({ name: p?.name || '', type: 'player' })).filter(item => item.name);
+    const clubSuggestions = (POPULAR_CLUBS || []).map(c => ({ name: c || '', type: 'club' })).filter(item => item.name);
     const combined = [...activeQuestionAnswers, ...playerSuggestions, ...clubSuggestions];
 
     // Filter unique matches
@@ -591,6 +625,7 @@ export default function Top10Guess() {
     const seen = new Set();
 
     for (const item of combined) {
+      if (!item || !item.name) continue;
       const normName = normalize(item.name);
       if (seen.has(normName)) continue;
 
@@ -666,7 +701,7 @@ export default function Top10Guess() {
       persist(revealed, newLives, newWrong, 'game');
 
       if (newLives <= 0) {
-        if (!hasWatchedAd) {
+        if (!hasWatchedAd && !isRaid) {
           setTimeout(() => setShowAdOverlay(true), 1500);
         } else {
           setTimeout(() => endGame(revealed, 0), 1500);
@@ -702,30 +737,34 @@ export default function Top10Guess() {
   async function endGame(finalRevealed, finalLives) {
     setPhase('result');
     const correctCount = finalRevealed.filter(Boolean).length;
-    const { stats: newStats, history: newHistory } = saveStats(correctCount, puzzleDate);
-    setStats(newStats);
-    setHistory(newHistory);
+    if (!isRaid) {
+      const { stats: newStats, history: newHistory } = saveStats(correctCount, puzzleDate);
+      setStats(newStats);
+      setHistory(newHistory);
+    }
 
     const user = getUser();
     let awarded = 0;
     if (user?.userId) {
       try {
         const computedXP = calculateXP(correctCount, wrongGuesses.length);
-        const res = await awardXP(user.userId, 'top10_complete', { rawXP: computedXP });
+        const res = await awardXP(user.userId, 'top10_complete', { rawXP: computedXP, correctCount: correctCount });
         awarded = res?.xpAwarded ?? 0;
       } catch (e) {
         console.error('[Top10Guess] awardXP failed:', e);
       }
     }
     setXpAwarded(awarded);
-    localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
-      revealed: finalRevealed,
-      lives: finalLives,
-      wrongGuesses: wrongGuesses,
-      phase: 'result',
-      xpAwarded: awarded,
-      hasWatchedAd: hasWatchedAd
-    }));
+    if (!isRaid) {
+      localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
+        revealed: finalRevealed,
+        lives: finalLives,
+        wrongGuesses: wrongGuesses,
+        phase: 'result',
+        xpAwarded: awarded,
+        hasWatchedAd: hasWatchedAd
+      }));
+    }
   }
 
   function handleShare() {

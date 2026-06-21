@@ -1816,7 +1816,7 @@ export default function Home() {
           </div>
 
           {/* Action CTAs */}
-          <ActionButtons onRaid={showSoon} onFriends={showSoon}/>
+          <ActionButtons onRaid={() => navigate("/raid")} onFriends={showSoon}/>
 
           {/* Fortress Guild */}
           <SectionDivider label="Your Nation" color={C.teal}/>

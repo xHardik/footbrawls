@@ -1,7 +1,7 @@
 // src/pages/Raid.jsx
 // Full raid lobby: mode pick → buddy search → acts 1–3 → results
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../lib/user';
 import { findBuddy } from '../lib/matchmaking';
@@ -9,6 +9,8 @@ import { finalizeRaid, getRaidXpPreview } from '../lib/raidFinalize';
 import {
   pickAct1Game,
   simulateBotAct1Scores,
+  simulateBotAct2Scores,
+  simulateBotAct3Scores,
   determineActWinner,
   computeRaidOutcome,
   sumAct1Duo,
@@ -17,9 +19,6 @@ import {
   calculateCastleDamage,
 } from '../lib/raidEngine';
 import { RAID_TYPES, R, BUDDY_TIMEOUT_MS } from '../lib/raidConstants';
-import RaidAct1 from '../components/RaidAct1';
-import RaidAct2 from '../components/RaidAct2';
-import RaidAct3 from '../components/RaidAct3';
 
 const Icon = {
   Shield: ({size=20,color="currentColor"}) => (
@@ -69,11 +68,11 @@ function fmtSecs(ms) {
 
 export default function Raid() {
   const navigate = useNavigate();
-  const user     = getUser();
+  const user     = useMemo(() => getUser(), []);
 
   const [phase, setPhase]           = useState('lobby');
   const [raidType, setRaidType]     = useState('normal');
-  const [raidSeed]                  = useState(() => Date.now());
+  const [raidSeed, setRaidSeed]     = useState(() => Date.now());
   const [searchRemaining, setSearchRemaining] = useState(BUDDY_TIMEOUT_MS);
   const [match, setMatch]           = useState(null);
   const [act1Game, setAct1Game]     = useState(null);
@@ -83,65 +82,20 @@ export default function Raid() {
   const [finalizing, setFinalizing] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState(null);
 
-  useEffect(() => { injectFonts(); }, []);
-
-  const startSearch = useCallback(async (type) => {
-    if (!user) return;
-    setRaidType(type);
-    setPhase('searching');
-    setSearchRemaining(BUDDY_TIMEOUT_MS);
-
-    const result = await findBuddy(user, type, ({ remaining }) => {
-      setSearchRemaining(remaining);
-    });
-
-    setMatch(result);
-    setAct1Game(pickAct1Game(raidSeed));
-    setPhase('matched');
-    setTimeout(() => setPhase('act1'), 2200);
-  }, [user, raidSeed]);
-
-  const handleAct1Done = useCallback(({ gameId, result, normalized }) => {
-    const bots = simulateBotAct1Scores(gameId, raidSeed);
-    const yourTotal  = sumAct1Duo(normalized, bots.buddy);
-    const rivalTotal = sumAct1Rival(bots.rival1, bots.rival2);
-    const winner     = determineActWinner(yourTotal, rivalTotal);
-
-    const act1 = { gameId, playerScore: normalized, buddyScore: bots.buddy, rivalTotal, yourTotal, winner };
-    setActs(prev => ({ ...prev, act1 }));
-    setActWinners(prev => [...prev, winner]);
-    setTimeout(() => setPhase('act2'), 1400);
-  }, [raidSeed]);
-
-  const handleAct2Done = useCallback((act2) => {
-    setActs(prev => ({ ...prev, act2 }));
-    setActWinners(prev => [...prev, act2.winner]);
-    setTimeout(() => setPhase('act3'), 1400);
-  }, []);
-
-  const handleAct3Done = useCallback(async (act3) => {
-    const allActs = { ...acts, act3 };
-    setActs(allActs);
-    const winners = [...actWinners, act3.winner];
-    setActWinners(winners);
-    const raidOutcome = computeRaidOutcome(winners);
-    setOutcome(raidOutcome);
-    setPhase('results');
-
-    const perf = {
-      [user.userId]: (allActs.act1?.playerScore || 0) + (allActs.act2?.playerRoundWins || 0) + (allActs.act3?.playerGoals || 0),
-    };
-    const mvpId = pickMvp(perf);
-
+  const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
     setFinalizing(true);
     try {
+      const perf = {
+        [user.userId]: (currentActs.act1?.playerScore || 0) + ((currentActs.act2?.playerRoundWins || 0) * 20) + ((currentActs.act3?.playerGoals || 0) * 20),
+      };
+      const mvpId = pickMvp(perf);
       const res = await finalizeRaid({
-        raidType,
+        raidType: currentRaidType,
         outcome: raidOutcome,
         isMvp: mvpId === user.userId,
-        acts: allActs,
-        match,
-        rivalGuildCode: match?.rivals?.[0]?.homeCountry,
+        acts: currentActs,
+        match: currentMatch,
+        rivalGuildCode: currentMatch?.rivals?.[0]?.homeCountry,
         playerPerformance: perf,
       });
       setFinalizeResult(res);
@@ -150,7 +104,194 @@ export default function Raid() {
     } finally {
       setFinalizing(false);
     }
-  }, [acts, actWinners, user, raidType, match]);
+  }, [user]);
+
+  // Restore/process raid session state
+  useEffect(() => {
+    const sessionStr = localStorage.getItem('active_raid_session');
+    if (!sessionStr) {
+      setPhase('lobby');
+      return;
+    }
+    let timer;
+
+    try {
+      const session = JSON.parse(sessionStr);
+      if (!session || !session.active) {
+        localStorage.removeItem('active_raid_session');
+        setPhase('lobby');
+        return;
+      }
+
+      // Check session expiration (1 hour)
+      if (session.createdAt && Date.now() - session.createdAt > 3600000) {
+        localStorage.removeItem('active_raid_session');
+        setPhase('lobby');
+        return;
+      }
+
+      // Defensive initialization
+      if (!session.scores) session.scores = {};
+      if (!session.acts) session.acts = {};
+      if (!session.actWinners) session.actWinners = [];
+
+      // Ensure state is aligned
+      setRaidType(session.raidType || 'normal');
+      setMatch(session.match || null);
+      setAct1Game(session.act1Game || null);
+      setRaidSeed(session.raidSeed || Date.now());
+
+      let updated = false;
+
+      // 1. Process Act 1 score if done
+      if (session.scores.act1 && !session.acts.act1) {
+        const score1 = session.scores.act1;
+        const bots = simulateBotAct1Scores(score1.gameId, session.raidSeed);
+        const yourTotal  = sumAct1Duo(score1.normalized || 0, bots.buddy);
+        const rivalTotal = sumAct1Rival(bots.rival1, bots.rival2);
+        const winner     = determineActWinner(yourTotal, rivalTotal);
+        
+        session.acts.act1 = {
+          gameId: score1.gameId,
+          playerScore: score1.normalized || 0,
+          buddyScore: bots.buddy,
+          rivalTotal,
+          yourTotal,
+          winner
+        };
+        session.actWinners.push(winner);
+        updated = true;
+      }
+
+      // 2. Process Act 2 score if done
+      if (session.scores.act2 && !session.acts.act2) {
+        const score2 = session.scores.act2;
+        const bots = simulateBotAct2Scores(session.raidSeed);
+        const playerWins = score2.wins || 0;
+        const yourTotal = playerWins + bots.buddyWins;
+        const rivalTotal = bots.rivalWins;
+        const winner = determineActWinner(yourTotal, rivalTotal);
+        
+        session.acts.act2 = {
+          winner,
+          playerRoundWins: playerWins,
+          buddyRoundWins: bots.buddyWins,
+          rivalBotWins: bots.rivalWins,
+          yourTotal,
+          rivalTotal
+        };
+        session.actWinners.push(winner);
+        updated = true;
+      }
+
+      // 3. Process Act 3 score if done
+      if (session.scores.act3 && !session.acts.act3) {
+        const score3 = session.scores.act3;
+        const baseBots = simulateBotAct3Scores(session.raidSeed);
+        
+        const duo1 = [user, session.match?.buddy].filter(Boolean).sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
+        const duo2 = [...(session.match?.rivals || [])].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
+        const isUserHigher = user?.userId === duo1[0]?.userId;
+        const buddy = duo1.find(p => p.userId !== user?.userId) || session.match?.buddy;
+        const buddyOpponent = isUserHigher ? duo2[0] : duo2[1];
+        
+        const buddyXpDiff = (buddy?.totalXP || 0) - (buddyOpponent?.totalXP || 0);
+        const buddyGoalsOffset = Math.round(buddyXpDiff / 2500);
+        const buddyGoals = Math.max(0, Math.min(5, baseBots.buddyGoals + buddyGoalsOffset));
+        
+        const playerGoals = score3.goals || 0;
+        const yourTotal = playerGoals + buddyGoals;
+        const rivalTotal = baseBots.rivalGoals;
+        const winner = determineActWinner(yourTotal, rivalTotal);
+        
+        session.acts.act3 = {
+          winner,
+          playerGoals,
+          playerSaves: 5 - playerGoals,
+          buddyGoals,
+          rivalBotGoals: rivalTotal,
+          yourTotal,
+          rivalTotal
+        };
+        session.actWinners.push(winner);
+        updated = true;
+      }
+
+      if (updated) {
+        localStorage.setItem('active_raid_session', JSON.stringify(session));
+      }
+
+      setActs(session.acts);
+      setActWinners(session.actWinners);
+
+      // Determine phase or redirect
+      if (session.currentAct === 1) {
+        setPhase('matched');
+        timer = setTimeout(() => {
+          navigate(session.act1Game?.route || '/games/whoareya');
+        }, 1500);
+      } else if (session.currentAct === 2) {
+        setPhase('act2_interstitial');
+      } else if (session.currentAct === 3) {
+        setPhase('act3_interstitial');
+      } else if (session.currentAct === 4) {
+        const outcomes = computeRaidOutcome(session.actWinners);
+        setOutcome(outcomes);
+        setPhase('results');
+        finalizeRaidFromState(session.acts, outcomes, session.match, session.raidType);
+        localStorage.removeItem('active_raid_session');
+      }
+    } catch (e) {
+      console.warn('[Raid] Error restoring session:', e);
+      localStorage.removeItem('active_raid_session');
+      setPhase('lobby');
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [user, finalizeRaidFromState, navigate]);
+
+  useEffect(() => { injectFonts(); }, []);
+
+  const startSearch = useCallback(async (type) => {
+    if (!user) return;
+    const newSeed = Date.now();
+    setRaidSeed(newSeed);
+    setRaidType(type);
+    setPhase('searching');
+    setSearchRemaining(BUDDY_TIMEOUT_MS);
+
+    const result = await findBuddy(user, type, ({ remaining }) => {
+      setSearchRemaining(remaining);
+    });
+
+    const act1GameObj = pickAct1Game(newSeed);
+    setMatch(result);
+    setAct1Game(act1GameObj);
+    setPhase('matched');
+
+    const session = {
+      active: true,
+      createdAt: Date.now(),
+      raidType: type,
+      raidSeed: newSeed,
+      match: result,
+      currentAct: 1,
+      act1Game: act1GameObj,
+      scores: {
+        act1: null,
+        act2: null,
+        act3: null
+      },
+      acts: {},
+      actWinners: []
+    };
+    localStorage.setItem('active_raid_session', JSON.stringify(session));
+
+    setTimeout(() => {
+      navigate(act1GameObj.route);
+    }, 2200);
+  }, [user, navigate]);
 
   if (!user) {
     return (
@@ -160,6 +301,69 @@ export default function Raid() {
       </div>
     );
   }
+
+  const standings = useMemo(() => {
+    if (!match) return [];
+    
+    // Act 1
+    const a1You = acts.act1?.playerScore || 0;
+    const a1Buddy = acts.act1?.buddyScore || 0;
+    const a1Bots = acts.act1?.gameId ? simulateBotAct1Scores(acts.act1.gameId, raidSeed) : { rival1: 0, rival2: 0 };
+    const a1Rival1 = a1Bots.rival1;
+    const a1Rival2 = a1Bots.rival2;
+
+    // Act 2
+    const a2You = (acts.act2?.playerRoundWins || 0) * 20;
+    const a2Buddy = (acts.act2?.buddyRoundWins || 0) * 20;
+    const a2TotalRivals = (acts.act2?.rivalBotWins || 0) * 20;
+    const a2Rival1 = Math.round(a2TotalRivals / 2);
+    const a2Rival2 = a2TotalRivals - a2Rival1;
+
+    // Act 3
+    const a3You = (acts.act3?.playerGoals || 0) * 20;
+    const a3Buddy = (acts.act3?.buddyGoals || 0) * 20;
+    const a3TotalRivals = (acts.act3?.rivalBotGoals || 0) * 20;
+    const a3Rival1 = Math.round(a3TotalRivals / 2);
+    const a3Rival2 = a3TotalRivals - a3Rival1;
+
+    const list = [
+      {
+        nickname: user.nickname,
+        flag: user.flag || '🛡️',
+        act1: a1You,
+        act2: a2You,
+        act3: a3You,
+        total: Number((a1You + a2You + a3You).toFixed(1)),
+        isUser: true
+      },
+      {
+        nickname: match.buddy?.nickname || 'Buddy',
+        flag: match.buddy?.flag || '🛡️',
+        act1: a1Buddy,
+        act2: a2Buddy,
+        act3: a3Buddy,
+        total: Number((a1Buddy + a2Buddy + a3Buddy).toFixed(1))
+      },
+      {
+        nickname: match.rivals?.[0]?.nickname || 'Rival 1',
+        flag: match.rivals?.[0]?.flag || '⚔️',
+        act1: a1Rival1,
+        act2: a2Rival1,
+        act3: a3Rival1,
+        total: Number((a1Rival1 + a2Rival1 + a3Rival1).toFixed(1))
+      },
+      {
+        nickname: match.rivals?.[1]?.nickname || 'Rival 2',
+        flag: match.rivals?.[1]?.flag || '⚔️',
+        act1: a1Rival2,
+        act2: a2Rival2,
+        act3: a3Rival2,
+        total: Number((a1Rival2 + a2Rival2 + a3Rival2).toFixed(1))
+      }
+    ];
+
+    return list.sort((a, b) => b.total - a.total);
+  }, [user, match, acts, raidSeed]);
 
   const xpPreview = getRaidXpPreview(raidType, outcome);
   const isTraining = raidType === 'training';
@@ -210,10 +414,12 @@ export default function Raid() {
 
         {phase === 'searching' && (
           <div style={s.center}>
-            <div style={s.spinner} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, justifyContent: 'center', marginBottom: 20 }}>
+              <span style={{ fontSize: '2.5rem' }}>{user?.flag || '🛡️'}</span>
+              <div style={s.spinner} />
+            </div>
             <h2 style={s.searchTitle}>Finding a buddy…</h2>
             <p style={s.muted}>Matchmaking · {fmtSecs(searchRemaining)}s left</p>
-            <p style={{ ...s.muted, fontSize: '0.72rem' }}>Bot rivals after 45s</p>
           </div>
         )}
 
@@ -227,7 +433,7 @@ export default function Raid() {
                   <div key={p.userId} style={s.playerRow}>
                     <span>{p.flag}</span>
                     <span>{p.nickname}</span>
-                    {p.isBot && <span style={s.botTag}>BOT</span>}
+                    {p.isBot && raidType === 'training' && <span style={s.botTag}>BOT</span>}
                   </div>
                 ))}
               </div>
@@ -238,37 +444,170 @@ export default function Raid() {
                   <div key={p.userId} style={s.playerRow}>
                     <span>{p.flag}</span>
                     <span>{p.nickname}</span>
-                    <span style={s.botTag}>BOT</span>
+                    {raidType === 'training' && <span style={s.botTag}>BOT</span>}
                   </div>
                 ))}
               </div>
             </div>
-            {match.isBotMatch && (
+            {match.isBotMatch && raidType === 'training' && (
               <p style={s.muted}>Bot match — no humans available yet</p>
             )}
           </div>
         )}
 
-        {phase === 'act1' && act1Game && (
-          <RaidAct1 game={act1Game} raidSeed={raidSeed} onComplete={handleAct1Done} />
+        {phase === 'act2_interstitial' && match && (
+          <div style={s.section}>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 16,
+              padding: 24,
+              textAlign: 'center',
+              boxShadow: '0 4px 30px rgba(0,0,0,0.4)',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: 12 }}>⚡</div>
+              <h2 style={s.searchTitle}>Act 1 Completed!</h2>
+              
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 12, margin: '14px 0', border: `1px solid ${C.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span>Act 1 Result:</span>
+                  <span style={{ fontWeight: 'bold', color: actWinners[0] === 'you' ? C.green : actWinners[0] === 'rival' ? C.red : C.muted }}>
+                    {actWinners[0] === 'you' ? '🏆 Won' : actWinners[0] === 'rival' ? '💀 Lost' : '🤝 Draw'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Point Breakdown Card */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 12, margin: '14px 0', border: `1px solid ${C.border}`, textAlign: 'left' }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.68rem', letterSpacing: 1.5, color: C.muted, textTransform: 'uppercase', marginBottom: 10 }}>
+                  📊 ACT 1 POINT BREAKDOWN
+                </div>
+                
+                {/* Your Duo */}
+                <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: C.accent }}>
+                    <span>🛡️ Your Duo Total</span>
+                    <span>{acts.act1?.yourTotal} pts</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', paddingLeft: 14, marginTop: 4, color: C.muted }}>
+                    <span>You ({user.nickname})</span>
+                    <span>{acts.act1?.playerScore} pts</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', paddingLeft: 14, marginTop: 2, color: C.muted }}>
+                    <span>{match.buddy?.nickname}</span>
+                    <span>{acts.act1?.buddyScore} pts</span>
+                  </div>
+                </div>
+
+                {/* Rivals */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: C.red }}>
+                    <span>⚔️ Rivals Total</span>
+                    <span>{acts.act1?.rivalTotal} pts</span>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: C.muted, fontStyle: 'italic', paddingLeft: 14, marginTop: 4 }}>
+                    Combined score of {match.rivals?.[0]?.nickname || 'Rival 1'} & {match.rivals?.[1]?.nickname || 'Rival 2'}
+                  </div>
+                </div>
+              </div>
+
+              <p style={{ ...s.muted, margin: '12px 0 20px', lineHeight: 1.5 }}>
+                Next up: **Act 2 — Dribble Gauntlet**. Dribble past defenders and slot it past the keeper.
+              </p>
+
+              <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
+                ⚔️ Play Act 2 — Dribble
+              </button>
+            </div>
+          </div>
         )}
 
-        {phase === 'act2' && (
-          <RaidAct2 raidSeed={raidSeed} onComplete={handleAct2Done} />
-        )}
+        {phase === 'act3_interstitial' && match && (
+          <div style={s.section}>
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 16,
+              padding: 24,
+              textAlign: 'center',
+              boxShadow: '0 4px 30px rgba(0,0,0,0.4)',
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: 12 }}>🧤</div>
+              <h2 style={s.searchTitle}>Act 2 Completed!</h2>
 
-        {phase === 'act3' && (
-          <RaidAct3 raidSeed={raidSeed} onComplete={handleAct3Done} />
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 12, margin: '14px 0', border: `1px solid ${C.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: 6 }}>
+                  <span>Act 1 Result:</span>
+                  <span style={{ fontWeight: 'bold', color: actWinners[0] === 'you' ? C.green : actWinners[0] === 'rival' ? C.red : C.muted }}>
+                    {actWinners[0] === 'you' ? 'Won' : actWinners[0] === 'rival' ? 'Lost' : 'Draw'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                  <span>Act 2 Result:</span>
+                  <span style={{ fontWeight: 'bold', color: actWinners[1] === 'you' ? C.green : actWinners[1] === 'rival' ? C.red : C.muted }}>
+                    {actWinners[1] === 'you' ? 'Won' : actWinners[1] === 'rival' ? 'Lost' : 'Draw'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Point Breakdown Card */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 12, margin: '14px 0', border: `1px solid ${C.border}`, textAlign: 'left' }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.68rem', letterSpacing: 1.5, color: C.muted, textTransform: 'uppercase', marginBottom: 10 }}>
+                  📊 ACT 2 POINT BREAKDOWN
+                </div>
+
+                {/* Your Duo */}
+                <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: C.accent }}>
+                    <span>🛡️ Your Duo Total</span>
+                    <span>{acts.act2?.yourTotal * 20} pts</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', paddingLeft: 14, marginTop: 4, color: C.muted }}>
+                    <span>You ({user.nickname})</span>
+                    <span>{acts.act2?.playerRoundWins * 20} pts</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', paddingLeft: 14, marginTop: 2, color: C.muted }}>
+                    <span>{match.buddy?.nickname}</span>
+                    <span>{acts.act2?.buddyRoundWins * 20} pts</span>
+                  </div>
+                </div>
+
+                {/* Rivals */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', color: C.red }}>
+                    <span>⚔️ Rivals Total</span>
+                    <span>{acts.act2?.rivalTotal * 20} pts</span>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: C.muted, fontStyle: 'italic', paddingLeft: 14, marginTop: 4 }}>
+                    Defenders bypassed by your opponents
+                  </div>
+                </div>
+              </div>
+
+              <p style={{ ...s.muted, margin: '12px 0 20px', lineHeight: 1.5 }}>
+                Final showdown: **Act 3 — Penalty Shootout**. The high-stakes 5-kick shootout.
+              </p>
+
+              <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
+                ⚽ Play Act 3 — Penalty Shootout
+              </button>
+            </div>
+          </div>
         )}
 
         {phase === 'results' && (
-          <div style={s.section}>
+          <div style={{ ...s.section, position: 'relative' }}>
+            <ParticleEffect type={outcome === 'win' ? 'win' : 'loss'} />
+            
             <div style={{
               ...s.outcomeBanner,
               borderColor: outcome === 'win' ? C.green : outcome === 'loss' ? C.red : C.muted,
               color: outcome === 'win' ? C.green : outcome === 'loss' ? C.red : C.muted,
+              background: outcome === 'win' ? 'rgba(61, 214, 140, 0.05)' : 'rgba(232, 64, 64, 0.05)',
+              boxShadow: outcome === 'win' ? '0 0 20px rgba(61, 214, 140, 0.15)' : '0 0 20px rgba(232, 64, 64, 0.15)',
+              transition: 'all 0.5s ease',
             }}>
-              {outcome === 'win' ? '🏆 RAID WON' : outcome === 'loss' ? '💀 RAID LOST' : '🤝 DRAW'}
+              {outcome === 'win' ? '🏆 RAID VICTORIOUS' : outcome === 'loss' ? '💀 RAID DEFEATED' : '🤝 POINTS DRAWN'}
             </div>
 
             <div style={s.actSummary}>
@@ -277,7 +616,7 @@ export default function Raid() {
                 return (
                   <div key={key} style={s.actRow}>
                     <span>Act {i + 1}</span>
-                  <span style={{ color: w === 'you' ? C.green : w === 'rival' ? C.red : C.muted }}>
+                    <span style={{ fontWeight: 'bold', color: w === 'you' ? C.green : w === 'rival' ? C.red : C.muted }}>
                       {w === 'you' ? 'Won' : w === 'rival' ? 'Lost' : 'Draw'}
                     </span>
                   </div>
@@ -285,15 +624,71 @@ export default function Raid() {
               })}
             </div>
 
+            {/* Standings Leaderboard */}
+            <div style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 20,
+              position: 'relative',
+              zIndex: 2
+            }}>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.72rem', letterSpacing: 1.5, color: C.purple, textTransform: 'uppercase', marginBottom: 12, fontWeight: 'bold' }}>
+                🏆 FINAL RAID STANDINGS (ALL ACTS)
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {standings.map((p, idx) => (
+                  <div key={p.nickname} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    background: p.isUser ? 'rgba(168, 85, 247, 0.1)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${p.isUser ? 'rgba(168, 85, 247, 0.3)' : C.border}`,
+                    borderRadius: 10,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontFamily: "'Space Mono', monospace", color: idx === 0 ? C.accent : C.muted, fontWeight: 'bold' }}>
+                        #{idx + 1}
+                      </span>
+                      <span>{p.flag}</span>
+                      <span style={{ fontWeight: p.isUser ? 'bold' : 'normal', color: p.isUser ? C.text : 'inherit' }}>
+                        {p.nickname} {p.isUser && '(You)'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: '0.72rem', color: C.muted, fontFamily: "'Space Mono', monospace" }}>
+                        Act scores: {p.act1} | {p.act2} | {p.act3}
+                      </span>
+                      <span style={{ fontWeight: 'bold', color: idx === 0 ? C.accent : C.text, fontFamily: "'Space Mono', monospace" }}>
+                        {p.total} pts
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Castle HP Damage Slider Visual on Win */}
+            {outcome === 'win' && !isTraining && (
+              <CastleDamageVisual
+                damagePct={RAID_TYPES[raidType]?.castleDamagePct || 0.20}
+                rivalName={match?.rivals?.[0]?.homeCountry}
+              />
+            )}
+
             {!isTraining && (
               <div style={s.xpBox}>
                 {finalizing ? (
-                  <span style={s.muted}>Awarding XP…</span>
+                  <span style={s.muted}>Updating Guild Castle HP & XP…</span>
                 ) : (
                   <>
                     <div>+{(finalizeResult?.xpResults?.win?.xpAwarded ?? xpPreview.win) || xpPreview.loss} XP</div>
                     {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && (
-                    <div style={{ color: C.accent, marginTop: 6 }}>+{finalizeResult.xpResults.mvp.xpAwarded} MVP</div>
+                      <div style={{ color: C.accent, marginTop: 6, fontSize: '0.9rem', fontFamily: "'Space Mono', monospace" }}>
+                        🔥 MVP BONUS +{finalizeResult.xpResults.mvp.xpAwarded} XP
+                      </div>
                     )}
                   </>
                 )}
@@ -301,21 +696,15 @@ export default function Raid() {
             )}
 
             {isTraining && (
-              <p style={s.muted}>Training mode — no XP awarded</p>
-            )}
-
-            {damagePreview > 0 && (
-              <p style={{ ...s.muted, marginTop: 12 }}>
-                ~{damagePreview.toLocaleString()} castle HP damage dealt
-              </p>
+              <p style={{ ...s.muted, textAlign: 'center', margin: '20px 0' }}>Training mode — no XP awarded</p>
             )}
 
             {finalizeResult?.serverResult?.curseLifted && (
-              <div style={s.curseLift}>🎉 Curse lifted! ({RAID_TYPES.normal.winXP ? '' : ''}3 raid wins)</div>
+              <div style={s.curseLift}>🎉 Curse lifted! (3 raid wins achieved)</div>
             )}
 
             <button type="button" style={s.primaryBtn} onClick={() => navigate('/guild')}>
-              Back to Guild
+              Back to Guild Castle
             </button>
             <button type="button" style={s.secondaryBtn} onClick={() => { setPhase('lobby'); setActs({}); setActWinners([]); setOutcome(null); setMatch(null); }}>
               Raid Again
@@ -323,6 +712,139 @@ export default function Raid() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// Particle Canvas Component for Win/Loss Celebrations
+function ParticleEffect({ type }) {
+  const canvasRef = useCallback((canvas) => {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    const particles = [];
+
+    const resize = () => {
+      canvas.width = canvas.parentElement.offsetWidth;
+      canvas.height = 350;
+    };
+    resize();
+
+    const count = type === 'win' ? 100 : 40;
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -300,
+        size: type === 'win' ? Math.random() * 6 + 4 : Math.random() * 12 + 16,
+        color: type === 'win'
+          ? `hsla(${Math.random() * 360}, 90%, 50%, 0.9)`
+          : null,
+        vy: Math.random() * 3 + 1.5,
+        vx: Math.random() * 2 - 1,
+        rotation: Math.random() * Math.PI,
+        rotationSpeed: Math.random() * 0.08 - 0.04
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.y += p.vy;
+        p.x += p.vx;
+        p.rotation += p.rotationSpeed;
+
+        if (p.y > canvas.height) {
+          p.y = -30;
+          p.x = Math.random() * canvas.width;
+        }
+
+        if (type === 'win') {
+          // Draw colored confetti
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size, p.size, p.size * 2);
+          ctx.restore();
+        } else {
+          // Draw falling heartbreak emojis 💔
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.font = `${p.size}px serif`;
+          ctx.fillText('💔', -p.size / 2, p.size / 2);
+          ctx.restore();
+        }
+      });
+      animationId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    window.addEventListener('resize', resize);
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [type]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: 350,
+        pointerEvents: 'none',
+        zIndex: 1,
+      }}
+    />
+  );
+}
+
+// Castle Damage Animation Slider
+function CastleDamageVisual({ damagePct, rivalName }) {
+  const [hp, setHp] = useState(100);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHp(100 - damagePct * 100);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [damagePct]);
+
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,0.02)',
+      border: `1px solid ${C.border}`,
+      borderRadius: 14,
+      padding: 16,
+      marginTop: 16,
+      marginBottom: 16,
+      textAlign: 'left',
+      position: 'relative',
+      zIndex: 2,
+    }}>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.62rem', color: C.purple, letterSpacing: 1.5, marginBottom: 8, textTransform: 'uppercase' }}>
+        🏰 RIVAL CASTLE SIEGED
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: 8 }}>
+        <span>{rivalName || 'Rival'} Guild Castle</span>
+        <span style={{ color: C.red }}>{hp.toFixed(0)}% HP</span>
+      </div>
+      <div style={{ height: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{
+          width: '100%',
+          height: '100%',
+          background: `linear-gradient(90deg, ${C.red}, ${C.purple})`,
+          transition: 'transform 1.5s cubic-bezier(0.1, 1, 0.1, 1)',
+          transform: `scaleX(${hp / 100})`,
+          transformOrigin: 'left',
+        }} />
+      </div>
+      <div style={{ fontSize: '0.68rem', color: C.muted, marginTop: 6, fontStyle: 'italic' }}>
+        Dealt {Math.round(damagePct * 100)}% Damage to their castle!
+      </div>
     </div>
   );
 }
@@ -353,10 +875,10 @@ const s = {
   botTag:        { fontSize: '0.55rem', padding: '2px 6px', borderRadius: 99, background: 'rgba(247,195,68,0.15)', color: C.accent, fontWeight: 700 },
   vs:            { fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.2rem', color: C.muted },
   outcomeBanner: { textAlign: 'center', padding: '20px 16px', border: '2px solid', borderRadius: 16, fontFamily: "'Bebas Neue', sans-serif", fontSize: '2rem', letterSpacing: 3, marginBottom: 20 },
-  actSummary:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20 },
+  actSummary:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 20, position: 'relative', zIndex: 2 },
   actRow:        { display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '0.88rem', borderBottom: `1px solid ${C.border}` },
-  xpBox:         { textAlign: 'center', padding: 16, background: 'rgba(61,214,140,0.08)', border: `1px solid rgba(61,214,140,0.25)`, borderRadius: 12, marginBottom: 16, fontWeight: 800, fontSize: '1.2rem', color: C.green },
-  curseLift:     { textAlign: 'center', padding: 12, background: 'rgba(247,195,68,0.1)', border: '1px solid rgba(247,195,68,0.3)', borderRadius: 12, color: C.accent, marginBottom: 16, fontWeight: 700 },
-  primaryBtn:    { width: '100%', padding: 16, background: `linear-gradient(135deg, ${C.accent}, #e8a800)`, color: '#111', border: 'none', borderRadius: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, letterSpacing: 1 },
-  secondaryBtn:  { width: '100%', padding: 14, background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 14, cursor: 'pointer', fontWeight: 600 },
+  xpBox:         { textAlign: 'center', padding: 16, background: 'rgba(61,214,140,0.08)', border: `1px solid rgba(61,214,140,0.25)`, borderRadius: 12, marginBottom: 16, fontWeight: 800, fontSize: '1.2rem', color: C.green, position: 'relative', zIndex: 2 },
+  curseLift:     { textAlign: 'center', padding: 12, background: 'rgba(247,195,68,0.1)', border: '1px solid rgba(247,195,68,0.3)', borderRadius: 12, color: C.accent, marginBottom: 16, fontWeight: 700, position: 'relative', zIndex: 2 },
+  primaryBtn:    { width: '100%', padding: 16, background: `linear-gradient(135deg, ${C.accent}, #e8a800)`, color: '#111', border: 'none', borderRadius: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, letterSpacing: 1, position: 'relative', zIndex: 2 },
+  secondaryBtn:  { width: '100%', padding: 14, background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 14, cursor: 'pointer', fontWeight: 600, position: 'relative', zIndex: 2 },
 };

@@ -34,7 +34,16 @@ function getAttrForRound(roundIndex) {
 }
 
 function getSequencedPlayer(players, roundOffset) {
-  const seed = getDailySeed();
+  let seed = getDailySeed();
+  try {
+    const sessionStr = localStorage.getItem('active_raid_session');
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      if (session && session.active) {
+        seed = session.raidSeed;
+      }
+    }
+  } catch (e) {}
   const baseOffset = 67; // GAME_OFFSETS.higherLower
   return players[(seed + baseOffset + roundOffset) % players.length];
 }
@@ -280,6 +289,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   // Rewarded ad states
   const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
   const [isAdLoading, setIsAdLoading]               = useState(false);
+  const [isRaid, setIsRaid]                         = useState(false);
 
   function triggerRewardedAdToSaveStreak() {
     setIsAdLoading(true);
@@ -307,6 +317,28 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
   // Load saved state
   useEffect(() => {
+    let raid = false;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          raid = true;
+        }
+      }
+    } catch (e) {}
+
+    setIsRaid(raid);
+
+    if (raid) {
+      setRound(0);
+      setStreak(0);
+      setGameOver(false);
+      setXpAwarded(null);
+      setHasWatchedReviveAd(false);
+      return;
+    }
+
     const puzzleDate = getActivePuzzleDate();
     const key = `hl_${puzzleDate}_state`;
     const saved = localStorage.getItem(key);
@@ -384,7 +416,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         const uid = userId || currentUser?.userId;
         if (uid && raw > 0) {
           try {
-            const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
+            const result = await awardXP(uid, "higherLower_correct", { rawXP: raw, streak: newStreak });
             xp = result?.xpAwarded ?? raw;
           } catch (e) {
             console.error('[HigherLower] awardXP failed:', e);
@@ -414,9 +446,9 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       let xp = 0;
       const currentUser = getUser();
       const uid = userId || currentUser?.userId;
-      if (uid && raw > 0) {
+      if (uid && (raw > 0 || isRaid)) {
         try {
-          const result = await awardXP(uid, "higherLower_correct", { rawXP: raw });
+          const result = await awardXP(uid, "higherLower_correct", { rawXP: raw, streak: streak });
           xp = result?.xpAwarded ?? raw;
         } catch (e) {
           console.error('[HigherLower] awardXP failed:', e);
@@ -536,7 +568,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             )}
 
             {/* ── REWARDED AD — Save Streak ── */}
-            {!hasWatchedReviveAd && streak < 10 && (
+            {!isRaid && !hasWatchedReviveAd && streak < 10 && (
               <div className="hl-ad-section">
                 <p className="hl-ad-hint">Streak ended? Watch a quick ad to revive and keep your streak going!</p>
                 <button

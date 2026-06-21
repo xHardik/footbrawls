@@ -731,6 +731,12 @@ export default function PenaltyNerve({ onBack }) {
   }
 
   useEffect(() => {
+    const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_raid_session');
+    if (isRaid) {
+      setAlreadyPlayed(false);
+      setPhase('aiming');
+      return;
+    }
     const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
     if (hist[today]) {
       setAlreadyPlayed(true);
@@ -797,7 +803,8 @@ export default function PenaltyNerve({ onBack }) {
         const goals   = newKicks.filter(k => !k.saved).length;
 
         let finalAwarded = 0;
-        if (finalXP > 0) {
+        const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_raid_session');
+        if (finalXP > 0 || isRaid) {
           try {
             const user = getUser();
             if (!user?.userId) {
@@ -815,12 +822,14 @@ export default function PenaltyNerve({ onBack }) {
         }
         setXpAwarded(finalAwarded);
 
-        const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
-        hist[today] = { score: finalXP, goals, xpAwarded: finalAwarded, date: today };
-        localStorage.setItem('footbrawls_penaltynerve', JSON.stringify(hist));
+        if (!isRaid) {
+          const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
+          hist[today] = { score: finalXP, goals, xpAwarded: finalAwarded, date: today };
+          localStorage.setItem('footbrawls_penaltynerve', JSON.stringify(hist));
 
-        const { stats: s, history: h } = saveResult(today, goals, finalAwarded);
-        setStats(s); setHistory(h);
+          const { stats: s, history: h } = saveResult(today, goals, finalAwarded);
+          setStats(s); setHistory(h);
+        }
       } else {
         setPhase('aiming');
         setLastResult(null);

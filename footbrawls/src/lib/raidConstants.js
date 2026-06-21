@@ -1,18 +1,17 @@
 export const BUDDY_TIMEOUT_MS = 45_000;
 
 export const RAID_TYPES = {
-  normal:    { id: 'normal',    label: 'Normal Raid',    winXP: 100, lossXP: 30, castleDamagePct: 0.20 },
-  challenge: { id: 'challenge', label: 'Challenge Raid', winXP: 200, lossXP: 30, castleDamagePct: 0.40 },
-  training:  { id: 'training',  label: 'Training',       winXP: 0,   lossXP: 0,  castleDamagePct: 0 },
+  normal:    { id: 'normal',    label: 'Normal Match',    winXP: 100, lossXP: 30, castleDamagePct: 0.20 },
+  challenge: { id: 'challenge', label: 'Castle Siege',    winXP: 200, lossXP: 30, castleDamagePct: 0.40 },
+  training:  { id: 'training',  label: 'Practice Match',  winXP: 0,   lossXP: 0,  castleDamagePct: 0 },
 };
 
 export const ACT1_GAME_POOL = [
-  { id: 'whoAreYa',       label: 'Who Are Ya?',       icon: '👤' },
-  { id: 'wordle',         label: 'Player Wordle',     icon: '🟩' },
-  { id: 'higherLower',    label: 'Higher or Lower',   icon: '📊' },
-  { id: 'transferTrail',  label: 'Transfer Trail',    icon: '🔗' },
-  { id: 'matchPredictor', label: 'Match Predictor',   icon: '🔮' },
-  { id: 'penaltyNerve',   label: 'Penalty Nerve',     icon: '⚽' },
+  { id: 'whoAreYa',       label: 'Who Are Ya?',       icon: '👤', route: '/games/whoareya' },
+  { id: 'wordle',         label: 'Player Wordle',     icon: '🟩', route: '/games/wordle' },
+  { id: 'higherLower',    label: 'Higher or Lower',   icon: '📊', route: '/games/higherlower' },
+  { id: 'transferTrail',  label: 'Transfer Trail',    icon: '🔗', route: '/games/transfertrail' },
+  { id: 'top10',          label: 'Top 10 Guess',      icon: '🏆', route: '/games/top10' },
 ];
 
 export const PENALTY_ZONES = [

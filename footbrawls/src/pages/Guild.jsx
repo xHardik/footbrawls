@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   collection, doc, onSnapshot, addDoc,
@@ -10,7 +10,7 @@ import { COUNTRIES } from "../lib/countries";
 import CastleHP from "../components/CastleHP";
 import CurseBanner from "../components/CurseBanner";
 import GuildChat from "../components/GuildChat";
-import { getGuildLevel, getLevelProgress, getHPDisplay, checkUpgrade, GUILD_LEVELS } from "../lib/guildLevels";
+import { getGuildLevel, getLevelProgress, getHPDisplay, checkUpgrade, GUILD_LEVELS, isCurseExpired } from "../lib/guildLevels";
 import { clearLevelUpNotification } from "../lib/xpEngine";
 
 const Icon = {
@@ -205,11 +205,14 @@ function CastleTab({ guild, user }) {
   const maxHp           = levelConfig.hpCap;
   const levelPct        = getLevelProgress(hp, guildLevel);
   const hpDisplay       = getHPDisplay(hp, guildLevel);
-  const curseStatus     = guild?.currentCurse || guild?.currentBlessing || "neutral";
+  const isExpired       = isCurseExpired(guild);
+  const effectiveCurse  = (isExpired && guild?.currentCurse !== 'death_curse') ? null : (guild?.currentCurse || null);
+  const effectiveBlessing = isExpired ? null : (guild?.currentBlessing || null);
+  const curseStatus     = effectiveCurse || effectiveBlessing || "neutral";
   const expiryTime      = guild?.curseExpiresAt;
   const blessedSecs     = expiryTime
     ? Math.max(0, Math.floor((expiryTime.toMillis() - Date.now()) / 1000))
-    : 18000;
+    : 0;
   const raidWins        = guild?.curseRaidWins    ?? 0;
   const raidWinsNeeded  = guild?.curseRaidWinsNeeded ?? 3;
   const contributors    = (guild?.topContributors ?? []).slice(0, 3);
@@ -220,8 +223,64 @@ function CastleTab({ guild, user }) {
   const nextLevel       = guildLevel < 5 ? getGuildLevel(guildLevel + 1) : null;
   const LEVEL_COLORS    = ["#6b7280","#3b82f6","#10b981","#f59e0b","#8b5cf6"];
 
+  const [timeLeft, setTimeLeft] = useState("");
+  const isRuined = hp <= 0;
+
+  useEffect(() => {
+    if (!isRuined) return;
+    const ruinedTime = guild?.ruinedAt
+      ? (guild.ruinedAt.toMillis ? guild.ruinedAt.toMillis() : new Date(guild.ruinedAt).getTime())
+      : (Date.now() - 45 * 60 * 1000); // fallback 45 mins ago
+    const expiry = ruinedTime + 3 * 60 * 60 * 1000; // 3 hours cooldown
+
+    const updateTimer = () => {
+      const diff = expiry - Date.now();
+      if (diff <= 0) {
+        setTimeLeft("Ready to Rebuild! 🛠️");
+        return;
+      }
+      const hrs = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [isRuined, guild]);
+
   return (
     <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
+      {isRuined && (
+        <div style={{
+          background: 'rgba(232, 64, 64, 0.1)',
+          border: '1px solid var(--red)',
+          borderRadius: 16,
+          padding: 20,
+          textAlign: 'center',
+          boxShadow: '0 0 20px rgba(232, 64, 64, 0.15)',
+        }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🌋</div>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.6rem', color: 'var(--red)', letterSpacing: 2 }}>🏰 CASTLE RUINED</div>
+          <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '4px 0 16px', lineHeight: 1.4 }}>
+            Enemy raids have reduced your fortress to rubble! Rebuild underway.
+          </p>
+          <div style={{
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '0.85rem',
+            color: 'var(--accent)',
+            fontWeight: 'bold',
+            background: 'rgba(0,0,0,0.3)',
+            padding: '8px 16px',
+            borderRadius: 8,
+            display: 'inline-block',
+            border: '1px solid var(--border)'
+          }}>
+            ⏱️ RECONSTRUCTION: {timeLeft}
+          </div>
+        </div>
+      )}
       <CurseBanner status={curseStatus} team={teamName} match={lastMatch} blessedSecs={blessedSecs} raidWins={raidWins} raidWinsNeeded={raidWinsNeeded} />
       <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:16, padding:"16px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:0, marginBottom:14 }}>
@@ -442,6 +501,8 @@ function BottomNav({ navigate, toast, setToast }) {
     </>
   );
 }
+
+
 
 export default function Guild() {
   const navigate = useNavigate();

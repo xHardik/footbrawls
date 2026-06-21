@@ -32,13 +32,13 @@ export async function finalizeRaid({
     }
 
     if (winSource) {
-      const res = await awardXP(user.userId, winSource);
+      const res = await awardXP(user.userId, winSource, { skipCap: true });
       xpResults.win = res;
       xpResults.cappedOut = res?.cappedOut ?? false;
     }
 
     if (isMvp) {
-      const mvpRes = await awardXP(user.userId, 'raid_mvp');
+      const mvpRes = await awardXP(user.userId, 'raid_mvp', { skipCap: true });
       xpResults.mvp = mvpRes;
     }
   }

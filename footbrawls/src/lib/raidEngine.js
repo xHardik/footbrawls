@@ -32,7 +32,16 @@ export function simulateBotAct1Scores(gameId, raidSeed = Date.now()) {
 
 function buildAct1BotResult(gameId, seed, botIndex) {
   const r = seededRandom(seed, botIndex * 17);
-  switch (gameId) {
+  const cleanId = gameId ? gameId.toLowerCase().replace('_correct', '').replace('_complete', '') : '';
+  let canonicalId = gameId;
+  if (cleanId === 'whoareya') canonicalId = 'whoAreYa';
+  else if (cleanId === 'wordle') canonicalId = 'wordle';
+  else if (cleanId === 'higherlower') canonicalId = 'higherLower';
+  else if (cleanId === 'transfertrail') canonicalId = 'transferTrail';
+  else if (cleanId === 'matchpredictor') canonicalId = 'matchPredictor';
+  else if (cleanId === 'penaltynerve') canonicalId = 'penaltyNerve';
+
+  switch (canonicalId) {
     case 'whoAreYa':
       return { guessNumber: Math.max(1, Math.min(8, Math.ceil(r * 8))), solved: r > 0.15 };
     case 'wordle':
@@ -54,8 +63,8 @@ function buildAct1BotResult(gameId, seed, botIndex) {
  * Simulate bot round wins for Dribble Gauntlet (Act 2) best-of-5.
  */
 export function simulateBotAct2Scores(raidSeed = Date.now()) {
-  const buddyWins  = Math.floor(seededRandom(raidSeed, 50) * 3);
-  const rivalWins  = Math.floor(seededRandom(raidSeed, 51) * 3);
+  const buddyWins  = Math.floor(seededRandom(raidSeed, 50) * 2) + 1;
+  const rivalWins  = Math.floor(seededRandom(raidSeed, 51) * 2) + 1;
   return { buddyWins, rivalWins };
 }
 

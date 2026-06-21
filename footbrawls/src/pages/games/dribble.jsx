@@ -273,6 +273,7 @@ export default function DribbleGauntlet() {
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [userXP, setUserXP] = useState(0);
   const [floatingXP, setFloatingXP] = useState(null);
+  const [isRaid, setIsRaid]         = useState(false);
 
   const today = getTodayKey();
 
@@ -298,6 +299,29 @@ export default function DribbleGauntlet() {
     }
     const u = getUser();
     if (u) setUserXP(u.totalXP || 0);
+
+    let raid = false;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          raid = true;
+        }
+      }
+    } catch (e) {}
+    setIsRaid(raid);
+
+    if (raid) {
+      setAlreadyPlayed(false);
+      setXpAwarded(null);
+      const s = stRef.current;
+      s.phase = 'rules';
+      s.results = [];
+      repaint();
+      return;
+    }
+
     const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
     if (dailySave[today] || history[today]) {
       setAlreadyPlayed(true);
@@ -461,26 +485,29 @@ export default function DribbleGauntlet() {
       } else { earnedXP = calculatedXP; }
     } catch { earnedXP = calculatedXP; }
     setXpAwarded(earnedXP);
-    const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
-    dailySave[today] = { completed: true, xpAwarded: earnedXP, score: wins };
-    localStorage.setItem(DAILY_KEY, JSON.stringify(dailySave));
-    const hist = loadHistory();
-    hist[today] = { completed: true, xpAwarded: earnedXP, score: wins };
-    const allEntries = Object.values(hist);
-    const newStats = {
-      played: allEntries.length,
-      best:   Math.max(...allEntries.map(e => e.score ?? 0)),
-      avg:    Math.round((allEntries.reduce((s, e) => s + (e.score ?? 0), 0) / allEntries.length) * 10) / 10,
-      streak: 0,
-    };
-    const check = new Date(today + "T00:00:00");
-    while (true) {
-      const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
-      if (hist[k]) { newStats.streak++; check.setDate(check.getDate() - 1); } else break;
+    if (!isRaid) {
+      const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
+      dailySave[today] = { completed: true, xpAwarded: earnedXP, score: wins };
+      localStorage.setItem(DAILY_KEY, JSON.stringify(dailySave));
+      const hist = loadHistory();
+      hist[today] = { completed: true, xpAwarded: earnedXP, score: wins };
+      const allEntries = Object.values(hist);
+      const newStats = {
+        played: allEntries.length,
+        best:   Math.max(...allEntries.map(e => e.score ?? 0)),
+        avg:    Math.round((allEntries.reduce((s, e) => s + (e.score ?? 0), 0) / allEntries.length) * 10) / 10,
+        streak: 0,
+      };
+      const check = new Date(today + "T00:00:00");
+      while (true) {
+        const k = `${check.getFullYear()}-${String(check.getMonth()+1).padStart(2,"0")}-${String(check.getDate()).padStart(2,"0")}`;
+        if (hist[k]) { newStats.streak++; check.setDate(check.getDate() - 1); } else break;
+      }
+      setStats(newStats);
+      setHistory(hist);
+      localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
     }
-    localStorage.setItem(STATS_KEY, JSON.stringify(newStats));
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-    setHistory(hist); setStats(newStats);
   };
 
   const nextRound = () => {
@@ -688,7 +715,7 @@ export default function DribbleGauntlet() {
 
                   {s.tackled || s.phase === 'shot_result' ? (
                     <div className="db-post-round">
-                      {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && (
+                      {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && !isRaid && (
                         <div className="db-ad-box">
                           <div className="db-ad-box-text">Watch a short ad to retake this round</div>
                           <button className="db-ad-go-btn" onClick={triggerRewardedAdToRetakeRound} disabled={isAdLoading}>

@@ -59,7 +59,16 @@ function seededRandom(seed) {
 function getDailyPlayers(players, dateStr) {
   const eligible = players.filter(p => Array.isArray(p.clubs) && p.clubs.length >= 2);
   if (eligible.length < PLAYERS_PER_GAME) return eligible.slice(0, PLAYERS_PER_GAME);
-  const seed = dateStr.split("-").reduce((a, n) => a * 100 + parseInt(n), 0);
+  let seed = dateStr.split("-").reduce((a, n) => a * 100 + parseInt(n), 0);
+  try {
+    const sessionStr = localStorage.getItem('active_raid_session');
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      if (session && session.active) {
+        seed = session.raidSeed + 221;
+      }
+    }
+  } catch (e) {}
   const rng  = seededRandom(seed);
   const pool = [...eligible];
   const picked = [];
@@ -550,6 +559,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const [revealed, setRevealed]         = useState({});
   const [unlockedHints, setUnlockedHints] = useState({});
   const [isAdLoading, setIsAdLoading]   = useState(false);
+  const [isRaid, setIsRaid]             = useState(false);
 
   useEffect(() => { injectFonts(); }, []);
 
@@ -561,6 +571,31 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }, []);
 
   useEffect(() => {
+    let raid = false;
+    try {
+      const sessionStr = localStorage.getItem('active_raid_session');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session && session.active) {
+          raid = true;
+        }
+      }
+    } catch (e) {}
+
+    setIsRaid(raid);
+
+    if (raid) {
+      setCurrentIdx(0);
+      setXpEarned(0);
+      setStreak(0);
+      setCorrectCount(0);
+      setGameOver(false);
+      setRevealed({});
+      setXpAwarded(0);
+      setUnlockedHints({});
+      return;
+    }
+
     const saved = localStorage.getItem(stateKey);
     if (saved) {
       try {
@@ -578,6 +613,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }, [stateKey]);
 
   function persist(updates) {
+    if (isRaid) return;
     const fullState = {
       currentIdx: updates.currentIdx ?? currentIdx,
       xpEarned: updates.xpEarned ?? xpEarned,
@@ -997,7 +1033,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 )}
 
                 {/* Hint Section */}
-                {!gameOver && currentPlayer && (
+                {!gameOver && currentPlayer && !isRaid && (
                   <div style={{ marginTop: 20, width: "100%", maxWidth: 400, display: "flex", justifyContent: "center" }}>
                     {unlockedHints[currentIdx] ? (
                       <div style={{

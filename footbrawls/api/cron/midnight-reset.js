@@ -9,9 +9,21 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
-  initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
-  });
+  let credentialCert;
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    credentialCert = cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT));
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+    const jsonStr = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
+    credentialCert = cert(JSON.parse(jsonStr));
+  } else {
+    console.warn("No Firebase Service Account credentials found in environment variables.");
+  }
+
+  if (credentialCert) {
+    initializeApp({
+      credential: credentialCert,
+    });
+  }
 }
 const db = getFirestore();
 

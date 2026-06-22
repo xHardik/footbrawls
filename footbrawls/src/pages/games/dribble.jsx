@@ -300,16 +300,7 @@ export default function DribbleGauntlet() {
     const u = getUser();
     if (u) setUserXP(u.totalXP || 0);
 
-    let raid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          raid = true;
-        }
-      }
-    } catch (e) {}
+    let raid = !!localStorage.getItem('active_game_session_id');
     setIsRaid(raid);
 
     if (raid) {

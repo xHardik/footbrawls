@@ -60,15 +60,10 @@ function getDailyPlayers(players, dateStr) {
   const eligible = players.filter(p => Array.isArray(p.clubs) && p.clubs.length >= 2);
   if (eligible.length < PLAYERS_PER_GAME) return eligible.slice(0, PLAYERS_PER_GAME);
   let seed = dateStr.split("-").reduce((a, n) => a * 100 + parseInt(n), 0);
-  try {
-    const sessionStr = localStorage.getItem('active_raid_session');
-    if (sessionStr) {
-      const session = JSON.parse(sessionStr);
-      if (session && session.active) {
-        seed = session.raidSeed + 221;
-      }
+    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    if (sessionSeed) {
+      seed = parseInt(sessionSeed) + 221;
     }
-  } catch (e) {}
   const rng  = seededRandom(seed);
   const pool = [...eligible];
   const picked = [];
@@ -571,17 +566,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }, []);
 
   useEffect(() => {
-    let raid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          raid = true;
-        }
-      }
-    } catch (e) {}
-
+    let raid = !!localStorage.getItem('active_game_session_id');
     setIsRaid(raid);
 
     if (raid) {

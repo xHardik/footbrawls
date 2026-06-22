@@ -1,11 +1,10 @@
-// src/pages/Raid.jsx
-// Full raid lobby: mode pick → buddy search → acts 1–3 → results
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../lib/user';
 import { findBuddy } from '../lib/matchmaking';
 import { finalizeRaid, getRaidXpPreview } from '../lib/raidFinalize';
+import { doc, onSnapshot, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import {
   pickAct1Game,
   simulateBotAct1Scores,
@@ -81,6 +80,7 @@ export default function Raid() {
   const [outcome, setOutcome]       = useState(null);
   const [finalizing, setFinalizing] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState(null);
+  const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
 
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
     setFinalizing(true);
@@ -106,157 +106,193 @@ export default function Raid() {
     }
   }, [user]);
 
-  // Restore/process raid session state
+  // Subscribe to real-time updates for active raid from Firestore
   useEffect(() => {
-    const sessionStr = localStorage.getItem('active_raid_session');
-    if (!sessionStr) {
+    if (!activeSessionId) {
       setPhase('lobby');
       return;
     }
-    let timer;
 
-    try {
-      const session = JSON.parse(sessionStr);
-      if (!session || !session.active) {
-        localStorage.removeItem('active_raid_session');
+    const sessionRef = doc(db, 'gameSessions', activeSessionId);
+    let initialRedirectTimer;
+
+    const unsubscribe = onSnapshot(sessionRef, async (snapshot) => {
+      if (!snapshot.exists()) {
+        localStorage.removeItem('active_game_session_id');
+        setActiveSessionId(null);
         setPhase('lobby');
         return;
       }
 
-      // Check session expiration (1 hour)
-      if (session.createdAt && Date.now() - session.createdAt > 3600000) {
-        localStorage.removeItem('active_raid_session');
-        setPhase('lobby');
-        return;
-      }
-
-      // Defensive initialization
-      if (!session.scores) session.scores = {};
-      if (!session.acts) session.acts = {};
-      if (!session.actWinners) session.actWinners = [];
+      const session = snapshot.data();
 
       // Ensure state is aligned
       setRaidType(session.raidType || 'normal');
-      setMatch(session.match || null);
-      setAct1Game(session.act1Game || null);
       setRaidSeed(session.raidSeed || Date.now());
+      localStorage.setItem('active_game_session_seed', String(session.raidSeed || ''));
 
-      let updated = false;
+      const buddyObj = session.players?.find(p => p.userId !== user.userId) || null;
+      const currentMatch = {
+        buddy: buddyObj,
+        rivals: session.rivals || [],
+        isBotMatch: !buddyObj || buddyObj.userId.startsWith('bot_'),
+        matchedAt: session.createdAt?.toMillis() || Date.now()
+      };
+      setMatch(currentMatch);
 
-      // 1. Process Act 1 score if done
-      if (session.scores.act1 && !session.acts.act1) {
-        const score1 = session.scores.act1;
-        const bots = simulateBotAct1Scores(score1.gameId, session.raidSeed);
-        const yourTotal  = sumAct1Duo(score1.normalized || 0, bots.buddy);
-        const rivalTotal = sumAct1Rival(bots.rival1, bots.rival2);
-        const winner     = determineActWinner(yourTotal, rivalTotal);
-        
-        session.acts.act1 = {
-          gameId: score1.gameId,
-          playerScore: score1.normalized || 0,
-          buddyScore: bots.buddy,
-          rivalTotal,
-          yourTotal,
-          winner
-        };
-        session.actWinners.push(winner);
-        updated = true;
+      const gameObj = session.act1Game || pickAct1Game(session.raidSeed);
+      setAct1Game(gameObj);
+
+      // Processing Acts based on scores submitted to Firestore
+      const newActs = { ...session.acts };
+      const newActWinners = [ ...session.actWinners ];
+      let sessionUpdated = false;
+
+      // Ensure user and buddy score objects exist
+      const p1Id = user.userId;
+      const p2Id = buddyObj?.userId;
+
+      const p1Scores = session.scores?.[p1Id] || {};
+      const p2Scores = buddyObj ? (session.scores?.[p2Id] || {}) : {};
+
+      // Calculate Bot buddy if matching a bot
+      const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_');
+      const bots1 = simulateBotAct1Scores(gameObj.id, session.raidSeed);
+      const bots2 = simulateBotAct2Scores(session.raidSeed);
+      const baseBots3 = simulateBotAct3Scores(session.raidSeed);
+
+      // Act 1
+      if (p1Scores.act1 && !newActs.act1) {
+        const p1ScoreVal = p1Scores.act1.normalized || 0;
+        const buddyScoreVal = isBotBuddy ? bots1.buddy : (p2Scores.act1?.normalized || 0);
+
+        // Wait until buddy submits score too if human
+        if (isBotBuddy || p2Scores.act1) {
+          const yourTotal = sumAct1Duo(p1ScoreVal, buddyScoreVal);
+          const rivalTotal = sumAct1Rival(bots1.rival1, bots1.rival2);
+          const winner = determineActWinner(yourTotal, rivalTotal);
+
+          newActs.act1 = {
+            gameId: gameObj.id,
+            playerScore: p1ScoreVal,
+            buddyScore: buddyScoreVal,
+            rivalTotal,
+            yourTotal,
+            winner
+          };
+          newActWinners[0] = winner;
+          sessionUpdated = true;
+        }
       }
 
-      // 2. Process Act 2 score if done
-      if (session.scores.act2 && !session.acts.act2) {
-        const score2 = session.scores.act2;
-        const bots = simulateBotAct2Scores(session.raidSeed);
-        const playerWins = score2.wins || 0;
-        const yourTotal = playerWins + bots.buddyWins;
-        const rivalTotal = bots.rivalWins;
-        const winner = determineActWinner(yourTotal, rivalTotal);
-        
-        session.acts.act2 = {
-          winner,
-          playerRoundWins: playerWins,
-          buddyRoundWins: bots.buddyWins,
-          rivalBotWins: bots.rivalWins,
-          yourTotal,
-          rivalTotal
-        };
-        session.actWinners.push(winner);
-        updated = true;
+      // Act 2
+      if (p1Scores.act2 && newActs.act1 && !newActs.act2) {
+        const p1Wins = p1Scores.act2.wins || 0;
+        const buddyWins = isBotBuddy ? bots2.buddyWins : (p2Scores.act2?.wins || 0);
+
+        if (isBotBuddy || p2Scores.act2) {
+          const yourTotal = p1Wins + buddyWins;
+          const rivalTotal = bots2.rivalWins;
+          const winner = determineActWinner(yourTotal, rivalTotal);
+
+          newActs.act2 = {
+            winner,
+            playerRoundWins: p1Wins,
+            buddyRoundWins: buddyWins,
+            rivalBotWins: rivalTotal,
+            yourTotal,
+            rivalTotal
+          };
+          newActWinners[1] = winner;
+          sessionUpdated = true;
+        }
       }
 
-      // 3. Process Act 3 score if done
-      if (session.scores.act3 && !session.acts.act3) {
-        const score3 = session.scores.act3;
-        const baseBots = simulateBotAct3Scores(session.raidSeed);
-        
-        const duo1 = [user, session.match?.buddy].filter(Boolean).sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
-        const duo2 = [...(session.match?.rivals || [])].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
+      // Act 3
+      if (p1Scores.act3 && newActs.act2 && !newActs.act3) {
+        const p1Goals = p1Scores.act3.goals || 0;
+
+        const duo1 = [user, buddyObj].filter(Boolean).sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
+        const duo2 = [...(session.rivals || [])].sort((a, b) => (b.totalXP || 0) - (a.totalXP || 0));
         const isUserHigher = user?.userId === duo1[0]?.userId;
-        const buddy = duo1.find(p => p.userId !== user?.userId) || session.match?.buddy;
+        const buddy = duo1.find(p => p.userId !== user?.userId) || buddyObj;
         const buddyOpponent = isUserHigher ? duo2[0] : duo2[1];
-        
-        const buddyXpDiff = (buddy?.totalXP || 0) - (buddyOpponent?.totalXP || 0);
+
+        const buddyXpDiff = buddy ? ((buddy.totalXP || 0) - (buddyOpponent?.totalXP || 0)) : 0;
         const buddyGoalsOffset = Math.round(buddyXpDiff / 2500);
-        const buddyGoals = Math.max(0, Math.min(5, baseBots.buddyGoals + buddyGoalsOffset));
-        
-        const playerGoals = score3.goals || 0;
-        const yourTotal = playerGoals + buddyGoals;
-        const rivalTotal = baseBots.rivalGoals;
-        const winner = determineActWinner(yourTotal, rivalTotal);
-        
-        session.acts.act3 = {
-          winner,
-          playerGoals,
-          playerSaves: 5 - playerGoals,
-          buddyGoals,
-          rivalBotGoals: rivalTotal,
-          yourTotal,
-          rivalTotal
-        };
-        session.actWinners.push(winner);
-        updated = true;
+        const buddyGoals = isBotBuddy
+          ? Math.max(0, Math.min(5, baseBots3.buddyGoals + buddyGoalsOffset))
+          : (p2Scores.act3?.goals || 0);
+
+        if (isBotBuddy || p2Scores.act3) {
+          const yourTotal = p1Goals + buddyGoals;
+          const rivalTotal = baseBots3.rivalGoals;
+          const winner = determineActWinner(yourTotal, rivalTotal);
+
+          newActs.act3 = {
+            winner,
+            playerGoals: p1Goals,
+            playerSaves: 5 - p1Goals,
+            buddyGoals,
+            rivalBotGoals: rivalTotal,
+            yourTotal,
+            rivalTotal
+          };
+          newActWinners[2] = winner;
+          sessionUpdated = true;
+        }
       }
 
-      if (updated) {
-        localStorage.setItem('active_raid_session', JSON.stringify(session));
+      if (sessionUpdated) {
+        let nextActVal = session.currentAct;
+        if (newActs.act3) nextActVal = 4;
+        else if (newActs.act2) nextActVal = 3;
+        else if (newActs.act1) nextActVal = 2;
+
+        await updateDoc(sessionRef, {
+          acts: newActs,
+          actWinners: newActWinners,
+          currentAct: nextActVal
+        });
       }
 
-      setActs(session.acts);
-      setActWinners(session.actWinners);
+      setActs(newActs);
+      setActWinners(newActWinners);
 
-      // Determine phase or redirect
+      // UI Phase transitions
       if (session.currentAct === 1) {
         setPhase('matched');
-        timer = setTimeout(() => {
-          navigate(session.act1Game?.route || '/games/whoareya');
-        }, 1500);
+        initialRedirectTimer = setTimeout(() => {
+          navigate(gameObj.route);
+        }, 2200);
       } else if (session.currentAct === 2) {
         setPhase('act2_interstitial');
       } else if (session.currentAct === 3) {
         setPhase('act3_interstitial');
       } else if (session.currentAct === 4) {
-        const outcomes = computeRaidOutcome(session.actWinners);
+        const outcomes = computeRaidOutcome(newActWinners);
         setOutcome(outcomes);
         setPhase('results');
-        finalizeRaidFromState(session.acts, outcomes, session.match, session.raidType);
-        localStorage.removeItem('active_raid_session');
+        
+        // Finalize locally/globally
+        await finalizeRaidFromState(newActs, outcomes, currentMatch, session.raidType);
+        
+        // Mark session as completed
+        await updateDoc(sessionRef, { status: 'completed' });
+        localStorage.removeItem('active_game_session_id');
       }
-    } catch (e) {
-      console.warn('[Raid] Error restoring session:', e);
-      localStorage.removeItem('active_raid_session');
-      setPhase('lobby');
-    }
+    });
+
     return () => {
-      if (timer) clearTimeout(timer);
+      unsubscribe();
+      if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
     };
-  }, [user, finalizeRaidFromState, navigate]);
+  }, [activeSessionId, user, navigate, finalizeRaidFromState]);
 
   useEffect(() => { injectFonts(); }, []);
 
   const startSearch = useCallback(async (type) => {
     if (!user) return;
-    const newSeed = Date.now();
-    setRaidSeed(newSeed);
     setRaidType(type);
     setPhase('searching');
     setSearchRemaining(BUDDY_TIMEOUT_MS);
@@ -265,33 +301,46 @@ export default function Raid() {
       setSearchRemaining(remaining);
     });
 
-    const act1GameObj = pickAct1Game(newSeed);
-    setMatch(result);
-    setAct1Game(act1GameObj);
-    setPhase('matched');
+    // Check if result returned a session ID (for human matching)
+    if (result.sessionId) {
+      localStorage.setItem('active_game_session_id', result.sessionId);
+      localStorage.setItem('active_game_session_seed', String(result.matchedAt || Date.now()));
+      setActiveSessionId(result.sessionId);
+    } else {
+      // Local Bot session creation (fallback / training)
+      const mockSessionId = `bot_raid_${Date.now()}`;
+      const seedVal = result.matchedAt || Date.now();
+      const act1GameObj = pickAct1Game(seedVal);
+      
+      const sessionRef = doc(db, 'gameSessions', mockSessionId);
+      await setDoc(sessionRef, {
+        sessionId: mockSessionId,
+        sessionType: 'raid',
+        raidType: type,
+        raidSeed: seedVal,
+        players: [
+          {
+            userId: user.userId,
+            nickname: user.nickname,
+            flag: user.flag || '',
+            homeCountry: user.homeCountry,
+            totalXP: user.totalXP || 0,
+          }
+        ],
+        rivals: result.rivals || [],
+        act1Game: act1GameObj,
+        currentAct: 1,
+        scores: {},
+        acts: {},
+        actWinners: [],
+        status: 'active',
+      });
 
-    const session = {
-      active: true,
-      createdAt: Date.now(),
-      raidType: type,
-      raidSeed: newSeed,
-      match: result,
-      currentAct: 1,
-      act1Game: act1GameObj,
-      scores: {
-        act1: null,
-        act2: null,
-        act3: null
-      },
-      acts: {},
-      actWinners: []
-    };
-    localStorage.setItem('active_raid_session', JSON.stringify(session));
-
-    setTimeout(() => {
-      navigate(act1GameObj.route);
-    }, 2200);
-  }, [user, navigate]);
+      localStorage.setItem('active_game_session_id', mockSessionId);
+      localStorage.setItem('active_game_session_seed', String(seedVal));
+      setActiveSessionId(mockSessionId);
+    }
+  }, [user]);
 
   if (!user) {
     return (

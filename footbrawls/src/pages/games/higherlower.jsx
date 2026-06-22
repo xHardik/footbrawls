@@ -35,15 +35,10 @@ function getAttrForRound(roundIndex) {
 
 function getSequencedPlayer(players, roundOffset) {
   let seed = getDailySeed();
-  try {
-    const sessionStr = localStorage.getItem('active_raid_session');
-    if (sessionStr) {
-      const session = JSON.parse(sessionStr);
-      if (session && session.active) {
-        seed = session.raidSeed;
-      }
-    }
-  } catch (e) {}
+  const sessionSeed = localStorage.getItem('active_game_session_seed');
+  if (sessionSeed) {
+    seed = parseInt(sessionSeed);
+  }
   const baseOffset = 67; // GAME_OFFSETS.higherLower
   return players[(seed + baseOffset + roundOffset) % players.length];
 }
@@ -317,17 +312,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
   // Load saved state
   useEffect(() => {
-    let raid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          raid = true;
-        }
-      }
-    } catch (e) {}
-
+    let raid = !!localStorage.getItem('active_game_session_id');
     setIsRaid(raid);
 
     if (raid) {

@@ -71,6 +71,8 @@ async function tryFirestoreMatch(user, raidType) {
       if (myData.status === 'matched' && myData.matchedWith) {
         const buddy = myData.matchedWith;
         const seed = myData.matchedSeed || Date.now();
+        const sessionId = myData.sessionId || `raid_session_${seed}`;
+
         const { rivals } = createBotRivalDuo(user, seed);
 
         // Delete our queue document now that we've retrieved the buddy
@@ -83,6 +85,7 @@ async function tryFirestoreMatch(user, raidType) {
           rivalDuo:   rivals,
           isBotMatch: false,
           matchedAt:  Date.now(),
+          sessionId,
         };
       }
     } else {
@@ -114,7 +117,8 @@ async function tryFirestoreMatch(user, raidType) {
 
     // 3. Atomically match with the candidate using a transaction
     const matchedSeed = Date.now();
-    const buddy = await runTransaction(db, async (transaction) => {
+    const sessionId = `raid_${matchedSeed}`;
+    const resultBuddy = await runTransaction(db, async (transaction) => {
       const candRef = doc(db, 'raidQueue', candidate.id);
       const candSnap = await transaction.get(candRef);
       if (!candSnap.exists()) return null;
@@ -137,6 +141,7 @@ async function tryFirestoreMatch(user, raidType) {
           isBot:       false,
         },
         matchedSeed,
+        sessionId,
       });
 
       // Update our own status to matched with candidate
@@ -152,24 +157,52 @@ async function tryFirestoreMatch(user, raidType) {
         status: 'matched',
         matchedWith: buddyData,
         matchedSeed,
+        sessionId,
       });
 
       return buddyData;
     });
 
-    if (buddy) {
+    if (resultBuddy) {
       const { rivals } = createBotRivalDuo(user, matchedSeed);
+
+      // Create the shared raid session in gameSessions collection
+      const sessionRef = doc(db, 'gameSessions', sessionId);
+      await setDoc(sessionRef, {
+        sessionId,
+        sessionType: 'raid',
+        raidType,
+        raidSeed: matchedSeed,
+        players: [
+          {
+            userId: user.userId,
+            nickname: user.nickname,
+            flag: user.flag || '',
+            homeCountry: user.homeCountry,
+            totalXP: user.totalXP || 0,
+          },
+          resultBuddy
+        ],
+        rivals,
+        currentAct: 1,
+        scores: {},
+        acts: {},
+        actWinners: [],
+        status: 'active',
+        createdAt: serverTimestamp(),
+      });
 
       // Clean up our own queue document
       try { await deleteDoc(queueRef); } catch (e) {}
 
       return {
-        buddy,
+        buddy: resultBuddy,
         rivals,
-        yourDuo:    [user, buddy],
+        yourDuo:    [user, resultBuddy],
         rivalDuo:   rivals,
         isBotMatch: false,
         matchedAt:  Date.now(),
+        sessionId,
       };
     }
 

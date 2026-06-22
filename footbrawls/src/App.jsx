@@ -19,6 +19,7 @@ import AboutUs from './pages/AboutUs';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import ContactUs from './pages/ContactUs';
+import Ranks from './pages/Ranks';
 
 function RequireUser({ children }) {
   const user = getUser();
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/" element={<RequireUser><Home /></RequireUser>} />
         <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
         <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
+        <Route path="/ranks" element={<RequireUser><Layout><Ranks /></Layout></RequireUser>} />
         <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
         <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
         <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />

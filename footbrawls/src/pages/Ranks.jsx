@@ -29,6 +29,56 @@ function getTier(totalXP = 0) {
   return [...TIERS].reverse().find(t => totalXP >= t.min) || TIERS[0];
 }
 
+const CSS = `
+.rk-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  transition: background 0.2s;
+}
+.rk-name {
+  flex: 1;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rk-tier {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+.rk-xp {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  color: #F7C344;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+  margin-left: 8px;
+}
+@media (max-width: 480px) {
+  .rk-row {
+    padding: 10px 10px !important;
+    gap: 6px !important;
+  }
+  .rk-tier {
+    display: none !important;
+  }
+  .rk-name {
+    font-size: 0.78rem !important;
+  }
+  .rk-xp {
+    font-size: 0.95rem !important;
+    margin-left: 4px !important;
+  }
+}
+`;
+
 export default function Ranks() {
   const [tab, setTab] = useState("individuals"); // "individuals" | "guilds"
   const [users, setUsers] = useState([]);
@@ -36,26 +86,39 @@ export default function Ranks() {
   const [loading, setLoading] = useState(true);
   const currentUser = getUser();
 
+  // Inject CSS styles
+  useEffect(() => {
+    if (!document.getElementById("rk-styles")) {
+      const s = document.createElement("style");
+      s.id = "rk-styles";
+      s.textContent = CSS;
+      document.head.appendChild(s);
+    }
+  }, []);
+
   // Load Leaderboards
   useEffect(() => {
     setLoading(true);
     
-    // 1. Query Top 50 Users
+    // 1. Query Top Users (fetch extra documents to filter out bots and keep exactly top 50 human users)
     const usersQuery = query(
       collection(db, "users"),
       orderBy("totalXP", "desc"),
-      limit(50)
+      limit(250)
     );
     
     const unsubUsers = onSnapshot(usersQuery, (snap) => {
-      const userList = snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const userList = snap.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .filter(u => u.isBot !== true)
+        .slice(0, 50);
       setUsers(userList);
     });
 
-    // 2. Query Guilds (all of them, then sort & slice top 50 in JS to avoid index requirement)
+    // 2. Query Guilds (all of them, then sort, filter, & slice top 50 in JS to avoid index requirement)
     const guildsQuery = query(collection(db, "guilds"));
     const unsubGuilds = onSnapshot(guildsQuery, (snap) => {
       const guildList = snap.docs.map(doc => ({
@@ -88,7 +151,7 @@ export default function Ranks() {
       background: C.bg,
       color: C.text,
       minHeight: "100vh",
-      padding: "24px max(16px, 4vw) 100px",
+      padding: "24px max(12px, 4vw) 100px",
       boxSizing: "border-box",
     }}>
       {/* Decorative Background Glows */}
@@ -185,19 +248,15 @@ export default function Ranks() {
               return (
                 <div
                   key={m.userId || i}
+                  className="rk-row"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 18px",
                     borderBottom: i < users.length - 1 ? `1px solid ${C.border}` : "none",
                     background: isMe ? "rgba(61,214,140,0.06)" : "transparent",
-                    transition: "background 0.2s"
                   }}
                 >
                   <span style={{
                     fontSize: i < 3 ? 20 : 13,
-                    width: 28,
+                    width: 24,
                     textAlign: "center",
                     flexShrink: 0,
                     fontFamily: "'Bebas Neue', sans-serif",
@@ -207,39 +266,26 @@ export default function Ranks() {
                     {i < 3 ? medals[i] : i + 1}
                   </span>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{m.flag || "🏳️"}</span>
-                  <span style={{
-                    flex: 1,
-                    fontSize: "0.85rem",
-                    fontWeight: isMe ? 800 : 600,
-                    color: isMe ? C.green : C.text,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
+                  <span 
+                    className="rk-name"
+                    style={{
+                      fontWeight: isMe ? 800 : 600,
+                      color: isMe ? C.green : C.text,
+                    }}
+                  >
                     {m.nickname} {isMe && "(you)"}
                   </span>
-                  <span style={{
-                    fontSize: "0.58rem",
-                    fontWeight: 700,
-                    padding: "2px 8px",
-                    borderRadius: 99,
-                    color: tier.color,
-                    background: `${tier.color}15`,
-                    border: `1px solid ${tier.color}35`,
-                    fontFamily: "'Space Mono', monospace",
-                    flexShrink: 0,
-                    letterSpacing: 0.5
-                  }}>
+                  <span 
+                    className="rk-tier"
+                    style={{
+                      color: tier.color,
+                      background: `${tier.color}15`,
+                      border: `1px solid ${tier.color}35`,
+                    }}
+                  >
                     {tier.label}
                   </span>
-                  <span style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: "1.15rem",
-                    color: C.accent,
-                    flexShrink: 0,
-                    letterSpacing: 1,
-                    marginLeft: 8
-                  }}>
+                  <span className="rk-xp">
                     {m.totalXP ?? 0} XP
                   </span>
                 </div>
@@ -259,19 +305,15 @@ export default function Ranks() {
               return (
                 <div
                   key={g.code || i}
+                  className="rk-row"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "14px 18px",
                     borderBottom: i < guilds.length - 1 ? `1px solid ${C.border}` : "none",
                     background: isMyGuild ? "rgba(247,195,68,0.06)" : "transparent",
-                    transition: "background 0.2s"
                   }}
                 >
                   <span style={{
                     fontSize: i < 3 ? 20 : 13,
-                    width: 28,
+                    width: 24,
                     textAlign: "center",
                     flexShrink: 0,
                     fontFamily: "'Bebas Neue', sans-serif",
@@ -281,42 +323,29 @@ export default function Ranks() {
                     {i < 3 ? medals[i] : i + 1}
                   </span>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{g.flag || "🏳️"}</span>
-                  <span style={{
-                    flex: 1,
-                    fontSize: "0.85rem",
-                    fontWeight: isMyGuild ? 800 : 600,
-                    color: isMyGuild ? C.accent : C.text,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  }}>
+                  <span 
+                    className="rk-name"
+                    style={{
+                      fontWeight: isMyGuild ? 800 : 600,
+                      color: isMyGuild ? C.accent : C.text,
+                    }}
+                  >
                     {g.name} {isMyGuild && "(your guild)"}
                   </span>
-                  <span style={{
-                    fontSize: "0.58rem",
-                    fontWeight: 700,
-                    padding: "2px 8px",
-                    borderRadius: 99,
-                    color: lvlConfig.color,
-                    background: `${lvlConfig.color}15`,
-                    border: `1px solid ${lvlConfig.color}35`,
-                    fontFamily: "'Space Mono', monospace",
-                    flexShrink: 0,
-                    letterSpacing: 0.5,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4
-                  }}>
+                  <span 
+                    className="rk-tier"
+                    style={{
+                      color: lvlConfig.color,
+                      background: `${lvlConfig.color}15`,
+                      border: `1px solid ${lvlConfig.color}35`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4
+                    }}
+                  >
                     {lvlConfig.emoji} {lvlConfig.name.toUpperCase()}
                   </span>
-                  <span style={{
-                    fontFamily: "'Bebas Neue', sans-serif",
-                    fontSize: "1.15rem",
-                    color: C.accent,
-                    flexShrink: 0,
-                    letterSpacing: 1,
-                    marginLeft: 8
-                  }}>
+                  <span className="rk-xp">
                     LVL {lvl} · {g.castleHP ?? 0} HP
                   </span>
                 </div>

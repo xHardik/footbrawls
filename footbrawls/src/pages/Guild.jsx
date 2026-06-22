@@ -555,6 +555,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
       snap => {
         const sorted = snap.docs
           .map(d => ({id:d.id,...d.data()}))
+          .filter(u => u.isBot !== true)
           .sort((a,b) => (b.totalXP || 0) - (a.totalXP || 0));
         setOverallLeaderboard(sorted);
       },

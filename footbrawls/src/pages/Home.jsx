@@ -1634,7 +1634,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
   const items=[
     {id:"home",    label:"Games",  IconC:Icon.Ball,    route:"/"},
     {id:"guild",   label:"Guild",  IconC:Icon.Shield,  route:"/guild"},
-    {id:"raids",   label:"Raids",  IconC:Icon.Swords},
+    {id:"raids",   label:"Raids",  IconC:Icon.Swords,  route:"/raid"},
     {id:"ranks",   label:"Ranks",  IconC:Icon.Rank},
     {id:"profile", label:"Me",     IconC:Icon.Person},
   ];

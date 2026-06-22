@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, where, limit, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, limit, setDoc, deleteDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
 import { COUNTRIES } from './countries';
 import { seededRandom } from './dailySeed';
@@ -63,17 +63,43 @@ export function createBotRivalDuo(user, seed = Date.now()) {
 async function tryFirestoreMatch(user, raidType) {
   try {
     const queueRef = doc(db, 'raidQueue', user.userId);
-    await setDoc(queueRef, {
-      userId:       user.userId,
-      nickname:     user.nickname,
-      flag:         user.flag,
-      homeCountry:  user.homeCountry,
-      totalXP:      user.totalXP || 0,
-      raidType,
-      waitingSince: serverTimestamp(),
-      status:       'waiting',
-    });
+    
+    // 1. Check if our own document is already matched by someone else
+    const myDocSnap = await getDoc(queueRef);
+    if (myDocSnap.exists()) {
+      const myData = myDocSnap.data();
+      if (myData.status === 'matched' && myData.matchedWith) {
+        const buddy = myData.matchedWith;
+        const seed = myData.matchedSeed || Date.now();
+        const { rivals } = createBotRivalDuo(user, seed);
 
+        // Delete our queue document now that we've retrieved the buddy
+        try { await deleteDoc(queueRef); } catch (e) {}
+
+        return {
+          buddy,
+          rivals,
+          yourDuo:    [user, buddy],
+          rivalDuo:   rivals,
+          isBotMatch: false,
+          matchedAt:  Date.now(),
+        };
+      }
+    } else {
+      // Create initial waiting document
+      await setDoc(queueRef, {
+        userId:       user.userId,
+        nickname:     user.nickname,
+        flag:         user.flag || '',
+        homeCountry:  user.homeCountry,
+        totalXP:      user.totalXP || 0,
+        raidType,
+        waitingSince: serverTimestamp(),
+        status:       'waiting',
+      });
+    }
+
+    // 2. Query for other waiting candidates in our guild
     const q = query(
       collection(db, 'raidQueue'),
       where('status', '==', 'waiting'),
@@ -86,32 +112,70 @@ async function tryFirestoreMatch(user, raidType) {
 
     if (!candidate) return null;
 
-    const buddyData = candidate.data();
-    await deleteDoc(queueRef);
-    await deleteDoc(doc(db, 'raidQueue', candidate.id));
+    // 3. Atomically match with the candidate using a transaction
+    const matchedSeed = Date.now();
+    const buddy = await runTransaction(db, async (transaction) => {
+      const candRef = doc(db, 'raidQueue', candidate.id);
+      const candSnap = await transaction.get(candRef);
+      if (!candSnap.exists()) return null;
 
-    const buddy = {
-      userId:      buddyData.userId,
-      nickname:    buddyData.nickname,
-      flag:        buddyData.flag,
-      homeCountry: buddyData.homeCountry,
-      totalXP:     buddyData.totalXP || 1000,
-      isBot:       false,
-    };
+      const candData = candSnap.data();
+      if (candData.status !== 'waiting') return null;
 
-    const seed = Date.now();
-    const { rivals } = createBotRivalDuo(user, seed);
+      const mySnap = await transaction.get(queueRef);
+      if (!mySnap.exists()) return null;
 
-    return {
-      buddy,
-      rivals,
-      yourDuo:    [user, buddy],
-      rivalDuo:   rivals,
-      isBotMatch: false,
-      matchedAt:  Date.now(),
-    };
+      // Update candidate status to matched with us
+      transaction.update(candRef, {
+        status: 'matched',
+        matchedWith: {
+          userId:      user.userId,
+          nickname:    user.nickname,
+          flag:        user.flag || '',
+          homeCountry: user.homeCountry,
+          totalXP:     user.totalXP || 0,
+          isBot:       false,
+        },
+        matchedSeed,
+      });
+
+      // Update our own status to matched with candidate
+      const buddyData = {
+        userId:      candData.userId,
+        nickname:    candData.nickname,
+        flag:        candData.flag || '',
+        homeCountry: candData.homeCountry,
+        totalXP:     candData.totalXP || 0,
+        isBot:       false,
+      };
+      transaction.update(queueRef, {
+        status: 'matched',
+        matchedWith: buddyData,
+        matchedSeed,
+      });
+
+      return buddyData;
+    });
+
+    if (buddy) {
+      const { rivals } = createBotRivalDuo(user, matchedSeed);
+
+      // Clean up our own queue document
+      try { await deleteDoc(queueRef); } catch (e) {}
+
+      return {
+        buddy,
+        rivals,
+        yourDuo:    [user, buddy],
+        rivalDuo:   rivals,
+        isBotMatch: false,
+        matchedAt:  Date.now(),
+      };
+    }
+
+    return null;
   } catch (err) {
-    console.warn('[matchmaking] Firestore queue unavailable:', err.message);
+    console.warn('[matchmaking] Firestore queue match failed:', err.message);
     return null;
   }
 }

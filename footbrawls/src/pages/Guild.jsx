@@ -468,7 +468,7 @@ function BottomNav({ navigate, toast, setToast }) {
     { id:"home",  label:"Games", IconC:Icon.Ball,   route:"/"      },
     { id:"guild", label:"Guild", IconC:Icon.Shield, route:"/guild" },
     { id:"raids", label:"Raids", IconC:Icon.Swords, route:"/raid"  },
-    { id:"ranks", label:"Ranks", IconC:Icon.Rank,   route:null     },
+    { id:"ranks", label:"Ranks", IconC:Icon.Rank,   route:"/ranks" },
     { id:"me",    label:"Me",    IconC:Icon.Person, route:null     },
   ];
   function handleClick(item) {

@@ -72,6 +72,8 @@ const TEAM_NAME_TO_CODE = {
   'Brazil': 'BRA',
   'Canada': 'CAN',
   'Cape Verde': 'CPV',
+  'Cape Verde Islands': 'CPV',
+  'Cape Verde Republic': 'CPV',
   'Colombia': 'COL',
   'Croatia': 'CRO',
   'Curaçao': 'CUW',

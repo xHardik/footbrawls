@@ -25,7 +25,7 @@ const TEAM_NAME_TO_CODE = {
   'Wales': 'WAL', 'Hungary': 'HUN', 'Costa Rica': 'CRC', 'Honduras': 'HON', 'Jamaica': 'JAM',
   'India': 'IND', 'Algeria': 'ALG', 'Argentina': 'ARG', 'Australia': 'AUS', 'Austria': 'AUT',
   'Belgium': 'BEL', 'Bosnia and Herzegovina': 'BIH', 'Brazil': 'BRA', 'Canada': 'CAN',
-  'Cape Verde': 'CPV', 'Colombia': 'COL', 'Croatia': 'CRO', 'Curaçao': 'CUW',
+  'Cape Verde': 'CPV', 'Cape Verde Islands': 'CPV', 'Cape Verde Republic': 'CPV', 'Colombia': 'COL', 'Croatia': 'CRO', 'Curaçao': 'CUW',
   'DR Congo': 'COD', 'Democratic Republic of the Congo': 'COD', 'Ecuador': 'ECU', 'Egypt': 'EGY', 'England': 'ENG', 'France': 'FRA',
   'Germany': 'GER', 'Ghana': 'GHA', 'Haiti': 'HAI', 'Iran': 'IRN', 'Iraq': 'IRQ',
   'Ivory Coast': 'CIV', 'Japan': 'JPN', 'Jordan': 'JOR', 'Mexico': 'MEX', 'Morocco': 'MAR',

@@ -129,6 +129,11 @@ async function tryFirestoreMatch(user, raidType) {
 
     if (!candidate) return null;
 
+    // Deterministic match initiator conflict resolution (avoid double session creation)
+    if (user.userId > candidate.id) {
+      return null;
+    }
+
     // 3. Atomically match with the candidate using a transaction
     const matchedSeed = Date.now();
     const sessionId = `raid_${matchedSeed}`;

@@ -272,20 +272,24 @@ export default function Raid() {
         // UI Phase transitions
         if (session.currentAct === 1) {
           if (!!session.scores?.[user.userId]?.act1) {
+            if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
             setPhase('waiting_act1');
           } else {
             setPhase('matched');
             console.log('[Raid] Matched! Game route:', gameObj.route, 'Session ID:', activeSessionId);
+            if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
             initialRedirectTimer = setTimeout(() => {
               console.log('[Raid] Navigating to game route:', gameObj.route);
               navigate(gameObj.route);
             }, 2200);
           }
-        } else if (session.currentAct === 2) {
-          setPhase('act2_interstitial');
-        } else if (session.currentAct === 3) {
-          setPhase('act3_interstitial');
-        } else if (session.currentAct === 4) {
+        } else {
+          if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
+          if (session.currentAct === 2) {
+            setPhase('act2_interstitial');
+          } else if (session.currentAct === 3) {
+            setPhase('act3_interstitial');
+          } else if (session.currentAct === 4) {
           const outcomes = computeRaidOutcome(newActWinners);
           setOutcome(outcomes);
           setPhase('results');

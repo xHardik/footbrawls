@@ -80,65 +80,40 @@ export async function awardXP(userId, source, opts = {}) {
           let normalized = rawScore;
 
           if (session.sessionType === 'raid') {
-            const scores = session.scores || {};
-            const userScoreObj = scores[userId] || {};
-
             if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
               normalized = normScore(source, opts);
-              await setDoc(sessionRef, {
-                scores: {
-                  ...scores,
-                  [userId]: {
-                    ...userScoreObj,
-                    act1: {
-                      gameId: source,
-                      rawScore,
-                      normalized
-                    }
-                  }
+              await updateDoc(sessionRef, {
+                [`scores.${userId}.act1`]: {
+                  gameId: source,
+                  rawScore,
+                  normalized
                 }
-              }, { merge: true });
+              });
             } else if (source === 'dribble_correct') {
               const wins = Math.min(5, Math.max(0, Math.round(rawScore / 5)));
-              await setDoc(sessionRef, {
-                scores: {
-                  ...scores,
-                  [userId]: {
-                    ...userScoreObj,
-                    act2: {
-                      gameId: source,
-                      rawScore,
-                      wins
-                    }
-                  }
+              await updateDoc(sessionRef, {
+                [`scores.${userId}.act2`]: {
+                  gameId: source,
+                  rawScore,
+                  wins
                 }
-              }, { merge: true });
+              });
             } else if (source === 'penaltyNerve_all5') {
               const goals = Math.min(5, Math.max(0, Math.round(rawScore / 5)));
-              await setDoc(sessionRef, {
-                scores: {
-                  ...scores,
-                  [userId]: {
-                    ...userScoreObj,
-                    act3: {
-                      gameId: source,
-                      rawScore,
-                      goals
-                    }
-                  }
+              await updateDoc(sessionRef, {
+                [`scores.${userId}.act3`]: {
+                  gameId: source,
+                  rawScore,
+                  goals
                 }
-              }, { merge: true });
+              });
             }
             window.location.href = '/raid';
             return { xpAwarded: 0, raidIntercepted: true };
           } else if (session.sessionType === 'vs_friends') {
-            const scores = session.scores || {};
-            await setDoc(sessionRef, {
-              scores: {
-                ...scores,
-                [userId]: rawScore
-              }
-            }, { merge: true });
+            await updateDoc(sessionRef, {
+              [`scores.${userId}`]: rawScore
+            });
             window.location.href = '/vs-friends';
             return { xpAwarded: 0, raidIntercepted: true };
           }

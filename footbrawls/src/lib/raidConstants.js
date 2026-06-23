@@ -1,4 +1,4 @@
-export const BUDDY_TIMEOUT_MS = 45_000;
+export const BUDDY_TIMEOUT_MS = 15_000;
 
 export const RAID_TYPES = {
   normal:    { id: 'normal',    label: 'Normal Match',    winXP: 100, lossXP: 30, castleDamagePct: 0.20 },

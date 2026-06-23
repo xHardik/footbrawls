@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { COUNTRIES } from './countries';
 import { seededRandom } from './dailySeed';
 import { BUDDY_TIMEOUT_MS } from './raidConstants';
+import { pickAct1Game } from './raidEngine';
 
 const REALISTIC_BOT_NAMES = [
   'GoalHunter_9', 'PitchWizard_88', 'TikiTakaMaster', 'BacklineBoss_4', 'GoldenBoot_22',
@@ -131,6 +132,9 @@ async function tryFirestoreMatch(user, raidType) {
     // 3. Atomically match with the candidate using a transaction
     const matchedSeed = Date.now();
     const sessionId = `raid_${matchedSeed}`;
+    const { rivals } = createBotRivalDuo(user, matchedSeed);
+    const act1GameObj = pickAct1Game(matchedSeed);
+
     const resultBuddy = await runTransaction(db, async (transaction) => {
       const candRef = doc(db, 'raidQueue', candidate.id);
       const candSnap = await transaction.get(candRef);
@@ -173,15 +177,9 @@ async function tryFirestoreMatch(user, raidType) {
         sessionId,
       });
 
-      return buddyData;
-    });
-
-    if (resultBuddy) {
-      const { rivals } = createBotRivalDuo(user, matchedSeed);
-
-      // Create the shared raid session in gameSessions collection
+      // Create the shared raid session in gameSessions collection atomically
       const sessionRef = doc(db, 'gameSessions', sessionId);
-      await setDoc(sessionRef, {
+      transaction.set(sessionRef, {
         sessionId,
         sessionType: 'raid',
         raidType,
@@ -194,9 +192,10 @@ async function tryFirestoreMatch(user, raidType) {
             homeCountry: user.homeCountry,
             totalXP: user.totalXP || 0,
           },
-          resultBuddy
+          buddyData
         ],
         rivals,
+        act1Game: act1GameObj,
         currentAct: 1,
         scores: {},
         acts: {},
@@ -205,6 +204,10 @@ async function tryFirestoreMatch(user, raidType) {
         createdAt: serverTimestamp(),
       });
 
+      return buddyData;
+    });
+
+    if (resultBuddy) {
       // Clean up our own queue document
       try { await deleteDoc(queueRef); } catch (e) {}
 

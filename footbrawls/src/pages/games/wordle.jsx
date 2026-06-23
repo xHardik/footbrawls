@@ -723,16 +723,12 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
   const target = useMemo(() => {
     if (!players.length) return null;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          const idx = (session.raidSeed + 101) % players.length;
-          return players[idx];
-        }
-      }
-    } catch (e) {}
+    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    const raid = !!localStorage.getItem('active_game_session_id');
+    if (raid && sessionSeed) {
+      const idx = (parseInt(sessionSeed) + 101) % players.length;
+      return players[idx];
+    }
     return getDailyPlayer(players, "wordle", puzzleDate);
   }, [players, puzzleDate]);
   const targetName = (target?.name || "").toUpperCase().replace(/\s.*/, "");
@@ -778,17 +774,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   useEffect(() => {
     if (!targetName) return;
 
-    let raid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          raid = true;
-        }
-      }
-    } catch (e) {}
-
+    let raid = !!localStorage.getItem('active_game_session_id');
     setIsRaid(raid);
 
     if (raid) {

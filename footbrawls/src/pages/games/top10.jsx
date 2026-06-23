@@ -515,15 +515,10 @@ export default function Top10Guess() {
 
   const activeQuestion = useMemo(() => {
     let seed = getDailySeed(puzzleDate);
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          seed = session.raidSeed;
-        }
-      }
-    } catch (e) {}
+    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    if (sessionSeed) {
+      seed = parseInt(sessionSeed);
+    }
     const offset = 199;
     const idx = (seed + offset) % TOP10_QUESTIONS.length;
     return TOP10_QUESTIONS[idx];
@@ -544,18 +539,8 @@ export default function Top10Guess() {
     }));
   }
 
-  // Load saved state or check history
   useEffect(() => {
-    let isRaid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          isRaid = true;
-        }
-      }
-    } catch (e) {}
+    let isRaid = !!localStorage.getItem('active_game_session_id');
 
     setIsRaid(isRaid);
 

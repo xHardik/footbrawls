@@ -285,6 +285,12 @@ export default function Layout({ children, hideMobileNav }) {
   useEffect(() => {
     const checkRaid = () => {
       try {
+        const activeId = localStorage.getItem('active_game_session_id');
+        if (!activeId) {
+          setRaidSession(null);
+          return;
+        }
+
         const sessionStr = localStorage.getItem('active_raid_session');
         if (sessionStr) {
           const session = JSON.parse(sessionStr);
@@ -328,7 +334,7 @@ export default function Layout({ children, hideMobileNav }) {
    const hpPercent  = guild ? Math.min(100, (guild.castleHP / guild.castleHPCap) * 100) : 0;
    const xpPercent  = Math.min(100, (userXP / 200) * 100);
  
-   if (raidSession) {
+   if (raidSession && localStorage.getItem('active_game_session_id')) {
      const isTraining = raidSession.raidType === 'training';
      const limit = 60;
      const timerPercent = (secondsLeft / limit) * 100;

@@ -741,22 +741,15 @@ export default function WhoAreYa() {
     }
   }, []);
 
-  // Load state
   useEffect(() => {
     let player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
-    let raid = false;
-    try {
-      const sessionStr = localStorage.getItem('active_raid_session');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (session && session.active) {
-          raid = true;
-          // Pick a random player from ALL players pool using the raid seed
-          const idx = (session.raidSeed + 997) % PLAYERS.length;
-          player = PLAYERS[idx];
-        }
-      }
-    } catch (e) {}
+    let raid = !!localStorage.getItem('active_game_session_id');
+    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    if (raid && sessionSeed) {
+      // Pick a random player from ALL players pool using the raid seed
+      const idx = (parseInt(sessionSeed) + 997) % PLAYERS.length;
+      player = PLAYERS[idx];
+    }
 
     setTarget(player);
     setIsRaid(raid);

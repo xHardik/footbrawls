@@ -731,7 +731,7 @@ export default function PenaltyNerve({ onBack }) {
   }
 
   useEffect(() => {
-    const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_raid_session');
+    const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
     if (isRaid) {
       setAlreadyPlayed(false);
       setPhase('aiming');
@@ -803,7 +803,7 @@ export default function PenaltyNerve({ onBack }) {
         const goals   = newKicks.filter(k => !k.saved).length;
 
         let finalAwarded = 0;
-        const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_raid_session');
+        const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
         if (finalXP > 0 || isRaid) {
           try {
             const user = getUser();

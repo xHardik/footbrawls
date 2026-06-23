@@ -266,7 +266,9 @@ export default function Raid() {
         // UI Phase transitions
         if (session.currentAct === 1) {
           setPhase('matched');
+          console.log('[Raid] Matched! Game route:', gameObj.route, 'Session ID:', activeSessionId);
           initialRedirectTimer = setTimeout(() => {
+            console.log('[Raid] Navigating to game route:', gameObj.route);
             navigate(gameObj.route);
           }, 2200);
         } else if (session.currentAct === 2) {
@@ -526,7 +528,7 @@ export default function Raid() {
             <div style={s.teams}>
               <div style={s.teamBox}>
                 <div style={s.teamHdr}>Your Duo</div>
-                {[user, match.buddy].map(p => (
+                {[user, match.buddy].filter(Boolean).map(p => (
                   <div key={p.userId} style={s.playerRow}>
                     <span>{p.flag}</span>
                     <span>{p.nickname}</span>

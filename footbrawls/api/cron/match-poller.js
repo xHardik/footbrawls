@@ -7,28 +7,27 @@
 // with header: Authorization: Bearer <CRON_SECRET>
 // ============================================================
 
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, cert, getApps, getApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { awardPredictionXP } from '../lib/xpEngine.js';
 
-if (!getApps().length) {
+function getFirebaseApp() {
+  if (getApps().length) return getApp();
+
   let credentialCert;
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    credentialCert = cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT));
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_B64) {
     const jsonStr = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
     credentialCert = cert(JSON.parse(jsonStr));
+  } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    credentialCert = cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT));
   } else {
-    console.warn("No Firebase Service Account credentials found in environment variables.");
+    throw new Error('No Firebase credentials found in environment variables');
   }
 
-  if (credentialCert) {
-    initializeApp({
-      credential: credentialCert,
-    });
-  }
+  return initializeApp({ credential: credentialCert });
 }
-const db = getFirestore();
+
+const db = getFirestore(getFirebaseApp());
 
 const API_FOOTBALL_KEY  = process.env.API_FOOTBALL_KEY;
 const WC_2026_LEAGUE_ID = 1; // ← update with real FIFA WC 2026 ID from API-Football
@@ -227,7 +226,7 @@ async function triggerCurseBlessing(match) {
     }, { merge: true });
 
     const loserSnap = await db.collection('guilds').doc(loser).get();
-    const loserData = loserSnap.exists ? loserSnap.data() : {}; // FIX: .exists not .exists()
+    const loserData = loserSnap.exists ? loserSnap.data() : {};
 
     const isKnockedOut = ['quarter-finals','semi-finals','final','3rd place']
       .some(s => match.stage?.toLowerCase().includes(s));
@@ -291,7 +290,7 @@ async function resolveMatchPredictions(fixtureId, homeScore, awayScore, scorers 
       });
     }
 
-    const xpAwarded     = (resultCorrect ? 15 : 0) + (scorerCorrect ? 5 : 0);
+    const xpAwarded = (resultCorrect ? 15 : 0) + (scorerCorrect ? 5 : 0);
 
     batch.update(predDoc.ref, {
       resolved: true,
@@ -345,7 +344,7 @@ export default async function handler(req, res) {
       }
     });
     if (!resFeeds.ok) throw new Error(`Football-Data API error: HTTP ${resFeeds.status}`);
-    
+
     const data = await resFeeds.json();
     const games = data.matches || [];
 

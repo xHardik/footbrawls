@@ -79,6 +79,9 @@ export default function Raid() {
   const [actWinners, setActWinners] = useState([]);
   const [outcome, setOutcome]       = useState(null);
   const [finalizing, setFinalizing] = useState(false);
+  const [hasFinishedAct1, setHasFinishedAct1] = useState(false);
+  const [hasFinishedAct2, setHasFinishedAct2] = useState(false);
+  const [hasFinishedAct3, setHasFinishedAct3] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
 
@@ -262,15 +265,22 @@ export default function Raid() {
 
         setActs(newActs);
         setActWinners(newActWinners);
+        setHasFinishedAct1(!!session.scores?.[user.userId]?.act1);
+        setHasFinishedAct2(!!session.scores?.[user.userId]?.act2);
+        setHasFinishedAct3(!!session.scores?.[user.userId]?.act3);
 
         // UI Phase transitions
         if (session.currentAct === 1) {
-          setPhase('matched');
-          console.log('[Raid] Matched! Game route:', gameObj.route, 'Session ID:', activeSessionId);
-          initialRedirectTimer = setTimeout(() => {
-            console.log('[Raid] Navigating to game route:', gameObj.route);
-            navigate(gameObj.route);
-          }, 2200);
+          if (!!session.scores?.[user.userId]?.act1) {
+            setPhase('waiting_act1');
+          } else {
+            setPhase('matched');
+            console.log('[Raid] Matched! Game route:', gameObj.route, 'Session ID:', activeSessionId);
+            initialRedirectTimer = setTimeout(() => {
+              console.log('[Raid] Navigating to game route:', gameObj.route);
+              navigate(gameObj.route);
+            }, 2200);
+          }
         } else if (session.currentAct === 2) {
           setPhase('act2_interstitial');
         } else if (session.currentAct === 3) {
@@ -522,6 +532,17 @@ export default function Raid() {
           </div>
         )}
 
+        {phase === 'waiting_act1' && (
+          <div style={s.center}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, justifyContent: 'center', marginBottom: 20 }}>
+              <span style={{ fontSize: '2.5rem' }}>⏳</span>
+              <div style={s.spinner} />
+            </div>
+            <h2 style={s.searchTitle}>Act 1 Completed!</h2>
+            <p style={s.muted}>Waiting for your buddy to submit their Act 1 score...</p>
+          </div>
+        )}
+
         {phase === 'matched' && match && (
           <div style={s.section}>
             <h2 style={s.searchTitle}>Squad locked in!</h2>
@@ -614,9 +635,16 @@ export default function Raid() {
                 Next up: **Act 2 — Dribble Gauntlet**. Dribble past defenders and slot it past the keeper.
               </p>
 
-              <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
-                ⚔️ Play Act 2 — Dribble
-              </button>
+              {hasFinishedAct2 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                  <div style={s.spinner} />
+                  <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 2...</p>
+                </div>
+              ) : (
+                <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
+                  ⚔️ Play Act 2 — Dribble
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -687,9 +715,16 @@ export default function Raid() {
                 Final showdown: **Act 3 — Penalty Shootout**. The high-stakes 5-kick shootout.
               </p>
 
-              <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
-                ⚽ Play Act 3 — Penalty Shootout
-              </button>
+              {hasFinishedAct3 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                  <div style={s.spinner} />
+                  <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 3...</p>
+                </div>
+              ) : (
+                <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
+                  ⚽ Play Act 3 — Penalty Shootout
+                </button>
+              )}
             </div>
           </div>
         )}

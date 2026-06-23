@@ -453,7 +453,7 @@ export default function DribbleGauntlet() {
     // GK dives to cover its two adjacent zones
     animateGKDive(340, () => {});
     setTimeout(() => {
-      animateBallOnly(zoneScreenX(s.zonePick), 15, 420, () => {
+      animateBallOnly(zoneScreenX(s.zonePick), 15, 420, async () => {
         s.phase = 'shot_result';
         s.feedback = gkBlocked ? 'saved' : 'goal';
         s.results = [...s.results, { dribbleWon: true, goal: !gkBlocked }];
@@ -475,6 +475,12 @@ export default function DribbleGauntlet() {
         earnedXP = res?.xpAwarded ?? calculatedXP;
       } else { earnedXP = calculatedXP; }
     } catch { earnedXP = calculatedXP; }
+    if (isRaid) {
+      const activeId = localStorage.getItem('active_game_session_id');
+      if (activeId) {
+        localStorage.setItem(`raid_completed_act2_${activeId}`, 'true');
+      }
+    }
     setXpAwarded(earnedXP);
     if (!isRaid) {
       const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
@@ -573,11 +579,11 @@ export default function DribbleGauntlet() {
               <ul className="db-rules-list">
                 <li>
                   <span className="db-rule-pill dribble">Dribble</span>
-                  <span>Pick a lane — Left, Center, or Right — to get past the defender. <strong>+2 XP</strong> for beating them.</span>
+                  <span>Pick a lane — Left, Center, or Right — to get past the defender.{!isRaid && <strong> +2 XP for beating them.</strong>}</span>
                 </li>
                 <li>
                   <span className="db-rule-pill shoot">Shoot</span>
-                  <span>Choose one of 6 goal zones to strike. The GK always covers <strong>2 adjacent zones</strong>. <strong>+3 XP</strong> for a goal.</span>
+                  <span>Choose one of 6 goal zones to strike. The GK always covers <strong>2 adjacent zones</strong>.{!isRaid && <strong> +3 XP for a goal.</strong>}</span>
                 </li>
                 <li>
                   <span className="db-rule-pill retake">Retake</span>
@@ -608,12 +614,14 @@ export default function DribbleGauntlet() {
                 <h1 className="db-page-title">Dribble Gauntlet</h1>
                 <p className="db-page-subtitle">Navigate past defenders · Strike past the keeper</p>
               </div>
-              <div className="db-live-xp-pill">
-                <span className="db-live-xp-icon">🏆</span>
-                <span className="db-live-xp-val">{alreadyPlayed ? xpAwarded : liveXPGained}</span>
-                <span className="db-live-xp-lbl">XP</span>
-                {floatingXP && <span key={floatingXP.key} className="db-xp-float">{floatingXP.text}</span>}
-              </div>
+              {!isRaid && (
+                <div className="db-live-xp-pill">
+                  <span className="db-live-xp-icon">🏆</span>
+                  <span className="db-live-xp-val">{alreadyPlayed ? xpAwarded : liveXPGained}</span>
+                  <span className="db-live-xp-lbl">XP</span>
+                  {floatingXP && <span key={floatingXP.key} className="db-xp-float">{floatingXP.text}</span>}
+                </div>
+              )}
             </div>
           </div>
 
@@ -630,7 +638,7 @@ export default function DribbleGauntlet() {
                   <div className="db-sum-score-sub">Goals Scored</div>
                 </div>
 
-                {xpAwarded !== null && (
+                 {!isRaid && xpAwarded !== null && (
                   <div className="db-sum-xp-badge">
                     {xpAwarded > 0 ? `+${xpAwarded} XP Earned` : 'Daily XP cap reached'}
                   </div>

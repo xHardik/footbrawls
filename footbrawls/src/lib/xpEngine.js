@@ -108,13 +108,11 @@ export async function awardXP(userId, source, opts = {}) {
                 }
               });
             }
-            window.location.href = '/raid';
             return { xpAwarded: 0, raidIntercepted: true };
           } else if (session.sessionType === 'vs_friends') {
             await updateDoc(sessionRef, {
               [`scores.${userId}`]: rawScore
             });
-            window.location.href = '/vs-friends';
             return { xpAwarded: 0, raidIntercepted: true };
           }
         }

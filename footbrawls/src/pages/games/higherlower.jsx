@@ -142,14 +142,16 @@ function RulesModal({ onClose }) {
           <li><span className="hl-rule-icon">🤔</span>Guess if the right player's stat is <strong>Higher</strong> or <strong>Lower</strong></li>
           <li><span className="hl-rule-icon">🔥</span>Build a streak — every correct answer keeps you alive</li>
           <li><span className="hl-rule-icon">❌</span>One wrong answer ends the game immediately</li>
-          <li><span className="hl-rule-icon">🏆</span>Max {MAX_XP} XP — survive as long as you can!</li>
+          {!isRaid && <li><span className="hl-rule-icon">🏆</span>Max {MAX_XP} XP — survive as long as you can!</li>}
         </ul>
-        <div className="hl-scoring-box">
-          <h3>💰 XP System — Max {MAX_XP} XP</h3>
-          <div className="hl-scoring-item"><span>Each Correct Answer</span><span className="hl-scoring-value">Streak +1</span></div>
-          <div className="hl-scoring-item"><span>Streak of 10</span><span className="hl-scoring-value">{MAX_XP} XP</span></div>
-          <div className="hl-scoring-item"><span>Wrong Answer</span><span className="hl-scoring-value">Game Over</span></div>
-        </div>
+        {!isRaid && (
+          <div className="hl-scoring-box">
+            <h3>💰 XP System — Max {MAX_XP} XP</h3>
+            <div className="hl-scoring-item"><span>Each Correct Answer</span><span className="hl-scoring-value">Streak +1</span></div>
+            <div className="hl-scoring-item"><span>Streak of 10</span><span className="hl-scoring-value">{MAX_XP} XP</span></div>
+            <div className="hl-scoring-item"><span>Wrong Answer</span><span className="hl-scoring-value">Game Over</span></div>
+          </div>
+        )}
         <button className="hl-btn-primary" onClick={onClose}>🚀 Start Playing</button>
       </div>
     </div>
@@ -414,6 +416,12 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           setStreak(newStreak);
           setGameOver(true);
           setXpAwarded(xp);
+          if (isRaid) {
+            const activeId = localStorage.getItem('active_game_session_id');
+            if (activeId) {
+              localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+            }
+          }
           persist({ round: round + 1, streak: newStreak, gameOver: true, xpAwarded: xp, hasWatchedReviveAd });
           if (onComplete) onComplete({ gameId: "higherLower", streak: newStreak, xpAwarded: xp });
         }, 900);
@@ -445,6 +453,12 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       setTimeout(() => {
         setGameOver(true);
         setXpAwarded(xp);
+        if (isRaid) {
+          const activeId = localStorage.getItem('active_game_session_id');
+          if (activeId) {
+            localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+          }
+        }
         persist({ round, streak, gameOver: true, xpAwarded: xp, hasWatchedReviveAd });
         if (onComplete) onComplete({ gameId: "higherLower", streak, xpAwarded: xp });
       }, 900);
@@ -490,14 +504,16 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
         {/* Score row */}
         <div className="hl-score-row">
-          <div className="hl-score-card hl-score-current">
+          <div className="hl-score-card hl-score-current" style={isRaid ? { width: '100%' } : {}}>
             <div className="hl-score-label">Current Streak</div>
             <div className="hl-score-value-current">{streak}</div>
           </div>
-          <div className="hl-score-card hl-score-best">
-            <div className="hl-score-label">XP Earned</div>
-            <div className="hl-score-value-best">{STREAK_XP[Math.min(10, streak)]} XP</div>
-          </div>
+          {!isRaid && (
+            <div className="hl-score-card hl-score-best">
+              <div className="hl-score-label">XP Earned</div>
+              <div className="hl-score-value-best">{STREAK_XP[Math.min(10, streak)]} XP</div>
+            </div>
+          )}
         </div>
 
         {/* ── GAME AREA ── */}
@@ -548,7 +564,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             <div className="hl-result-score-label">Streak</div>
             <div className="hl-result-phrase">{getResultPhrase(streak)}</div>
 
-            {xpAwarded > 0 && (
+            {!isRaid && xpAwarded > 0 && (
               <div className="hl-xp-badge-earned">+{xpAwarded} XP EARNED</div>
             )}
 

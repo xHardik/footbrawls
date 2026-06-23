@@ -847,6 +847,13 @@ export default function WhoAreYa() {
           finalXP = rawScore;
         }
       }
+
+      if (isRaid) {
+        const activeId = localStorage.getItem('active_game_session_id');
+        if (activeId) {
+          localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+        }
+      }
       setXpAwarded(finalXP);
 
       if (!isRaid) {
@@ -1092,7 +1099,7 @@ export default function WhoAreYa() {
                 {target.country} · {target.position} · {target.club} · Age {target.age} · {target.foot}-footed
               </div>
 
-              {xpAwarded != null && (
+              {!isRaid && xpAwarded != null && (
                 <div className="pn-xp-badge">
                   {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                 </div>

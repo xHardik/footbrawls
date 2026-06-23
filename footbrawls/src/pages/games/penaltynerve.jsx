@@ -618,19 +618,21 @@ function HowToPlayModal({ onClose }) {
           <li><span className="pn-rule-icon">🎯</span>Pick a corner and strike the ball past the keeper</li>
           <li><span className="pn-rule-icon">🧤</span>The keeper gets smarter — save chances rise each kick</li>
           <li><span className="pn-rule-icon">⚽</span>Score {MAX_KICKS} goals in a row for the perfect shootout</li>
-          <li><span className="pn-rule-icon">🏆</span>Every goal scored earns XP — keep them coming!</li>
+          {!isRaid && <li><span className="pn-rule-icon">🏆</span>Every goal scored earns XP — keep them coming!</li>}
           <li><span className="pn-rule-icon">📺</span>If the keeper saves one, watch an ad to retake the kick</li>
         </ul>
-        <div className="pn-scoring-box">
-          <h3>💰 Scoring — {XP_PER_GOAL} XP per Goal · Max 25 XP</h3>
-          {Array.from({ length: MAX_KICKS }).map((_, i) => (
-            <div key={i} className="pn-scoring-item">
-              <span>Goal #{i + 1}</span>
-              <span className="pn-scoring-val">+{XP_PER_GOAL} XP</span>
-            </div>
-          ))}
-          <div className="pn-scoring-item"><span>Saved</span><span className="pn-scoring-val">0 XP</span></div>
-        </div>
+        {!isRaid && (
+          <div className="pn-scoring-box">
+            <h3>💰 Scoring — {XP_PER_GOAL} XP per Goal · Max 25 XP</h3>
+            {Array.from({ length: MAX_KICKS }).map((_, i) => (
+              <div key={i} className="pn-scoring-item">
+                <span>Goal #{i + 1}</span>
+                <span className="pn-scoring-val">+{XP_PER_GOAL} XP</span>
+              </div>
+            ))}
+            <div className="pn-scoring-item"><span>Saved</span><span className="pn-scoring-val">0 XP</span></div>
+          </div>
+        )}
         <button className="pn-modal-btn" onClick={onClose}>🚀 Start Playing</button>
       </div>
     </div>
@@ -822,6 +824,12 @@ export default function PenaltyNerve({ onBack }) {
             finalAwarded = finalXP;
           }
         }
+        if (isRaid) {
+          const activeId = localStorage.getItem('active_game_session_id');
+          if (activeId) {
+            localStorage.setItem(`raid_completed_act3_${activeId}`, 'true');
+          }
+        }
         setXpAwarded(finalAwarded);
 
         if (!isRaid) {
@@ -886,19 +894,21 @@ export default function PenaltyNerve({ onBack }) {
             Penalty Nerve
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-            Score {MAX_KICKS} penalties in a row · {XP_PER_GOAL} XP per goal · Max {MAX_KICKS * XP_PER_GOAL} XP
+            Score {MAX_KICKS} penalties in a row{!isRaid && ` · ${XP_PER_GOAL} XP per goal · Max ${MAX_KICKS * XP_PER_GOAL} XP`}
           </p>
         </div>
 
-        <div className="pn-score-box">
-          <div>
-            <div className="pn-score-label">Current XP</div>
-            <div className="pn-score-value">{displayXP} XP</div>
+        {!isRaid && (
+          <div className="pn-score-box">
+            <div>
+              <div className="pn-score-label">Current XP</div>
+              <div className="pn-score-value">{displayXP} XP</div>
+            </div>
+            <div className="pn-score-streak">
+              {stats.streak ? `🔥 ${stats.streak} day streak` : "Play to start streak"}
+            </div>
           </div>
-          <div className="pn-score-streak">
-            {stats.streak ? `🔥 ${stats.streak} day streak` : "Play to start streak"}
-          </div>
-        </div>
+        )}
 
         {msg && <div className={`pn-msg pn-msg-${msg.type}`}>{msg.text}</div>}
 
@@ -908,7 +918,7 @@ export default function PenaltyNerve({ onBack }) {
             <div className="pn-result-title" style={{ color: getResultColor(displayGoals) }}>
               {getResultTitle(displayGoals)}
             </div>
-            <div className="pn-result-score">{displayXP} XP</div>
+            {!isRaid && <div className="pn-result-score">{displayXP} XP</div>}
             <div className="pn-result-phrase">
               {displayGoals} of {MAX_KICKS} goals scored · New penalties tomorrow
             </div>
@@ -1014,7 +1024,7 @@ export default function PenaltyNerve({ onBack }) {
                   <div className={`pn-feedback-banner ${lastResult.saved ? 'banner-saved' : 'banner-goal'}`}>
                     {lastResult.saved
                       ? `SAVED! Goalkeeper ${GK_DIVES[lastResult.gkDive]}`
-                      : `GOAL! +${XP_PER_GOAL} XP Earned`}
+                      : (isRaid ? `GOAL!` : `GOAL! +${XP_PER_GOAL} XP Earned`)}
                   </div>
                 )}
 
@@ -1063,7 +1073,7 @@ export default function PenaltyNerve({ onBack }) {
                 <div className="pn-result-title" style={{ color: getResultColor(goals) }}>
                   {getResultTitle(goals)}
                 </div>
-                <div className="pn-result-score">{scoreDisplay} XP</div>
+                {!isRaid && <div className="pn-result-score">{scoreDisplay} XP</div>}
                 <div className="pn-result-phrase">{goals} of {MAX_KICKS} goals scored</div>
 
                 <div className="pn-kick-replay-list">
@@ -1077,7 +1087,7 @@ export default function PenaltyNerve({ onBack }) {
                   ))}
                 </div>
 
-                {xpAwarded != null && (
+                {!isRaid && xpAwarded != null && (
                   <div className="pn-xp-badge">
                     {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                   </div>

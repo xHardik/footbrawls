@@ -739,6 +739,12 @@ export default function Top10Guess() {
         console.error('[Top10Guess] awardXP failed:', e);
       }
     }
+    if (isRaid) {
+      const activeId = localStorage.getItem('active_game_session_id');
+      if (activeId) {
+        localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+      }
+    }
     setXpAwarded(awarded);
     if (!isRaid) {
       localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
@@ -959,7 +965,7 @@ export default function Top10Guess() {
                   <div className="t10-result-title">{title}</div>
                   <div className="t10-result-sub">Category: {activeQuestion.question}</div>
 
-                  {xpAwarded != null && (
+                  {!isRaid && xpAwarded != null && (
                     <div className="t10-xp-badge">
                       {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                     </div>
@@ -1117,7 +1123,7 @@ function HowToPlayModal({ show, onClose }) {
           <li><strong>❤️ Lives:</strong> You start with 3 lives. Every incorrect guess costs you 1 life</li>
           <li><strong>🚫 Double Penalty:</strong> You won't be penalized twice for entering the same incorrect guess</li>
           <li><strong>🏆 Win Condition:</strong> Reveal all 10 items or exit with lives remaining. 6+ correct counts as a win</li>
-          <li><strong>🎁 XP Rewards:</strong> Earn up to 25 XP based on how many correct items you guess</li>
+          {!isRaid && <li><strong>🎁 XP Rewards:</strong> Earn up to 25 XP based on how many correct items you guess</li>}
         </ul>
         <button className="t10-modal-close" onClick={onClose}>🚀 Let's Go!</button>
       </div>

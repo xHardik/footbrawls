@@ -597,7 +597,7 @@ function HowToPlayModal({ onClose }) {
           <li><span className="wdl-rule-icon">🎯</span>Guess the footballer's last name in {MAX_GUESSES} attempts</li>
           <li><span className="wdl-rule-icon">🔤</span>Each guess must match the correct number of letters</li>
           <li><span className="wdl-rule-icon">🎨</span>After each guess, tile colors show how close you are</li>
-          <li><span className="wdl-rule-icon">🏆</span>Earlier correct guesses earn more XP!</li>
+          {!isRaid && <li><span className="wdl-rule-icon">🏆</span>Earlier correct guesses earn more XP!</li>}
           <li><span className="wdl-rule-icon">💡</span>Get a <strong>country hint</strong> after 3rd attempt and a <strong>position hint</strong> after 4th</li>
         </ul>
         <div className="wdl-color-demo">
@@ -614,16 +614,18 @@ function HowToPlayModal({ onClose }) {
             <p style={{marginTop:8,fontSize:"0.75rem",color:"rgba(255,255,255,0.35)",fontWeight:700}}>Not in Name</p>
           </div>
         </div>
-        <div className="wdl-scoring-box">
-          <h3>💰 Scoring System — Max 25 XP</h3>
-          {scoring.map(([attempt, xp]) => (
-            <div key={attempt} className="wdl-scoring-item">
-              <span>{attempt === 1 ? "1st" : attempt === 2 ? "2nd" : attempt === 3 ? "3rd" : `${attempt}th`} Try</span>
-              <span className="wdl-scoring-val">+{xp} XP</span>
-            </div>
-          ))}
-          <div className="wdl-scoring-item"><span>Failed</span><span className="wdl-scoring-val">0 XP</span></div>
-        </div>
+        {!isRaid && (
+          <div className="wdl-scoring-box">
+            <h3>💰 Scoring System — Max 25 XP</h3>
+            {scoring.map(([attempt, xp]) => (
+              <div key={attempt} className="wdl-scoring-item">
+                <span>{attempt === 1 ? "1st" : attempt === 2 ? "2nd" : attempt === 3 ? "3rd" : `${attempt}th`} Try</span>
+                <span className="wdl-scoring-val">+{xp} XP</span>
+              </div>
+            ))}
+            <div className="wdl-scoring-item"><span>Failed</span><span className="wdl-scoring-val">0 XP</span></div>
+          </div>
+        )}
         <button className="wdl-modal-btn" onClick={onClose}>🚀 Start Playing</button>
       </div>
     </div>
@@ -846,6 +848,12 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           xp = r?.xpAwarded ?? calcScore;
         }
       }
+      if (isRaid) {
+        const activeId = localStorage.getItem('active_game_session_id');
+        if (activeId) {
+          localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+        }
+      }
       setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
       if (!isRaid) {
         const { stats: s, history: h } = saveResult(puzzleDate, won, xp);
@@ -992,15 +1000,17 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         </div>
 
         {/* ── SCORE BOX ── */}
-        <div className="wdl-score-box">
-          <div>
-            <div className="wdl-score-label">Current XP</div>
-            <div className="wdl-score-value">{score} XP</div>
+        {!isRaid && (
+          <div className="wdl-score-box">
+            <div>
+              <div className="wdl-score-label">Current XP</div>
+              <div className="wdl-score-value">{score} XP</div>
+            </div>
+            <div className="wdl-score-streak">
+              {stats.streak ? `🔥 ${stats.streak} day streak` : "Play to start streak"}
+            </div>
           </div>
-          <div className="wdl-score-streak">
-            {stats.streak ? `🔥 ${stats.streak} day streak` : "Play to start streak"}
-          </div>
-        </div>
+        )}
 
         {/* ── EXTRA TRY REWARDED AD ── */}
         {gameOver && !solved && !hasWatchedExtraTryAd && !isRaid && (
@@ -1170,13 +1180,13 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             <div className="wdl-result-title" style={{ color: solved ? "var(--green)" : "var(--accent2)" }}>
               {solved ? `🎉 ${targetName}!` : "😞 Game Over!"}
             </div>
-            <div className="wdl-result-score">{score} XP</div>
+            {!isRaid && <div className="wdl-result-score">{score} XP</div>}
             <div className="wdl-result-phrase">
               {solved
                 ? `Guessed correctly in ${guesses.length} ${guesses.length === 1 ? "try" : "tries"}!`
                 : `The answer was ${targetName}`}
             </div>
-            {solved && xpAwarded > 0 && (
+            {!isRaid && solved && xpAwarded > 0 && (
               <div className="wdl-xp-badge">+{xpAwarded} XP earned</div>
             )}
 

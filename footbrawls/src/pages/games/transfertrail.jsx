@@ -177,22 +177,24 @@ function RulesModal({ onClose }) {
           </div>
         ))}
 
-        <div style={{background:"rgba(26,111,255,0.05)",border:`1px solid ${T.border2}`,borderRadius:14,padding:18,margin:"18px 0 20px"}}>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:1,color:T.royal,marginBottom:12,textAlign:"center"}}>
-            🌟 XP REWARDS — MAX 30 XP
-          </div>
-          {[
-            ["1st Correct Guess",        "+5 XP"],
-            ["2nd Correct (Streak)",     "+10 XP"],
-            ["3rd Correct (Streak)",     "+10 XP"],
-            ["Perfect Completion (3/3)", "+5 XP"],
-          ].map(([label, val]) => (
-            <div key={label} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:"0.82rem",borderBottom:`1px solid ${T.border}`,color:T.muted}}>
-              <span>{label}</span>
-              <span style={{color:T.royal,fontWeight:700}}>{val}</span>
+        {!isRaid && (
+          <div style={{background:"rgba(26,111,255,0.05)",border:`1px solid ${T.border2}`,borderRadius:14,padding:18,margin:"18px 0 20px"}}>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:1,color:T.royal,marginBottom:12,textAlign:"center"}}>
+              🌟 XP REWARDS — MAX 30 XP
             </div>
-          ))}
-        </div>
+            {[
+              ["1st Correct Guess",        "+5 XP"],
+              ["2nd Correct (Streak)",     "+10 XP"],
+              ["3rd Correct (Streak)",     "+10 XP"],
+              ["Perfect Completion (3/3)", "+5 XP"],
+            ].map(([label, val]) => (
+              <div key={label} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",fontSize:"0.82rem",borderBottom:`1px solid ${T.border}`,color:T.muted}}>
+                <span>{label}</span>
+                <span style={{color:T.royal,fontWeight:700}}>{val}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           onClick={onClose}
@@ -410,18 +412,28 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         {perfect ? "FLAWLESS GUESSING!" : "GAME OVER!"}
       </div>
 
-      <div className="tt-result-score" style={{
-        fontFamily:"'Bebas Neue',sans-serif",fontSize:"4.8rem",letterSpacing:2,lineHeight:1,margin:"10px 0",
-        background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
-        WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-        animation:"ttPulse 2.5s ease-in-out infinite, ttScorePop 0.5s ease",
-      }}>
-        +{xpEarned} <span style={{fontSize:"2.4rem",opacity:0.55}}>XP</span>
-      </div>
+      {!isRaid ? (
+        <div className="tt-result-score" style={{
+          fontFamily:"'Bebas Neue',sans-serif",fontSize:"4.8rem",letterSpacing:2,lineHeight:1,margin:"10px 0",
+          background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
+          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+          animation:"ttPulse 2.5s ease-in-out infinite, ttScorePop 0.5s ease",
+        }}>
+          +{xpEarned} <span style={{fontSize:"2.4rem",opacity:0.55}}>XP</span>
+        </div>
+      ) : (
+        <div className="tt-result-score" style={{
+          fontFamily:"'Bebas Neue',sans-serif",fontSize:"3rem",letterSpacing:2,lineHeight:1,margin:"24px 0",
+          background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
+          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+        }}>
+          SCORE SUBMITTED
+        </div>
+      )}
 
       <div style={{fontSize:"0.92rem",color:T.muted,marginBottom:26,lineHeight:1.6}}>
         {correctCount} of {PLAYERS_PER_GAME} players guessed correctly
-        {perfect && " — +5 XP FLAWLESS BONUS!"}
+        {!isRaid && perfect && " — +5 XP FLAWLESS BONUS!"}
       </div>
 
       <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,padding:"16px 18px",marginBottom:22,textAlign:"left"}}>
@@ -433,9 +445,11 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
               <div style={{fontWeight:700,fontSize:"0.88rem",color:T.text}}>{p.name}</div>
               <div style={{fontSize:"0.67rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
             </div>
-            <div style={{fontFamily:"monospace",fontSize:"0.65rem",fontWeight:700,padding:"3px 10px",borderRadius:99,background:"rgba(61,214,140,0.1)",color:T.green}}>
-              {i === 0 ? "+5" : i === 1 ? "+10" : "+10"} XP
-            </div>
+            {!isRaid && (
+              <div style={{fontFamily:"monospace",fontSize:"0.65rem",fontWeight:700,padding:"3px 10px",borderRadius:99,background:"rgba(61,214,140,0.1)",color:T.green}}>
+                {i === 0 ? "+5" : i === 1 ? "+10" : "+10"} XP
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -700,6 +714,12 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
     } else {
       xp = finalXpVal;
     }
+    if (isRaid) {
+      const activeId = localStorage.getItem('active_game_session_id');
+      if (activeId) {
+        localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+      }
+    }
     setXpAwarded(xp);
     setGameOver(true);
     persist({ 
@@ -729,7 +749,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       const finalXp = newPerfect ? newXpEarned + PERFECT_BONUS_XP : newXpEarned;
 
       setFeedback("correct");
-      setFeedbackMsg(`✅ Correct! +${xpPoints} XP${newPerfect ? ` +${PERFECT_BONUS_XP} XP bonus!` : ""}`);
+      setFeedbackMsg(isRaid ? `✅ Correct!` : `✅ Correct! +${xpPoints} XP${newPerfect ? ` +${PERFECT_BONUS_XP} XP bonus!` : ""}`);
       setXpEarned(newPerfect ? finalXp : newXpEarned);
       setStreak(newStreak);
       setCorrectCount(newCorrect);

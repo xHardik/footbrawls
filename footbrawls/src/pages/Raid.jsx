@@ -263,15 +263,19 @@ export default function Raid() {
           });
         }
 
+        const localAct1Done = localStorage.getItem(`raid_completed_act1_${activeSessionId}`) === 'true';
+        const localAct2Done = localStorage.getItem(`raid_completed_act2_${activeSessionId}`) === 'true';
+        const localAct3Done = localStorage.getItem(`raid_completed_act3_${activeSessionId}`) === 'true';
+
         setActs(newActs);
         setActWinners(newActWinners);
-        setHasFinishedAct1(!!session.scores?.[user.userId]?.act1);
-        setHasFinishedAct2(!!session.scores?.[user.userId]?.act2);
-        setHasFinishedAct3(!!session.scores?.[user.userId]?.act3);
+        setHasFinishedAct1(!!session.scores?.[user.userId]?.act1 || localAct1Done);
+        setHasFinishedAct2(!!session.scores?.[user.userId]?.act2 || localAct2Done);
+        setHasFinishedAct3(!!session.scores?.[user.userId]?.act3 || localAct3Done);
 
         // UI Phase transitions
         if (session.currentAct === 1) {
-          if (!!session.scores?.[user.userId]?.act1) {
+          if (!!session.scores?.[user.userId]?.act1 || localAct1Done) {
             if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
             setPhase('waiting_act1');
           } else {
@@ -290,16 +294,17 @@ export default function Raid() {
           } else if (session.currentAct === 3) {
             setPhase('act3_interstitial');
           } else if (session.currentAct === 4) {
-          const outcomes = computeRaidOutcome(newActWinners);
-          setOutcome(outcomes);
-          setPhase('results');
-          
-          // Finalize locally/globally
-          await finalizeRaidFromState(newActs, outcomes, currentMatch, session.raidType);
-          
-          // Mark session as completed
-          await updateDoc(sessionRef, { status: 'completed' });
-          localStorage.removeItem('active_game_session_id');
+            const outcomes = computeRaidOutcome(newActWinners);
+            setOutcome(outcomes);
+            setPhase('results');
+            
+            // Finalize locally/globally
+            await finalizeRaidFromState(newActs, outcomes, currentMatch, session.raidType);
+            
+            // Mark session as completed
+            await updateDoc(sessionRef, { status: 'completed' });
+            localStorage.removeItem('active_game_session_id');
+          }
         }
       } catch (err) {
         console.error('[Raid] Error inside session snapshot processing:', err);

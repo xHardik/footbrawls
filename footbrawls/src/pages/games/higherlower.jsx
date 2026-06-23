@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDailySeed, getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
+import { getDailySeed, getDailyPlayer, getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 import { PLAYERS } from "../../lib/players.js";
@@ -35,9 +35,11 @@ function getAttrForRound(roundIndex) {
 
 function getSequencedPlayer(players, roundOffset) {
   let seed = getDailySeed();
+  const raid = !!localStorage.getItem('active_game_session_id');
+  const sessionId = localStorage.getItem('active_game_session_id');
   const sessionSeed = localStorage.getItem('active_game_session_seed');
-  if (sessionSeed) {
-    seed = parseInt(sessionSeed);
+  if (raid) {
+    seed = getRaidSeed(sessionId, sessionSeed);
   }
   const baseOffset = 67; // GAME_OFFSETS.higherLower
   return players[(seed + baseOffset + roundOffset) % players.length];

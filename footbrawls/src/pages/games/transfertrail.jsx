@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getActivePuzzleDate } from "../../lib/dailySeed.js";
+import { getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
@@ -60,10 +60,12 @@ function getDailyPlayers(players, dateStr) {
   const eligible = players.filter(p => Array.isArray(p.clubs) && p.clubs.length >= 2);
   if (eligible.length < PLAYERS_PER_GAME) return eligible.slice(0, PLAYERS_PER_GAME);
   let seed = dateStr.split("-").reduce((a, n) => a * 100 + parseInt(n), 0);
-    const sessionSeed = localStorage.getItem('active_game_session_seed');
-    if (sessionSeed) {
-      seed = parseInt(sessionSeed) + 221;
-    }
+  const raid = !!localStorage.getItem('active_game_session_id');
+  const sessionId = localStorage.getItem('active_game_session_id');
+  const sessionSeed = localStorage.getItem('active_game_session_seed');
+  if (raid) {
+    seed = getRaidSeed(sessionId, sessionSeed) + 221;
+  }
   const rng  = seededRandom(seed);
   const pool = [...eligible];
   const picked = [];

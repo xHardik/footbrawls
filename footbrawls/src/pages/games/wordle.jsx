@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getDailyPlayer, getActivePuzzleDate } from "../../lib/dailySeed.js";
+import { getDailyPlayer, getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
 import { PLAYERS } from "../../lib/players.js";
@@ -725,10 +725,12 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
   const target = useMemo(() => {
     if (!players.length) return null;
-    const sessionSeed = localStorage.getItem('active_game_session_seed');
     const raid = !!localStorage.getItem('active_game_session_id');
-    if (raid && sessionSeed) {
-      const idx = (parseInt(sessionSeed) + 101) % players.length;
+    const sessionId = localStorage.getItem('active_game_session_id');
+    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    if (raid) {
+      const seedVal = getRaidSeed(sessionId, sessionSeed);
+      const idx = (seedVal + 101) % players.length;
       return players[idx];
     }
     return getDailyPlayer(players, "wordle", puzzleDate);

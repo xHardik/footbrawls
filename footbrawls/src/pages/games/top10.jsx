@@ -9,7 +9,7 @@ import { awardXP } from '../../lib/xpEngine.js';
 import { TOP10_QUESTIONS } from '../../lib/questions.js';
 import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto, useClubWikiLogo } from '../../lib/wikiAssets.jsx';
-import { getActivePuzzleDate, getDailySeed } from '../../lib/dailySeed.js';
+import { getActivePuzzleDate, getDailySeed, getRaidSeed } from '../../lib/dailySeed.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATS_KEY   = 'footbrawls_top10_stats';
@@ -515,9 +515,11 @@ export default function Top10Guess() {
 
   const activeQuestion = useMemo(() => {
     let seed = getDailySeed(puzzleDate);
+    const raid = !!localStorage.getItem('active_game_session_id');
+    const sessionId = localStorage.getItem('active_game_session_id');
     const sessionSeed = localStorage.getItem('active_game_session_seed');
-    if (sessionSeed) {
-      seed = parseInt(sessionSeed);
+    if (raid) {
+      seed = getRaidSeed(sessionId, sessionSeed);
     }
     const offset = 199;
     const idx = (seed + offset) % TOP10_QUESTIONS.length;

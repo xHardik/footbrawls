@@ -59,6 +59,28 @@ function injectFonts() {
   l.rel = 'stylesheet';
   l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap';
   document.head.appendChild(l);
+
+  const style = document.createElement('style');
+  style.id = 'fb-raid-styles';
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .glowing-btn:hover {
+      box-shadow: 0 0 20px rgba(247, 195, 68, 0.45) !important;
+      transform: translateY(-2px);
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 function fmtSecs(ms) {
@@ -655,7 +677,7 @@ export default function Raid() {
                   <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 2...</p>
                 </div>
               ) : (
-                <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
+                <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
                   ⚔️ Play Act 2 — Dribble
                 </button>
               )}
@@ -735,7 +757,7 @@ export default function Raid() {
                   <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 3...</p>
                 </div>
               ) : (
-                <button type="button" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
+                <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
                   ⚽ Play Act 3 — Penalty Shootout
                 </button>
               )}
@@ -851,7 +873,7 @@ export default function Raid() {
               <div style={s.curseLift}>🎉 Curse lifted! (3 raid wins achieved)</div>
             )}
 
-            <button type="button" style={s.primaryBtn} onClick={() => navigate('/guild')}>
+            <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/guild')}>
               Back to Guild Castle
             </button>
             <button type="button" style={s.secondaryBtn} onClick={() => { setPhase('lobby'); setActs({}); setActWinners([]); setOutcome(null); setMatch(null); }}>
@@ -1027,6 +1049,6 @@ const s = {
   actRow:        { display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '0.88rem', borderBottom: `1px solid ${C.border}` },
   xpBox:         { textAlign: 'center', padding: 16, background: 'rgba(61,214,140,0.08)', border: `1px solid rgba(61,214,140,0.25)`, borderRadius: 12, marginBottom: 16, fontWeight: 800, fontSize: '1.2rem', color: C.green, position: 'relative', zIndex: 2 },
   curseLift:     { textAlign: 'center', padding: 12, background: 'rgba(247,195,68,0.1)', border: '1px solid rgba(247,195,68,0.3)', borderRadius: 12, color: C.accent, marginBottom: 16, fontWeight: 700, position: 'relative', zIndex: 2 },
-  primaryBtn:    { width: '100%', padding: 16, background: `linear-gradient(135deg, ${C.accent}, #e8a800)`, color: '#111', border: 'none', borderRadius: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, letterSpacing: 1, position: 'relative', zIndex: 2 },
+  primaryBtn:    { width: '100%', padding: 16, background: `linear-gradient(135deg, ${C.accent}, #e8a800)`, color: '#111', border: 'none', borderRadius: 14, fontWeight: 800, cursor: 'pointer', marginBottom: 10, letterSpacing: 1, position: 'relative', zIndex: 2, transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)' },
   secondaryBtn:  { width: '100%', padding: 14, background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 14, cursor: 'pointer', fontWeight: 600, position: 'relative', zIndex: 2 },
 };

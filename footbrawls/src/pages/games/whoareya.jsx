@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDailyPlayer, getActivePuzzleDate } from '../../lib/dailySeed.js';
+import { getDailyPlayer, getActivePuzzleDate, getRaidSeed } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
 import { PLAYERS } from '../../lib/players.js';
@@ -742,13 +742,16 @@ export default function WhoAreYa() {
   }, []);
 
   useEffect(() => {
-    let player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
     let raid = !!localStorage.getItem('active_game_session_id');
+    const sessionId = localStorage.getItem('active_game_session_id');
     const sessionSeed = localStorage.getItem('active_game_session_seed');
-    if (raid && sessionSeed) {
-      // Pick a random player from ALL players pool using the raid seed
-      const idx = (parseInt(sessionSeed) + 997) % PLAYERS.length;
+    let player;
+    if (raid) {
+      const seedVal = getRaidSeed(sessionId, sessionSeed);
+      const idx = (seedVal + 997) % PLAYERS.length;
       player = PLAYERS[idx];
+    } else {
+      player = getDailyPlayer(PLAYERS, 'whoAreYa', puzzleDate);
     }
 
     setTarget(player);

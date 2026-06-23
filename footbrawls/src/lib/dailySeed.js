@@ -4,7 +4,22 @@
 
 const TOURNAMENT_START_UTC = new Date('2026-06-11T00:00:00Z');
 
-// ─── Seed ─────────────────────────────────────────────────────────────────────
+export function getRaidSeed(sessionId, sessionSeed) {
+  if (sessionSeed) {
+    const parsed = parseInt(sessionSeed);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  if (sessionId) {
+    const num = parseInt(sessionId.replace(/\D/g, ''));
+    if (!isNaN(num) && num > 0) return num;
+    let hash = 0;
+    for (let i = 0; i < sessionId.length; i++) {
+      hash = sessionId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash);
+  }
+  return Date.now();
+}
 
 export function getDailySeed(dateOverride = null) {
   const today = dateOverride ? new Date(dateOverride) : new Date();

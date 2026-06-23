@@ -178,15 +178,19 @@ export async function awardXP(userId, source, opts = {}) {
 
     const homeXP    = Math.round(xpToAward * 0.8);
     const supportXP = xpToAward - homeXP;
+    const isRaidSource = source && source.startsWith('raid_');
     const newTotal  = (user.totalXP || 0) + xpToAward;
 
     // ── ALL WRITES (only after all reads complete) ────────────────────────────
-    t.update(userRef, {
+    const updatePayload = {
       totalXP:     newTotal,
-      dailyXP:     dailyXP + xpToAward,
-      dailyXPDate: today,
       tier:        getTier(newTotal),
-    });
+    };
+    if (!isRaidSource) {
+      updatePayload.dailyXP = dailyXP + xpToAward;
+      updatePayload.dailyXPDate = today;
+    }
+    t.update(userRef, updatePayload);
 
     applyGuildHP(t, homeGuildRef, homeGuildData, homeXP);
 
@@ -198,7 +202,7 @@ export async function awardXP(userId, source, opts = {}) {
       xpAwarded:      xpToAward,
       newTotal,
       newTier:        getTier(newTotal),
-      dailyXPUsed:    dailyXP + xpToAward,
+      dailyXPUsed:    isRaidSource ? dailyXP : (dailyXP + xpToAward),
       curseMultiplier: multiplier,
       split:          { home: homeXP, support: supportXP },
     };
@@ -209,8 +213,10 @@ export async function awardXP(userId, source, opts = {}) {
     const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
     if (localUser && localUser.userId === userId) {
       localUser.totalXP = result.newTotal;
-      localUser.dailyXP = result.dailyXPUsed;
-      localUser.dailyXPDate = getTodayUTC();
+      if (!source.startsWith('raid_')) {
+        localUser.dailyXP = result.dailyXPUsed;
+        localUser.dailyXPDate = getTodayUTC();
+      }
       localUser.tier = result.newTier;
       localStorage.setItem('footbrawls_user', JSON.stringify(localUser));
     }

@@ -1,134 +1,50 @@
-// firestore.rules
-// Deploy with: firebase deploy --only firestore:rules
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Guilds ───────────────────────────────────────────────────────────────
-    // Anyone can read. Only server (admin SDK) can write most fields.
-    // Exception: castleHP can be incremented by authenticated users via transaction.
-
-    match /guilds/{guildCode} {
-      allow read: if true;
-
-      // Only allow client writes for castleHP increment (via transaction)
-      // All other guild fields are server-only
-      allow update: if request.auth == null
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['castleHP'])
-        && request.resource.data.castleHP <= 10000;
-
-      // No client creates or deletes — seeded by script
-      allow create, delete: if false;
-    }
-
-    // ── Users ────────────────────────────────────────────────────────────────
-    // Users can read/write their own doc. Others can read nickname/tier/flag only.
-
+    // Users — open for now (UUID-based, no Firebase Auth)
     match /users/{userId} {
-      // Own doc: full read/write
-      allow read, write: if request.resource.data.uuid == userId
-        || resource.data.uuid == userId;
-
-      // Public fields: anyone can read nickname, tier, flag, homeCountry
-      allow read: if true; // Frontend filters sensitive fields
-
-      // Prevent XP manipulation: clients can only update safe fields
-      allow update: if isOwner(userId)
-        && !request.resource.data.diff(resource.data)
-            .affectedKeys()
-            .hasAny(['totalXP', 'dailyXP', 'tier', 'predictionStreak']);
-        // XP fields are server-only (updated by cloud functions / admin SDK)
-
-      allow create: if isValidNewUser(request.resource.data);
-    }
-
-    // ── Chat ─────────────────────────────────────────────────────────────────
-    match /chat/{messageId} {
-      allow read: if true;
-
-      allow create: if isValidChatMessage(request.resource.data);
-
-      // Only allow reportCount increment (no editing messages)
-      allow update: if request.resource.data.diff(resource.data)
-        .affectedKeys().hasOnly(['reportCount', 'reported'])
-        && request.resource.data.reportCount == resource.data.reportCount + 1;
-
-      allow delete: if false; // Server-side moderation only
-    }
-
-    // ── Predictions ──────────────────────────────────────────────────────────
-    match /predictions/{predId} {
-      allow read: if true;
-
-      // Users can create predictions for themselves
-      allow create: if request.resource.data.userId == getUserId()
-        && request.resource.data.resolved == false
-        && request.time < request.resource.data.locksAt; // Can't predict after lock
-
-      // Only server can resolve predictions (sets xpAwarded, resolved:true)
-      allow update: if false; // Admin SDK only
-    }
-
-    // ── Fixtures ─────────────────────────────────────────────────────────────
-    match /fixtures/{fixtureId} {
-      allow read: if true;
-      allow write: if false; // Cron only
-    }
-
-    // ── Raids ────────────────────────────────────────────────────────────────
-    match /raids/{raidId} {
-      allow read: if true;
-      // Raid creation and updates handled server-side for V1
-      // Post-launch: allow create if both players confirmed
-      allow write: if false;
-    }
-
-    // ── Leaderboard ──────────────────────────────────────────────────────────
-    match /leaderboard/{docId} {
-      allow read: if true;
-      allow write: if false; // Cron only
-    }
-
-    // ── Raid Queue ───────────────────────────────────────────────────────────
-    match /raidQueue/{docId} {
       allow read, write: if true;
     }
 
-    // ── Game Sessions ────────────────────────────────────────────────────────
+    // Raid Queue
+    match /raidQueue/{userId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.userId == userId
+        && request.resource.data.status in ['waiting', 'matched'];
+      allow delete: if true;
+    }
+
+    // Game Sessions (Must be open for client-side matching & play)
     match /gameSessions/{docId} {
       allow read, write: if true;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
-    function getUserId() {
-      // We use UUID from localStorage — not Firebase Auth
-      // So we check against the userId field in the doc being written
-      return request.resource.data.userId;
+    // Guilds — read freely, write allowed for castleHP increments from client
+    match /guilds/{guildId} {
+      allow read: if true;
+      allow write: if true; // xpEngine runs client-side so needs write access
     }
 
-    function isOwner(userId) {
-      return resource.data.uuid == userId;
+    // Fixtures — read only
+    match /fixtures/{fixtureId} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    function isValidNewUser(data) {
-      return data.keys().hasAll(['uuid', 'nickname', 'homeCountry', 'supportTeam'])
-        && data.nickname is string
-        && data.nickname.size() >= 2
-        && data.nickname.size() <= 20
-        && data.totalXP == 0
-        && data.tier == 'lurker';
+    // Chat
+    match /chat/{messageId} {
+      allow read, write: if true;
     }
 
-    function isValidChatMessage(data) {
-      return data.keys().hasAll(['guildCode', 'userId', 'nickname', 'text', 'timestamp'])
-        && data.text is string
-        && data.text.size() > 0
-        && data.text.size() <= 280
-        && data.reportCount == 0
-        && data.reported == false;
+    // Activity feed
+    match /activity/{activityId} {
+      allow read, write: if true;
+    }
+
+    // Predictions
+    match /predictions/{predId} {
+      allow read, write: if true;
     }
   }
 }

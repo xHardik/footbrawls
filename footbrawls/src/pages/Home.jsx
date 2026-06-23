@@ -1721,6 +1721,8 @@ export default function Home() {
     const u = getUser();
     if (!u) { navigate("/onboarding"); return; }
     setLocalUser(u);
+    localStorage.removeItem('active_game_session_id');
+    localStorage.removeItem('active_game_session_seed');
   }, []);
 
   useEffect(() => { const t = setInterval(() => setMockSecs(s => Math.max(0,s-1)), 1000); return () => clearInterval(t); }, []);

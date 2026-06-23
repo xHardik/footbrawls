@@ -155,8 +155,11 @@ export default function Raid() {
       const p1Scores = session.scores?.[p1Id] || {};
       const p2Scores = buddyObj ? (session.scores?.[p2Id] || {}) : {};
 
-      // Calculate Bot buddy if matching a bot
-      const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_');
+      // Check if buddy has disconnected
+      const hasBuddyDisconnected = session.disconnectedPlayers?.[buddyObj?.userId] === true;
+
+      // Calculate Bot buddy if matching a bot or buddy has disconnected
+      const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_') || hasBuddyDisconnected;
       const bots1 = simulateBotAct1Scores(gameObj.id, session.raidSeed);
       const bots2 = simulateBotAct2Scores(session.raidSeed);
       const baseBots3 = simulateBotAct3Scores(session.raidSeed);
@@ -166,7 +169,7 @@ export default function Raid() {
         const p1ScoreVal = p1Scores.act1.normalized || 0;
         const buddyScoreVal = isBotBuddy ? bots1.buddy : (p2Scores.act1?.normalized || 0);
 
-        // Wait until buddy submits score too if human
+        // Wait until buddy submits score too if human and not disconnected
         if (isBotBuddy || p2Scores.act1) {
           const yourTotal = sumAct1Duo(p1ScoreVal, buddyScoreVal);
           const rivalTotal = sumAct1Rival(bots1.rival1, bots1.rival2);
@@ -283,8 +286,36 @@ export default function Raid() {
       }
     });
 
+    // Mark player as disconnected on browser refresh or navigation away
+    const handleUnload = () => {
+      const activeId = localStorage.getItem('active_game_session_id');
+      if (activeId && user?.userId) {
+        const url = `https://firestore.googleapis.com/v1/projects/footbrawls/databases/(default)/documents/gameSessions/${activeId}?updateMask.fieldPaths=disconnectedPlayers.${user.userId}`;
+        const payload = JSON.stringify({
+          fields: {
+            [`disconnectedPlayers.${user.userId}`]: { booleanValue: true }
+          }
+        });
+        
+        // Use sendBeacon or synchronous XHR to guarantee transmission during unload
+        try {
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, payload);
+          } else {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PATCH', url, false);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(payload);
+          }
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
     return () => {
       unsubscribe();
+      window.removeEventListener('beforeunload', handleUnload);
       if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
     };
   }, [activeSessionId, user, navigate, finalizeRaidFromState]);

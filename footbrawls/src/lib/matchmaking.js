@@ -100,6 +100,18 @@ async function tryFirestoreMatch(user, raidType) {
         waitingSince: serverTimestamp(),
         status:       'waiting',
       });
+
+      // Write a dummy pending document to gameSessions to ensure collection is created and visible in console
+      const initialSessionId = `search_pending_${user.userId}`;
+      await setDoc(doc(db, 'gameSessions', initialSessionId), {
+        sessionId: initialSessionId,
+        sessionType: 'raid_pending',
+        hostId: user.userId,
+        hostName: user.nickname,
+        hostFlag: user.flag || '',
+        status: 'waiting',
+        createdAt: serverTimestamp(),
+      });
     }
 
     // 2. Query for other waiting candidates in our guild
@@ -228,6 +240,7 @@ export function findBuddy(user, raidType, onProgress) {
       clearInterval(tickTimer);
       clearInterval(pollTimer);
       try { deleteDoc(doc(db, 'raidQueue', user.userId)); } catch { /* noop */ }
+      try { deleteDoc(doc(db, 'gameSessions', `search_pending_${user.userId}`)); } catch { /* noop */ }
       resolve(match);
     };
 

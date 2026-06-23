@@ -1,7 +1,8 @@
-import { collection, doc, getDoc, getDocs, query, where, limit, setDoc, deleteDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where, limit, setDoc, deleteDoc, serverTimestamp, runTransaction, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { COUNTRIES } from './countries';
 import { seededRandom } from './dailySeed';
+import { BUDDY_TIMEOUT_MS } from './raidConstants';
 
 const REALISTIC_BOT_NAMES = [
   'GoalHunter_9', 'PitchWizard_88', 'TikiTakaMaster', 'BacklineBoss_4', 'GoldenBoot_22',
@@ -231,14 +232,18 @@ export function findBuddy(user, raidType, onProgress) {
     let settled   = false;
     let pollTimer = null;
     let tickTimer = null;
+    let unsubSnapshot = null;
 
-    const timeoutDuration = Math.floor(Math.random() * 8000) + 4000;
+    const timeoutDuration = BUDDY_TIMEOUT_MS;
 
     const finish = (match) => {
       if (settled) return;
       settled = true;
       clearInterval(tickTimer);
       clearInterval(pollTimer);
+      if (unsubSnapshot) {
+        try { unsubSnapshot(); } catch (e) {}
+      }
       try { deleteDoc(doc(db, 'raidQueue', user.userId)); } catch { /* noop */ }
       try { deleteDoc(doc(db, 'gameSessions', `search_pending_${user.userId}`)); } catch { /* noop */ }
       resolve(match);
@@ -253,6 +258,28 @@ export function findBuddy(user, raidType, onProgress) {
         finish(createBotRivalDuo(user, Date.now()));
       }
     }, 400);
+
+    unsubSnapshot = onSnapshot(doc(db, 'raidQueue', user.userId), (snap) => {
+      if (settled) return;
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.status === 'matched' && data.matchedWith) {
+          const buddy = data.matchedWith;
+          const seed = data.matchedSeed || Date.now();
+          const sessionId = data.sessionId || `raid_session_${seed}`;
+          const { rivals } = createBotRivalDuo(user, seed);
+          finish({
+            buddy,
+            rivals,
+            yourDuo:    [user, buddy],
+            rivalDuo:   rivals,
+            isBotMatch: false,
+            matchedAt:  Date.now(),
+            sessionId,
+          });
+        }
+      }
+    });
 
     pollTimer = setInterval(async () => {
       if (settled || Date.now() - start >= timeoutDuration) return;

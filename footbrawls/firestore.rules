@@ -91,6 +91,16 @@ service cloud.firestore {
       allow write: if false; // Cron only
     }
 
+    // ── Raid Queue ───────────────────────────────────────────────────────────
+    match /raidQueue/{docId} {
+      allow read, write: if true;
+    }
+
+    // ── Game Sessions ────────────────────────────────────────────────────────
+    match /gameSessions/{docId} {
+      allow read, write: if true;
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     function getUserId() {

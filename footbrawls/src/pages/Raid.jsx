@@ -328,48 +328,53 @@ export default function Raid() {
     setPhase('searching');
     setSearchRemaining(BUDDY_TIMEOUT_MS);
 
-    const result = await findBuddy(user, type, ({ remaining }) => {
-      setSearchRemaining(remaining);
-    });
-
-    // Check if result returned a session ID (for human matching)
-    if (result.sessionId) {
-      localStorage.setItem('active_game_session_id', result.sessionId);
-      localStorage.setItem('active_game_session_seed', String(result.matchedAt || Date.now()));
-      setActiveSessionId(result.sessionId);
-    } else {
-      // Local Bot session creation (fallback / training)
-      const mockSessionId = `bot_raid_${Date.now()}`;
-      const seedVal = result.matchedAt || Date.now();
-      const act1GameObj = pickAct1Game(seedVal);
-      
-      const sessionRef = doc(db, 'gameSessions', mockSessionId);
-      await setDoc(sessionRef, {
-        sessionId: mockSessionId,
-        sessionType: 'raid',
-        raidType: type,
-        raidSeed: seedVal,
-        players: [
-          {
-            userId: user.userId,
-            nickname: user.nickname,
-            flag: user.flag || '',
-            homeCountry: user.homeCountry,
-            totalXP: user.totalXP || 0,
-          }
-        ],
-        rivals: result.rivals || [],
-        act1Game: act1GameObj,
-        currentAct: 1,
-        scores: {},
-        acts: {},
-        actWinners: [],
-        status: 'active',
+    try {
+      const result = await findBuddy(user, type, ({ remaining }) => {
+        setSearchRemaining(remaining);
       });
 
-      localStorage.setItem('active_game_session_id', mockSessionId);
-      localStorage.setItem('active_game_session_seed', String(seedVal));
-      setActiveSessionId(mockSessionId);
+      // Check if result returned a session ID (for human matching)
+      if (result.sessionId) {
+        localStorage.setItem('active_game_session_id', result.sessionId);
+        localStorage.setItem('active_game_session_seed', String(result.matchedAt || Date.now()));
+        setActiveSessionId(result.sessionId);
+      } else {
+        // Local Bot session creation (fallback / training)
+        const mockSessionId = `bot_raid_${Date.now()}`;
+        const seedVal = result.matchedAt || Date.now();
+        const act1GameObj = pickAct1Game(seedVal);
+        
+        const sessionRef = doc(db, 'gameSessions', mockSessionId);
+        await setDoc(sessionRef, {
+          sessionId: mockSessionId,
+          sessionType: 'raid',
+          raidType: type,
+          raidSeed: seedVal,
+          players: [
+            {
+              userId: user.userId,
+              nickname: user.nickname,
+              flag: user.flag || '',
+              homeCountry: user.homeCountry,
+              totalXP: user.totalXP || 0,
+            }
+          ],
+          rivals: result.rivals || [],
+          act1Game: act1GameObj,
+          currentAct: 1,
+          scores: {},
+          acts: {},
+          actWinners: [],
+          status: 'active',
+        });
+
+        localStorage.setItem('active_game_session_id', mockSessionId);
+        localStorage.setItem('active_game_session_seed', String(seedVal));
+        setActiveSessionId(mockSessionId);
+      }
+    } catch (err) {
+      console.error('[Raid] Matchmaking or session creation failed:', err);
+      setPhase('lobby');
     }
   }, [user]);
 

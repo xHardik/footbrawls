@@ -267,6 +267,11 @@ export default function Raid() {
         const localAct2Done = localStorage.getItem(`raid_completed_act2_${activeSessionId}`) === 'true';
         const localAct3Done = localStorage.getItem(`raid_completed_act3_${activeSessionId}`) === 'true';
 
+        console.log('[Raid Debug] currentAct:', session.currentAct);
+        console.log('[Raid Debug] scores:', session.scores);
+        console.log('[Raid Debug] userId:', user.userId);
+        console.log('[Raid Debug] localAct1Done:', localAct1Done, 'localAct2Done:', localAct2Done);
+
         setActs(newActs);
         setActWinners(newActWinners);
         setHasFinishedAct1(!!session.scores?.[user.userId]?.act1 || localAct1Done);

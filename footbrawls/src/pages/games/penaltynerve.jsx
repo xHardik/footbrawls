@@ -672,6 +672,7 @@ function StreakDots({ history, today }) {
 export default function PenaltyNerve({ onBack }) {
   const navigate = useNavigate();
   const handleBack = onBack || (() => navigate('/'));
+  const [isRaid, setIsRaid] = useState(false);
 
   const [kicks, setKicks]           = useState([]);
   const [phase, setPhase]           = useState('aiming');
@@ -731,8 +732,9 @@ export default function PenaltyNerve({ onBack }) {
   }
 
   useEffect(() => {
-    const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
-    if (isRaid) {
+    const raid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
+    setIsRaid(raid);
+    if (raid) {
       setAlreadyPlayed(false);
       setPhase('aiming');
       return;
@@ -867,7 +869,7 @@ export default function PenaltyNerve({ onBack }) {
       {showModal && <HowToPlayModal onClose={() => setShowModal(false)} />}
 
       <nav className="pn-nav">
-        <button className="pn-logo" onClick={() => navigate('/')}>←</button>
+        {!isRaid && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}
         <div className="pn-nav-tag">
           <span className="pn-tag-dot" />
           Penalty Nerve
@@ -911,7 +913,11 @@ export default function PenaltyNerve({ onBack }) {
               {displayGoals} of {MAX_KICKS} goals scored · New penalties tomorrow
             </div>
             <div className="pn-result-actions">
-              <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+              {isRaid ? (
+                <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+              ) : (
+                <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+              )}
             </div>
           </div>
         ) : (
@@ -1041,11 +1047,15 @@ export default function PenaltyNerve({ onBack }) {
               </div>
             )}
 
-            {phase !== 'gameover' && (
-              <div className="pn-controls">
-                <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
-              </div>
-            )}
+             {phase !== 'gameover' && (
+               <div className="pn-controls">
+                 {isRaid ? (
+                   <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
+                 ) : (
+                   <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+                 )}
+               </div>
+             )}
 
             {phase === 'gameover' && (
               <div className="pn-result">
@@ -1086,9 +1096,13 @@ export default function PenaltyNerve({ onBack }) {
                   </div>
                 )}
 
-                <div className="pn-result-actions">
-                  <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
-                </div>
+                 <div className="pn-result-actions">
+                   {isRaid ? (
+                     <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                   ) : (
+                     <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+                   )}
+                 </div>
               </div>
             )}
           </>

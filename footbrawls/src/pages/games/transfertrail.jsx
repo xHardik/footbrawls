@@ -386,7 +386,8 @@ function Feedback({ state, message }) {
 }
 
 // ── Result Card ───────────────────────────────────────────────────────────────
-function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain }) {
+function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain, isRaid }) {
+  const navigate = useNavigate();
   const perfect = correctCount === PLAYERS_PER_GAME;
 
   return (
@@ -440,6 +441,35 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
       </div>
 
       {/* Play Again button removed to enforce once-per-day play limit */}
+      <div style={{ marginTop: 18 }}>
+        {isRaid ? (
+          <button 
+            className="tt-btn" 
+            onClick={() => navigate('/raid')}
+            style={{
+              background: `linear-gradient(135deg, ${T.royal}, ${T.royalLight})`,
+              color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12,
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.2rem', letterSpacing: 1.5,
+              cursor: 'pointer', width: '100%'
+            }}
+          >
+            ⚔️ Return to Raid
+          </button>
+        ) : (
+          <button 
+            className="tt-btn" 
+            onClick={() => navigate('/')}
+            style={{
+              background: T.surface, border: `1px solid ${T.border}`, color: T.text,
+              padding: '12px 24px', borderRadius: 12,
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.2rem', letterSpacing: 1.5,
+              cursor: 'pointer', width: '100%'
+            }}
+          >
+            ← Back to Home
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -809,18 +839,20 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         borderBottom:`1px solid rgba(26,111,255,0.25)`,
         boxShadow:"0 10px 30px rgba(26,111,255,0.22)",
       }}>
-        <button
-          className="tt-nav-logo"
-          onClick={() => navigate("/")}
-          style={{
-            fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:3,
-            background:`linear-gradient(90deg,${T.royal} 0%,${T.royalLight} 50%,${T.royal} 100%)`,
-            backgroundSize:"200% auto",
-            WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-            animation:"ttShimmer 4s linear infinite",cursor:"pointer",
-            border:"none",outline:"none",textAlign:"left",padding:0,
-          }}
-        >←</button>
+        {!isRaid && (
+          <button
+            className="tt-nav-logo"
+            onClick={() => navigate("/")}
+            style={{
+              fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:3,
+              background:`linear-gradient(90deg,${T.royal} 0%,${T.royalLight} 50%,${T.royal} 100%)`,
+              backgroundSize:"200% auto",
+              WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+              animation:"ttShimmer 4s linear infinite",cursor:"pointer",
+              border:"none",outline:"none",textAlign:"left",padding:0,
+            }}
+          >←</button>
+        )}
 
         <div className="tt-nav-tag" style={{
           display:"flex",alignItems:"center",gap:7,
@@ -871,6 +903,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             correctCount={correctCount}
             players={puzzlePlayers}
             onPlayAgain={handlePlayAgain}
+            isRaid={isRaid}
           />
         ) : (
           <>

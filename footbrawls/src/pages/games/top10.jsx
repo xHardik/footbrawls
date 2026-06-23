@@ -816,7 +816,7 @@ export default function Top10Guess() {
 
         {/* NAV */}
         <nav className="t10-nav">
-          <button className="t10-nav-logo" onClick={() => navigate('/')}>←</button>
+          {!isRaid && <button className="t10-nav-logo" onClick={() => navigate('/')}>←</button>}
           <div className="t10-nav-tag">
             <span className="t10-fire-dot" />
             Top 10 Guess
@@ -983,9 +983,11 @@ export default function Top10Guess() {
                     </div>
                   </div>
 
-                  <div className="t10-result-actions">
-                    <button className="t10-btn primary" onClick={handleShare} style={{ flex: 1 }}>Share result 📤</button>
-                  </div>
+                  {!isRaid && (
+                    <div className="t10-result-actions">
+                      <button className="t10-btn primary" onClick={handleShare} style={{ flex: 1 }}>Share result 📤</button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Revealing the full board */}
@@ -1011,7 +1013,11 @@ export default function Top10Guess() {
                 </div>
 
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <button className="t10-btn ghost" onClick={() => navigate('/')}>← Back to Home</button>
+                  {isRaid ? (
+                    <button className="t10-btn ghost" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
+                  ) : (
+                    <button className="t10-btn ghost" onClick={() => navigate('/')}>← Back to Home</button>
+                  )}
                 </div>
               </>
             );

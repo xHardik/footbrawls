@@ -466,7 +466,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
       {/* ── NAV ── */}
       <nav className="hl-nav">
-        <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>
+        {!isRaid && <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>}
         <div className="hl-nav-tag">
           <span className="hl-tag-dot" />
           Higher or Lower
@@ -576,13 +576,23 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
               >
                 Played Today
               </button>
-              <button
-                className="hl-btn"
-                style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", flex: 1 }}
-                onClick={() => navigate('/')}
-              >
-                ← Home
-              </button>
+              {isRaid ? (
+                <button
+                  className="hl-btn"
+                  style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)", color: "#fff", border: "none", flex: 1 }}
+                  onClick={() => navigate('/raid')}
+                >
+                  ⚔️ Return to Raid
+                </button>
+              ) : (
+                <button
+                  className="hl-btn"
+                  style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", flex: 1 }}
+                  onClick={() => navigate('/')}
+                >
+                  ← Home
+                </button>
+              )}
             </div>
           </div>
         )}

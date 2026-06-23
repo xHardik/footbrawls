@@ -591,7 +591,7 @@ export default function DribbleGauntlet() {
 
         {/* Nav */}
         <nav className="db-nav">
-          <button className="db-logo" onClick={() => navigate('/')}>←</button>
+          {!isRaid && <button className="db-logo" onClick={() => navigate('/')}>←</button>}
           <div className="db-nav-tag"><span className="db-tag-dot" />Dribble Gauntlet</div>
           <div className="db-nav-right">
             <button className="db-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
@@ -663,8 +663,14 @@ export default function DribbleGauntlet() {
                 </div>
 
                 <div className="db-summary-actions">
-                  <button className="db-action-btn db-btn-next" onClick={() => navigate('/')}>← Home</button>
-                  <button className="db-action-btn db-btn-go" onClick={restart}>Play Again</button>
+                  {isRaid ? (
+                    <button className="db-action-btn db-btn-go" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                  ) : (
+                    <>
+                      <button className="db-action-btn db-btn-next" onClick={() => navigate('/')}>← Home</button>
+                      <button className="db-action-btn db-btn-go" onClick={restart}>Play Again</button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

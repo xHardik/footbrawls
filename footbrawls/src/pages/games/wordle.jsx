@@ -971,7 +971,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
-        <button className="wdl-logo" onClick={handleBack}>←</button>
+        {!isRaid && <button className="wdl-logo" onClick={handleBack}>←</button>}
         <div className="wdl-nav-tag">
           <span className="wdl-tag-dot" />
           Player Wordle
@@ -1156,7 +1156,11 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
         {/* ── CONTROLS ── */}
         <div className="wdl-controls">
-          <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+          {isRaid ? (
+            <button className="wdl-btn wdl-btn-raid" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
+          ) : (
+            <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+          )}
         </div>
 
         {/* ── RESULT CARD ── */}
@@ -1177,7 +1181,11 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             )}
 
             <div className="wdl-result-actions">
-              <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+              {isRaid ? (
+                <button className="wdl-btn wdl-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+              ) : (
+                <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+              )}
             </div>
           </div>
         )}

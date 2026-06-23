@@ -930,7 +930,7 @@ export default function WhoAreYa() {
 
         {/* NAV */}
         <nav className="wya-nav">
-          <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>
+          {!isRaid && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />
             Who Are Ya?
@@ -1113,8 +1113,14 @@ export default function WhoAreYa() {
                 </div>
               </div>
               <div className="wya-result-actions">
-                <button className="wya-btn primary" onClick={() => window.location.reload()}>↺ Play Again</button>
-                <button className="wya-btn secondary" onClick={() => window.history.back()}>← Home</button>
+                {isRaid ? (
+                  <button className="wya-btn primary" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                ) : (
+                  <>
+                    <button className="wya-btn primary" onClick={() => window.location.reload()}>↺ Play Again</button>
+                    <button className="wya-btn secondary" onClick={() => window.history.back()}>← Home</button>
+                  </>
+                )}
               </div>
             </div>
           )}

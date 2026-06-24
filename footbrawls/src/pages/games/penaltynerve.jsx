@@ -1023,7 +1023,7 @@ export default function PenaltyNerve({ onBack }) {
                 {phase === 'result' && lastResult && (
                   <div className={`pn-feedback-banner ${lastResult.saved ? 'banner-saved' : 'banner-goal'}`}>
                     {lastResult.saved
-                      ? `SAVED! Goalkeeper ${GK_DIVES[lastResult.gkDive]}`
+                      ? `SAVED!`
                       : (isRaid ? `GOAL!` : `GOAL! +${XP_PER_GOAL} XP Earned`)}
                   </div>
                 )}

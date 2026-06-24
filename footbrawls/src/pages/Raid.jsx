@@ -106,6 +106,32 @@ export default function Raid() {
   const [hasFinishedAct3, setHasFinishedAct3] = useState(false);
   const [finalizeResult, setFinalizeResult] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
+  const [readyAct2, setReadyAct2] = useState({});
+  const [readyAct3, setReadyAct3] = useState({});
+
+  const handleReadyAct2 = async () => {
+    if (!activeSessionId) return;
+    try {
+      const sessionRef = doc(db, 'gameSessions', activeSessionId);
+      await updateDoc(sessionRef, {
+        [`readyAct2.${user.userId}`]: true
+      });
+    } catch (e) {
+      console.error('[Raid] Ready Act 2 failed:', e);
+    }
+  };
+
+  const handleReadyAct3 = async () => {
+    if (!activeSessionId) return;
+    try {
+      const sessionRef = doc(db, 'gameSessions', activeSessionId);
+      await updateDoc(sessionRef, {
+        [`readyAct3.${user.userId}`]: true
+      });
+    } catch (e) {
+      console.error('[Raid] Ready Act 3 failed:', e);
+    }
+  };
 
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
     setFinalizing(true);
@@ -300,6 +326,17 @@ export default function Raid() {
         setHasFinishedAct2(!!session.scores?.[user.userId]?.act2 || localAct2Done);
         setHasFinishedAct3(!!session.scores?.[user.userId]?.act3 || localAct3Done);
 
+        const ready2 = session.readyAct2 || {};
+        const ready3 = session.readyAct3 || {};
+        setReadyAct2(ready2);
+        setReadyAct3(ready3);
+
+        const youReady2 = ready2[user.userId] === true;
+        const buddyReady2 = isBotBuddy ? true : (ready2[buddyObj?.userId] === true);
+
+        const youReady3 = ready3[user.userId] === true;
+        const buddyReady3 = isBotBuddy ? true : (ready3[buddyObj?.userId] === true);
+
         // UI Phase transitions
         if (session.currentAct === 1) {
           if (!!session.scores?.[user.userId]?.act1 || localAct1Done) {
@@ -318,8 +355,18 @@ export default function Raid() {
           if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
           if (session.currentAct === 2) {
             setPhase('act2_interstitial');
+            if (youReady2 && buddyReady2 && !localAct2Done) {
+              initialRedirectTimer = setTimeout(() => {
+                navigate('/games/dribble');
+              }, 2200);
+            }
           } else if (session.currentAct === 3) {
             setPhase('act3_interstitial');
+            if (youReady3 && buddyReady3 && !localAct3Done) {
+              initialRedirectTimer = setTimeout(() => {
+                navigate('/games/penaltynerve');
+              }, 2200);
+            }
           } else if (session.currentAct === 4) {
             const outcomes = computeRaidOutcome(newActWinners);
             setOutcome(outcomes);
@@ -677,9 +724,23 @@ export default function Raid() {
                   <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 2...</p>
                 </div>
               ) : (
-                <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
-                  ⚔️ Play Act 2 — Dribble
-                </button>
+                <>
+                  {readyAct2[user.userId] && (match.isBotMatch || readyAct2[match.buddy?.userId]) ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                      <div style={s.spinner} />
+                      <p style={{ ...s.muted, marginTop: 10 }}>Both ready! Launching Act 2 Dribble...</p>
+                    </div>
+                  ) : readyAct2[user.userId] ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                      <div style={s.spinner} />
+                      <p style={{ ...s.muted, marginTop: 10 }}>Waiting for teammate to ready up...</p>
+                    </div>
+                  ) : (
+                    <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={handleReadyAct2}>
+                      ⚔️ Ready Up for Act 2 — Dribble
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -757,9 +818,23 @@ export default function Raid() {
                   <p style={{ ...s.muted, marginTop: 10 }}>Waiting for buddy to finish Act 3...</p>
                 </div>
               ) : (
-                <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
-                  ⚽ Play Act 3 — Penalty Shootout
-                </button>
+                <>
+                  {readyAct3[user.userId] && (match.isBotMatch || readyAct3[match.buddy?.userId]) ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                      <div style={s.spinner} />
+                      <p style={{ ...s.muted, marginTop: 10 }}>Both ready! Launching Act 3 Penalties...</p>
+                    </div>
+                  ) : readyAct3[user.userId] ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                      <div style={s.spinner} />
+                      <p style={{ ...s.muted, marginTop: 10 }}>Waiting for teammate to ready up...</p>
+                    </div>
+                  ) : (
+                    <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={handleReadyAct3}>
+                      ⚽ Ready Up for Act 3 — Penalty Shootout
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

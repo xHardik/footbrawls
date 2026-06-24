@@ -315,6 +315,38 @@ export default function Raid() {
         const localAct2Done = localStorage.getItem(`raid_completed_act2_${activeSessionId}`) === 'true';
         const localAct3Done = localStorage.getItem(`raid_completed_act3_${activeSessionId}`) === 'true';
 
+        // Self-healing score writes to prevent lockouts on lost writes
+        if (localAct1Done && !session.scores?.[user.userId]?.act1 && session.status === 'active') {
+          console.warn('[Raid] Self-healing Act 1: local finished but DB score missing. Writing fallback.');
+          updateDoc(sessionRef, {
+            [`scores.${user.userId}.act1`]: {
+              gameId: gameObj?.id || 'unknown',
+              rawScore: 0,
+              normalized: 0
+            }
+          });
+        }
+        if (localAct2Done && !session.scores?.[user.userId]?.act2 && session.status === 'active') {
+          console.warn('[Raid] Self-healing Act 2: local finished but DB score missing. Writing fallback.');
+          updateDoc(sessionRef, {
+            [`scores.${user.userId}.act2`]: {
+              gameId: 'dribble_correct',
+              rawScore: 0,
+              wins: 0
+            }
+          });
+        }
+        if (localAct3Done && !session.scores?.[user.userId]?.act3 && session.status === 'active') {
+          console.warn('[Raid] Self-healing Act 3: local finished but DB score missing. Writing fallback.');
+          updateDoc(sessionRef, {
+            [`scores.${user.userId}.act3`]: {
+              gameId: 'penaltyNerve_all5',
+              rawScore: 0,
+              goals: 0
+            }
+          });
+        }
+
         console.log('[Raid Debug] currentAct:', session.currentAct);
         console.log('[Raid Debug] scores:', session.scores);
         console.log('[Raid Debug] userId:', user.userId);
@@ -655,6 +687,16 @@ export default function Raid() {
             {match.isBotMatch && raidType === 'training' && (
               <p style={s.muted}>Bot match — no humans available yet</p>
             )}
+
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div style={s.spinner} />
+              <p style={{ ...s.muted, marginBottom: 4 }}>Launching Act 1 game...</p>
+              {act1Game && (
+                <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate(act1Game.route)}>
+                  ⚔️ Enter Stage 1: {act1Game.label}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -726,9 +768,12 @@ export default function Raid() {
               ) : (
                 <>
                   {readyAct2[user.userId] && (match.isBotMatch || readyAct2[match.buddy?.userId]) ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0', gap: 12 }}>
                       <div style={s.spinner} />
-                      <p style={{ ...s.muted, marginTop: 10 }}>Both ready! Launching Act 2 Dribble...</p>
+                      <p style={{ ...s.muted, marginBottom: 4 }}>Both ready! Launching Act 2 Dribble...</p>
+                      <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/dribble')}>
+                        ⚔️ Enter Stage 2 — Dribble
+                      </button>
                     </div>
                   ) : readyAct2[user.userId] ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
@@ -820,9 +865,12 @@ export default function Raid() {
               ) : (
                 <>
                   {readyAct3[user.userId] && (match.isBotMatch || readyAct3[match.buddy?.userId]) ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0', gap: 12 }}>
                       <div style={s.spinner} />
-                      <p style={{ ...s.muted, marginTop: 10 }}>Both ready! Launching Act 3 Penalties...</p>
+                      <p style={{ ...s.muted, marginBottom: 4 }}>Both ready! Launching Act 3 Penalties...</p>
+                      <button type="button" className="glowing-btn" style={s.primaryBtn} onClick={() => navigate('/games/penaltynerve')}>
+                        ⚽ Enter Stage 3 — Penalty Shootout
+                      </button>
                     </div>
                   ) : readyAct3[user.userId] ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '20px 0' }}>

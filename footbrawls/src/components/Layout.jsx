@@ -215,7 +215,17 @@ export default function Layout({ children, hideMobileNav }) {
     const docRef = doc(db, 'gameSessions', activeId);
     const unsub = onSnapshot(docRef, snap => {
       if (snap.exists()) {
-        setSessionData(snap.data());
+        const data = snap.data();
+        setSessionData(data);
+
+        // Auto-redirect to /raid once player's score is submitted for the current act
+        const uid = getUser()?.userId;
+        const act = data.currentAct || 1;
+        const hasScoreLocally = localStorage.getItem(`raid_completed_act${act}_${activeId}`) === 'true';
+        const hasScoreInDb = !!data.scores?.[uid]?.[`act${act}`];
+        if (uid && (hasScoreLocally || hasScoreInDb)) {
+          navigate('/raid');
+        }
       }
     });
 
@@ -223,7 +233,7 @@ export default function Layout({ children, hideMobileNav }) {
       clearInterval(interval);
       unsub();
     };
-  }, [location.pathname, handleTimeout]);
+  }, [location.pathname, handleTimeout, navigate]);
 
   // Live guild data
   useEffect(() => {

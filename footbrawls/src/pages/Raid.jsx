@@ -387,6 +387,14 @@ export default function Raid() {
           if (initialRedirectTimer) clearTimeout(initialRedirectTimer);
           if (session.currentAct === 2) {
             setPhase('act2_interstitial');
+            
+            // Auto-ready user if not ready yet
+            if (!youReady2) {
+              updateDoc(sessionRef, {
+                [`readyAct2.${user.userId}`]: true
+              });
+            }
+
             if (youReady2 && buddyReady2 && !localAct2Done) {
               initialRedirectTimer = setTimeout(() => {
                 navigate('/games/dribble');
@@ -394,6 +402,14 @@ export default function Raid() {
             }
           } else if (session.currentAct === 3) {
             setPhase('act3_interstitial');
+
+            // Auto-ready user if not ready yet
+            if (!youReady3) {
+              updateDoc(sessionRef, {
+                [`readyAct3.${user.userId}`]: true
+              });
+            }
+
             if (youReady3 && buddyReady3 && !localAct3Done) {
               initialRedirectTimer = setTimeout(() => {
                 navigate('/games/penaltynerve');

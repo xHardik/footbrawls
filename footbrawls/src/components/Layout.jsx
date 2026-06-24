@@ -8,6 +8,7 @@ import { isCurseExpired } from '../lib/guildLevels';
 import { getUser, saveUserLocally } from '../lib/user';
 import { db } from '../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { awardXP } from '../lib/xpEngine';
 
 const C = {
   bg:      "#060810",
@@ -149,6 +150,80 @@ export default function Layout({ children, hideMobileNav }) {
   const [guild, setGuild]         = useState(null);
   const [userXP, setUserXP]       = useState(0);
   const [completedGames, setCompletedGames] = useState({});
+  const [timer, setTimer] = useState(60);
+  const [sessionData, setSessionData] = useState(null);
+
+  const handleTimeout = useCallback(async (activeId) => {
+    const path = location.pathname.toLowerCase();
+    const user = getUser();
+    if (!user?.userId) {
+      navigate('/raid');
+      return;
+    }
+
+    try {
+      if (path.includes('dribble')) {
+        localStorage.setItem(`raid_completed_act2_${activeId}`, 'true');
+        await awardXP(user.userId, 'dribble_correct', { rawXP: 0 });
+      } else if (path.includes('penaltynerve')) {
+        localStorage.setItem(`raid_completed_act3_${activeId}`, 'true');
+        await awardXP(user.userId, 'penaltyNerve_all5', { rawXP: 0 });
+      } else {
+        localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
+        let gameId = 'whoareya_correct';
+        let opts = { rawXP: 0, guessNumber: 8, solved: false };
+        if (path.includes('wordle')) {
+          gameId = 'wordle_correct';
+          opts = { rawXP: 0, guessNumber: 6, solved: false };
+        } else if (path.includes('higherlower')) {
+          gameId = 'higherLower_correct';
+          opts = { rawXP: 0, streak: 0 };
+        } else if (path.includes('transfertrail')) {
+          gameId = 'transferTrail_correct';
+          opts = { rawXP: 0 };
+        } else if (path.includes('top10')) {
+          gameId = 'top10_complete';
+          opts = { rawXP: 0, correctCount: 0 };
+        }
+        await awardXP(user.userId, gameId, opts);
+      }
+    } catch (e) {
+      console.error('[Layout Raid Timer] Timeout submission failed:', e);
+    }
+    navigate('/raid');
+  }, [location.pathname, navigate]);
+
+  // Timer & Session listener in Raid mode
+  useEffect(() => {
+    const isRaid = !!localStorage.getItem('active_game_session_id');
+    const activeId = localStorage.getItem('active_game_session_id');
+    if (!isRaid || !activeId || !location.pathname.startsWith('/games/')) return;
+
+    setTimer(60);
+
+    const interval = setInterval(() => {
+      setTimer(t => {
+        if (t <= 1) {
+          clearInterval(interval);
+          handleTimeout(activeId);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+
+    const docRef = doc(db, 'gameSessions', activeId);
+    const unsub = onSnapshot(docRef, snap => {
+      if (snap.exists()) {
+        setSessionData(snap.data());
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
+  }, [location.pathname, handleTimeout]);
 
   // Live guild data
   useEffect(() => {
@@ -256,6 +331,78 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
     const curseInfo  = CURSE_COLORS[curse] || CURSE_COLORS[null];
    const hpPercent  = guild ? Math.min(100, (guild.castleHP / guild.castleHPCap) * 100) : 0;
    const xpPercent  = Math.min(100, (userXP / 200) * 100);
+
+  const isRaidMode = !!localStorage.getItem('active_game_session_id') && location.pathname.startsWith('/games/');
+  if (isRaidMode) {
+    const buddy = sessionData?.players?.find(p => p.userId !== user?.userId) || null;
+    const teammateName = buddy ? buddy.nickname : 'Teammate';
+    let teammateStatus = 'Playing...';
+    if (sessionData && buddy) {
+      const act = sessionData.currentAct || 1;
+      const scores = sessionData.scores?.[buddy.userId] || {};
+      if (act === 1) {
+        teammateStatus = scores.act1 ? `${scores.act1.normalized} pts` : 'Playing...';
+      } else if (act === 2) {
+        teammateStatus = scores.act2 ? `${scores.act2.wins * 20} pts` : 'Playing...';
+      } else if (act === 3) {
+        teammateStatus = scores.act3 ? `${scores.act3.goals * 20} pts` : 'Playing...';
+      }
+    }
+
+    return (
+      <div className="ly-raid-layout" style={{ minHeight: '100vh', background: '#04080f', color: '#f2f2f4', display: 'flex', flexDirection: 'column' }}>
+        {/* Raid Header HUD */}
+        <div style={{
+          background: 'rgba(6, 8, 16, 0.95)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          backdropFilter: 'blur(10px)',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000
+        }}>
+          {/* Left: Raid Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: '1.2rem' }}>⚔️</span>
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', letterSpacing: 0.5, color: '#F7C344' }}>CO-OP RAID</div>
+              <div style={{ fontSize: '0.68rem', color: 'rgba(242, 242, 244, 0.5)' }}>Stage {sessionData?.currentAct || 1}</div>
+            </div>
+          </div>
+
+          {/* Center: Countdown Timer */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '0.62rem', letterSpacing: 1.5, color: 'rgba(242, 242, 244, 0.5)', textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }}>Time Remaining</div>
+            <div style={{
+              fontSize: '1.55rem',
+              fontWeight: 800,
+              fontFamily: "'Space Mono', monospace",
+              color: timer <= 15 ? '#E84040' : '#f2f2f4',
+              animation: timer <= 15 ? 'pulse 1s infinite' : 'none'
+            }}>
+              {timer}s
+            </div>
+          </div>
+
+          {/* Right: Teammate Status */}
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.62rem', letterSpacing: 1, color: 'rgba(242, 242, 244, 0.5)', textTransform: 'uppercase' }}>Teammate Status</div>
+            <div style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>
+              👤 {teammateName}: <span style={{ color: teammateStatus.includes('Playing') ? '#F7C344' : '#3DD68C' }}>{teammateStatus}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ly-root">

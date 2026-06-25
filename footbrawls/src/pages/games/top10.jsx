@@ -991,41 +991,13 @@ export default function Top10Guess() {
                     </div>
                   </div>
 
-                  {!isRaid && (
-                    <div className="t10-result-actions">
-                      <button className="t10-btn primary" onClick={handleShare} style={{ flex: 1 }}>Share result 📤</button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Revealing the full board */}
-                <h3 style={{ fontSize: '.9rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '14px', color: 'var(--muted)' }}>
-                  Complete List Revealed
-                </h3>
-                <div className="t10-board">
-                  {activeQuestion.answers.map((ans, idx) => {
-                    const wasCorrect = revealed[idx];
-                    return (
-                      <div key={idx} className={`t10-row ${wasCorrect ? 'revealed' : 'missed'}`}>
-                        <span className="t10-row-num">#{idx + 1}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                          <WikiAvatar name={ans.name} isClub={isClubQuestion} />
-                          <span className="t10-row-name" style={{ color: wasCorrect ? 'var(--green)' : '#ff6b6b' }}>
-                            {ans.name} {!wasCorrect && <span style={{ fontSize: '.7rem', opacity: 0.5 }}>(Missed)</span>}
-                          </span>
-                        </div>
-                        <span className="t10-row-val">{ans.value}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  {isRaid ? (
-                    <button className="t10-btn ghost" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
-                  ) : (
-                    <button className="t10-btn ghost" onClick={() => navigate('/')}>← Back to Home</button>
-                  )}
+                  <div style={{ textAlign: 'center', marginTop: 14 }}>
+                    {isRaid ? (
+                      <button className="t10-btn primary" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                    ) : (
+                      <button className="t10-btn primary" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
+                    )}
+                  </div>
                 </div>
               </>
             );

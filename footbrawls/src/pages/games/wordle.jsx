@@ -4,7 +4,7 @@
  * Fully synced to Crickingo HTML fidelity: spacing, modal, responsive, nav tooltip
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDailyPlayer, getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";

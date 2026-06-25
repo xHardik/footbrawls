@@ -899,9 +899,8 @@ export default function DailyTrivia() {
                   </div>
                 )}
 
-                <div className="dt-result-actions">
-                  <button className="dt-btn secondary" onClick={handleShare}>📤 Share</button>
-                  <button className="dt-btn ghost" onClick={markDone}>← Home</button>
+                <div className="dt-result-actions" style={{ justifyContent: 'center' }}>
+                  <button className="dt-btn primary" onClick={markDone} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810', fontWeight: 'bold' }}>← Back to Home</button>
                 </div>
               </div>
             );
@@ -919,8 +918,7 @@ export default function DailyTrivia() {
               <div className="dt-countdown">{countdown}</div>
               <div className="dt-countdown-lbl">Until next puzzle</div>
               <div className="dt-result-actions" style={{ justifyContent: 'center' }}>
-                <button className="dt-btn secondary" onClick={handleShare}>📤 Share Result</button>
-                <button className="dt-btn ghost" onClick={() => window.history.back()}>← Home</button>
+                <button className="dt-btn primary" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810', fontWeight: 'bold' }}>← Back to Home</button>
               </div>
             </div>
           )}

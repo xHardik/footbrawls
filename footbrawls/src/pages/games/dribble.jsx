@@ -674,10 +674,7 @@ export default function DribbleGauntlet() {
                   {isRaid ? (
                     <button className="db-action-btn db-btn-go" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
                   ) : (
-                    <>
-                      <button className="db-action-btn db-btn-next" onClick={() => navigate('/')}>← Home</button>
-                      <button className="db-action-btn db-btn-go" onClick={restart}>Play Again</button>
-                    </>
+                    <button className="db-action-btn db-btn-go" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
                   )}
                 </div>
               </div>
@@ -762,7 +759,6 @@ export default function DribbleGauntlet() {
                       <div className="db-ctrl-label">
                         <span className="db-phase-badge shoot">Shoot</span>
                         Pick a goal zone <span className="db-xp-hint">+3 XP</span>
-                        <span className="db-gk-hint">GK covers: <strong>{blockedHint}</strong></span>
                       </div>
                       <div className="db-finish-grid">
                         {ZONE_LABELS.map((_, i) => (

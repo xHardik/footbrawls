@@ -716,7 +716,8 @@ if (typeof window !== "undefined") {
   };
   window.adConfig({
     preloadAdBreaks: 'on',
-    sound: 'on'
+    sound: 'on',
+    videoAdOnly: true
   });
 }
 

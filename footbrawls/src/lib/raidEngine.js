@@ -88,13 +88,13 @@ export function determineActWinner(yourTotal, rivalTotal) {
 }
 
 /**
- * Compute overall raid outcome from 3 act winners.
+ * Compute overall raid outcome from total combined team points.
  */
-export function computeRaidOutcome(actWinners) {
-  const yours  = actWinners.filter(w => w === 'you').length;
-  const theirs = actWinners.filter(w => w === 'rival').length;
-  if (yours > theirs)  return 'win';
-  if (theirs > yours)  return 'loss';
+export function computeRaidOutcome(acts) {
+  const yourTotal  = (acts.act1?.yourTotal || 0) + (acts.act2?.yourTotal || 0) + (acts.act3?.yourTotal || 0);
+  const rivalTotal = (acts.act1?.rivalTotal || 0) + (acts.act2?.rivalTotal || 0) + (acts.act3?.rivalTotal || 0);
+  if (yourTotal > rivalTotal)  return 'win';
+  if (rivalTotal > yourTotal)  return 'loss';
   return 'draw';
 }
 

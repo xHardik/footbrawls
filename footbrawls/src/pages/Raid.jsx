@@ -602,16 +602,28 @@ export default function Raid() {
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
     setFinalizing(true);
     try {
+      const userScore = (currentActs.act1?.playerScore || 0) +
+        ((currentActs.act2?.playerRoundWins || 0) * 20) +
+        ((currentActs.act3?.playerGoals || 0) * 20);
+
+      const buddyScore = currentMatch?.buddy ? (
+        (currentActs.act1?.buddyScore || 0) +
+        ((currentActs.act2?.buddyRoundWins || 0) * 20) +
+        ((currentActs.act3?.buddyGoals || 0) * 20)
+      ) : 0;
+
+      const isUserMvp = userScore > buddyScore;
+
       const perf = {
-        [user.userId]:
-          (currentActs.act1?.playerScore  || 0) +
-          ((currentActs.act2?.playerRoundWins || 0) * 20) +
-          ((currentActs.act3?.playerGoals || 0) * 20),
+        [user.userId]: userScore,
       };
-      const mvpId = pickMvp(perf);
+      if (currentMatch?.buddy?.userId) {
+        perf[currentMatch.buddy.userId] = buddyScore;
+      }
+
       const res = await finalizeRaid({
         raidType: currentRaidType, outcome: raidOutcome,
-        isMvp: mvpId === user.userId, acts: currentActs, match: currentMatch,
+        isMvp: isUserMvp, acts: currentActs, match: currentMatch,
         rivalGuildCode: currentMatch?.rivals?.[0]?.homeCountry,
         playerPerformance: perf,
       });
@@ -726,7 +738,23 @@ export default function Raid() {
         if (timer) clearTimeout(timer);
 
         if (s.currentAct===1) {
-          if (!!s.scores?.[user.userId]?.act1||l1) { setPhase('waiting_act1'); }
+          if (!!s.scores?.[user.userId]?.act1||l1) {
+            if (isBotBuddy) {
+              setPhase('act2_interstitial');
+              const finalNewActs = { ...newActs };
+              if (!newActs.act1) {
+                const p1v = p1Scores.act1?.normalized || 0;
+                const bv = bots1.buddy;
+                const yt = sumAct1Duo(p1v, bv);
+                const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
+                finalNewActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
+                newWinners[0] = finalNewActs.act1.winner;
+              }
+              await updateDoc(sessionRef, { acts: finalNewActs, actWinners: newWinners, currentAct: 2 });
+            } else {
+              setPhase('waiting_act1');
+            }
+          }
           else {
             setPhase('matched');
             timer = setTimeout(()=>navigate(gameObj.route),2200);
@@ -734,14 +762,24 @@ export default function Raid() {
         } else {
           if (s.currentAct===2) {
             setPhase('act2_interstitial');
-            if (!y2) updateDoc(sessionRef,{[`readyAct2.${user.userId}`]:true});
-            if (y2&&b2&&!l2) timer = setTimeout(()=>navigate('/games/dribble'),2200);
+            if (isBotBuddy) {
+              if (!y2) await updateDoc(sessionRef,{[`readyAct2.${user.userId}`]:true});
+              if (!l2) timer = setTimeout(()=>navigate('/games/dribble'), 1000);
+            } else {
+              if (!y2) updateDoc(sessionRef,{[`readyAct2.${user.userId}`]:true});
+              if (y2&&b2&&!l2) timer = setTimeout(()=>navigate('/games/dribble'),2200);
+            }
           } else if (s.currentAct===3) {
             setPhase('act3_interstitial');
-            if (!y3) updateDoc(sessionRef,{[`readyAct3.${user.userId}`]:true});
-            if (y3&&b3&&!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'),2200);
+            if (isBotBuddy) {
+              if (!y3) await updateDoc(sessionRef,{[`readyAct3.${user.userId}`]:true});
+              if (!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'), 1000);
+            } else {
+              if (!y3) updateDoc(sessionRef,{[`readyAct3.${user.userId}`]:true});
+              if (y3&&b3&&!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'),2200);
+            }
           } else if (s.currentAct===4) {
-            const out = computeRaidOutcome(newWinners);
+            const out = computeRaidOutcome(newActs);
             setOutcome(out); setPhase('results');
             await finalizeRaidFromState(newActs,out,currentMatch,s.raidType);
             await updateDoc(sessionRef,{status:'completed'});
@@ -774,6 +812,58 @@ export default function Raid() {
   /* ── Start search ── */
   const startSearch = useCallback(async type => {
     if (!user) return;
+
+    if (type === 'challenge') {
+      const today = new Date().toISOString().split('T')[0];
+      const key = `castle_raid_entries_${today}`;
+      const current = parseInt(localStorage.getItem(key) || '0', 10);
+      if (current >= 10) {
+        alert('Daily limit reached! You can only play 10 Castle Raids per day.');
+        return;
+      }
+      const nextCount = current + 1;
+      localStorage.setItem(key, String(nextCount));
+      setCastleRaidEntries(nextCount);
+    }
+
+    if (type === 'training') {
+      setRaidType(type);
+      const sid = `bot_raid_${Date.now()}`;
+      const seed = Date.now();
+      const g = pickAct1Game(seed);
+      const botDuo = createBotRivalDuo(user, seed);
+      
+      const mockMatch = {
+        buddy: botDuo.buddy,
+        rivals: botDuo.rivals,
+        yourDuo: [user, botDuo.buddy],
+        rivalDuo: botDuo.rivals,
+        isBotMatch: true,
+        matchedAt: seed,
+        sessionId: sid,
+      };
+
+      try {
+        await setDoc(doc(db,'gameSessions',sid), {
+          sessionId:sid, sessionType:'raid', raidType:type, raidSeed:seed,
+          players:[
+            { userId:user.userId, nickname:user.nickname, flag:user.flag||'', homeCountry:user.homeCountry, totalXP:user.totalXP||0 },
+            { userId:botDuo.buddy.userId, nickname:botDuo.buddy.nickname, flag:botDuo.buddy.flag||'', homeCountry:botDuo.buddy.homeCountry, totalXP:botDuo.buddy.totalXP||0, isBot:true }
+          ],
+          rivals:botDuo.rivals, act1Game:g, currentAct:1,
+          scores:{}, acts:{}, actWinners:[], status:'active',
+        });
+        localStorage.setItem('active_game_session_id', sid);
+        localStorage.setItem('active_game_session_seed', String(seed));
+        setMatch(mockMatch);
+        setPhase('matched');
+        setActiveSessionId(sid);
+      } catch (err) {
+        console.error('[Raid] Direct bot search fail:', err);
+      }
+      return;
+    }
+
     setRaidType(type); setPhase('searching'); setSearchRemaining(BUDDY_TIMEOUT_MS);
     try {
       const result = await findBuddy(user, type, ({ remaining }) => setSearchRemaining(remaining));
@@ -787,7 +877,10 @@ export default function Raid() {
         const g = pickAct1Game(seed);
         await setDoc(doc(db,'gameSessions',sid), {
           sessionId:sid, sessionType:'raid', raidType:type, raidSeed:seed,
-          players:[{ userId:user.userId, nickname:user.nickname, flag:user.flag||'', homeCountry:user.homeCountry, totalXP:user.totalXP||0 }],
+          players:[
+            { userId:user.userId, nickname:user.nickname, flag:user.flag||'', homeCountry:user.homeCountry, totalXP:user.totalXP||0 },
+            { userId:result.buddy.userId, nickname:result.buddy.nickname, flag:result.buddy.flag||'', homeCountry:result.buddy.homeCountry, totalXP:result.buddy.totalXP||0, isBot:true }
+          ],
           rivals:result.rivals||[], act1Game:g, currentAct:1,
           scores:{}, acts:{}, actWinners:[], status:'active',
         });
@@ -894,6 +987,11 @@ export default function Raid() {
                 const isNormal    = mode.id === 'normal';
                 const accentColor = isChallenge ? T.gold : isNormal ? T.blue : T.muted;
 
+                const today = new Date().toISOString().split('T')[0];
+                const key = `castle_raid_entries_${today}`;
+                const attemptsUsed = isChallenge ? parseInt(localStorage.getItem(key) || '0', 10) : 0;
+                const isLimitReached = isChallenge && attemptsUsed >= 3;
+
                 const ModeIcon = isChallenge
                   ? <SwordsIcon size={20} color={accentColor} />
                   : isNormal
@@ -901,10 +999,21 @@ export default function Raid() {
                     : <GlobeIcon size={20} color={accentColor} />;
 
                 return (
-                  <button key={mode.id} className="raid-mode-card" onClick={() => startSearch(mode.id)}>
+                  <button
+                    key={mode.id}
+                    className="raid-mode-card"
+                    onClick={() => !isLimitReached && startSearch(mode.id)}
+                    disabled={isLimitReached}
+                    style={{
+                      opacity: isLimitReached ? 0.5 : 1,
+                      cursor: isLimitReached ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     {isChallenge && (
-                      <div style={{ position:'absolute', top:12, right:12 }}>
-                        <GlowBadge color={T.gold}>HOT</GlowBadge>
+                      <div style={{ position:'absolute', top:12, right:12, display:'flex', gap:6 }}>
+                        <GlowBadge color={isLimitReached ? T.red : T.gold}>
+                          {isLimitReached ? 'LIMIT REACHED' : `${attemptsUsed}/3 ATTEMPTS`}
+                        </GlowBadge>
                       </div>
                     )}
 
@@ -1258,32 +1367,47 @@ export default function Raid() {
             {!isTraining && (
               <div style={{
                 position:'relative', zIndex:2,
-                textAlign:'center', padding:'16px 20px',
-                background:`${T.green}0a`, border:`1px solid ${T.green}30`,
+                padding:'16px 20px',
+                background:'rgba(255,255,255,0.015)', border:`1px solid ${T.border}`,
                 borderRadius:16, marginBottom:16,
               }}>
+                <div style={{
+                  fontFamily:"'Orbitron',sans-serif", fontSize:10, letterSpacing:2,
+                  color:T.purple, textTransform:'uppercase', marginBottom:12, fontWeight:700,
+                  display:'flex', alignItems:'center', gap:6,
+                }}>
+                  📈 XP Rewards earned
+                </div>
+
                 {finalizing ? (
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'10px 0' }}>
                     <Spinner size={20} color={T.green} />
-                    <span style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif" }}>Updating XP & Guild HP…</span>
+                    <span style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif" }}>Calculating XP rewards…</span>
                   </div>
                 ) : (
-                  <>
-                    <div style={{
-                      fontFamily:"'Orbitron',sans-serif", fontSize:24, fontWeight:900,
-                      color:T.green, textShadow:`0 0 14px ${T.greenGlow}`,
-                    }}>
-                      +{(finalizeResult?.xpResults?.win?.xpAwarded ?? xpPreview.win) || xpPreview.loss} XP
+                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                    {/* User XP row */}
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
+                      <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.text }}>
+                        👤 You ({user.nickname})
+                      </span>
+                      <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
+                        +{(finalizeResult?.xpResults?.win?.xpAwarded ?? (outcome === 'win' ? xpPreview.win : xpPreview.loss)) + (finalizeResult?.xpResults?.mvp?.xpAwarded || 0)} XP
+                        {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                      </span>
                     </div>
-                    {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && (
-                      <div style={{
-                        marginTop:8, display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-                        color:T.gold, fontFamily:"'Orbitron',sans-serif", fontSize:12, fontWeight:700, letterSpacing:1,
-                      }}>
-                        <StarIcon size={13} /> MVP BONUS +{finalizeResult.xpResults.mvp.xpAwarded} XP
-                      </div>
-                    )}
-                  </>
+
+                    {/* Teammate XP row */}
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
+                      <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
+                        🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})
+                      </span>
+                      <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
+                        +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + ((!match?.isBotMatch && !finalizeResult?.xpResults?.mvp) ? 50 : 0)} XP
+                        {(!match?.isBotMatch && !finalizeResult?.xpResults?.mvp) && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

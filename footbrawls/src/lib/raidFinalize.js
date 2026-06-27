@@ -84,7 +84,8 @@ async function performClientFinalizeFallback(payload) {
         if (outcome === 'win') {
           const dLevel = dData.guildLevel || 1;
           const dCap = getHPCap(dLevel);
-          const dmgPct = raidType === 'challenge' ? 0.40 : 0.20;
+          // Normal Raid deals 0% castle damage, Challenge Raid deals 2%
+          const dmgPct = raidType === 'challenge' ? 0.02 : 0.00;
           damageDealt = Math.floor(dCap * dmgPct);
           const rawHP = dData.castleHP || 0;
           dUpdate.castleHP = Math.max(0, rawHP - damageDealt);
@@ -198,8 +199,8 @@ export function getRaidXpPreview(raidType, outcome) {
   const config = RAID_TYPES[raidType];
   if (!config || raidType === 'training') return { win: 0, loss: 0, mvp: 0 };
   return {
-    win:  outcome === 'win'  ? config.winXP : 0,
-    loss: outcome !== 'win' ? config.lossXP : 0,
+    win:  config.winXP || 100,
+    loss: config.lossXP || 30,
     mvp:  50,
   };
 }

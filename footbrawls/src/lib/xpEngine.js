@@ -110,10 +110,23 @@ export async function awardXP(userId, source, opts = {}) {
             }
             return { xpAwarded: 0, raidIntercepted: true };
           } else if (session.sessionType === 'vs_friends') {
+            const currentActVal = session.currentAct || 1;
+            let normalized = rawScore;
+            if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
+              normalized = normScore(source, opts);
+            } else if (source === 'dribble_correct') {
+              normalized = Math.min(5, Math.max(0, Math.round(rawScore / 5))) * 20;
+            } else if (source === 'penaltyNerve_all5') {
+              normalized = Math.min(5, Math.max(0, Math.round(rawScore / 5))) * 20;
+            }
             await updateDoc(sessionRef, {
-              [`scores.${userId}`]: rawScore
+              [`scores.${userId}.act${currentActVal}`]: {
+                gameId: source,
+                rawScore,
+                normalized
+              }
             });
-            return { xpAwarded: 0, raidIntercepted: true };
+            return { xpAwarded: 0, raidIntercepted: true, skipDailyIncrement: true };
           }
         }
       }

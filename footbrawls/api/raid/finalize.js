@@ -118,7 +118,8 @@ export default async function handler(req, res) {
         const dData    = defenderSnap.data();
         const dLevel   = dData.guildLevel || 1;
         const dCap     = getHPCap(dLevel);
-        const dmgPct   = raidType === 'challenge' ? 0.40 : 0.20;
+        // Normal Raid deals 0% castle damage, Challenge Raid deals 2%
+        const dmgPct   = raidType === 'challenge' ? 0.02 : 0.00;
         damageDealt    = Math.floor(dCap * dmgPct);
         const newHP    = applyCastleDamage(dData.castleHP || 0, damageDealt);
 

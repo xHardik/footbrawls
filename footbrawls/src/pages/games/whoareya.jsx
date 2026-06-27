@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { getDailyPlayer, getActivePuzzleDate, getRaidSeed } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { PLAYERS } from '../../lib/players.js';
 import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
 
@@ -1124,7 +1126,23 @@ export default function WhoAreYa() {
               </div>
               <div className="wya-result-actions">
                 {isRaid ? (
-                  <button className="wya-btn primary" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                  <button 
+                    className="wya-btn primary" 
+                    onClick={async () => {
+                      const activeId = localStorage.getItem('active_game_session_id');
+                      if (activeId) {
+                        const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                        if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                          navigate('/vsfriends');
+                          return;
+                        }
+                      }
+                      navigate('/raid');
+                    }} 
+                    style={{ width: '100%' }}
+                  >
+                    ⚔️ Return to Lobby
+                  </button>
                 ) : (
                   <button className="wya-btn primary" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
                 )}

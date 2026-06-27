@@ -21,6 +21,7 @@ import TermsOfService from './pages/TermsOfService';
 import ContactUs from './pages/ContactUs';
 import Ranks from './pages/Ranks';
 import VsFriends from './pages/VsFriends';
+import Profile from './pages/Profile';
 
 function RequireUser({ children }) {
   const user = getUser();
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
         <Route path="/vs-friends" element={<RequireUser><VsFriends /></RequireUser>} />
         <Route path="/ranks" element={<RequireUser><Layout><Ranks /></Layout></RequireUser>} />
+        <Route path="/profile" element={<RequireUser><Profile /></RequireUser>} />
         <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
         <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
         <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />

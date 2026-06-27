@@ -1,8 +1,8 @@
 export const BUDDY_TIMEOUT_MS = 15_000;
 
 export const RAID_TYPES = {
-  normal:    { id: 'normal',    label: 'Normal Match',    winXP: 100, lossXP: 30, castleDamagePct: 0.20 },
-  challenge: { id: 'challenge', label: 'Castle Siege',    winXP: 200, lossXP: 30, castleDamagePct: 0.40 },
+  normal:    { id: 'normal',    label: 'Normal Match',    winXP: 100, lossXP: 30, castleDamagePct: 0.00 },
+  challenge: { id: 'challenge', label: 'Castle Siege',    winXP: 200, lossXP: 30, castleDamagePct: 0.02 },
   training:  { id: 'training',  label: 'Practice Match',  winXP: 0,   lossXP: 0,  castleDamagePct: 0 },
 };
 

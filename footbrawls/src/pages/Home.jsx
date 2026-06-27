@@ -1632,11 +1632,11 @@ function Footer({ navigate }) {
 function BottomNav({ active, navigate, onUnavailable }) {
   const [pressed,setPressed]=useState(null);
   const items=[
-    {id:"home",    label:"Games",  IconC:Icon.Ball,    route:"/"},
-    {id:"guild",   label:"Guild",  IconC:Icon.Shield,  route:"/guild"},
-    {id:"raids",   label:"Raids",  IconC:Icon.Swords,  route:"/raid"},
-    {id:"ranks",   label:"Ranks",  IconC:Icon.Rank,    route:"/ranks"},
-    {id:"profile", label:"Me",     IconC:Icon.Person},
+    {id:"home",    label:"Games",  IconC:Icon.Ball,    route:"/", color: C.gold, glow: C.goldGlow, bgGlow: "rgba(247,195,68,0.1)", bgRadial: "rgba(247,195,68,0.1)"},
+    {id:"guild",   label:"Guild",  IconC:Icon.Shield,  route:"/guild", color: C.green, glow: "rgba(61,214,140,0.8)", bgGlow: "rgba(61,214,140,0.1)", bgRadial: "rgba(61,214,140,0.1)"},
+    {id:"raids",   label:"Raids",  IconC:Icon.Swords,  route:"/raid", color: C.blue, glow: "rgba(79,142,247,0.8)", bgGlow: "rgba(79,142,247,0.1)", bgRadial: "rgba(79,142,247,0.1)"},
+    {id:"ranks",   label:"Ranks",  IconC:Icon.Rank,    route:"/ranks", color: C.red, glow: "rgba(232,64,64,0.8)", bgGlow: "rgba(232,64,64,0.1)", bgRadial: "rgba(232,64,64,0.1)"},
+    {id:"profile", label:"Me",     IconC:Icon.Person,  route:"/profile", color: C.gold, glow: C.goldGlow, bgGlow: "rgba(247,195,68,0.1)", bgRadial: "rgba(247,195,68,0.1)"},
   ];
   return (
     <nav style={{
@@ -1654,6 +1654,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
         const isActive = item.id === active;
         const isPressed = pressed === item.id;
         const NavIcon = item.IconC;
+        const currentIconColor = isActive ? item.color : isPressed ? "rgba(242,242,244,0.6)" : "rgba(242,242,244,0.27)";
         return (
           <button key={item.id} type="button"
             onMouseDown={()=>setPressed(item.id)}
@@ -1668,25 +1669,25 @@ function BottomNav({ active, navigate, onUnavailable }) {
               display:"flex",flexDirection:"column",alignItems:"center",gap:4,
               cursor:"pointer",
               fontFamily:"'Space Mono',monospace",fontSize:"0.45rem",fontWeight:700,letterSpacing:0.8,textTransform:"uppercase",
-              color:isActive?C.gold:isPressed?"rgba(242,242,244,0.65)":"rgba(242,242,244,0.27)",
+              color:isActive?item.color:isPressed?"rgba(242,242,244,0.65)":"rgba(242,242,244,0.27)",
               position:"relative",transition:"color 0.15s",
               WebkitTapHighlightColor:"transparent",touchAction:"manipulation",
               transform:isPressed?"scale(0.88)":"scale(1)",
             }}
           >
-            {isActive && <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:28,height:2,borderRadius:"0 0 4px 4px",background:C.gold,boxShadow:`0 0 12px ${C.goldGlow}`}}/>}
-            {isActive && <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 25%,${C.goldDim},transparent 70%)`,pointerEvents:"none"}}/>}
+            {isActive && <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:28,height:2,borderRadius:"0 0 4px 4px",background:item.color,boxShadow:`0 0 12px ${item.glow}`}}/>}
+            {isActive && <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse at 50% 25%,${item.bgRadial},transparent 70%)`,pointerEvents:"none"}}/>}
             <div style={{
               position:"relative",width:28,height:28,
               display:"flex",alignItems:"center",justifyContent:"center",
               borderRadius:8,
-              background: isActive ? `rgba(247,195,68,0.1)` : "transparent",
-              border: isActive ? `1px solid rgba(247,195,68,0.2)` : "1px solid transparent",
+              background: isActive ? item.bgGlow : "transparent",
+              border: isActive ? `1px solid ${item.color}33` : "1px solid transparent",
               transition:"all 0.18s",
             }}>
-              <NavIcon size={18} color={isActive?C.gold:isPressed?"rgba(242,242,244,0.6)":"rgba(242,242,244,0.27)"}/>
+              <NavIcon size={18} color={currentIconColor}/>
             </div>
-            <span style={{letterSpacing:0.4}}>{item.label}</span>
+            <span style={{letterSpacing:0.4, fontSize: "0.55rem"}}>{item.label}</span>
           </button>
         );
       })}

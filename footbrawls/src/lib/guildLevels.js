@@ -100,20 +100,32 @@ export function getHPCap(level = 1) {
 }
 
 /**
+ * Normalize castle HP against level caps.
+ * Carries overflow through every reached level.
+ */
+export function normalizeGuildProgress(castleHP, currentLevel) {
+  let level = Math.min(Math.max(Number(currentLevel) || 1, 1), 5);
+  let hp = Math.max(0, Number(castleHP) || 0);
+  const fromLevel = level;
+
+  while (level < 5 && hp >= getHPCap(level)) {
+    hp -= getHPCap(level);
+    level += 1;
+  }
+
+  return {
+    shouldUpgrade: level > fromLevel,
+    overflow: hp,
+    newLevel: level,
+  };
+}
+
+/**
  * Check if guild should upgrade given current HP and level.
- * Returns { shouldUpgrade, overflow, newLevel } 
+ * Returns { shouldUpgrade, overflow, newLevel }
  */
 export function checkUpgrade(castleHP, currentLevel) {
-  if (currentLevel >= 5) return { shouldUpgrade: false, overflow: 0, newLevel: 5 };
-  const cap = getHPCap(currentLevel);
-  if (castleHP >= cap) {
-    return {
-      shouldUpgrade: true,
-      overflow:      castleHP - cap,  // carry overflow into next level
-      newLevel:      currentLevel + 1,
-    };
-  }
-  return { shouldUpgrade: false, overflow: 0, newLevel: currentLevel };
+  return normalizeGuildProgress(castleHP, currentLevel);
 }
 
 /**

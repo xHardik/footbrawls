@@ -189,7 +189,7 @@ function applyGuildHP(t, guildRef, guildData, hpToAdd) {
     });
   } else {
     t.update(guildRef, {
-      castleHP:    FieldValue.increment(hpToAdd),
+      castleHP:    overflow,
       castleHPCap: getHPCap(currentLevel),
     });
   }

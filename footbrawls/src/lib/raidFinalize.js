@@ -104,6 +104,33 @@ async function performClientFinalizeFallback(payload) {
       }
     }
 
+    if (payload.userId) {
+      const userRef = doc(db, 'users', payload.userId);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        const stats = userData.stats || {};
+        const achievements = userData.achievements || {};
+
+        stats.totalRaidDamage = (stats.totalRaidDamage || 0) + damageDealt;
+        if (!achievements.guildWarlord && stats.totalRaidDamage >= 100000) {
+          achievements.guildWarlord = true;
+        }
+
+        batch.update(userRef, { stats, achievements });
+
+        // sync to localStorage
+        try {
+          const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
+          if (localUser && localUser.userId === payload.userId) {
+            localUser.stats = stats;
+            localUser.achievements = achievements;
+            localStorage.setItem('footbrawls_user', JSON.stringify(localUser));
+          }
+        } catch (e) {}
+      }
+    }
+
     await batch.commit();
 
     return {
@@ -176,20 +203,10 @@ export async function finalizeRaid({
 
   let serverResult = null;
   try {
-    const res = await fetch('/api/raid/finalize', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-    });
-    if (res.ok) {
-      serverResult = await res.json();
-    } else {
-      console.warn('[raidFinalize] Server finalize failed:', res.status);
-      serverResult = await performClientFinalizeFallback(payload);
-    }
-  } catch (err) {
-    console.warn('[raidFinalize] API unreachable, falling back to client-side finalize:', err.message);
+    // Simplified: Push directly to Firebase from client to avoid API fallback issues locally
     serverResult = await performClientFinalizeFallback(payload);
+  } catch (err) {
+    console.error('[raidFinalize] Client finalize failed:', err);
   }
 
   return { xpResults, serverResult, payload };

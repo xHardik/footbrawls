@@ -4,6 +4,7 @@ import { doc, onSnapshot, collection, query, where, orderBy, limit, addDoc, serv
 import { db } from "../lib/firebase";
 import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
+import { getHPCap } from "../lib/guildLevels";
 
 const DAILY_XP_CAP  = 250;
 const CASTLE_HP_CAP = 10000;
@@ -902,7 +903,7 @@ function GamePortalCard({ game, done, onPlay }) {
 function FortressGuildCard({ guild, navigate }) {
   const [hovered, setHovered] = useState(false);
   const hp = guild.castleHP ?? 0;
-  const maxHp = guild.castleHPCap ?? CASTLE_HP_CAP;
+  const maxHp = getHPCap(guild.guildLevel ?? 1);
   const hpPct = clampPct(hp, maxHp);
   const hpColor = hpPct >= 70 ? C.green : hpPct >= 35 ? C.gold : C.red;
   const hpGlow = hpPct >= 70 ? "rgba(61,214,140,0.4)" : hpPct >= 35 ? "rgba(247,195,68,0.4)" : "rgba(232,64,64,0.4)";
@@ -1733,7 +1734,7 @@ export default function Home() {
     return onSnapshot(doc(db, "guilds", localUser.homeCountry), snap => {
       if (!snap.exists()) { setGuildDoc(null); return; }
       const d = snap.data();
-      setGuildDoc({ name:d.name??null, flag:d.flag??null, memberCount:d.memberCount??0, castleHP:d.castleHP??0, castleHPCap:d.castleHPCap??CASTLE_HP_CAP });
+      setGuildDoc({ name:d.name??null, flag:d.flag??null, memberCount:d.memberCount??0, castleHP:d.castleHP??0, castleHPCap:d.castleHPCap??CASTLE_HP_CAP, guildLevel:d.guildLevel??1 });
     }, () => setGuildDoc(null));
   }, [localUser?.homeCountry]);
 
@@ -1768,6 +1769,7 @@ export default function Home() {
     memberCount: guildDoc?.memberCount ?? 0,
     castleHP:    guildDoc?.castleHP    ?? 0,
     castleHPCap: guildDoc?.castleHPCap ?? CASTLE_HP_CAP,
+    guildLevel:  guildDoc?.guildLevel  ?? 1,
   };
 
   const games     = GAMES.map(g => ({ ...g, done: isDoneToday(g) }));

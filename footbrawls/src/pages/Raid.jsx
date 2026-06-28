@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../lib/user';
-import { findBuddy } from '../lib/matchmaking';
+import { findBuddy, createBotRivalDuo } from '../lib/matchmaking';
 import { finalizeRaid, getRaidXpPreview } from '../lib/raidFinalize';
 import { doc, onSnapshot, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -46,6 +46,34 @@ const StarIcon = ({ size = 16 }) => (
 const ZapIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+  </svg>
+);
+
+const BallIcon = ({ size = 20, color = 'currentColor', style = {} }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
+    <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+    <path d="M12 2c0 0-2.5 3-2.5 5s2.5 5 2.5 5 2.5-2 2.5-5S12 2 12 2z" fill={color} opacity="0.7" />
+    <path d="M2 12h4l2 3-2 3H2" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6" />
+    <path d="M22 12h-4l-2 3 2 3h4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6" />
+    <path d="M5 5.5l3 2.5 1 4-4-2-1.5-4z" fill={color} opacity="0.6" />
+    <path d="M19 5.5l-3 2.5-1 4 4-2 1.5-4z" fill={color} opacity="0.6" />
+    <path d="M8 19l1-4 3-1 3 1 1 4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6" />
+  </svg>
+);
+
+const RankIcon = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M3 20h18" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M7 20V10" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
+    <path d="M12 20V4" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M17 20V14" stroke={color} strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
+  </svg>
+);
+
+const PersonIcon = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5" />
+    <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
   </svg>
 );
 
@@ -376,6 +404,24 @@ function injectStyles() {
       content:''; flex:1; height:1px;
       background:linear-gradient(90deg,rgba(255,255,255,.1),transparent);
     }
+    .raid-bottom-nav {
+      position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;
+      background:rgba(6,8,16,0.97);backdrop-filter:blur(24px);
+      border-top:1px solid ${T.border};
+      padding-bottom:env(safe-area-inset-bottom,0px);
+      box-shadow:0 -4px 24px rgba(0,0,0,0.4);
+    }
+    .raid-nav-item {
+      position:relative;flex:1;min-width:0;border:none;background:transparent;
+      padding:10px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;
+      cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    }
+    .raid-nav-indicator {
+      position:absolute;top:0;left:50%;transform:translateX(-50%);
+      width:32px;height:2px;border-radius:0 0 99px 99px;
+      background:#4F8EF7;box-shadow:0 0 12px #4F8EF7;
+    }
   `;
   document.head.appendChild(el);
 }
@@ -594,6 +640,7 @@ export default function Raid() {
   const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
   const [readyAct2, setReadyAct2]             = useState({});
   const [readyAct3, setReadyAct3]             = useState({});
+  const [toast, setToast]                     = useState("");
   const [castleRaidEntries, setCastleRaidEntries] = useState(() => {
     const today = new Date().toISOString().split('T')[0];
     return parseInt(localStorage.getItem(`castle_raid_entries_${today}`) || '0', 10);
@@ -1465,6 +1512,38 @@ export default function Raid() {
         )}
 
       </main>
+
+      {/* ─── BOTTOM NAV ────────────────────────────────────────── */}
+      <nav className="raid-bottom-nav">
+        {[
+          { id: "home",  label: "Games", IconC: BallIcon,   route: "/" },
+          { id: "guild", label: "Guild", IconC: ShieldIcon, route: "/guild" },
+          { id: "raids", label: "Raids", IconC: SwordsIcon, route: "/raid" },
+          { id: "ranks", label: "Ranks", IconC: RankIcon,   route: "/ranks" },
+          { id: "me",    label: "Me",    IconC: PersonIcon, route: null },
+        ].map(item => {
+          const active = item.id === "raids";
+          const NavIcon = item.IconC;
+          return (
+            <button key={item.id} className="raid-nav-item" onClick={() => {
+              if (item.route) navigate(item.route);
+              else { setToast("Coming soon ⚡"); setTimeout(() => setToast(""), 2000); }
+            }}
+              style={{ color:active?"#4F8EF7":"rgba(242,242,244,0.38)", display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+              {active && <span className="raid-nav-indicator"/>}
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28 }}>
+                <NavIcon size={18} color={active?"#4F8EF7":"rgba(242,242,244,0.38)"} />
+              </span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:0.5 }}>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      {toast && (
+        <div style={{ position:"fixed", bottom:76, left:"50%", transform:"translateX(-50%)", zIndex:300, background:"rgba(12,15,26,0.96)", border:"1px solid var(--border2)", borderRadius:999, color:"var(--text)", padding:"10px 18px", fontFamily:"'Space Mono',monospace", fontSize:"0.76rem", fontWeight:700, whiteSpace:"nowrap", pointerEvents:"none", animation:"fadeUp 0.22s ease" }}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

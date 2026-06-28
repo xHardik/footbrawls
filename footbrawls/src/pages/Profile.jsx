@@ -42,628 +42,77 @@ const KIT_COLORS = {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   3-D REVOLVING PLAYER  –  mouse-drag + auto-spin + real depth
+   HOLOGRAPHIC PLAYER CARD
 ───────────────────────────────────────────────────────────── */
-function PlayerMannequin3D({ kit }) {
-  const containerRef = useRef(null);
-  const angleRef     = useRef(20);          // current Y rotation
-  const velRef       = useRef(0);           // momentum
-  const dragging     = useRef(false);
-  const lastX        = useRef(0);
-  const rafRef       = useRef(null);
-  const autoSpin     = useRef(true);
-
-  // ---- derived colours ----
-  const shirt      = kit.shirt;
-  const shirtDark  = kit.shirtDark;
-  const shorts     = kit.shorts;
-  const shortsDark = kit.shortsDark;
-  const socks      = kit.socks;
-  const isStripe   = kit.pattern === "stripes";
-  const stripeA    = shirt;
-  const stripeB    = "#ffffff";
-
-  // Each CSS face needs a "side" fill that's the darkened edge colour
-  const shirtSide  = shirtDark;
-  const shortsSide = shortsDark;
-  const sockSide   = socks + "bb";
-
-  // ---- animation loop ----
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const tick = () => {
-      if (dragging.current) {
-        // momentum decays while dragging is live (handled by pointer events)
-      } else {
-        if (autoSpin.current) {
-          velRef.current = 0.45;               // constant auto-rotate
-        } else {
-          velRef.current *= 0.93;              // friction after drag
-          if (Math.abs(velRef.current) < 0.05) autoSpin.current = true;
-        }
-        angleRef.current = (angleRef.current + velRef.current) % 360;
-      }
-      el.style.transform = `rotateY(${angleRef.current}deg)`;
-
-      // Dynamic lighting based on angle
-      const rad     = (angleRef.current * Math.PI) / 180;
-      const light   = 0.5 + 0.5 * Math.cos(rad);
-      const bri     = (0.7 + light * 0.45).toFixed(2);
-      const con     = (0.85 + light * 0.2).toFixed(2);
-      el.style.filter = `brightness(${bri}) contrast(${con})`;
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  // ---- pointer drag ----
-  const onPointerDown = (e) => {
-    dragging.current  = true;
-    autoSpin.current  = false;
-    lastX.current     = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
-    containerRef.current?.setPointerCapture?.(e.pointerId);
+function PlayerCard({ kit, user, tier }) {
+  const cardRef = useRef(null);
+  
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -15;
+    const rotateY = ((x - centerX) / centerX) * 15;
+    
+    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
   };
-  const onPointerMove = (e) => {
-    if (!dragging.current) return;
-    const x   = e.clientX ?? e.touches?.[0]?.clientX ?? lastX.current;
-    const dx  = x - lastX.current;
-    velRef.current     = dx * 0.6;
-    angleRef.current   = (angleRef.current + dx * 0.6) % 360;
-    lastX.current      = x;
-  };
-  const onPointerUp = () => {
-    dragging.current = false;
-    // velRef keeps momentum; auto-spin resumes when it decays
+  
+  const handleMouseLeave = () => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
   };
 
-  /* ---- build striped pattern for Argentina ---- */
-  const stripeStyle = isStripe
-    ? {
-        background: `repeating-linear-gradient(90deg, ${stripeA} 0px, ${stripeA} 12px, ${stripeB} 12px, ${stripeB} 24px)`,
-      }
-    : { background: shirt };
-
-  /* ----------------------------------------------------------------
-     CSS 3-D box approach:
-     Each body part is a div with 6 faces (front/back/left/right/top/bottom).
-     We use transform-style: preserve-3d throughout so the browser
-     composites them in real 3D — giving genuine depth from every angle.
-  ---------------------------------------------------------------- */
-
-  // Utility: build a 3-D box node
-  // w=CSS width of the front face, h=height, d=depth (thickness)
-  // faceColors: { front, back, left, right, top, bottom }
-  const Box3D = ({ w, h, d, style = {}, faceColors = {}, children, className }) => {
-    const fc = {
-      front:  faceColors.front  || shirt,
-      back:   faceColors.back   || shirtDark,
-      left:   faceColors.left   || shirtSide,
-      right:  faceColors.right  || shirtSide,
-      top:    faceColors.top    || shirtDark,
-      bottom: faceColors.bottom || shirtDark,
-    };
-    const faceBase = {
-      position: "absolute",
-      backfaceVisibility: "hidden",
-    };
-    return (
-      <div
-        className={className}
-        style={{
-          position:        "relative",
-          width:           w,
-          height:          h,
-          transformStyle:  "preserve-3d",
-          ...style,
-        }}
-      >
-        {/* front */}
-        <div style={{ ...faceBase, width: w, height: h, background: isStripe ? `repeating-linear-gradient(90deg,${stripeA} 0,${stripeA} 12px,${stripeB} 12px,${stripeB} 24px)` : fc.front, transform: `translateZ(${d/2}px)` }}>{children}</div>
-        {/* back */}
-        <div style={{ ...faceBase, width: w, height: h, background: fc.back, transform: `rotateY(180deg) translateZ(${d/2}px)` }} />
-        {/* left */}
-        <div style={{ ...faceBase, width: d, height: h, background: fc.left, transform: `rotateY(-90deg) translateZ(${d/2}px)` }} />
-        {/* right */}
-        <div style={{ ...faceBase, width: d, height: h, background: fc.right, transform: `rotateY(90deg) translateZ(${w - d/2}px)` }} />
-        {/* top */}
-        <div style={{ ...faceBase, width: w, height: d, background: fc.top, transform: `rotateX(90deg) translateZ(${d/2}px)` }} />
-        {/* bottom */}
-        <div style={{ ...faceBase, width: w, height: d, background: fc.bottom, transform: `rotateX(-90deg) translateZ(${h - d/2}px)` }} />
-      </div>
-    );
-  };
-
-  const SKIN      = "url(#skinGrad)";
-  const SKIN_SIDE = "#c08050";
-  const SKIN_DARK = "#a06030";
-
-  /* ─── SVG mannequin with real 3-D depth via transform-style ─── */
+  const ovr = Math.floor((user?.totalXP || 0) / 100) + 50;
+  
   return (
     <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       style={{
-        perspective:     "1100px",
-        perspectiveOrigin: "50% 40%",
-        width:           "100%",
-        display:         "flex",
-        flexDirection:   "column",
-        alignItems:      "center",
-        userSelect:      "none",
-        cursor:          "grab",
+        width: 260,
+        height: 380,
+        borderRadius: 20,
+        background: `linear-gradient(135deg, ${kit.shirtDark} 0%, ${kit.shirt} 100%)`,
+        border: `2px solid ${kit.shirtDark}`,
+        boxShadow: `0 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.2)`,
+        transition: 'transform 0.15s ease-out',
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: 20,
+        cursor: 'pointer',
       }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
     >
-      {/* The rotating group */}
-      <div
-        ref={containerRef}
-        style={{
-          transformStyle:  "preserve-3d",
-          willChange:      "transform",
-          position:        "relative",
-          width:           120,
-          height:          340,
-        }}
-      >
-        {/* ── HEAD ── */}
-        <div style={{
-          position:       "absolute",
-          top:            0,
-          left:           "50%",
-          transformStyle: "preserve-3d",
-          transform:      "translateX(-50%)",
-        }}>
-          {/* skull – a stretched sphere approximated by a layered set of planes */}
-          <Box3D
-            w={52} h={58} d={44}
-            style={{ transform: "translateX(0)" }}
-            faceColors={{
-              front:  "#e8b88a",
-              back:   "#c07840",
-              left:   "#d09060",
-              right:  "#d09060",
-              top:    "#4a2f14",   // hair
-              bottom: "#e8b88a",
-            }}
-          />
-          {/* face overlay (eyes, mouth) drawn on front face – just colour cues */}
-          <div style={{
-            position:   "absolute",
-            top:        14,
-            left:       "50%",
-            transform:  `translateX(-50%) translateZ(${44/2 + 0.5}px)`,
-            width:      52,
-            height:     40,
-            pointerEvents: "none",
-          }}>
-            {/* eyes */}
-            <div style={{ position:"absolute", top:12, left:10, width:10, height:7, borderRadius:"50%", background:"#1a0f05", border:"2px solid #fff5" }} />
-            <div style={{ position:"absolute", top:12, right:10, width:10, height:7, borderRadius:"50%", background:"#1a0f05", border:"2px solid #fff5" }} />
-            {/* mouth */}
-            <div style={{ position:"absolute", bottom:8, left:"50%", transform:"translateX(-50%)", width:18, height:5, borderRadius:"0 0 9px 9px", background:"#8b4513", opacity:0.7 }} />
-          </div>
-        </div>
-
-        {/* ── NECK ── */}
-        <Box3D
-          w={22} h={18} d={18}
-          style={{
-            position:  "absolute",
-            top:       54,
-            left:      "50%",
-            transform: "translateX(-50%)",
-          }}
-          faceColors={{ front:SKIN_SIDE, back:SKIN_DARK, left:SKIN_DARK, right:SKIN_DARK, top:SKIN_SIDE, bottom:SKIN_SIDE }}
-        />
-
-        {/* ── TORSO ── */}
-        <Box3D
-          w={88} h={90} d={36}
-          style={{
-            position:  "absolute",
-            top:       70,
-            left:      "50%",
-            transform: "translateX(-50%)",
-          }}
-          faceColors={{
-            front:  isStripe ? shirt : shirt,
-            back:   shirtDark,
-            left:   shirtSide,
-            right:  shirtSide,
-            top:    shirtDark,
-            bottom: shirtDark,
-          }}
-        >
-          {/* badge */}
-          <div style={{
-            position:    "absolute",
-            top:         20,
-            left:        12,
-            width:       16,
-            height:      16,
-            borderRadius:"50%",
-            background:  "rgba(255,255,255,0.9)",
-            border:      "1px solid rgba(0,0,0,0.15)",
-            display:     "flex",
-            alignItems:  "center",
-            justifyContent:"center",
-            fontSize:    9,
-            zIndex:      2,
-          }}>
-            {kit.flag}
-          </div>
-          {/* number */}
-          <div style={{
-            position:   "absolute",
-            bottom:     8,
-            left:       "50%",
-            transform:  "translateX(-50%)",
-            fontFamily: "'Bebas Neue', sans-serif",
-            fontSize:   28,
-            color:      "rgba(255,255,255,0.18)",
-            lineHeight: 1,
-          }}>10</div>
-        </Box3D>
-
-        {/* ── LEFT UPPER ARM ── */}
-        <Box3D
-          w={18} h={52} d={18}
-          style={{
-            position:  "absolute",
-            top:       72,
-            left:      "50%",
-            transform: "translateX(-98px) rotateZ(12deg)",
-            transformOrigin: "top center",
-          }}
-          faceColors={{ front:shirt, back:shirtDark, left:shirtSide, right:shirtSide, top:shirtDark, bottom:shirtDark }}
-        />
-        {/* ── LEFT FOREARM ── */}
-        <Box3D
-          w={15} h={46} d={15}
-          style={{
-            position:  "absolute",
-            top:       120,
-            left:      "50%",
-            transform: "translateX(-106px) rotateZ(6deg)",
-            transformOrigin: "top center",
-          }}
-          faceColors={{ front:SKIN_SIDE, back:SKIN_DARK, left:SKIN_DARK, right:SKIN_DARK, top:SKIN_SIDE, bottom:SKIN_SIDE }}
-        />
-        {/* ── LEFT HAND ── */}
-        <Box3D
-          w={13} h={14} d={10}
-          style={{
-            position:  "absolute",
-            top:       163,
-            left:      "50%",
-            transform: "translateX(-107px)",
-          }}
-          faceColors={{ front:SKIN_SIDE, back:SKIN_DARK, left:SKIN_DARK, right:SKIN_DARK, top:SKIN_SIDE, bottom:SKIN_SIDE }}
-        />
-
-        {/* ── RIGHT UPPER ARM ── */}
-        <Box3D
-          w={18} h={52} d={18}
-          style={{
-            position:  "absolute",
-            top:       72,
-            left:      "50%",
-            transform: "translateX(80px) rotateZ(-12deg)",
-            transformOrigin: "top center",
-          }}
-          faceColors={{ front:shirt, back:shirtDark, left:shirtSide, right:shirtSide, top:shirtDark, bottom:shirtDark }}
-        />
-        {/* ── RIGHT FOREARM ── */}
-        <Box3D
-          w={15} h={46} d={15}
-          style={{
-            position:  "absolute",
-            top:       120,
-            left:      "50%",
-            transform: "translateX(91px) rotateZ(-6deg)",
-            transformOrigin: "top center",
-          }}
-          faceColors={{ front:SKIN_SIDE, back:SKIN_DARK, left:SKIN_DARK, right:SKIN_DARK, top:SKIN_SIDE, bottom:SKIN_SIDE }}
-        />
-        {/* ── RIGHT HAND ── */}
-        <Box3D
-          w={13} h={14} d={10}
-          style={{
-            position:  "absolute",
-            top:       163,
-            left:      "50%",
-            transform: "translateX(94px)",
-          }}
-          faceColors={{ front:SKIN_SIDE, back:SKIN_DARK, left:SKIN_DARK, right:SKIN_DARK, top:SKIN_SIDE, bottom:SKIN_SIDE }}
-        />
-
-        {/* ── HIPS / SHORTS WAISTBAND ── */}
-        <Box3D
-          w={90} h={12} d={32}
-          style={{
-            position:  "absolute",
-            top:       158,
-            left:      "50%",
-            transform: "translateX(-50%)",
-          }}
-          faceColors={{ front:shortsDark, back:shortsDark, left:shortsDark, right:shortsDark, top:shortsDark, bottom:shortsDark }}
-        />
-
-        {/* ── LEFT THIGH (SHORTS) ── */}
-        <Box3D
-          w={38} h={56} d={30}
-          style={{
-            position:  "absolute",
-            top:       168,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(-22px)",
-          }}
-          faceColors={{ front:shorts, back:shortsDark, left:shortsSide, right:shortsSide, top:shorts, bottom:shorts }}
-        />
-        {/* ── RIGHT THIGH (SHORTS) ── */}
-        <Box3D
-          w={38} h={56} d={30}
-          style={{
-            position:  "absolute",
-            top:       168,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(22px)",
-          }}
-          faceColors={{ front:shorts, back:shortsDark, left:shortsSide, right:shortsSide, top:shorts, bottom:shorts }}
-        />
-
-        {/* ── LEFT SHIN ── */}
-        <Box3D
-          w={28} h={70} d={22}
-          style={{
-            position:  "absolute",
-            top:       222,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(-22px)",
-          }}
-          faceColors={{ front:socks, back:socks+"88", left:socks+"aa", right:socks+"aa", top:socks, bottom:socks }}
-        />
-        {/* ── RIGHT SHIN ── */}
-        <Box3D
-          w={28} h={70} d={22}
-          style={{
-            position:  "absolute",
-            top:       222,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(22px)",
-          }}
-          faceColors={{ front:socks, back:socks+"88", left:socks+"aa", right:socks+"aa", top:socks, bottom:socks }}
-        />
-
-        {/* ── LEFT BOOT ── */}
-        <Box3D
-          w={32} h={18} d={30}
-          style={{
-            position:  "absolute",
-            top:       290,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(-22px) translateZ(4px)",
-          }}
-          faceColors={{ front:C.gold, back:"#b8920a", left:"#c9a01a", right:"#c9a01a", top:"#d4ac20", bottom:"#7a6000" }}
-        />
-        {/* ── RIGHT BOOT ── */}
-        <Box3D
-          w={32} h={18} d={30}
-          style={{
-            position:  "absolute",
-            top:       290,
-            left:      "50%",
-            transform: "translateX(-50%) translateX(22px) translateZ(4px)",
-          }}
-          faceColors={{ front:C.gold, back:"#b8920a", left:"#c9a01a", right:"#c9a01a", top:"#d4ac20", bottom:"#7a6000" }}
-        />
-
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%)', pointerEvents: 'none' }} />
+      <div style={{ fontSize: 48, marginBottom: 12, marginTop: 10 }}>{kit.flag}</div>
+      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: 2, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+        {user?.nickname || "GUEST"}
       </div>
-
-      {/* Ground shadow */}
-      <div style={{
-        width:        100,
-        height:       18,
-        marginTop:    8,
-        background:   "radial-gradient(ellipse, rgba(247,195,68,0.18) 0%, transparent 80%)",
-        borderRadius: "50%",
-      }} />
-
-      {/* Drag hint */}
-      <div style={{
-        marginTop:   10,
-        fontSize:    11,
-        color:       C.muted2,
-        fontFamily:  "'Space Mono', monospace",
-        letterSpacing: 1,
-        userSelect:  "none",
-      }}>
-        ↔ DRAG TO ROTATE
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#fff', opacity: 0.9, marginBottom: 24 }}>
+        {kit.name} KIT
+      </div>
+      <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: '12px 24px', width: '100%', display: 'flex', justifyContent: 'space-between', boxSizing: 'border-box' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>OVR</div>
+          <div style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", color: tier.color }}>{ovr > 99 ? 99 : ovr}</div>
+        </div>
+        <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>POS</div>
+          <div style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", color: '#fff' }}>ST</div>
+        </div>
       </div>
     </div>
   );
 }
 
-export default function Profile() {
-  const navigate = useNavigate();
-  const user = getUser();
-
-  const countryCode = user?.homeCountry || "FR";
-  const kit = KIT_COLORS[countryCode] || KIT_COLORS.FR;
-  const countryObj = COUNTRIES.find(c => c.code === countryCode);
-  const currentTier = getTier(user?.totalXP || 0);
-
-  const achievements = [
-    { title: "Striker Hero",  desc: "Gain 200+ XP in a single day",           unlocked: true,  icon: "🔥" },
-    { title: "Castle Raider", desc: "Win a Castle Raid with a teammate",       unlocked: true,  icon: "🏰" },
-    { title: "Hot Predictor", desc: "Reach a 3.0x hot streak multiplier",      unlocked: true,  icon: "🎯" },
-    { title: "Trivia Master", desc: "Answer 5 consecutive trivia correctly",   unlocked: false, icon: "🧠" },
-    { title: "Consul MVP",    desc: "Gain Raid MVP points bonus",              unlocked: false, icon: "👑" },
-  ];
-
-  return (
-    <div style={{
-      fontFamily:   "'Syne', sans-serif",
-      background:   C.bg,
-      color:        C.text,
-      minHeight:    "100vh",
-      padding:      "24px max(12px, 4vw) 100px",
-      boxSizing:    "border-box",
-      position:     "relative",
-    }}>
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 28 }}>
-        <h1 style={{
-          fontFamily:    "'Bebas Neue', sans-serif",
-          fontSize:      "3rem",
-          letterSpacing: "3px",
-          color:         C.gold,
-          margin:        0,
-        }}>
-          👤 ATHLETE DOSSIER
-        </h1>
-        <p style={{ fontSize: "0.85rem", color: C.muted, marginTop: 4 }}>
-          Inspect your athlete career standings, custom national kit, and unlocked accolades
-        </p>
-      </div>
-
-      <div style={{
-        display:             "grid",
-        gridTemplateColumns: "1fr 1.2fr",
-        gap:                 28,
-        maxWidth:            820,
-        margin:              "0 auto",
-      }} className="profile-grid">
-
-        {/* LEFT COLUMN: 3D Jersey Mannequin */}
-        <div style={{
-          background:   "rgba(255,255,255,0.025)",
-          border:       `1px solid ${C.border}`,
-          borderRadius: 18,
-          padding:      24,
-          textAlign:    "center",
-          display:      "flex",
-          flexDirection:"column",
-          alignItems:   "center",
-          position:     "relative",
-          boxShadow:    "0 8px 32px rgba(0,0,0,0.3)",
-          overflow:     "hidden",
-        }}>
-          <div style={{
-            fontFamily:    "'Space Mono', monospace",
-            fontSize:      10,
-            color:         C.gold,
-            textTransform: "uppercase",
-            letterSpacing: 2,
-            marginBottom:  16,
-          }}>
-            3D Kit Viewer
-          </div>
-
-          <PlayerMannequin3D kit={kit} />
-
-          <div style={{ marginTop: 16 }}>
-            <span style={{ fontSize: 20 }}>{kit.flag}</span>
-            <span style={{ marginLeft: 8, fontSize: 13, fontWeight: 700, color: C.text, fontFamily: "'Space Mono', monospace" }}>
-              {kit.name} KIT
-            </span>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: Player Bio & Accolades */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-          {/* Stats card */}
-          <div style={{
-            background:   "rgba(255,255,255,0.025)",
-            border:       `1px solid ${C.border}`,
-            borderRadius: 18,
-            padding:      20,
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.6rem", letterSpacing: 1.5, color: C.text }}>
-                {user?.nickname || "Guest Challenger"}
-              </h3>
-              <span style={{
-                fontSize:    10,
-                fontWeight:  800,
-                color:       currentTier.color,
-                background:  `${currentTier.color}15`,
-                border:      `1px solid ${currentTier.color}35`,
-                padding:     "2px 8px",
-                borderRadius:99,
-                fontFamily:  "'Space Mono', monospace",
-              }}>
-                {currentTier.label}
-              </span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: C.muted }}>
-              <div>Total Standing Career XP: <strong style={{ color: C.gold }}>{user?.totalXP || 0} XP</strong></div>
-              <div>Represented Nation: <strong style={{ color: C.text }}>{kit.flag} {countryCode}</strong></div>
-            </div>
-          </div>
-
-          {/* Achievements */}
-          <div style={{
-            background:   "rgba(255,255,255,0.025)",
-            border:       `1px solid ${C.border}`,
-            borderRadius: 18,
-            padding:      20,
-          }}>
-            <div style={{
-              fontFamily:    "'Space Mono', monospace",
-              fontSize:      10,
-              color:         C.gold,
-              textTransform: "uppercase",
-              letterSpacing: 2,
-              marginBottom:  16,
-            }}>
-              🏆 Trophies & Milestones
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {achievements.map((ach, idx) => (
-                <div key={idx} style={{
-                  display:     "flex",
-                  alignItems:  "center",
-                  gap:         12,
-                  padding:     "10px 14px",
-                  background:  ach.unlocked ? "rgba(61,214,140,0.04)" : "rgba(255,255,255,0.01)",
-                  border:      `1px solid ${ach.unlocked ? "rgba(61,214,140,0.15)" : C.border}`,
-                  borderRadius:12,
-                  opacity:     ach.unlocked ? 1 : 0.4,
-                }}>
-                  <span style={{ fontSize: 22 }}>{ach.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: ach.unlocked ? C.green : C.text }}>{ach.title}</div>
-                    <div style={{ fontSize: 11, color: C.muted }}>{ach.desc}</div>
-                  </div>
-                  <span style={{ fontSize: 11, fontFamily: "'Space Mono', monospace", fontWeight: 700, color: ach.unlocked ? C.green : C.muted }}>
-                    {ach.unlocked ? "UNLOCKED" : "LOCKED"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <BottomNav active="profile" navigate={navigate} onUnavailable={() => alert("Coming soon — stay tuned")} />
-    </div>
-  );
-}
-
-function BottomNav({ active, navigate, onUnavailable }) {
-  const [pressed, setPressed] = useState(null);
-
-  const icons = {
+const icons = {
     Ball: ({size=18, color="currentColor"}) => (
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5"/>
@@ -702,8 +151,287 @@ function BottomNav({ active, navigate, onUnavailable }) {
         <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
+
+    Fire: ({size=18, color="currentColor"}) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8 6 6 9 6 13C6 17 9 21 12 21C15 21 18 17 18 13C18 9 16 6 12 2Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 11C12 11 13 13 13 15C13 17 12 18 12 18C12 18 10.5 17 10.5 14C10.5 11 12 11 12 11Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    Target: ({size=18, color="currentColor"}) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
+        <circle cx="12" cy="12" r="5" stroke={color} strokeWidth="1.5"/>
+        <circle cx="12" cy="12" r="1.5" fill={color}/>
+      </svg>
+    ),
+    Brain: ({size=18, color="currentColor"}) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M9 5C7 5 5 7 5 9C5 11 6.5 12.5 8 13.5V17C8 18 9 19 10.5 19H13.5C15 19 16 18 16 17V13.5C17.5 12.5 19 11 19 9C19 7 17 5 15 5C14.5 5 14 5.2 13.5 5.5C13 4.5 12 4 12 4C12 4 11 4.5 10.5 5.5C10 5.2 9.5 5 9 5Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    Crown: ({size=18, color="currentColor"}) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <path d="M4 19L5 8L9 11L12 5L15 11L19 8L20 19H4Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      </svg>
+    ),
+    };
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const user = getUser();
+
+  const countryCode = user?.homeCountry || "FR";
+  const kit = KIT_COLORS[countryCode] || KIT_COLORS.FR;
+  const countryObj = COUNTRIES.find(c => c.code === countryCode);
+  const currentTier = getTier(user?.totalXP || 0);
+
+  const userStats = user?.stats || {};
+  const userAchievements = user?.achievements || {};
+
+  const getProgress = (id) => {
+    if (userAchievements[id]) return "Completed";
+    switch (id) {
+      case 'strikerHero': return `${user?.dailyXP || 0} / 1000 XP`;
+      case 'dedicatedAthlete': return `${userStats.consecutiveDaysPlayed || 0} / 15 Days`;
+      case 'oracle': return `${user?.predictionStreak || 0} / 5 Streak`;
+      case 'triviaGod': return `${userStats.totalTriviaCorrect || 0} / 100 Qs`;
+      case 'consulMvp': return `${userStats.raidMvpCount || 0} / 50 MVPs`;
+      case 'guildWarlord': return `${Math.floor((userStats.totalRaidDamage || 0)/1000)}k / 100k Dmg`;
+      default: return "";
+    }
   };
 
+  const achievements = [
+    { id: "strikerHero",      title: "Striker Hero",      desc: "Accumulate 1,000 XP within a single 24-hour period",  unlocked: !!userAchievements.strikerHero,      IconC: icons.Fire },
+    { id: "dedicatedAthlete", title: "Dedicated Athlete", desc: "Play all 9 daily games for 15 consecutive days",      unlocked: !!userAchievements.dedicatedAthlete, IconC: icons.Shield },
+    { id: "oracle",           title: "Oracle",            desc: "Maintain a flawless 5-match prediction streak",       unlocked: !!userAchievements.oracle,           IconC: icons.Target },
+    { id: "triviaGod",        title: "Trivia God",        desc: "Answer 100 Trivia questions correctly overall",       unlocked: !!userAchievements.triviaGod,        IconC: icons.Brain },
+    { id: "consulMvp",        title: "Consul MVP",        desc: "Achieve Raid MVP 50 times in a single season",        unlocked: !!userAchievements.consulMvp,        IconC: icons.Crown },
+    { id: "guildWarlord",     title: "Guild Warlord",     desc: "Deal 100,000 Total Raid Damage for your Guild",       unlocked: !!userAchievements.guildWarlord,     IconC: icons.Swords },
+  ];
+
+  const userBreakdown = user?.xpBreakdown || {};
+  const totalBreakdownXP = Object.values(userBreakdown).reduce((sum, val) => sum + (val || 0), 0);
+  
+  const statsBreakdown = [
+    { key: "raids", label: "Guild Raids", color: "#3b82f6" },
+    { key: "predictor", label: "Match Predictor", color: "#3DD68C" },
+    { key: "trivia", label: "Daily Trivia", color: "#F7C344" },
+    { key: "social", label: "Social & Bonuses", color: "#a855f7" },
+    { key: "games", label: "Other Games", color: "#E84040" },
+  ].map(item => {
+    const xp = userBreakdown[item.key] || 0;
+    const percent = totalBreakdownXP > 0 ? (xp / totalBreakdownXP) * 100 : 0;
+    return { ...item, xp, percent };
+  }).sort((a, b) => b.xp - a.xp); // Sort by highest XP first
+
+  return (
+    <div style={{
+      fontFamily:   "'Syne', sans-serif",
+      backgroundImage: "url(/locker_room_bg.png)",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+      color:        C.text,
+      minHeight:    "100vh",
+      padding:      "24px max(12px, 4vw) 100px",
+      boxSizing:    "border-box",
+      position:     "relative",
+    }}>
+      {/* Dark overlay for locker room background */}
+      <div style={{ position: "absolute", inset: 0, background: "rgba(5, 8, 15, 0.82)", zIndex: 0 }} />
+      
+      <div style={{ position: "relative", zIndex: 1 }}>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <h1 style={{
+          fontFamily:    "'Bebas Neue', sans-serif",
+          fontSize:      "3rem",
+          letterSpacing: "3px",
+          color:         C.gold,
+          margin:        0,
+        }}>
+          👤 ATHLETE DOSSIER
+        </h1>
+        <p style={{ fontSize: "0.85rem", color: C.muted, marginTop: 4 }}>
+          Inspect your athlete career standings, custom national kit, and unlocked accolades
+        </p>
+      </div>
+
+      <div style={{
+        display:             "grid",
+        gridTemplateColumns: "1fr 1.2fr",
+        gap:                 28,
+        maxWidth:            820,
+        margin:              "0 auto",
+      }} className="profile-grid">
+
+        {/* LEFT COLUMN: 3D Jersey Mannequin */}
+        <div style={{
+          alignSelf:    "start",
+          background:   "rgba(25, 28, 38, 0.65)",
+          backdropFilter: "blur(12px)",
+          border:       `1px solid rgba(255,255,255,0.1)`,
+          borderRadius: 18,
+          padding:      24,
+          textAlign:    "center",
+          display:      "flex",
+          flexDirection:"column",
+          alignItems:   "center",
+          position:     "relative",
+          boxShadow:    "0 8px 32px rgba(0,0,0,0.3)",
+          overflow:     "hidden",
+        }}>
+          <div style={{
+            fontFamily:    "'Space Mono', monospace",
+            fontSize:      10,
+            color:         C.gold,
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom:  16,
+          }}>
+            HOLOGRAPHIC PLAYER CARD
+          </div>
+
+          <PlayerCard kit={kit} user={user} tier={currentTier} />
+
+          {/* Stats Breakdown */}
+          <div style={{ marginTop: 32, width: "100%", textAlign: "left" }}>
+            <div style={{
+              fontFamily:    "'Space Mono', monospace",
+              fontSize:      10,
+              color:         C.text,
+              textTransform: "uppercase",
+              letterSpacing: 2,
+              marginBottom:  16,
+              textAlign:     "center"
+            }}>
+              📊 Career XP Breakdown
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {statsBreakdown.map((stat, idx) => (
+                <div key={idx}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#ffffff", fontWeight: 500, marginBottom: 4 }}>
+                    <span>{stat.label}</span>
+                    <strong style={{ color: "#ffffff" }}>{stat.xp} XP</strong>
+                  </div>
+                  {/* Progress Bar Background */}
+                  <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.15)", borderRadius: 4, overflow: "hidden" }}>
+                    {/* Progress Fill */}
+                    <div style={{
+                      width: `${stat.percent}%`,
+                      height: "100%",
+                      background: stat.color,
+                      borderRadius: 4,
+                      boxShadow: `0 0 8px ${stat.color}88`
+                    }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Player Bio & Accolades */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+          {/* Stats card */}
+          <div style={{
+            background:   "rgba(25, 28, 38, 0.65)",
+            backdropFilter: "blur(12px)",
+            border:       `1px solid rgba(255,255,255,0.1)`,
+            borderRadius: 18,
+            padding:      20,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+              <h3 style={{ margin: 0, fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.6rem", letterSpacing: 1.5, color: C.text }}>
+                {user?.nickname || "Guest Challenger"}
+              </h3>
+              <span style={{
+                fontSize:    10,
+                fontWeight:  800,
+                color:       currentTier.color,
+                background:  `${currentTier.color}15`,
+                border:      `1px solid ${currentTier.color}35`,
+                padding:     "2px 8px",
+                borderRadius:99,
+                fontFamily:  "'Space Mono', monospace",
+              }}>
+                {currentTier.label}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13, color: C.muted }}>
+              <div>Total Standing Career XP: <strong style={{ color: C.gold }}>{user?.totalXP || 0} XP</strong></div>
+              <div>Represented Nation: <strong style={{ color: C.text }}>{kit.flag} {countryCode}</strong></div>
+            </div>
+
+          </div>
+
+          {/* Achievements */}
+          <div style={{
+            background:   "rgba(25, 28, 38, 0.65)",
+            backdropFilter: "blur(12px)",
+            border:       `1px solid rgba(255,255,255,0.1)`,
+            borderRadius: 18,
+            padding:      20,
+          }}>
+            <div style={{
+              fontFamily:    "'Space Mono', monospace",
+              fontSize:      10,
+              color:         C.gold,
+              textTransform: "uppercase",
+              letterSpacing: 2,
+              marginBottom:  16,
+            }}>
+              🏆 Trophies & Milestones
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {achievements.map((ach, idx) => (
+                <div key={idx} style={{
+                  display:     "flex",
+                  alignItems:  "center",
+                  gap:         12,
+                  padding:     "10px 14px",
+                  background:  ach.unlocked ? "rgba(61,214,140,0.04)" : "rgba(255,255,255,0.01)",
+                  border:      `1px solid ${ach.unlocked ? "rgba(61,214,140,0.15)" : C.border}`,
+                  borderRadius:12,
+                  opacity:     ach.unlocked ? 1 : 0.4,
+                }}>
+                  <span><ach.IconC size={24} color={ach.unlocked ? C.green : C.muted} /></span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: ach.unlocked ? C.green : C.text }}>{ach.title}</div>
+                    <div style={{ fontSize: 11, color: C.muted }}>{ach.desc}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 11, fontFamily: "'Space Mono', monospace", fontWeight: 700, color: ach.unlocked ? C.green : C.muted }}>
+                      {ach.unlocked ? "UNLOCKED" : "LOCKED"}
+                    </div>
+                    {!ach.unlocked && (
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                        {getProgress(ach.id)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>      </div>
+
+      <BottomNav active="profile" navigate={navigate} onUnavailable={() => alert("Coming soon — stay tuned")} />
+    </div>
+  );
+}
+
+function BottomNav({ active, navigate, onUnavailable }) {
+  const [pressed, setPressed] = useState(null);
+
+  
   const items = [
     { id: "home",    label: "Games",  IconC: icons.Ball,   route: "/",        color: "#F7C344", glow: "rgba(247,195,68,0.8)",   bgGlow: "rgba(247,195,68,0.1)",   bgRadial: "rgba(247,195,68,0.2)"   },
     { id: "guild",   label: "Guild",  IconC: icons.Shield, route: "/guild",   color: "#3DD68C", glow: "rgba(61,214,140,0.8)",   bgGlow: "rgba(61,214,140,0.1)",   bgRadial: "rgba(61,214,140,0.2)"   },
@@ -713,7 +441,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
   ];
 
   return (
-    <nav style={{
+      <nav style={{
       position:       "fixed", bottom: 0, left: 0, right: 0, zIndex: 200,
       display:        "flex",
       background:     "rgba(5,8,15,0.97)",

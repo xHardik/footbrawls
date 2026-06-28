@@ -207,20 +207,20 @@ export default function PrivacyPolicy() {
         <div style={{ marginBottom: "52px" }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
-            background: "rgba(247,195,68,0.08)", border: "1px solid rgba(247,195,68,0.2)",
+            background: "rgba(255,140,0,0.08)", border: "1px solid rgba(255,140,0,0.2)",
             borderRadius: "99px", padding: "5px 14px", marginBottom: "18px",
           }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F7C344" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FF8C00" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
             </svg>
-            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: "0.62rem", fontWeight: 700, color: C.gold, letterSpacing: "2px", textTransform: "uppercase" }}>
+            <span style={{ fontFamily: "'Space Mono', monospace", fontSize: "0.62rem", fontWeight: 700, color: "#FF8C00", letterSpacing: "2px", textTransform: "uppercase" }}>
               June 2026
             </span>
           </div>
           <h1 style={{
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: "4.8rem", letterSpacing: "5px",
-            background: "linear-gradient(110deg, #ffe680 0%, #F7C344 50%, #e8a800 100%)",
+            background: "linear-gradient(110deg, #da8d19 0%, #ff8c00 50%, #cc7000 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             margin: "0 0 6px 0", lineHeight: 1,
           }}>PRIVACY POLICY</h1>

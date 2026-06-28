@@ -13,7 +13,7 @@ import { normScore } from './scoreNorm';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DAILY_XP_CAP = 200;
+const DAILY_XP_CAP = 1000;
 
 const XP_REWARDS = {
   // Games
@@ -195,9 +195,82 @@ export async function awardXP(userId, source, opts = {}) {
     const newTotal  = (user.totalXP || 0) + xpToAward;
 
     // ── ALL WRITES (only after all reads complete) ────────────────────────────
+    let category = 'other';
+    if (source && source.startsWith('raid_')) category = 'raids';
+    else if (source && source.startsWith('prediction_')) category = 'predictor';
+    else if (source === 'dailytrivia_complete') category = 'trivia';
+    else if (source && (source.includes('login') || source.includes('share') || source === 'reveal_ad_watched' || source === 'chat_active')) category = 'social';
+    else category = 'games';
+
+    const currentBreakdown = user.xpBreakdown || {};
+    const newBreakdown = {
+      ...currentBreakdown,
+      [category]: (currentBreakdown[category] || 0) + xpToAward
+    };
+
+    const stats = user.stats || {};
+    const achievements = user.achievements || {};
+
+    // 1. Striker Hero (1,000 XP in 24 hours)
+    if (!achievements.strikerHero && !isRaidSource && (dailyXP + xpToAward >= 1000)) {
+      achievements.strikerHero = true;
+    }
+
+    // 2. Trivia God (100 Trivia correct overall)
+    if (category === 'trivia' && opts && opts.rawScore) {
+      stats.totalTriviaCorrect = (stats.totalTriviaCorrect || 0) + opts.rawScore;
+      if (!achievements.triviaGod && stats.totalTriviaCorrect >= 100) {
+        achievements.triviaGod = true;
+      }
+    }
+
+    // 3. Dedicated Athlete (9 daily games for 15 days)
+    if (category === 'games' && source) {
+      if (stats.dailyGamesDate !== today) {
+        stats.dailyGamesDate = today;
+        stats.dailyGamesPlayed = [];
+        stats.dedicatedAthleteDailyHit = false;
+        
+        // Check if streak was broken (missed yesterday)
+        const yesterday = new Date(new Date(today).getTime() - 86400000).toISOString().split('T')[0];
+        if (stats.lastDedicatedDay !== yesterday) {
+          stats.consecutiveDaysPlayed = 0;
+        }
+      }
+      if (!stats.dailyGamesPlayed.includes(source)) {
+        stats.dailyGamesPlayed.push(source);
+      }
+      if (stats.dailyGamesPlayed.length >= 9 && !stats.dedicatedAthleteDailyHit) {
+        stats.dedicatedAthleteDailyHit = true;
+        stats.lastDedicatedDay = today;
+        stats.consecutiveDaysPlayed = (stats.consecutiveDaysPlayed || 0) + 1;
+        if (!achievements.dedicatedAthlete && stats.consecutiveDaysPlayed >= 15) {
+          achievements.dedicatedAthlete = true;
+        }
+      }
+    }
+
+    // 4. Consul MVP (Raid MVP 50 times)
+    if (source === 'raid_mvp') {
+      stats.raidMvpCount = (stats.raidMvpCount || 0) + 1;
+      if (!achievements.consulMvp && stats.raidMvpCount >= 50) {
+        achievements.consulMvp = true;
+      }
+    }
+
+    // 5. Oracle (5 match prediction streak)
+    if (category === 'predictor') {
+      if (!achievements.oracle && user.predictionStreak >= 5) {
+        achievements.oracle = true;
+      }
+    }
+
     const updatePayload = {
       totalXP:     newTotal,
       tier:        getTier(newTotal),
+      xpBreakdown: newBreakdown,
+      stats:       stats,
+      achievements: achievements,
     };
     if (!isRaidSource) {
       updatePayload.dailyXP = dailyXP + xpToAward;
@@ -215,6 +288,9 @@ export async function awardXP(userId, source, opts = {}) {
       xpAwarded:      xpToAward,
       newTotal,
       newTier:        getTier(newTotal),
+      newBreakdown,
+      stats,
+      achievements,
       dailyXPUsed:    isRaidSource ? dailyXP : (dailyXP + xpToAward),
       curseMultiplier: multiplier,
       split:          { home: homeXP, support: supportXP },
@@ -226,7 +302,10 @@ export async function awardXP(userId, source, opts = {}) {
     const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
     if (localUser && localUser.userId === userId) {
       localUser.totalXP = result.newTotal;
-      if (!source.startsWith('raid_')) {
+      localUser.xpBreakdown = result.newBreakdown;
+      localUser.stats = result.stats;
+      localUser.achievements = result.achievements;
+      if (source && !source.startsWith('raid_')) {
         localUser.dailyXP = result.dailyXPUsed;
         localUser.dailyXPDate = getTodayUTC();
       }

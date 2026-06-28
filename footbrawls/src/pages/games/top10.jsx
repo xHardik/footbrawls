@@ -6,10 +6,13 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { TOP10_QUESTIONS } from '../../lib/questions.js';
 import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto, useClubWikiLogo } from '../../lib/wikiAssets.jsx';
 import { getActivePuzzleDate, getDailySeed, getRaidSeed } from '../../lib/dailySeed.js';
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATS_KEY   = 'footbrawls_top10_stats';
@@ -188,7 +191,7 @@ body{font-family:'DM Sans',sans-serif}
 .t10-nav-btn:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); }
 
 /* MAIN */
-.t10-main { width: 84%; max-width:980px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
+.t10-main { width: 90%; max-width:750px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
 
 /* START SCREEN */
 .t10-start { text-align:left; padding:16px 8px; animation:fadeUp .5s ease both; }
@@ -427,12 +430,16 @@ body{font-family:'DM Sans',sans-serif}
   letter-spacing: 1px; color: rgba(240,240,240,0.45);
 }
 .t10-streak-dots {
-  display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 4px; margin-bottom: 16px;
+  display: grid; grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(3, 42px); gap: 3px; margin-bottom: 12px;
 }
 .t10-streak-dot {
-  aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.05);
+  width: 100%; height: 42px; border-radius: 5px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  transition: transform 0.15s; cursor: default;
 }
+.t10-streak-dot:hover { transform: translateY(-2px); }
 .t10-streak-dot.win {
   background: rgba(236,72,153,.18); border-color: rgba(236,72,153,.32);
   box-shadow: 0 0 6px rgba(236,72,153,0.15);
@@ -746,6 +753,15 @@ export default function Top10Guess() {
       if (activeId) {
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
+    } else {
+      // Single mode animations & scroll
+      const isWin = correctCount >= 7;
+      if (isWin) {
+        triggerWinConfetti();
+      } else {
+        triggerLossHeartbreaks();
+      }
+      autoScrollToResult('.t10-result-card', isRaid);
     }
     setXpAwarded(awarded);
     if (!isRaid) {
@@ -993,7 +1009,23 @@ export default function Top10Guess() {
 
                   <div style={{ textAlign: 'center', marginTop: 14 }}>
                     {isRaid ? (
-                      <button className="t10-btn primary" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                      <button 
+                        className="t10-btn primary" 
+                        onClick={async () => {
+                          const activeId = localStorage.getItem('active_game_session_id');
+                          if (activeId) {
+                            const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                            if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                              navigate('/vsfriends');
+                              return;
+                            }
+                          }
+                          navigate('/raid');
+                        }} 
+                        style={{ width: '100%' }}
+                      >
+                        ⚔️ Return to Lobby
+                      </button>
                     ) : (
                       <button className="t10-btn primary" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
                     )}
@@ -1064,22 +1096,30 @@ function StreakDots({ history, puzzleDate, phase }) {
     const key = d.toISOString().split('T')[0];
     const isToday = key === puzzleDate;
     let cls = '';
+    let score = 0;
+    const e = history[key];
     if (isToday) {
-      const e = history[key];
       if (e) {
         cls = e.correct >= 6 ? 'win' : 'miss';
+        score = e.correct;
       } else {
         cls = (phase === 'result') ? 'played' : 'pending';
       }
     } else {
-      const e = history[key];
       cls = e ? (e.correct >= 6 ? 'win' : 'miss') : 'miss';
+      if (e) {
+        score = e.correct;
+      }
     }
-    dots.push(cls);
+    dots.push({ key, cls, score, hasPlayed: (e || (isToday && phase === 'result')) });
   }
   return (
     <div className="t10-streak-dots">
-      {dots.map((cls, i) => <div key={i} className={`t10-streak-dot ${cls}`} />)}
+      {dots.map((d, i) => (
+        <div key={d.key} className={`t10-streak-dot ${d.cls}`} title={`${d.key} ${d.score ? `· ${d.score}/10` : ''}`}>
+          {d.hasPlayed && d.score > 0 && <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--green)' }}>{d.score}</span>}
+        </div>
+      ))}
     </div>
   );
 }

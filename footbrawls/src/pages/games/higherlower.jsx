@@ -9,13 +9,16 @@
  *   <HigherLower players={playersArray} userId={uid} onComplete={(result) => {}} />
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getDailySeed, getDailyPlayer, getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto } from "../../lib/wikiAssets.jsx";
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 25;
@@ -134,17 +137,17 @@ const adBreak = (options) => {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function RulesModal({ onClose }) {
+function RulesModal({ show, onClose, isRaid }) {
+  if (!show) return null;
   return (
-    <div className="hl-modal-overlay active" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div className={`hl-modal-overlay active`} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="hl-modal-box">
         <h2 className="hl-modal-title">⚽ How to Play</h2>
         <ul className="hl-rules-list">
-          <li><span className="hl-rule-icon">👀</span>The left player's stat is revealed — study it carefully</li>
-          <li><span className="hl-rule-icon">🤔</span>Guess if the right player's stat is <strong>Higher</strong> or <strong>Lower</strong></li>
-          <li><span className="hl-rule-icon">🔥</span>Build a streak — every correct answer keeps you alive</li>
-          <li><span className="hl-rule-icon">❌</span>One wrong answer ends the game immediately</li>
-          {!isRaid && <li><span className="hl-rule-icon">🏆</span>Max {MAX_XP} XP — survive as long as you can!</li>}
+          <li><strong>👀 Stat:</strong> The left player's stat is revealed — study it carefully</li>
+          <li><strong>🤔 Guess:</strong> Choose if the right player's stat is <strong>Higher</strong> or <strong>Lower</strong></li>
+          <li><strong>🔥 Streak:</strong> Build a streak — every correct answer keeps you alive</li>
+          <li><strong>❌ Fail:</strong> One wrong answer ends the game immediately</li>
         </ul>
         {!isRaid && (
           <div className="hl-scoring-box">
@@ -154,7 +157,7 @@ function RulesModal({ onClose }) {
             <div className="hl-scoring-item"><span>Wrong Answer</span><span className="hl-scoring-value">Game Over</span></div>
           </div>
         )}
-        <button className="hl-btn-primary" onClick={onClose}>🚀 Start Playing</button>
+        <button className="hl-btn-primary" onClick={onClose}>🚀 Let's Play!</button>
       </div>
     </div>
   );
@@ -354,9 +357,28 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     }
   }, []);
 
-  const playerA = getSequencedPlayer(players, round);
-  const playerB = getSequencedPlayer(players, round + 1);
   const attr    = getAttrForRound(round);
+
+  const { playerA, playerB } = useMemo(() => {
+    const rawA = getSequencedPlayer(players, round);
+    // If streak is high (streak >= 7), we want a "close call" for playerB
+    if (streak >= 7) {
+      const valA = rawA[attr.key];
+      // Let's scan forward from round + 1 to find a player whose stat value is close to valA
+      // We'll search up to 25 players to find one that is within a 15% difference range.
+      for (let offset = 1; offset <= 25; offset++) {
+        const candidate = getSequencedPlayer(players, round + offset);
+        const valB = candidate[attr.key];
+        if (valA === 0 || valB === 0) continue;
+        const diffPercent = Math.abs(valA - valB) / Math.max(valA, valB);
+        if (diffPercent <= 0.18) { // close call (within 18% difference)
+          return { playerA: rawA, playerB: candidate };
+        }
+      }
+    }
+    const rawB = getSequencedPlayer(players, round + 1);
+    return { playerA: rawA, playerB: rawB };
+  }, [players, round, streak, attr]);
 
   function persist(updates) {
     const puzzleDate = getActivePuzzleDate();
@@ -460,6 +482,15 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           if (activeId) {
             localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
           }
+        } else {
+          // Single mode animations & scroll
+          const isWin = streak >= 10; // Max streak
+          if (isWin) {
+            triggerWinConfetti();
+          } else {
+            triggerLossHeartbreaks();
+          }
+          autoScrollToResult('.hl-result-card', isRaid);
         }
         persist({ round, streak, gameOver: true, xpAwarded: xp, hasWatchedReviveAd });
         if (onComplete) onComplete({ gameId: "higherLower", streak, xpAwarded: xp });
@@ -477,8 +508,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       <div className="hl-bg-layer" />
       <div className="hl-noise" />
 
-      {/* Rules Modal */}
-      {showModal && <RulesModal onClose={() => setShowModal(false)} />}
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
 
       {/* ── NAV ── */}
       <nav className="hl-nav">
@@ -587,25 +617,28 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             )}
 
             <div className="hl-result-actions" style={{ display: "flex", gap: "10px", width: "100%", justifyContent: "center" }}>
-              <button
-                className="hl-btn hl-btn-restart"
-                style={{ opacity: 0.5, cursor: "not-allowed", flex: 1 }}
-                disabled
-              >
-                Played Today
-              </button>
               {isRaid ? (
                 <button
                   className="hl-btn"
                   style={{ background: "linear-gradient(135deg, #a855f7, #6366f1)", color: "#fff", border: "none", flex: 1 }}
-                  onClick={() => navigate('/raid')}
+                  onClick={async () => {
+                    const activeId = localStorage.getItem('active_game_session_id');
+                    if (activeId) {
+                      const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                      if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                        navigate('/vsfriends');
+                        return;
+                      }
+                    }
+                    navigate('/raid');
+                  }}
                 >
-                  ⚔️ Return to Raid
+                  ⚔️ Return to Lobby
                 </button>
               ) : (
                 <button
                   className="hl-btn"
-                  style={{ background: "rgba(255,255,255,0.08)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", flex: 1 }}
+                  style={{ background: "var(--accent3, #a855f7)", color: "#fff", border: "none", flex: 1, fontWeight: "bold" }}
                   onClick={() => navigate('/')}
                 >
                   ← Home
@@ -765,8 +798,8 @@ const CSS = `
 /* ── PAGE ── */
 .hl-page {
   position: relative; z-index: 1;
-  max-width: 1000px; margin: 0 auto;
-  padding: 36px 36px 80px;
+  max-width: 800px; margin: 0 auto;
+  padding: 36px 5% 80px;
 }
 
 .hl-page-header { margin-bottom: 24px; animation: hlFadeUp 0.5s ease both; }

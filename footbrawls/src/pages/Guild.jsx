@@ -76,35 +76,81 @@ const GLOBAL_CSS = `
   .fb-blob2 { width:500px;height:400px;bottom:-80px;right:-100px;background:radial-gradient(ellipse,rgba(61,214,140,0.1) 0%,transparent 70%);animation:fbDrift 24s ease-in-out infinite alternate-reverse; }
   .fb-noise { position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.028;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:256px; }
 
-  .fb-nav { position:sticky;top:0;z-index:200;height:64px;padding:0 max(20px,4vw);background:rgba(6,8,16,0.35);backdrop-filter:blur(16px) saturate(1.3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+  .fb-nav {
+    position:sticky;top:0;z-index:200;height:68px;
+    padding:0 max(20px,4vw);
+    background:rgba(6,8,16,0.75);backdrop-filter:blur(24px) saturate(1.4);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 4px 32px rgba(0,0,0,0.35);
+  }
+  .fb-nav::before {
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),var(--purple),transparent);
+    opacity:0.6;
+  }
   .fb-logo { font-family:'Bebas Neue',sans-serif;font-size:1.85rem;letter-spacing:3px;background:linear-gradient(110deg,#ffe680 0%,#F7C344 40%,#e8a800 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
   .fb-logo em { font-style:normal;-webkit-text-fill-color:#F2F2F4; }
   .fb-logo small { font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:1px;-webkit-text-fill-color:rgba(242,242,244,0.35); }
   .fb-nav-pill { display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);font-family:'Space Mono',monospace;font-size:0.66rem;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.22s; }
   .fb-nav-pill:hover { background:var(--surface3);border-color:var(--border3);color:var(--text);transform:translateY(-1px); }
 
-  .fb-tab-bar { display:flex;border-bottom:1px solid var(--border);background:rgba(6,8,16,0.6);backdrop-filter:blur(8px);position:sticky;top:64px;z-index:100; }
-  .fb-tab { flex:1;padding:14px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.18s; }
+  .fb-tab-bar {
+    display:flex;border-bottom:1px solid var(--border);
+    background:rgba(6,8,16,0.8);backdrop-filter:blur(12px);
+    position:sticky;top:68px;z-index:100;
+    padding:0 max(16px,2vw);
+  }
+  .fb-tab {
+    flex:1;padding:16px 4px 14px;
+    background:none;border:none;
+    border-bottom:2px solid transparent;
+    color:var(--muted2);
+    font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;
+    cursor:pointer;transition:all 0.18s;
+    position:relative;
+  }
   .fb-tab.active { color:var(--accent);border-bottom-color:var(--accent); }
+  .fb-tab.active::after {
+    content:'';position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+    width:28px;height:2px;border-radius:99px;
+    background:var(--accent);
+    box-shadow:0 0 10px var(--accent-glow);
+  }
   .fb-tab:hover:not(.active) { color:var(--text); }
 
   .fb-section-hdr { display:flex;align-items:center;gap:14px;margin-bottom:18px; }
-  .fb-section-label { font-family:'Space Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap; }
+  .fb-section-label {
+    font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;
+    letter-spacing:3px;text-transform:uppercase;
+    color:var(--accent);white-space:nowrap;
+    display:flex;align-items:center;gap:8px;
+  }
+  .fb-section-label::before { content:'';width:3px;height:14px;background:var(--accent);border-radius:99px;box-shadow:0 0 8px var(--accent-glow); }
   .fb-section-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent); }
 
-  .fb-stat-row { display:flex;gap:0;border:1px solid var(--border2);border-radius:14px;overflow:hidden;margin-bottom:24px; }
-  .fb-stat-tile { display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 20px;background:var(--surface);border-right:1px solid var(--border2);flex:1; }
+  .fb-stat-row { display:flex;gap:0;border:1px solid var(--border2);border-radius:16px;overflow:hidden;margin-bottom:24px;background:rgba(255,255,255,0.02); }
+  .fb-stat-tile { display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 20px;background:transparent;border-right:1px solid var(--border);flex:1;transition:background 0.2s; }
   .fb-stat-tile:last-child { border-right:none; }
-  .fb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:1px;color:var(--accent);line-height:1; }
-  .fb-stat-lbl { font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted); }
+  .fb-stat-tile:hover { background:var(--surface2); }
+  .fb-stat-num { font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:1px;color:var(--accent);line-height:1;text-shadow:0 0 20px var(--accent-glow); }
+  .fb-stat-lbl { font-family:'Space Mono',monospace;font-size:0.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted2); }
 
-  .fb-bottom-nav { position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;background:rgba(6,8,16,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px); }
-  .fb-nav-item { position:relative;flex:1;min-width:0;border:none;background:transparent;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation; }
-  .fb-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 8px var(--green); }
+  .fb-bottom-nav {
+    position:fixed;bottom:0;left:0;right:0;z-index:200;
+    display:flex;
+    background:rgba(6,8,16,0.97);backdrop-filter:blur(24px);
+    border-top:1px solid var(--border);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    box-shadow:0 -4px 24px rgba(0,0,0,0.4);
+  }
+  .fb-nav-item { position:relative;flex:1;min-width:0;border:none;background:transparent;padding:10px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:'Syne',sans-serif;transition:color 0.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation; }
+  .fb-nav-indicator { position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:2px;border-radius:0 0 99px 99px;background:var(--green);box-shadow:0 0 12px var(--green); }
 
-  .fb-member-row { display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background 0.18s;cursor:default; }
+  .fb-member-row { display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border);transition:background 0.18s;cursor:default; }
   .fb-member-row:last-child { border-bottom:none; }
-  .fb-member-row:hover { background:var(--surface2); }
+  .fb-member-row:hover { background:rgba(255,255,255,0.04); }
 
   .fb-raid-banner {
     position:relative;overflow:hidden;
@@ -124,6 +170,7 @@ const GLOBAL_CSS = `
 
   @media(max-width:640px){
     .fb-nav { height:56px;padding:0 16px; }
+    .fb-tab-bar { top:56px; }
     .fb-tab { font-size:0.55rem;letter-spacing:1px; }
     .fb-blob { filter:blur(40px);opacity:0.25; }
     .fb-grid { display:none; }
@@ -171,11 +218,6 @@ function TopNav({ guildName, flag, members, navigate }) {
             <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.55rem", color:"var(--muted2)", letterSpacing:1 }}>{members?.toLocaleString()||"—"} members</div>
           </div>
         </div>
-      </div>
-      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-        <button onClick={() => navigate("/raid")} className="fb-nav-pill" style={{ background:"rgba(168,85,247,0.1)", borderColor:"rgba(168,85,247,0.3)", color:"#A855F7" }}>
-          ⚔️ Raid
-        </button>
       </div>
     </nav>
   );
@@ -251,7 +293,8 @@ function CastleTab({ guild, user }) {
   }, [isRuined, guild]);
 
   return (
-    <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
+    <div style={{ padding:"24px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
+      <div style={{ maxWidth:900, margin:"0 auto", display:"flex", flexDirection:"column", gap:20 }}>
       {isRuined && (
         <div style={{
           background: 'rgba(232, 64, 64, 0.1)',
@@ -368,24 +411,6 @@ function CastleTab({ guild, user }) {
           ))}
         </div>
       </div>
-      <div>
-        <div className="fb-section-hdr">
-          <span className="fb-section-label">Raid Battles</span>
-          <div className="fb-section-line"/>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"var(--accent)", letterSpacing:1 }}>STAGE 5</span>
-        </div>
-        <div className="fb-raid-banner" onClick={() => navigate('/raid')} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && navigate('/raid')}>
-          <div style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", fontSize:60, opacity:0.06, pointerEvents:"none", userSelect:"none" }}>⚔️</div>
-          <div className="fb-raid-icon">⚔️</div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.2rem", letterSpacing:1.5, display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-              Challenge Raid
-              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.5rem", fontWeight:700, border:"1px solid rgba(247,195,68,0.28)", borderRadius:999, padding:"2px 8px", color:"#F7C344", background:"rgba(247,195,68,0.09)" }}>2x XP on match day</span>
-            </div>
-            <p style={{ margin:0, fontSize:"0.75rem", color:"var(--muted)", lineHeight:1.4 }}>Find a buddy · 3-act battle · Break curses · Swing castle HP</p>
-          </div>
-          <span style={{ color:"#A855F7", fontSize:24, fontWeight:900, flexShrink:0 }}>›</span>
-        </div>
       </div>
     </div>
   );
@@ -394,7 +419,9 @@ function CastleTab({ guild, user }) {
 function RanksTab({ overallLeaderboard = [], currentUserId }) {
   const medals = ["🥇","🥈","🥉"];
   return (
-    <div style={{ padding:"24px max(16px,3vw)", display:"flex", flexDirection:"column", gap:20, animation:"fadeUp 0.35s ease both" }}>
+    <div style={{ padding:"24px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
+      <div style={{ maxWidth:900, margin:"0 auto", display:"flex", flexDirection:"column", gap:20 }}>
+
       <div>
         <div className="fb-section-hdr"><span className="fb-section-label">Guild Standings (All-Time)</span><div className="fb-section-line"/></div>
         <div style={{ background:"var(--surface)", border:"1px solid var(--border2)", borderRadius:16, overflow:"hidden" }}>
@@ -440,24 +467,26 @@ function RanksTab({ overallLeaderboard = [], currentUserId }) {
           <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"0.73rem", color:"var(--muted)", lineHeight:1.4 }}>80% of your XP goes to your home country castle. 20% to your support team. Curses and blessings modify all XP earned.</div>
         </div>
       </div>
+      </div>
     </div>
   );
 }
-
 function ChatTab({ user, guild, tier, canChat }) {
   const memberCount = guild?.memberCount ?? 0;
   return (
-    <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, padding:"16px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
-      <GuildChat 
-        guildCode={user.homeCountry} 
-        currentUid={user.userId} 
-        nickname={user.nickname} 
-        tier={tier.label} 
-        memberCount={memberCount} 
-        totalXP={user.totalXP || 0}
-        canChat={canChat}
-        currentFlag={user.flag}
-      />
+    <div style={{ padding:"16px max(16px,3vw)", animation:"fadeUp 0.35s ease both" }}>
+      <div style={{ maxWidth:900, margin:"0 auto" }}>
+        <GuildChat
+          guildCode={user.homeCountry}
+          currentUid={user.userId}
+          nickname={user.nickname}
+          tier={tier.label}
+          memberCount={memberCount}
+          totalXP={user.totalXP || 0}
+          canChat={canChat}
+          currentFlag={user.flag}
+        />
+      </div>
     </div>
   );
 }

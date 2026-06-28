@@ -332,20 +332,21 @@ function injectStyles() {
     }
 
     .raid-player-row {
-      display:flex; align-items:center; gap:10px; padding:10px 12px;
-      background:rgba(255,255,255,.03); border-radius:12px;
-      border:1px solid rgba(255,255,255,.06);
+      display:flex; align-items:center; gap:10px; padding:11px 14px;
+      background:rgba(255,255,255,.04); border-radius:12px;
+      border:1px solid rgba(255,255,255,.07);
       transition:background .2s;
     }
+    .raid-player-row:hover { background:rgba(255,255,255,.07); }
 
     .raid-act-pill {
       display:inline-flex; align-items:center; gap:6px;
-      padding:4px 12px; border-radius:99px;
+      padding:5px 14px; border-radius:99px;
       font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700; letter-spacing:1px;
     }
 
     .raid-hp-bar {
-      height:8px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden;
+      height:10px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden;
     }
     .raid-hp-fill {
       height:100%; border-radius:99px;
@@ -355,15 +356,25 @@ function injectStyles() {
 
     .raid-standing-row {
       display:flex; align-items:center; justify-content:space-between;
-      padding:12px 16px; border-radius:14px;
+      padding:14px 18px; border-radius:14px;
       border:1px solid rgba(255,255,255,.06);
       transition:all .2s;
     }
-    .raid-standing-row:hover { background:rgba(255,255,255,.04); }
+    .raid-standing-row:hover { background:rgba(255,255,255,.05); }
 
     .raid-divider {
       height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
-      margin:16px 0;
+      margin:20px 0;
+    }
+
+    .raid-section-label {
+      font-family:'Orbitron',sans-serif; font-size:10px; font-weight:700;
+      letter-spacing:2px; text-transform:uppercase;
+      display:flex; align-items:center; gap:8px; margin-bottom:14px;
+    }
+    .raid-section-label::after {
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg,rgba(255,255,255,.1),transparent);
     }
   `;
   document.head.appendChild(el);
@@ -583,6 +594,10 @@ export default function Raid() {
   const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
   const [readyAct2, setReadyAct2]             = useState({});
   const [readyAct3, setReadyAct3]             = useState({});
+  const [castleRaidEntries, setCastleRaidEntries] = useState(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return parseInt(localStorage.getItem(`castle_raid_entries_${today}`) || '0', 10);
+  });
 
   useEffect(() => { injectStyles(); }, []);
 
@@ -602,6 +617,15 @@ export default function Raid() {
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
     setFinalizing(true);
     try {
+      if (currentRaidType === 'challenge') {
+        const today = new Date().toISOString().split('T')[0];
+        const key = `castle_raid_entries_${today}`;
+        const current = parseInt(localStorage.getItem(key) || '0', 10);
+        const nextCount = current + 1;
+        localStorage.setItem(key, String(nextCount));
+        setCastleRaidEntries(nextCount);
+      }
+
       const userScore = (currentActs.act1?.playerScore || 0) +
         ((currentActs.act2?.playerRoundWins || 0) * 20) +
         ((currentActs.act3?.playerGoals || 0) * 20);
@@ -817,13 +841,10 @@ export default function Raid() {
       const today = new Date().toISOString().split('T')[0];
       const key = `castle_raid_entries_${today}`;
       const current = parseInt(localStorage.getItem(key) || '0', 10);
-      if (current >= 10) {
-        alert('Daily limit reached! You can only play 10 Castle Raids per day.');
+      if (current >= 3) {
+        alert('Daily limit reached! You can only play 3 Castle Raids per day.');
         return;
       }
-      const nextCount = current + 1;
-      localStorage.setItem(key, String(nextCount));
-      setCastleRaidEntries(nextCount);
     }
 
     if (type === 'training') {

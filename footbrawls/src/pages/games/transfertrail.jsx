@@ -13,8 +13,11 @@ import { useNavigate } from "react-router-dom";
 import { getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
 import { ClubLogo } from "../../lib/wikiAssets.jsx";
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
 
 // Initialize Google AdBreak queue safely
 const adBreak = (options) => {
@@ -138,7 +141,8 @@ function BgLayers() {
 }
 
 // ── How to Play Modal ─────────────────────────────────────────────────────────
-function RulesModal({ onClose }) {
+function RulesModal({ show, onClose, isRaid }) {
+  if (!show) return null;
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -166,14 +170,12 @@ function RulesModal({ onClose }) {
           ["🔍","Search and select the player's name from the dropdown list."],
           ["✅","Submit your guess — you get 3 attempts per player!"],
           ["🔥","Get all 3 correct for streak bonuses and the maximum score!"],
-          ["⏭️","Skip if you're stuck — but you'll lose your current streak."],
-          ["🏆","3 players per puzzle — a new puzzle drops every day!"],
         ].map(([icon, text]) => (
           <div key={text} style={{
             background:T.surface,border:`1px solid ${T.border}`,
             borderLeft:`3px solid rgba(26,111,255,0.45)`,
-            borderRadius:10,padding:"11px 14px",marginBottom:8,
-            fontSize:"0.85rem",lineHeight:1.6,color:T.muted,
+            borderRadius:10,padding:"12px 16px",marginBottom:8,
+            fontSize:"0.92rem",lineHeight:1.6,color:T.text,
           }}>
             <span style={{marginRight:8}}>{icon}</span>{text}
           </div>
@@ -209,7 +211,7 @@ function RulesModal({ onClose }) {
           onMouseEnter={e=>e.currentTarget.style.background=T.royalHover}
           onMouseLeave={e=>e.currentTarget.style.background=T.royal}
         >
-          🚀 Start Playing
+          🚀 Let's Play!
         </button>
       </div>
     </div>
@@ -461,7 +463,17 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         {isRaid ? (
           <button 
             className="tt-btn" 
-            onClick={() => navigate('/raid')}
+            onClick={async () => {
+              const activeId = localStorage.getItem('active_game_session_id');
+              if (activeId) {
+                const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                  navigate('/vsfriends');
+                  return;
+                }
+              }
+              navigate('/raid');
+            }}
             style={{
               background: `linear-gradient(135deg, ${T.royal}, ${T.royalLight})`,
               color: '#fff', border: 'none', padding: '12px 24px', borderRadius: 12,
@@ -469,7 +481,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
               cursor: 'pointer', width: '100%'
             }}
           >
-            ⚔️ Return to Raid
+            ⚔️ Return to Lobby
           </button>
         ) : (
           <button 
@@ -721,6 +733,15 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       if (activeId) {
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
+    } else {
+      // Single mode animations & scroll
+      const isWin = correctCount >= 2;
+      if (isWin) {
+        triggerWinConfetti();
+      } else {
+        triggerLossHeartbreaks();
+      }
+      autoScrollToResult('.tt-result-card', isRaid);
     }
     setXpAwarded(xp);
     setGameOver(true);
@@ -849,7 +870,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   return (
     <div style={{position:"relative",minHeight:"100vh",background:T.bg,fontFamily:"'DM Sans',sans-serif",color:T.text,overflowX:"hidden"}}>
       <BgLayers/>
-      {showModal && <RulesModal onClose={() => setShowModal(false)}/>}
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
 
       {/* ── NAV ── */}
       <nav className="tt-nav" style={{
@@ -905,7 +926,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       </nav>
 
       {/* ── PAGE ── */}
-      <main className="tt-main" style={{position:"relative",zIndex:1,maxWidth:980,margin:"0 auto",padding:"32px 22px 80px",boxSizing:"border-box"}}>
+      <main className="tt-main" style={{position:"relative",zIndex:1,maxWidth:800,margin:"0 auto",padding:"32px 5% 80px",boxSizing:"border-box"}}>
 
         {/* Header */}
         <div style={{marginBottom:22,animation:"ttFadeUp 0.45s ease"}}>

@@ -7,7 +7,10 @@ import { useNavigate } from 'react-router-dom';
 import { getActivePuzzleDate } from '../../lib/dailySeed.js';
 import { awardXP } from '../../lib/xpEngine.js';
 import { getUser } from '../../lib/user';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { TRIVIA_QUESTIONS } from '../../lib/questions.js';
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const QUESTIONS_PER_DAY = 10;
@@ -202,7 +205,7 @@ body{font-family:'DM Sans',sans-serif}
 .dt-nav-btn:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); }
 
 /* MAIN */
-.dt-main { max-width:580px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
+.dt-main { max-width:700px; margin:0 auto; padding:28px 16px 80px; position:relative; z-index:5; }
 
 /* PAGE HEADER */
 .dt-page-header { text-align:left; margin-bottom:24px; }
@@ -373,12 +376,21 @@ body{font-family:'DM Sans',sans-serif}
 .dt-dash-card-hdr { display:flex; align-items:center; gap:6px; margin-bottom:14px; }
 .dt-dash-icon { font-size:.95rem; }
 .dt-dash-label { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
-.dt-streak-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:5px; margin-bottom:12px; flex:1; align-content:space-between; }
-.dt-streak-dot { aspect-ratio:1; border-radius:4px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); }
-.dt-streak-dot.win    { background:rgba(61,214,140,.18); border-color:rgba(61,214,140,.32); }
-.dt-streak-dot.miss   { background:rgba(232,64,64,.08); border-color:rgba(232,64,64,.18); }
-.dt-streak-dot.played { background:rgba(13,148,136,.14); border-color:var(--accent3); box-shadow:0 0 10px rgba(13,148,136,.2); }
-.dt-streak-dot.pending { background:rgba(13,148,136,.09); border-style:dashed; border-color:rgba(13,148,136,.38); }
+.dt-streak-dots {
+  display: grid; grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(3, 42px); gap: 3px; margin-bottom: 12px;
+}
+.dt-streak-dot {
+  width: 100%; height: 42px; border-radius: 5px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  transition: transform 0.15s; cursor: default;
+}
+.dt-streak-dot:hover { transform: translateY(-2px); }
+.dt-streak-dot.win    { background: rgba(61,214,140,0.13);  border: 1px solid rgba(61,214,140,0.38); }
+.dt-streak-dot.miss   { background: rgba(255,255,255,0.03);  border: 1px solid rgba(255,255,255,0.07); }
+.dt-streak-dot.played { background: rgba(13,148,136,0.14);  border: 2px solid var(--accent3); box-shadow: 0 0 8px rgba(13,148,136,0.2); }
+.dt-streak-dot.pending { background: rgba(247,195,68,0.08);  border: 2px dashed rgba(247,195,68,0.35); }
 .dt-streak-legend { display:flex; gap:12px; font-size:.67rem; color:var(--muted); flex-wrap:wrap; margin-top:auto; }
 .dt-dot-sample { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:4px; vertical-align:middle; }
 .dt-dot-sample.win    { background:rgba(61,214,140,.18); border:1px solid var(--green); }
@@ -654,6 +666,15 @@ export default function DailyTrivia() {
           awarded = res?.xpAwarded ?? 0;
         } catch (e) { console.error('[DailyTrivia] awardXP error:', e); }
       }
+      // Single mode animations & scroll
+      const isWin = correct >= 7;
+      if (isWin) {
+        triggerWinConfetti();
+      } else {
+        triggerLossHeartbreaks();
+      }
+      autoScrollToResult('.dt-result-card', false);
+
       setXpAwarded(awarded);
       persist(puzzleDate, { answers: allAnswers, score: finalScore, done: true, xpAwarded: awarded });
       return;
@@ -985,17 +1006,28 @@ function StreakDots({ history, puzzleDate, phase }) {
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const isToday = key === puzzleDate;
     let cls = '';
+    let xp = 0;
+    const e = history[key];
     if (isToday) {
       cls = (phase === 'result' || phase === 'done') ? 'played' : 'pending';
+      if (phase === 'result' || phase === 'done') {
+        xp = e ? (e.xpAwarded ?? 25) : 25;
+      }
     } else {
-      const e = history[key];
       cls = e ? (e.correct >= 7 ? 'win' : 'miss') : 'miss';
+      if (e) {
+        xp = e.xpAwarded ?? (e.correct >= 7 ? 25 : 0);
+      }
     }
-    dots.push(cls);
+    dots.push({ key, cls, xp, hasPlayed: (e || (isToday && (phase === 'result' || phase === 'done'))) });
   }
   return (
     <div className="dt-streak-dots">
-      {dots.map((cls, i) => <div key={i} className={`dt-streak-dot ${cls}`} />)}
+      {dots.map((d, i) => (
+        <div key={d.key} className={`dt-streak-dot ${d.cls}`} title={`${d.key} ${d.xp ? `· ${d.xp} XP` : ''}`}>
+          {d.hasPlayed && d.xp > 0 && <span style={{ fontSize: '0.65rem', fontWeight: 800, lineWeight: 1, color: 'var(--green)' }}>{d.xp}</span>}
+        </div>
+      ))}
     </div>
   );
 }

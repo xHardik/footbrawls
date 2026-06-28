@@ -2,6 +2,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { awardXP } from '../../lib/xpEngine';
 import { getUser } from '../../lib/user';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 const ROUNDS = 5;
 const SEED = 42;
@@ -228,7 +231,6 @@ function drawScene(ctx, st) {
   drawBall(ctx, st.ballX, st.ballY);
 }
 
-// ─── StreakDots ─────────────────────────────────────────────────────────────
 function StreakDots({ history, today }) {
   const dots = [];
   const start = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000);
@@ -237,7 +239,8 @@ function StreakDots({ history, today }) {
     const key = day.toISOString().split('T')[0];
     const entry = history[key];
     const isToday = key === today;
-    let cls = 'dot-empty', label = 'No attempt', xp = 0;
+    let cls = 'dot-empty', label = 'No attempt';
+    let xp = 0;
     if (entry) {
       if (entry.completed) {
         cls = 'dot-won';
@@ -249,7 +252,10 @@ function StreakDots({ history, today }) {
     }
     dots.push(
       <div key={key} className={`db-dot ${cls} ${isToday ? 'dot-today' : ''}`}
-        title={`${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${label}`} />
+        title={`${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${label}`}
+      >
+        {entry && entry.completed && xp > 0 && <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--green)' }}>{xp}</span>}
+      </div>
     );
   }
   return <div className="db-streak-dots">{dots}</div>;
@@ -511,7 +517,20 @@ export default function DribbleGauntlet() {
     const s = stRef.current;
     if (s.results.length >= ROUNDS) {
       s.phase = 'summary'; rerender();
-      if (!alreadyPlayed) saveStatsAndXP(s.results);
+      if (!alreadyPlayed) {
+        saveStatsAndXP(s.results);
+      }
+      
+      // Single mode animations & scroll
+      const wins = s.results.filter(r => r.goal).length;
+      if (!isRaid) {
+        if (wins >= 3) {
+          triggerWinConfetti();
+        } else {
+          triggerLossHeartbreaks();
+        }
+        autoScrollToResult('.db-summary-card', isRaid);
+      }
       return;
     }
     s.round++;
@@ -574,23 +593,22 @@ export default function DribbleGauntlet() {
         {showModal && (
           <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
             <div className="db-modal-box">
-              <div className="db-modal-icon">⚽</div>
-              <h2 className="db-modal-title">Dribble Gauntlet</h2>
+              <h2 className="db-modal-title">⚽ How to Play</h2>
               <ul className="db-rules-list">
-                <li>
-                  <span className="db-rule-pill dribble">Dribble</span>
-                  <span>Pick a lane — Left, Center, or Right — to get past the defender.{!isRaid && <strong> +2 XP for beating them.</strong>}</span>
-                </li>
-                <li>
-                  <span className="db-rule-pill shoot">Shoot</span>
-                  <span>Choose one of 6 goal zones to strike. The GK always covers <strong>2 adjacent zones</strong>.{!isRaid && <strong> +3 XP for a goal.</strong>}</span>
-                </li>
-                <li>
-                  <span className="db-rule-pill retake">Retake</span>
-                  <span>Tackled or saved? Watch a short ad <strong>once per game</strong> to replay that round.</span>
-                </li>
+                <li><strong>🛡️ Dribble:</strong> Pick a lane — Left, Center, or Right — to get past the defender</li>
+                <li><strong>🥅 Shoot:</strong> Choose one of 6 goal zones to strike. The GK blocks <strong>2 adjacent zones</strong></li>
+                <li><strong>🔁 5 Rounds:</strong> Play 5 complete dribble + shoot sequences each game</li>
+                <li><strong>📺 Retake:</strong> Tackled or saved? Watch a short ad <strong>once per game</strong> to replay</li>
               </ul>
-              <button className="db-modal-close" onClick={() => setShowModal(false)}>Start Attack</button>
+              {!isRaid && (
+                <div className="db-scoring-box">
+                  <h3>💰 XP System</h3>
+                  <div className="db-scoring-item"><span>Beat the Defender</span><span className="db-scoring-value">+2 XP</span></div>
+                  <div className="db-scoring-item"><span>Score a Goal</span><span className="db-scoring-value">+3 XP</span></div>
+                  <div className="db-scoring-item"><span>Perfect Game (5/5)</span><span className="db-scoring-value">Bonus XP</span></div>
+                </div>
+              )}
+              <button className="db-modal-close" onClick={() => setShowModal(false)}>🚀 Let's Play!</button>
             </div>
           </div>
         )}
@@ -672,7 +690,23 @@ export default function DribbleGauntlet() {
 
                 <div className="db-summary-actions">
                   {isRaid ? (
-                    <button className="db-action-btn db-btn-go" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                    <button 
+                      className="db-action-btn db-btn-go" 
+                      onClick={async () => {
+                        const activeId = localStorage.getItem('active_game_session_id');
+                        if (activeId) {
+                          const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                          if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                            navigate('/vsfriends');
+                            return;
+                          }
+                        }
+                        navigate('/raid');
+                      }} 
+                      style={{ width: '100%' }}
+                    >
+                      ⚔️ Return to Lobby
+                    </button>
                   ) : (
                     <button className="db-action-btn db-btn-go" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
                   )}
@@ -1086,33 +1120,43 @@ const CSS = `
 }
 .db-modal-overlay.active { opacity: 1; pointer-events: auto; }
 .db-modal-box {
-  background: #080c1a; border: 1px solid rgba(132,204,22,0.18);
-  padding: 32px 28px; border-radius: 22px; max-width: 440px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  background: #0c1020; border: 1px solid rgba(132,204,22,0.22);
+  border-radius: 24px; padding: 44px 36px;
+  max-width: 560px; width: 100%; max-height: 88vh; overflow-y: auto;
+  position: relative; animation: dbModalUp 0.32s cubic-bezier(0.4,0,0.2,1);
 }
-.db-modal-icon { font-size: 2.5rem; text-align: center; margin-bottom: 8px; }
-.db-modal-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px;
-  color: var(--accent); text-align: center; margin-bottom: 22px;
+.db-modal-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--green), #a3e635);
+  border-radius: 24px 24px 0 0;
 }
-.db-rules-list { list-style: none; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
-.db-rules-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.86rem; color: var(--muted); }
-.db-rules-list strong { color: #fff; }
-.db-rule-pill {
-  flex-shrink: 0; font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 1px; padding: 3px 9px; border-radius: 100px; margin-top: 1px;
+@keyframes dbModalUp { from{opacity:0;transform:translateY(28px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+.db-modal-box::-webkit-scrollbar { width: 5px; }
+.db-modal-box::-webkit-scrollbar-thumb { background: rgba(132,204,22,0.3); border-radius: 5px; }
+.db-modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.3rem; letter-spacing: 2px; text-align: center; margin-bottom: 26px; }
+.db-rules-list { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 9px; }
+.db-rules-list li {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid rgba(132,204,22,0.45); border-radius: 12px;
+  padding: 13px 16px; font-size: 0.9rem; line-height: 1.6;
+  transition: border-color 0.2s, transform 0.2s;
 }
-.db-rule-pill.dribble { background: rgba(132,204,22,0.15); color: var(--accent); border: 1px solid rgba(132,204,22,0.3); }
-.db-rule-pill.shoot   { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
-.db-rule-pill.retake  { background: rgba(232,64,64,0.1); color: #ff8080; border: 1px solid rgba(232,64,64,0.25); }
+.db-rules-list li:hover { border-left-color: var(--accent); transform: translateX(4px); }
+.db-scoring-box {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 28px;
+}
+.db-scoring-box h3 { font-size: 0.77rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; }
+.db-scoring-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.db-scoring-item:last-child { border-bottom: none; }
+.db-scoring-value { font-weight: 700; color: var(--accent); }
 .db-modal-close {
-  display: block; width: 100%;
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
   background: linear-gradient(135deg, var(--accent), #a3e635); color: #1a2e05;
-  border: none; padding: 13px 32px; border-radius: 12px;
-  font-size: 0.92rem; font-weight: 800; cursor: pointer;
-  transition: all 0.2s; box-shadow: 0 6px 20px rgba(132,204,22,0.22); text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 800;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;
 }
-.db-modal-close:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(132,204,22,0.32); }
+.db-modal-close:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(132,204,22,0.4); }
 
 /* bottom dashboard */
 .db-bottom-section { margin-top: 8px; }
@@ -1129,13 +1173,21 @@ const CSS = `
 .db-dash-icon { font-size: 1rem; }
 .db-dash-lbl { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
 
-.db-streak-dots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
-.db-dot { aspect-ratio: 1; border-radius: 6px; transition: all 0.2s; }
+.db-streak-dots {
+  display: grid; grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(3, 42px); gap: 3px; margin-bottom: 12px;
+}
+.db-dot {
+  width: 100%; height: 42px; border-radius: 5px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 1px;
+  transition: transform 0.15s; cursor: default;
+}
+.db-dot:hover { transform: translateY(-2px); }
 .db-dot.dot-empty { background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
-.db-dot.dot-won { background: rgba(61,214,140,0.7); border: 1px solid rgba(61,214,140,0.4); box-shadow: 0 0 6px rgba(61,214,140,0.15); }
-.db-dot.dot-miss { background: rgba(232,64,64,0.55); border: 1px solid rgba(232,64,64,0.35); }
-.db-dot.dot-today { border: 2px solid var(--accent); animation: dbTodayPulse 2s ease infinite; }
-@keyframes dbTodayPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.db-dot.dot-won { background: rgba(61,214,140,0.13); border: 1px solid rgba(61,214,140,0.38); }
+.db-dot.dot-miss { background: rgba(232,64,64,0.08); border: 1px solid rgba(232,64,64,0.18); }
+.db-dot.dot-today { border: 2px solid var(--accent); box-shadow: 0 0 8px rgba(247,195,68,0.2); }
 
 .db-stats-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; }
 .db-stat-item {

@@ -432,15 +432,15 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
       <div className="ly-sidebar">
         {/* Logo */}
         <div className="ly-logo" onClick={() => navigate('/')}>
-          ⚽ <span className="ly-logo-text">Footbrawls</span>
+          <span className="ly-logo-text">Footbrawls</span>
         </div>
 
         {/* User Card */}
         {user && (
           <div className="ly-user-card">
-            <div className="ly-user-name">{user.nickname}</div>
-            <div className="ly-user-meta">
-              <span className="ly-tier">{user.tier || 'lurker'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              <div className="ly-user-name" style={{ margin: 0 }}>{user.nickname}</div>
+              <span className="ly-tier" style={{ margin: 0 }}>{user.tier || 'lurker'}</span>
             </div>
           </div>
         )}
@@ -459,10 +459,10 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
 
         {/* Guild Castle HP and Curse status */}
         {guild && (
-          <div className="ly-section">
-            <div className="ly-section-label">Your Castle</div>
+          <div className="ly-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div className="ly-section-label" style={{ alignSelf: 'stretch', textAlign: 'left' }}>Your Castle</div>
             <div className="ly-guild-name">🏰 {guild.name}</div>
-            <div className="ly-bar-bg">
+            <div className="ly-bar-bg" style={{ width: '100%' }}>
               <div 
                 className="ly-bar-fill hp-fill" 
                 style={{ 
@@ -473,7 +473,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
             </div>
             <div className="ly-hp-label">{guild.castleHP?.toLocaleString()} / {guild.castleHPCap?.toLocaleString()} HP</div>
 
-            <div className="ly-curse-badge" style={{ borderColor: curseInfo.color, color: curseInfo.color }}>
+            <div className="ly-curse-badge" style={{ borderColor: curseInfo.color, color: curseInfo.color, display: 'inline-flex', justifyContent: 'center', margin: '8px auto 0' }}>
               {curseInfo.icon} {curseInfo.label}
             </div>
           </div>
@@ -566,6 +566,7 @@ const CSS = `
 .ly-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 4px 16px;
   cursor: pointer;

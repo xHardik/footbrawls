@@ -6,6 +6,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { awardXP } from '../../lib/xpEngine';
 import { getUser } from '../../lib/user';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 const HISTORY_KEY = 'footbrawls_penaltynerve_history';
 const STATS_KEY   = 'footbrawls_penaltynerve_stats';
@@ -212,13 +215,13 @@ html { scroll-behavior: smooth; }
 .pn-gk-dive-badge { background: var(--accent2); color: #FFF; font-family: 'DM Sans', sans-serif; font-size: 0.65rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); letter-spacing: 0.5px; }
 .pn-ball-goal-badge { background: var(--green); color: #060810; font-family: 'DM Sans', sans-serif; font-size: 0.65rem; font-weight: 900; padding: 4px 8px; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); letter-spacing: 0.5px; }
 
-/* ── GOALKEEPER — taller figure (52x88) ── */
+/* ── GOALKEEPER ── */
 .pn-goalkeeper {
   position: absolute;
   bottom: 2px;
   left: 50%;
   width: 52px;
-  height: 88px;
+  height: 92px;
   margin-left: -26px;
   z-index: 4;
   pointer-events: none;
@@ -226,174 +229,135 @@ html { scroll-behavior: smooth; }
   will-change: transform;
   overflow: visible;
 }
-.pn-gk-svg { display: block; width: 52px; height: 88px; overflow: visible; }
+.pn-gk-svg { display: block; width: 52px; height: 92px; overflow: visible; }
 
-.pn-gk-shadow { fill: rgba(0,0,0,0.4); }
-.pn-gk-jersey  { fill: #E84040; stroke: #7a1f1f; stroke-width: 1.5; }
-.pn-gk-shorts  { fill: #1a2236; stroke: rgba(255,255,255,0.15); stroke-width: 1; }
-.pn-gk-skin    { fill: #e3a874; }
-.pn-gk-hair    { fill: #2b1c12; }
-.pn-gk-glove   { fill: #F7C344; stroke: #b9870e; stroke-width: 1; }
-.pn-gk-boot    { fill: #16181f; }
-.pn-gk-number  { fill: #ffffff; font-size: 7px; font-weight: 900; font-family: 'DM Sans', sans-serif; text-anchor: middle; }
-.pn-gk-arm, .pn-gk-leg { transform-box: fill-box; transform-origin: center; }
+.pn-gk-shadow    { fill: rgba(0,0,0,0.4); }
+.pn-gk-jersey    { fill: #E84040; stroke: #7a1f1f; stroke-width: 1.5; }
+.pn-gk-jersey-arm{ fill: #E84040; stroke: #7a1f1f; stroke-width: 1.5; }
+.pn-gk-shorts    { fill: #1a2236; stroke: rgba(255,255,255,0.15); stroke-width: 1; }
+.pn-gk-skin      { fill: #e3a874; }
+.pn-gk-hair      { fill: #2b1c12; }
+.pn-gk-glove     { fill: #F7C344; stroke: #b9870e; stroke-width: 1; }
+.pn-gk-boot      { fill: #16181f; }
+.pn-gk-number    { fill: #ffffff; font-size: 7px; font-weight: 900; font-family: 'DM Sans', sans-serif; text-anchor: middle; }
 
 /* ── IDLE sway ── */
 .pn-goalkeeper.pn-gk-idle { animation: pnGkSway 2.4s ease-in-out infinite; }
 @keyframes pnGkSway {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
+  50%       { transform: translateY(-3px); }
 }
-.pn-goalkeeper.pn-gk-idle .pn-gk-arm-left  { transform: rotate(8deg); transition: transform 0.4s ease; }
-.pn-goalkeeper.pn-gk-idle .pn-gk-arm-right { transform: rotate(-8deg); transition: transform 0.4s ease; }
 
-/* ── DIVING — 4-stop physics: stance → weight-load → mid-flight → full extension
-   translate3d keeps animation on the GPU compositor (no layout jank mid-frame) ── */
+/* ── DIVING — body only, arms/legs driven by JS ── */
 .pn-goalkeeper.pn-gk-diving { animation: none; }
 
 .pn-goalkeeper.pn-gk-diving.dive-topLeft {
-  animation: gkDiveTopLeft 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveTopLeft 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveTopLeft {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  15%  { transform: translate3d(6px, 4px, 0) rotate(4deg); }
-  40%  { transform: translate3d(-28px, -10px, 0) rotate(-28deg); }
-  100% { transform: translate3d(-80px, -30px, 0) rotate(-58deg); }
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  12%  { transform: translate3d(5px,3px,0) rotate(5deg); }
+  38%  { transform: translate3d(-32px,-12px,0) rotate(-30deg); }
+  100% { transform: translate3d(-88px,-34px,0) rotate(-62deg); }
 }
 
 .pn-goalkeeper.pn-gk-diving.dive-topCenter {
-  animation: gkDiveTopCenter 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveTopCenter 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveTopCenter {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  15%  { transform: translate3d(0, 5px, 0) scale(0.97); }
-  40%  { transform: translate3d(0, -14px, 0) scale(1.02); }
-  100% { transform: translate3d(0, -38px, 0) scale(1.06); }
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  15%  { transform: translate3d(0,4px,0) scale(0.97); }
+  42%  { transform: translate3d(0,-16px,0) scale(1.03); }
+  100% { transform: translate3d(0,-42px,0) scale(1.07); }
 }
 
 .pn-goalkeeper.pn-gk-diving.dive-topRight {
-  animation: gkDiveTopRight 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveTopRight 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveTopRight {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  15%  { transform: translate3d(-6px, 4px, 0) rotate(-4deg); }
-  40%  { transform: translate3d(28px, -10px, 0) rotate(28deg); }
-  100% { transform: translate3d(80px, -30px, 0) rotate(58deg); }
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  12%  { transform: translate3d(-5px,3px,0) rotate(-5deg); }
+  38%  { transform: translate3d(32px,-12px,0) rotate(30deg); }
+  100% { transform: translate3d(88px,-34px,0) rotate(62deg); }
 }
 
 .pn-goalkeeper.pn-gk-diving.dive-bottomLeft {
-  animation: gkDiveBottomLeft 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveBottomLeft 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveBottomLeft {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  12%  { transform: translate3d(4px, -4px, 0) rotate(3deg); }
-  40%  { transform: translate3d(-32px, 0px, 0) rotate(-38deg); }
-  100% { transform: translate3d(-80px, 6px, 0) rotate(-72deg); }
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  12%  { transform: translate3d(4px,-3px,0) rotate(3deg); }
+  38%  { transform: translate3d(-36px,0px,0) rotate(-42deg); }
+  100% { transform: translate3d(-86px,8px,0) rotate(-78deg); }
 }
 
 .pn-goalkeeper.pn-gk-diving.dive-bottomCenter {
-  animation: gkDiveBottomCenter 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveBottomCenter 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveBottomCenter {
-  0%   { transform: translate3d(0, 0, 0) scaleY(1); }
-  12%  { transform: translate3d(0, -5px, 0) scaleY(1.04); }
-  40%  { transform: translate3d(0, 2px, 0) scaleY(0.96); }
-  100% { transform: translate3d(0, 8px, 0) scaleY(0.88); }
+  0%   { transform: translate3d(0,0,0) scaleY(1); }
+  14%  { transform: translate3d(0,-4px,0) scaleY(1.04); }
+  42%  { transform: translate3d(0,3px,0) scaleY(0.95); }
+  100% { transform: translate3d(0,10px,0) scaleY(0.86); }
 }
 
 .pn-goalkeeper.pn-gk-diving.dive-bottomRight {
-  animation: gkDiveBottomRight 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: gkDiveBottomRight 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
 }
 @keyframes gkDiveBottomRight {
-  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-  12%  { transform: translate3d(-4px, -4px, 0) rotate(-3deg); }
-  40%  { transform: translate3d(32px, 0px, 0) rotate(38deg); }
-  100% { transform: translate3d(80px, 6px, 0) rotate(72deg); }
-}
-
-/* ── ARM / LEG physics during dive ── */
-.pn-goalkeeper.pn-gk-diving .pn-gk-arm-left {
-  animation: gkArmReachLeft 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.pn-goalkeeper.pn-gk-diving .pn-gk-arm-right {
-  animation: gkArmReachRight 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.pn-goalkeeper.pn-gk-diving .pn-gk-leg-left {
-  animation: gkLegSplitLeft 0.52s ease-out forwards;
-}
-.pn-goalkeeper.pn-gk-diving .pn-gk-leg-right {
-  animation: gkLegSplitRight 0.52s ease-out forwards;
-}
-@keyframes gkArmReachLeft {
-  0%   { transform: rotate(8deg) translateY(0); }
-  15%  { transform: rotate(3deg) translateY(1px); }
-  40%  { transform: rotate(-30deg) translateY(-5px); }
-  100% { transform: rotate(-65deg) translateY(-12px); }
-}
-@keyframes gkArmReachRight {
-  0%   { transform: rotate(-8deg) translateY(0); }
-  15%  { transform: rotate(-3deg) translateY(1px); }
-  40%  { transform: rotate(-30deg) translateY(-5px); }
-  100% { transform: rotate(-65deg) translateY(-12px); }
-}
-@keyframes gkLegSplitLeft {
-  0%   { transform: rotate(0deg); }
-  40%  { transform: rotate(12deg); }
-  100% { transform: rotate(24deg); }
-}
-@keyframes gkLegSplitRight {
-  0%   { transform: rotate(0deg); }
-  40%  { transform: rotate(-12deg); }
-  100% { transform: rotate(-24deg); }
+  0%   { transform: translate3d(0,0,0) rotate(0deg); }
+  12%  { transform: translate3d(-4px,-3px,0) rotate(-3deg); }
+  38%  { transform: translate3d(36px,0px,0) rotate(42deg); }
+  100% { transform: translate3d(86px,8px,0) rotate(78deg); }
 }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 480px) {
-  .pn-goalkeeper { width: 40px; height: 68px; margin-left: -20px; }
-  .pn-gk-svg { width: 40px; height: 68px; }
+  .pn-goalkeeper { width: 40px; height: 72px; margin-left: -20px; }
+  .pn-gk-svg { width: 40px; height: 72px; }
 
-  .pn-goalkeeper.pn-gk-diving.dive-topLeft    { animation: gkDiveTopLeftSm    0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .pn-goalkeeper.pn-gk-diving.dive-topCenter  { animation: gkDiveTopCenterSm  0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .pn-goalkeeper.pn-gk-diving.dive-topRight   { animation: gkDiveTopRightSm   0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .pn-goalkeeper.pn-gk-diving.dive-bottomLeft  { animation: gkDiveBottomLeftSm  0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .pn-goalkeeper.pn-gk-diving.dive-bottomCenter{ animation: gkDiveBottomCenterSm 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .pn-goalkeeper.pn-gk-diving.dive-bottomRight { animation: gkDiveBottomRightSm  0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-topLeft    { animation: gkDiveTopLeftSm    0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-topCenter  { animation: gkDiveTopCenterSm  0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-topRight   { animation: gkDiveTopRightSm   0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomLeft  { animation: gkDiveBottomLeftSm  0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomCenter{ animation: gkDiveBottomCenterSm 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .pn-goalkeeper.pn-gk-diving.dive-bottomRight { animation: gkDiveBottomRightSm  0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
   @keyframes gkDiveTopLeftSm {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    15%  { transform: translate3d(4px, 3px, 0) rotate(4deg); }
-    40%  { transform: translate3d(-20px, -8px, 0) rotate(-28deg); }
-    100% { transform: translate3d(-58px, -22px, 0) rotate(-58deg); }
+    12%  { transform: translate3d(4px, 2px, 0) rotate(5deg); }
+    38%  { transform: translate3d(-24px, -9px, 0) rotate(-30deg); }
+    100% { transform: translate3d(-64px, -26px, 0) rotate(-62deg); }
   }
   @keyframes gkDiveTopCenterSm {
     0%   { transform: translate3d(0, 0, 0) scale(1); }
-    15%  { transform: translate3d(0, 4px, 0) scale(0.97); }
-    40%  { transform: translate3d(0, -10px, 0) scale(1.02); }
-    100% { transform: translate3d(0, -28px, 0) scale(1.05); }
+    15%  { transform: translate3d(0, 3px, 0) scale(0.97); }
+    42%  { transform: translate3d(0, -12px, 0) scale(1.03); }
+    100% { transform: translate3d(0, -30px, 0) scale(1.06); }
   }
   @keyframes gkDiveTopRightSm {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    15%  { transform: translate3d(-4px, 3px, 0) rotate(-4deg); }
-    40%  { transform: translate3d(20px, -8px, 0) rotate(28deg); }
-    100% { transform: translate3d(58px, -22px, 0) rotate(58deg); }
+    12%  { transform: translate3d(-4px, 2px, 0) rotate(-5deg); }
+    38%  { transform: translate3d(24px, -9px, 0) rotate(30deg); }
+    100% { transform: translate3d(64px, -26px, 0) rotate(62deg); }
   }
   @keyframes gkDiveBottomLeftSm {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    12%  { transform: translate3d(3px, -3px, 0) rotate(3deg); }
-    40%  { transform: translate3d(-24px, 0px, 0) rotate(-38deg); }
-    100% { transform: translate3d(-58px, 4px, 0) rotate(-72deg); }
+    12%  { transform: translate3d(3px, -2px, 0) rotate(3deg); }
+    38%  { transform: translate3d(-26px, 0px, 0) rotate(-42deg); }
+    100% { transform: translate3d(-62px, 6px, 0) rotate(-78deg); }
   }
   @keyframes gkDiveBottomCenterSm {
     0%   { transform: translate3d(0, 0, 0) scaleY(1); }
-    12%  { transform: translate3d(0, -4px, 0) scaleY(1.03); }
-    40%  { transform: translate3d(0, 2px, 0) scaleY(0.96); }
-    100% { transform: translate3d(0, 6px, 0) scaleY(0.88); }
+    14%  { transform: translate3d(0, -3px, 0) scaleY(1.03); }
+    42%  { transform: translate3d(0, 2px, 0) scaleY(0.95); }
+    100% { transform: translate3d(0, 7px, 0) scaleY(0.86); }
   }
   @keyframes gkDiveBottomRightSm {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
-    12%  { transform: translate3d(-3px, -3px, 0) rotate(-3deg); }
-    40%  { transform: translate3d(24px, 0px, 0) rotate(38deg); }
-    100% { transform: translate3d(58px, 4px, 0) rotate(72deg); }
+    12%  { transform: translate3d(-3px, -2px, 0) rotate(-3deg); }
+    38%  { transform: translate3d(26px, 0px, 0) rotate(42deg); }
+    100% { transform: translate3d(62px, 6px, 0) rotate(78deg); }
   }
 }
 
@@ -609,17 +573,17 @@ if (typeof window !== "undefined") {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-function HowToPlayModal({ onClose }) {
+function HowToPlayModal({ show, onClose, isRaid }) {
+  if (!show) return null;
   return (
-    <div className="pn-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={`pn-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="pn-modal-box">
         <h2 className="pn-modal-title">⚽ How to Play</h2>
         <ul className="pn-rules-list">
-          <li><span className="pn-rule-icon">🎯</span>Pick a corner and strike the ball past the keeper</li>
-          <li><span className="pn-rule-icon">🧤</span>The keeper gets smarter — save chances rise each kick</li>
-          <li><span className="pn-rule-icon">⚽</span>Score {MAX_KICKS} goals in a row for the perfect shootout</li>
-          {!isRaid && <li><span className="pn-rule-icon">🏆</span>Every goal scored earns XP — keep them coming!</li>}
-          <li><span className="pn-rule-icon">📺</span>If the keeper saves one, watch an ad to retake the kick</li>
+          <li><strong>🎯 Aim:</strong> Pick a corner and strike the ball past the keeper</li>
+          <li><strong>🧤 Smart GK:</strong> The keeper gets smarter — save chances rise each kick</li>
+          <li><strong>⚽ Shootout:</strong> Score {MAX_KICKS} goals in a row for the perfect shootout</li>
+          <li><strong>📺 Retake:</strong> If the keeper saves one, watch an ad to retake the kick</li>
         </ul>
         {!isRaid && (
           <div className="pn-scoring-box">
@@ -633,7 +597,7 @@ function HowToPlayModal({ onClose }) {
             <div className="pn-scoring-item"><span>Saved</span><span className="pn-scoring-val">0 XP</span></div>
           </div>
         )}
-        <button className="pn-modal-btn" onClick={onClose}>🚀 Start Playing</button>
+        <button className="pn-modal-btn" onClick={onClose}>🚀 Let's Play!</button>
       </div>
     </div>
   );
@@ -654,15 +618,19 @@ function StreakDots({ history, today }) {
     else                       cls += "miss";
     const xp = entry ? (entry.xp ?? (entry.goals ? entry.goals * XP_PER_GOAL : 0)) : 0;
     dots.push(
-      <div key={key} className={cls} title={entry ? `${key} · ${xp} XP earned` : key}>
-        {entry && <span className="pn-sdot-score">{xp}</span>}
+      <div 
+        key={key} 
+        className={cls} 
+        title={entry ? `${key} · ${xp} XP earned` : key}
+      >
+        {entry && xp > 0 && <span className="pn-sdot-score">{xp}</span>}
       </div>
     );
   }
   return (
     <div>
       <div className="pn-streak-dots">{dots}</div>
-      <div className="pn-streak-legend">
+      <div className="pn-streak-legend" style={{ marginTop: '12px' }}>
         <span><span className="pn-dot-sample pn-ds-win" />Played</span>
         <span><span className="pn-dot-sample pn-ds-miss" />Missed</span>
         <span><span className="pn-dot-sample pn-ds-today" />Today</span>
@@ -829,6 +797,14 @@ export default function PenaltyNerve({ onBack }) {
           if (activeId) {
             localStorage.setItem(`raid_completed_act3_${activeId}`, 'true');
           }
+        } else {
+          const isWin = goals >= 3;
+          if (isWin) {
+            triggerWinConfetti();
+          } else {
+            triggerLossHeartbreaks();
+          }
+          autoScrollToResult('.pn-result', isRaid);
         }
         setXpAwarded(finalAwarded);
 
@@ -854,10 +830,10 @@ export default function PenaltyNerve({ onBack }) {
   const displayXP    = alreadyPlayed ? savedScore : scoreDisplay;
 
   const getResultTitle = (g) => {
-    if (g === 5) return '🎉 PERFECT SHOOTOUT!';
-    if (g >= 3)  return '🔥 GREAT SHOT POWER!';
-    if (g >= 1)  return '⚽ DECENT SHOT!';
-    return '😞 KEEPER DOMINATED';
+    if (g === 5) return 'PERFECT SHOOTOUT!';
+    if (g >= 3)  return 'GREAT SHOT POWER!';
+    if (g >= 1)  return 'DECENT SHOT!';
+    return 'KEEPER DOMINATED';
   };
   const getResultColor = (g) => {
     if (g === 5) return 'var(--accent)';
@@ -874,7 +850,7 @@ export default function PenaltyNerve({ onBack }) {
       <div className="pn-bg2" />
       <div className="pn-noise" />
 
-      {showModal && <HowToPlayModal onClose={() => setShowModal(false)} />}
+      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
 
       <nav className="pn-nav">
         {!isRaid && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}
@@ -914,7 +890,6 @@ export default function PenaltyNerve({ onBack }) {
 
         {alreadyPlayed ? (
           <div className="pn-result">
-            <div className="pn-result-badge">Game Complete</div>
             <div className="pn-result-title" style={{ color: getResultColor(displayGoals) }}>
               {getResultTitle(displayGoals)}
             </div>
@@ -922,11 +897,55 @@ export default function PenaltyNerve({ onBack }) {
             <div className="pn-result-phrase">
               {displayGoals} of {MAX_KICKS} goals scored · New penalties tomorrow
             </div>
-            <div className="pn-result-actions">
+            <div className="pn-result-actions" style={{ justifyContent: 'center', width: '100%' }}>
               {isRaid ? (
-                <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                <button
+                  className="pn-btn pn-btn-raid"
+                  onClick={async () => {
+                    const activeId = localStorage.getItem('active_game_session_id');
+                    if (activeId) {
+                      const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                      if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                        navigate('/vsfriends');
+                        return;
+                      }
+                    }
+                    navigate('/raid');
+                  }}
+                  style={{ width: '100%', maxWidth: '280px' }}
+                >
+                  Return to Lobby
+                </button>
               ) : (
-                <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+                <button 
+                  className="pn-btn" 
+                  onClick={handleBack}
+                  style={{
+                    background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+                    color: '#fff',
+                    padding: '14px 40px',
+                    borderRadius: '12px',
+                    fontWeight: '800',
+                    fontSize: '0.9rem',
+                    letterSpacing: '1px',
+                    border: 'none',
+                    boxShadow: '0 4px 18px rgba(124, 58, 237, 0.35)',
+                    transition: 'all 0.22s ease',
+                    width: '100%',
+                    maxWidth: '280px',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(124, 58, 237, 0.5)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(124, 58, 237, 0.35)';
+                  }}
+                >
+                  Home
+                </button>
               )}
             </div>
           </div>
@@ -985,34 +1004,44 @@ export default function PenaltyNerve({ onBack }) {
 
                   {/* Goalkeeper — re-keyed each kick so animations restart cleanly */}
                   <div key={gkKey} className={`pn-goalkeeper ${gkPhaseClass} ${gkDiveClass}`}>
-                    <svg viewBox="0 0 52 88" className="pn-gk-svg" xmlns="http://www.w3.org/2000/svg">
+                    <svg viewBox="0 0 52 92" className="pn-gk-svg" xmlns="http://www.w3.org/2000/svg">
                       {/* Ground shadow */}
-                      <ellipse className="pn-gk-shadow" cx="26" cy="86" rx="13" ry="2" />
+                      <ellipse className="pn-gk-shadow" cx="26" cy="90" rx="13" ry="2" />
 
-                      {/* Right arm (behind torso) */}
-                      <rect className="pn-gk-arm pn-gk-arm-right" x="37" y="28" width="8" height="20" rx="4" />
-                      <circle className="pn-gk-glove" cx="41" cy="49" r="4.5" />
+                      {/* === RIGHT ARM (behind torso) — upper arm + forearm + glove === */}
+                      <g className="pn-gk-arm pn-gk-arm-right">
+                        <rect className="pn-gk-jersey-arm" x="35" y="28" width="7" height="12" rx="3.5" />
+                        <g className="pn-gk-forearm-right">
+                          <rect className="pn-gk-skin" x="35.5" y="39" width="6" height="11" rx="3" />
+                          <circle className="pn-gk-glove" cx="38.5" cy="52" r="5" />
+                        </g>
+                      </g>
 
-                      {/* Left arm (behind torso) */}
-                      <rect className="pn-gk-arm pn-gk-arm-left" x="7" y="28" width="8" height="20" rx="4" />
-                      <circle className="pn-gk-glove" cx="11" cy="49" r="4.5" />
+                      {/* === LEFT ARM (behind torso) — upper arm + forearm + glove === */}
+                      <g className="pn-gk-arm pn-gk-arm-left">
+                        <rect className="pn-gk-jersey-arm" x="10" y="28" width="7" height="12" rx="3.5" />
+                        <g className="pn-gk-forearm-left">
+                          <rect className="pn-gk-skin" x="10.5" y="39" width="6" height="11" rx="3" />
+                          <circle className="pn-gk-glove" cx="13.5" cy="52" r="5" />
+                        </g>
+                      </g>
 
                       {/* Legs */}
-                      <rect className="pn-gk-leg pn-gk-leg-left"  x="18" y="54" width="7" height="24" rx="3" />
-                      <rect className="pn-gk-leg pn-gk-leg-right" x="27" y="54" width="7" height="24" rx="3" />
+                      <rect className="pn-gk-leg pn-gk-leg-left"  x="17" y="56" width="8" height="24" rx="4" />
+                      <rect className="pn-gk-leg pn-gk-leg-right" x="27" y="56" width="8" height="24" rx="4" />
 
                       {/* Boots */}
-                      <ellipse className="pn-gk-boot" cx="21.5" cy="80" rx="6" ry="3" />
-                      <ellipse className="pn-gk-boot" cx="30.5" cy="80" rx="6" ry="3" />
+                      <ellipse className="pn-gk-boot" cx="21" cy="82" rx="7" ry="3.5" />
+                      <ellipse className="pn-gk-boot" cx="31" cy="82" rx="7" ry="3.5" />
 
                       {/* Shorts */}
-                      <rect className="pn-gk-shorts" x="16" y="44" width="20" height="13" rx="4" />
+                      <rect className="pn-gk-shorts" x="15" y="46" width="22" height="14" rx="4" />
 
-                      {/* Jersey */}
-                      <rect className="pn-gk-jersey" x="14" y="20" width="24" height="27" rx="6" />
-                      <text className="pn-gk-number" x="26" y="37">1</text>
+                      {/* Jersey torso */}
+                      <rect className="pn-gk-jersey" x="13" y="20" width="26" height="30" rx="6" />
+                      <text className="pn-gk-number" x="26" y="38">1</text>
 
-                      {/* Neck + head */}
+                      {/* Neck + Head */}
                       <rect className="pn-gk-skin" x="23" y="13" width="6" height="8" rx="2" />
                       <circle className="pn-gk-skin" cx="26" cy="10" r="8.5" />
                       <path className="pn-gk-hair" d="M17.5 10 a8.5 8.5 0 0 1 17 0 q-1.5 -4 -4 -4.5 q-2 2 -4.5 1.2 q-2.5 -1.2 -4.5 0 q-2.5 1.2 -4 3.3 Z" />
@@ -1069,7 +1098,6 @@ export default function PenaltyNerve({ onBack }) {
 
             {phase === 'gameover' && (
               <div className="pn-result">
-                <div className="pn-result-badge">Game Complete</div>
                 <div className="pn-result-title" style={{ color: getResultColor(goals) }}>
                   {getResultTitle(goals)}
                 </div>
@@ -1106,11 +1134,55 @@ export default function PenaltyNerve({ onBack }) {
                   </div>
                 )}
 
-                 <div className="pn-result-actions">
+                 <div className="pn-result-actions" style={{ justifyContent: 'center', width: '100%' }}>
                    {isRaid ? (
-                     <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                     <button
+                       className="pn-btn pn-btn-raid"
+                       onClick={async () => {
+                         const activeId = localStorage.getItem('active_game_session_id');
+                         if (activeId) {
+                           const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                           if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                             navigate('/vsfriends');
+                             return;
+                           }
+                         }
+                         navigate('/raid');
+                       }}
+                       style={{ width: '100%', maxWidth: '280px' }}
+                     >
+                       Return to Lobby
+                     </button>
                    ) : (
-                     <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
+                     <button 
+                       className="pn-btn" 
+                       onClick={handleBack}
+                       style={{
+                         background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+                         color: '#fff',
+                         padding: '14px 40px',
+                         borderRadius: '12px',
+                         fontWeight: '800',
+                         fontSize: '0.9rem',
+                         letterSpacing: '1px',
+                         border: 'none',
+                         boxShadow: '0 4px 18px rgba(124, 58, 237, 0.35)',
+                         transition: 'all 0.22s ease',
+                         width: '100%',
+                         maxWidth: '280px',
+                         cursor: 'pointer'
+                       }}
+                       onMouseEnter={e => {
+                         e.currentTarget.style.transform = 'translateY(-2px)';
+                         e.currentTarget.style.boxShadow = '0 6px 24px rgba(124, 58, 237, 0.5)';
+                       }}
+                       onMouseLeave={e => {
+                         e.currentTarget.style.transform = 'none';
+                         e.currentTarget.style.boxShadow = '0 4px 18px rgba(124, 58, 237, 0.35)';
+                       }}
+                     >
+                       Home
+                     </button>
                    )}
                  </div>
               </div>

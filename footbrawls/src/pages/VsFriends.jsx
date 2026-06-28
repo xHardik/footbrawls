@@ -94,7 +94,7 @@ export default function VsFriends() {
 
     const code = generateInviteCode();
     const sid = `vs_${Date.now()}`;
-    const playlist = GAMES_POOL.filter(g => selectedGames.includes(g.id));
+    const playlist = selectedGames.map(id => GAMES_POOL.find(g => g.id === id));
 
     // Custom randomized seed generated on hosting to bypass daily seeds and stay unique
     const uniqueSessionSeed = String(Math.floor(100000 + Math.random() * 900000));

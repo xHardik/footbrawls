@@ -11,6 +11,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase.js';
 import { PLAYERS } from '../../lib/players.js';
 import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 const MAX_ATTEMPTS = 8;
 const SCORES = [25, 23, 21, 19, 17, 15, 13, 11];
@@ -858,6 +859,14 @@ export default function WhoAreYa() {
         if (activeId) {
           localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
         }
+      } else {
+        // Single mode animations & scroll
+        if (isWin) {
+          triggerWinConfetti();
+        } else {
+          triggerLossHeartbreaks();
+        }
+        autoScrollToResult('.wya-result-card', isRaid);
       }
       setXpAwarded(finalXP);
 

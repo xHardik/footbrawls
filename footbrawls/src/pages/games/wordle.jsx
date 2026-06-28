@@ -9,7 +9,11 @@ import { useNavigate } from "react-router-dom";
 import { getDailyPlayer, getActivePuzzleDate, getRaidSeed } from "../../lib/dailySeed.js";
 import { awardXP } from "../../lib/xpEngine.js";
 import { getUser } from "../../lib/user";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
+import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
+import { PlayerPhoto } from "../../lib/wikiAssets.jsx";
 
 // ─── XP table ────────────────────────────────────────────────────────────────
 const XP_BY_GUESS  = { 1:25, 2:23, 3:21, 4:19, 5:17, 6:15 };
@@ -585,20 +589,20 @@ function evaluateGuess(guess, target) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function HowToPlayModal({ onClose }) {
+function HowToPlayModal({ show, onClose, isRaid }) {
+  if (!show) return null;
   const scoring = [
     [1, 25], [2, 23], [3, 21], [4, 19], [5, 17], [6, 15],
   ];
   return (
-    <div className="wdl-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={`wdl-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="wdl-modal-box">
         <h2 className="wdl-modal-title">⚽ How to Play</h2>
         <ul className="wdl-rules-list">
-          <li><span className="wdl-rule-icon">🎯</span>Guess the footballer's last name in {MAX_GUESSES} attempts</li>
-          <li><span className="wdl-rule-icon">🔤</span>Each guess must match the correct number of letters</li>
-          <li><span className="wdl-rule-icon">🎨</span>After each guess, tile colors show how close you are</li>
-          {!isRaid && <li><span className="wdl-rule-icon">🏆</span>Earlier correct guesses earn more XP!</li>}
-          <li><span className="wdl-rule-icon">💡</span>Get a <strong>country hint</strong> after 3rd attempt and a <strong>position hint</strong> after 4th</li>
+          <li><strong>🎯 Goal:</strong> Guess the footballer's last name in {MAX_GUESSES} attempts</li>
+          <li><strong>🔤 Letters:</strong> Each guess must match the correct number of letters</li>
+          <li><strong>🎨 Colors:</strong> After each guess, tile colors show how close you are</li>
+          <li><strong>💡 Hints:</strong> Get a country hint after 3rd attempt and a position hint after 4th</li>
         </ul>
         <div className="wdl-color-demo">
           <div style={{textAlign:"center"}}>
@@ -626,7 +630,7 @@ function HowToPlayModal({ onClose }) {
             <div className="wdl-scoring-item"><span>Failed</span><span className="wdl-scoring-val">0 XP</span></div>
           </div>
         )}
-        <button className="wdl-modal-btn" onClick={onClose}>🚀 Start Playing</button>
+        <button className="wdl-modal-btn" onClick={onClose}>🚀 Let's Play!</button>
       </div>
     </div>
   );
@@ -736,7 +740,11 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     }
     return getDailyPlayer(players, "wordle", puzzleDate);
   }, [players, puzzleDate]);
-  const targetName = (target?.name || "").toUpperCase().replace(/\s.*/, "");
+  const targetName = useMemo(() => {
+    if (!target?.name) return "";
+    const parts = target.name.trim().split(/\s+/);
+    return parts[parts.length - 1].toUpperCase();
+  }, [target]);
 
   const navigate = useNavigate();
   const handleBack = onBack || (() => navigate('/'));
@@ -760,6 +768,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [rewardHints, setRewardHints] = useState([]);
   const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
+  const [hintsWatchedCount, setHintsWatchedCount] = useState(() => {
+    const key = `wordle_hints_watched_${puzzleDate}`;
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  });
+  const [revivalsWatchedCount, setRevivalsWatchedCount] = useState(() => {
+    const key = `wordle_revivals_watched_${puzzleDate}`;
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  });
   
   const inputRef = useRef(null);
 
@@ -807,6 +823,10 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       if (saved.hasWatchedExtraTryAd) setHasWatchedExtraTryAd(saved.hasWatchedExtraTryAd);
       if (saved.rewardHints) setRewardHints(saved.rewardHints);
     }
+    const keyHints = `wordle_hints_watched_${puzzleDate}`;
+    setHintsWatchedCount(parseInt(localStorage.getItem(keyHints) || '0', 10));
+    const keyRevivals = `wordle_revivals_watched_${puzzleDate}`;
+    setRevivalsWatchedCount(parseInt(localStorage.getItem(keyRevivals) || '0', 10));
   }, [targetName, puzzleDate]);
 
   function showMsg(text, type = "info", duration = 3000) {
@@ -856,6 +876,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         if (activeId) {
           localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
         }
+      } else {
+        // Single mode animations & scroll
+        if (won) {
+          triggerWinConfetti();
+        } else {
+          triggerLossHeartbreaks();
+        }
+        autoScrollToResult('.wdl-result', isRaid);
       }
       setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
       if (!isRaid) {
@@ -905,6 +933,10 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   }
 
   function triggerRewardedAdForHint() {
+    if (hintsWatchedCount >= 3) {
+      showMsg("Hint limit reached! You can watch a maximum of 3 hints per day.", "error");
+      return;
+    }
     setIsAdLoading(true);
     adBreak({
       type: "reward",
@@ -920,6 +952,9 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       },
       adViewed: () => {
         unlockNextPremiumHint();
+        const next = hintsWatchedCount + 1;
+        localStorage.setItem(`wordle_hints_watched_${puzzleDate}`, String(next));
+        setHintsWatchedCount(next);
       },
       adBreakDone: () => {
         setIsAdLoading(false);
@@ -928,6 +963,10 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   }
 
   function triggerRewardedAdForExtraTry() {
+    if (revivalsWatchedCount >= 1) {
+      showMsg("Revival limit reached! You can watch a maximum of 1 revival ad per day.", "error");
+      return;
+    }
     setIsAdLoading(true);
     adBreak({
       type: "reward",
@@ -947,6 +986,10 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         setGameOver(false);
         setHasWatchedExtraTryAd(true);
         showMsg("Granted 1 Extra Attempt! Keep guessing!", "success");
+
+        const next = revivalsWatchedCount + 1;
+        localStorage.setItem(`wordle_revivals_watched_${puzzleDate}`, String(next));
+        setRevivalsWatchedCount(next);
 
         // Update local storage to reflect game is active again
         localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
@@ -976,9 +1019,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       <div className="wdl-bg" />
       <div className="wdl-noise" />
 
-      {showModal && (
-        <HowToPlayModal onClose={() => { setShowModal(false); inputRef.current?.focus(); }} />
-      )}
+      <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid} />
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
@@ -1168,36 +1209,99 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         </div>
 
         {/* ── CONTROLS ── */}
-        <div className="wdl-controls">
-          {isRaid ? (
-            <button className="wdl-btn wdl-btn-raid" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
-          ) : (
-            <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
-          )}
-        </div>
+        {!gameOver && (
+          <div className="wdl-controls">
+            {isRaid ? (
+              <button 
+                className="wdl-btn wdl-btn-raid" 
+                onClick={async () => {
+                  const activeId = localStorage.getItem('active_game_session_id');
+                  if (activeId) {
+                    const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                    if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                      navigate('/vsfriends');
+                      return;
+                    }
+                  }
+                  navigate('/raid');
+                }}
+              >
+                ⚔️ Return to Lobby
+              </button>
+            ) : (
+              <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+            )}
+          </div>
+        )}
 
         {/* ── RESULT CARD ── */}
         {gameOver && (
           <div className="wdl-result">
-            <div className="wdl-result-badge">Game Complete</div>
             <div className="wdl-result-title" style={{ color: solved ? "var(--green)" : "var(--accent2)" }}>
-              {solved ? `🎉 ${targetName}!` : "😞 Game Over!"}
+              {solved ? target.name : "Game Over"}
             </div>
-            {!isRaid && <div className="wdl-result-score">{score} XP</div>}
+            
+            {target && (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+                <div style={{ borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--accent3)', width: 90, height: 90 }}>
+                  <PlayerPhoto name={target.name} size={90} />
+                </div>
+              </div>
+            )}
+
+            {!isRaid && (
+              <div 
+                className="wdl-result-score" 
+                style={{ 
+                  color: 'var(--accent)', 
+                  background: 'none', 
+                  WebkitTextFillColor: 'initial', 
+                  textShadow: '0 0 10px rgba(247,195,68,0.2)' 
+                }}
+              >
+                +{score} XP
+              </div>
+            )}
+            
             <div className="wdl-result-phrase">
               {solved
                 ? `Guessed correctly in ${guesses.length} ${guesses.length === 1 ? "try" : "tries"}!`
-                : `The answer was ${targetName}`}
+                : `The answer was ${targetName} (Last Name)`}
             </div>
-            {!isRaid && solved && xpAwarded > 0 && (
-              <div className="wdl-xp-badge">+{xpAwarded} XP earned</div>
-            )}
 
             <div className="wdl-result-actions">
               {isRaid ? (
-                <button className="wdl-btn wdl-btn-raid" onClick={() => navigate('/raid')} style={{ width: '100%' }}>⚔️ Return to Raid</button>
+                <button 
+                  className="wdl-btn wdl-btn-raid" 
+                  onClick={async () => {
+                    const activeId = localStorage.getItem('active_game_session_id');
+                    if (activeId) {
+                      const snap = await getDoc(doc(db, 'gameSessions', activeId));
+                      if (snap.exists() && snap.data().sessionType === 'vs_friends') {
+                        navigate('/vsfriends');
+                        return;
+                      }
+                    }
+                    navigate('/raid');
+                  }} 
+                  style={{ width: '100%' }}
+                >
+                  ⚔️ Return to Lobby
+                </button>
               ) : (
-                <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
+                <button 
+                  className="wdl-btn" 
+                  onClick={handleBack} 
+                  style={{ 
+                    width: '100%', 
+                    background: 'var(--accent3)', 
+                    color: '#fff', 
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)'
+                  }}
+                >
+                  ← Home
+                </button>
               )}
             </div>
           </div>

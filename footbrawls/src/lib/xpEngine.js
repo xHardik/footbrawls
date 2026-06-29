@@ -197,10 +197,10 @@ export async function awardXP(userId, source, opts = {}) {
     // ── ALL WRITES (only after all reads complete) ────────────────────────────
     let category = 'other';
     if (source && source.startsWith('raid_')) category = 'raids';
-    else if (source && source.startsWith('prediction_')) category = 'predictor';
-    else if (source === 'dailytrivia_complete') category = 'trivia';
+    else if (source && source.startsWith('prediction_')) category = 'matchpredictor';
     else if (source && (source.includes('login') || source.includes('share') || source === 'reveal_ad_watched' || source === 'chat_active')) category = 'social';
-    else category = 'games';
+    else if (source) category = source.split('_')[0].toLowerCase();
+    else category = 'other';
 
     const currentBreakdown = user.xpBreakdown || {};
     const newBreakdown = {

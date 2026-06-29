@@ -1032,17 +1032,10 @@ export default function Raid() {
             background: `linear-gradient(135deg, ${T.gold}, #e8a800)`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
-            CASTLE RAIDS
+            RAIDS
           </span>
         </button>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2,
-          color: T.gold, background: `${T.gold}15`,
-          border: `1px solid ${T.gold}45`, padding: '5px 14px', borderRadius: 100
-        }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: T.gold }} /> LIVE
-        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <button style={{
             background: 'rgba(255,255,255,0.038)', border: '1px solid rgba(255,255,255,0.13)', color: '#fff',
@@ -1574,7 +1567,7 @@ export default function Raid() {
           { id: "guild", label: "Guild", IconC: ShieldIcon, route: "/guild" },
           { id: "raids", label: "Raids", IconC: SwordsIcon, route: "/raid" },
           { id: "ranks", label: "Ranks", IconC: RankIcon,   route: "/ranks" },
-          { id: "me",    label: "Me",    IconC: PersonIcon, route: null },
+          { id: "me",    label: "Profile", IconC: PersonIcon, route: "/profile" },
         ].map(item => {
           const active = item.id === "raids";
           const NavIcon = item.IconC;

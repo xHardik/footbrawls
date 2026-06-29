@@ -207,17 +207,20 @@ function Spinner() {
 function TopNav({ guildName, flag, members, navigate }) {
   return (
     <nav className="fb-nav">
-      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-        <button onClick={() => navigate("/")} style={{ background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:22, lineHeight:1, padding:0, display:"flex", alignItems:"center" }}>
-          ‹
-        </button>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:22 }}>{flag}</span>
-          <div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.3rem", letterSpacing:2, color:"var(--text)", lineHeight:1 }}>{guildName}</div>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.55rem", color:"var(--muted2)", letterSpacing:1 }}>{members?.toLocaleString()||"—"} members</div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <button onClick={() => navigate("/")} style={{ background:"none", border:"none", color:"var(--muted)", cursor:"pointer", fontSize:22, lineHeight:1, padding:0, display:"flex", alignItems:"center" }}>
+            ‹
+          </button>
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:22 }}>{flag}</span>
+            <div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"1.3rem", letterSpacing:2, color:"var(--text)", lineHeight:1 }}>{guildName}</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.55rem", color:"var(--muted2)", letterSpacing:1 }}>{members?.toLocaleString()||"—"} members</div>
+            </div>
           </div>
         </div>
+        <img src="/logo.png" alt="Logo" style={{ height: 26, filter:"drop-shadow(0 0 8px rgba(247,195,68,0.3))" }} />
       </div>
     </nav>
   );

@@ -43,17 +43,17 @@ function buildAct1BotResult(gameId, seed, botIndex) {
 
   switch (canonicalId) {
     case 'whoAreYa':
-      return { guessNumber: Math.max(1, Math.min(8, Math.ceil(r * 8))), solved: r > 0.15 };
+      return { guessNumber: Math.max(1, Math.min(5, Math.ceil(r * 5))), solved: r > 0.05 };
     case 'wordle':
-      return { guessNumber: Math.max(1, Math.min(6, Math.ceil(r * 6))), solved: r > 0.2 };
+      return { guessNumber: Math.max(1, Math.min(4, Math.ceil(r * 4))), solved: r > 0.05 };
     case 'higherLower':
-      return { streak: Math.floor(r * 10) + 1 };
+      return { streak: Math.floor(r * 15) + 3 };
     case 'transferTrail':
-      return { stepsUsed: Math.max(1, Math.min(6, Math.ceil(r * 6))), solved: r > 0.25 };
+      return { stepsUsed: Math.max(1, Math.min(4, Math.ceil(r * 4))), solved: r > 0.05 };
     case 'matchPredictor':
-      return { xpAwarded: Math.floor(r * 100) };
+      return { xpAwarded: Math.floor(r * 60) + 40 };
     case 'penaltyNerve':
-      return { goalsScored: Math.floor(r * 6), totalKicks: 5 };
+      return { goalsScored: Math.floor(r * 3) + 3, totalKicks: 5 };
     default:
       return {};
   }
@@ -63,8 +63,8 @@ function buildAct1BotResult(gameId, seed, botIndex) {
  * Simulate bot round wins for Dribble Gauntlet (Act 2) best-of-5.
  */
 export function simulateBotAct2Scores(raidSeed = Date.now()) {
-  const buddyWins  = Math.floor(seededRandom(raidSeed, 50) * 2) + 1;
-  const rivalWins  = Math.floor(seededRandom(raidSeed, 51) * 2) + 1;
+  const buddyWins  = Math.floor(seededRandom(raidSeed, 50) * 3) + 2;
+  const rivalWins  = Math.floor(seededRandom(raidSeed, 51) * 3) + 2;
   return { buddyWins, rivalWins };
 }
 
@@ -72,8 +72,8 @@ export function simulateBotAct2Scores(raidSeed = Date.now()) {
  * Simulate bot penalty goals for Act 3 (buddy striker + rival strikers).
  */
 export function simulateBotAct3Scores(raidSeed = Date.now()) {
-  const buddyGoals = Math.floor(seededRandom(raidSeed, 60) * 4) + 1;
-  const rivalGoals = Math.floor(seededRandom(raidSeed, 61) * 4) + 1;
+  const buddyGoals = Math.floor(seededRandom(raidSeed, 60) * 4) + 2;
+  const rivalGoals = Math.floor(seededRandom(raidSeed, 61) * 4) + 2;
   return { buddyGoals, rivalGoals };
 }
 

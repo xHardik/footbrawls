@@ -661,7 +661,9 @@ export default function Raid() {
   };
 
   /* ── Finalize ── */
-  const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType) => {
+  // We only run this ONCE per user when the raid finishes.
+  const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType, scores) => {
+    if (finalizing) return;
     setFinalizing(true);
     try {
       if (currentRaidType === 'challenge') {
@@ -673,15 +675,26 @@ export default function Raid() {
         setCastleRaidEntries(nextCount);
       }
 
-      const userScore = (currentActs.act1?.playerScore || 0) +
-        ((currentActs.act2?.playerRoundWins || 0) * 20) +
-        ((currentActs.act3?.playerGoals || 0) * 20);
+      // Fix: Determine scores specifically by user.userId to avoid the "Both MVP" bug.
+      const uScores = scores?.[user.userId] || {};
+      const userScore = (uScores.act1?.normalized || 0) +
+        ((uScores.act2?.wins || 0) * 20) +
+        ((uScores.act3?.goals || 0) * 20);
 
-      const buddyScore = currentMatch?.buddy ? (
-        (currentActs.act1?.buddyScore || 0) +
-        ((currentActs.act2?.buddyRoundWins || 0) * 20) +
-        ((currentActs.act3?.buddyGoals || 0) * 20)
-      ) : 0;
+      let buddyScore = 0;
+      if (currentMatch?.buddy?.userId) {
+        if (currentMatch.isBotMatch) {
+          // Bots don't have individual score documents, they are in the acts object
+          buddyScore = (currentActs.act1?.buddyScore || 0) +
+            ((currentActs.act2?.buddyRoundWins || 0) * 20) +
+            ((currentActs.act3?.buddyGoals || 0) * 20);
+        } else {
+          const bScores = scores?.[currentMatch.buddy.userId] || {};
+          buddyScore = (bScores.act1?.normalized || 0) +
+            ((bScores.act2?.wins || 0) * 20) +
+            ((bScores.act3?.goals || 0) * 20);
+        }
+      }
 
       const isUserMvp = userScore > buddyScore;
       const isBuddyMvp = buddyScore > userScore;
@@ -754,26 +767,28 @@ export default function Raid() {
         }
         if (p1Scores.act2 && newActs.act1 && !newActs.act2) {
           const p1w = p1Scores.act2.wins || 0;
-          const bw  = isBotBuddy ? bots2.buddyWins : (p2Scores.act2?.wins || 0);
+          const is1v1 = s.raidType === 'training';
+          const bw  = isBotBuddy ? (is1v1 ? 0 : bots2.buddyWins) : (p2Scores.act2?.wins || 0);
           if (isBotBuddy || p2Scores.act2) {
             const yt = p1w + bw;
-            const rt = bots2.rivalWins;
+            const rt = is1v1 ? Math.min(3, bots2.rivalWins) : bots2.rivalWins; // Keep bot wins reasonable for 1v1
             newActs.act2 = { winner:determineActWinner(yt,rt), playerRoundWins:p1w, buddyRoundWins:bw, rivalBotWins:rt, yourTotal:yt, rivalTotal:rt };
             newWinners[1] = newActs.act2.winner; updated = true;
           }
         }
         if (p1Scores.act3 && newActs.act2 && !newActs.act3) {
           const p1g = p1Scores.act3.goals || 0;
+          const is1v1 = s.raidType === 'training';
           const duo1 = [user,buddyObj].filter(Boolean).sort((a,b)=>(b.totalXP||0)-(a.totalXP||0));
           const duo2 = [...(s.rivals||[])].sort((a,b)=>(b.totalXP||0)-(a.totalXP||0));
           const isHigher = user?.userId === duo1[0]?.userId;
           const buddy = duo1.find(p=>p.userId!==user?.userId)||buddyObj;
           const buddyOpp = isHigher ? duo2[0] : duo2[1];
           const off = Math.round(((buddy?.totalXP||0)-(buddyOpp?.totalXP||0))/2500);
-          const bg  = isBotBuddy ? Math.max(0,Math.min(5,baseBots3.buddyGoals+off)) : (p2Scores.act3?.goals||0);
+          const bg  = isBotBuddy ? (is1v1 ? 0 : Math.max(0,Math.min(5,baseBots3.buddyGoals+off))) : (p2Scores.act3?.goals||0);
           if (isBotBuddy || p2Scores.act3) {
             const yt = p1g + bg;
-            const rt = baseBots3.rivalGoals;
+            const rt = is1v1 ? Math.min(5, baseBots3.rivalGoals) : baseBots3.rivalGoals;
             newActs.act3 = { winner:determineActWinner(yt,rt), playerGoals:p1g, playerSaves:5-p1g, buddyGoals:bg, rivalBotGoals:rt, yourTotal:yt, rivalTotal:rt };
             newWinners[2] = newActs.act3.winner; updated = true;
           }
@@ -811,7 +826,7 @@ export default function Raid() {
 
         if (s.currentAct===1) {
           if (!!s.scores?.[user.userId]?.act1||l1) {
-            setPhase('act2_interstitial');
+            setPhase('waiting_teammate');
             if (isBotBuddy) {
               const finalNewActs = { ...newActs };
               if (!newActs.act1) {
@@ -829,25 +844,30 @@ export default function Raid() {
             setPhase('matched');
             timer = setTimeout(()=>navigate(gameObj.route),2200);
           }
-        } else {
-          if (s.currentAct===2 || (s.currentAct===1 && (!!s.scores?.[user.userId]?.act1||l1))) {
-            setPhase('act2_interstitial');
-            if (isBotBuddy && !l2) {
-              timer = setTimeout(()=>navigate('/games/dribble'), 1000);
-            }
-          } else if (s.currentAct===3 || (s.currentAct===2 && (!!s.scores?.[user.userId]?.act2||l2))) {
-            setPhase('act3_interstitial');
+        } else if (s.currentAct===2) {
+          if (!!s.scores?.[user.userId]?.act2||l2) {
+            setPhase('waiting_teammate');
             if (isBotBuddy && !l3) {
-              timer = setTimeout(()=>navigate('/games/penaltynerve'), 1000);
+              timer = setTimeout(()=>navigate('/games/penaltynerve'), 800);
             }
-          } else if (s.currentAct===4) {
+          } else {
+            setPhase('waiting_teammate');
+            if (!l2) timer = setTimeout(()=>navigate('/games/dribble'), 800);
+          }
+        } else if (s.currentAct===3) {
+          if (!!s.scores?.[user.userId]?.act3||l3) {
+            setPhase('waiting_teammate');
+          } else {
+            setPhase('waiting_teammate');
+            if (!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'), 800);
+          }
+        } else if (s.currentAct===4) {
             const out = computeRaidOutcome(newActs);
             setOutcome(out); setPhase('results');
-            await finalizeRaidFromState(newActs,out,currentMatch,s.raidType);
+            await finalizeRaidFromState(newActs,out,currentMatch,s.raidType, s.scores);
             await updateDoc(sessionRef,{status:'completed'});
             localStorage.removeItem('active_game_session_id');
           }
-        }
       } catch(err) {
         console.error('[Raid] snapshot error:', err);
         localStorage.removeItem('active_game_session_id');
@@ -893,10 +913,10 @@ export default function Raid() {
       const botDuo = createBotRivalDuo(user, seed);
       
       const mockMatch = {
-        buddy: botDuo.buddy,
-        rivals: botDuo.rivals,
-        yourDuo: [user, botDuo.buddy],
-        rivalDuo: botDuo.rivals,
+        buddy: null,
+        rivals: [botDuo.rivals[0]],
+        yourDuo: [user],
+        rivalDuo: [botDuo.rivals[0]],
         isBotMatch: true,
         matchedAt: seed,
         sessionId: sid,
@@ -906,10 +926,9 @@ export default function Raid() {
         await setDoc(doc(db,'gameSessions',sid), {
           sessionId:sid, sessionType:'raid', raidType:type, raidSeed:seed,
           players:[
-            { userId:user.userId, nickname:user.nickname, flag:user.flag||'', homeCountry:user.homeCountry, totalXP:user.totalXP||0 },
-            { userId:botDuo.buddy.userId, nickname:botDuo.buddy.nickname, flag:botDuo.buddy.flag||'', homeCountry:botDuo.buddy.homeCountry, totalXP:botDuo.buddy.totalXP||0, isBot:true }
+            { userId:user.userId, nickname:user.nickname, flag:user.flag||'', homeCountry:user.homeCountry, totalXP:user.totalXP||0 }
           ],
-          rivals:botDuo.rivals, act1Game:g, currentAct:1,
+          rivals: [botDuo.rivals[0]], act1Game:g, currentAct:1,
           scores:{}, acts:{}, actWinners:[], status:'active',
         });
         localStorage.setItem('active_game_session_id', sid);
@@ -993,27 +1012,46 @@ export default function Raid() {
       <DefenderFigure />
 
       {/* ── Nav ── */}
-      <nav style={css.nav}>
-        <button className="raid-btn-ghost" style={{ padding:'8px 14px', display:'flex', alignItems:'center', gap:6, fontSize:14 }} onClick={() => navigate('/')}>
-          <span style={{ fontSize:18, lineHeight:1 }}>‹</span> Back
-        </button>
-
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <div style={{
-            width:32, height:32, borderRadius:8,
-            background:`linear-gradient(135deg,${T.gold},#e8a800)`,
-            display:'flex', alignItems:'center', justifyContent:'center',
-            boxShadow:`0 0 12px ${T.goldGlow}`,
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 200,
+        display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
+        padding: '0 24px', height: 58,
+        background: 'rgba(5,7,15,0.85)', backdropFilter: 'blur(24px) saturate(1.4)',
+        borderBottom: `1px solid ${T.gold}25`,
+        boxShadow: `0 4px 20px ${T.gold}15`
+      }}>
+        <button onClick={() => navigate('/')} style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          border: 'none', cursor: 'pointer', outline: 'none', backgroundColor: 'transparent',
+          justifySelf: 'start'
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px ${T.goldGlow})` }} />
+          <span style={{
+            fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
+            background: `linear-gradient(135deg, ${T.gold}, #e8a800)`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           }}>
-            <SwordsIcon size={16} color="#111" />
-          </div>
-          <span style={css.logo}>RAID</span>
-        </div>
-
-        <button className="raid-btn-ghost" style={{ padding:'8px 12px', display:'flex', alignItems:'center', gap:6, fontSize:14 }} onClick={() => navigate('/guild')}>
-          <ShieldIcon size={16} color={T.gold} />
-          <span style={{ color:T.gold, fontSize:13, fontFamily:"'Orbitron',sans-serif", fontWeight:600 }}>Guild</span>
+            CASTLE RAIDS
+          </span>
         </button>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2,
+          color: T.gold, background: `${T.gold}15`,
+          border: `1px solid ${T.gold}45`, padding: '5px 14px', borderRadius: 100
+        }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: T.gold }} /> LIVE
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <button style={{
+            background: 'rgba(255,255,255,0.038)', border: '1px solid rgba(255,255,255,0.13)', color: '#fff',
+            padding: '7px 14px', borderRadius: 10, fontSize: '.78rem', fontWeight: 700,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            transition: 'all 0.2s'
+          }} onClick={() => { setToast("Help guide coming soon!"); setTimeout(() => setToast(""), 2000); }}>
+            <span style={{ fontSize: '1rem' }}>?</span> Help
+          </button>
+        </div>
       </nav>
 
       <main style={css.main}>
@@ -1172,16 +1210,16 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ WAITING ACT1 ═══════════════════════════════════════════════ */}
-        {phase === 'waiting_act1' && (
+        {/* ═══ WAITING TEAMMATE ═══════════════════════════════════════════ */}
+        {phase === 'waiting_teammate' && (
           <Section>
             <div style={{ textAlign:'center', padding:'60px 0' }}>
               <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-float 2s ease-in-out infinite' }}>
                 <HourglassIcon size={52} color={T.gold} />
               </div>
-              <h2 style={css.searchTitle}>Act 1 Complete!</h2>
+              <h2 style={css.searchTitle}>Stage Complete!</h2>
               <p style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif", marginTop:8 }}>
-                Waiting for your buddy to submit their score…
+                Waiting for your teammate to finish…
               </p>
               <div style={{ marginTop:28, display:'flex', justifyContent:'center' }}>
                 <Spinner size={36} />
@@ -1202,7 +1240,7 @@ export default function Raid() {
               {/* Duo */}
               <div className="raid-card" style={{ padding:16 }}>
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2, color:T.green, marginBottom:12, textTransform:'uppercase' }}>
-                  Your Duo
+                  {raidType === 'training' ? 'You' : 'Your Duo'}
                 </div>
                 {[user, match.buddy].filter(Boolean).map(p => (
                   <div key={p.userId} className="raid-player-row" style={{ marginBottom:6 }}>
@@ -1269,9 +1307,9 @@ export default function Raid() {
                 rivalTotal:acts.act1?.rivalTotal,
                 yourRows:[
                   { name:`You (${user.nickname})`, score:acts.act1?.playerScore },
-                  { name:match.buddy?.nickname || 'Buddy', score:acts.act1?.buddyScore },
+                  ...(raidType !== 'training' ? [{ name:match.buddy?.nickname || 'Buddy', score:acts.act1?.buddyScore }] : []),
                 ],
-                rivalNote:`Combined score of ${match.rivals?.[0]?.nickname||'Rival 1'} & ${match.rivals?.[1]?.nickname||'Rival 2'}`,
+                rivalNote: raidType === 'training' ? `Score of ${match.rivals?.[0]?.nickname||'Rival'}` : `Combined score of ${match.rivals?.[0]?.nickname||'Rival 1'} & ${match.rivals?.[1]?.nickname||'Rival 2'}`,
               }}
               isFinished={hasFinishedAct2}
               isBotMatch={match.isBotMatch}
@@ -1300,9 +1338,9 @@ export default function Raid() {
                 rivalTotal:(acts.act2?.rivalTotal||0)*20,
                 yourRows:[
                   { name:`You (${user.nickname})`, score:(acts.act2?.playerRoundWins||0)*20 },
-                  { name:match.buddy?.nickname || 'Buddy', score:(acts.act2?.buddyRoundWins||0)*20 },
+                  ...(raidType !== 'training' ? [{ name:match.buddy?.nickname || 'Buddy', score:(acts.act2?.buddyRoundWins||0)*20 }] : []),
                 ],
-                rivalNote:'Defenders bypassed by your opponents',
+                rivalNote: raidType === 'training' ? 'Defenders bypassed by opponent' : 'Defenders bypassed by your opponents',
               }}
               isFinished={hasFinishedAct3}
               isBotMatch={match.isBotMatch}
@@ -1479,15 +1517,17 @@ export default function Raid() {
                     </div>
 
                     {/* Teammate XP row */}
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
-                      <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
-                        🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})
-                      </span>
-                      <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
-                        +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
-                        {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
-                      </span>
-                    </div>
+                    {!isTraining && match?.buddy && (
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
+                        <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
+                          🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})
+                        </span>
+                        <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
+                          +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
+                          {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

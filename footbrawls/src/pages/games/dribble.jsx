@@ -1103,6 +1103,15 @@ const CSS = `
 }
 .db-duo-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; margin-bottom: 18px; }
 .db-duo-box { background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; transition: border-color 0.3s; }
+.db-sum-xp-lbl { font-size: 0.6rem; color: rgba(240,240,240,0.5); text-transform: uppercase; margin-top: -2px; }
+
+@media (max-width: 600px) {
+  .db-container { padding: 12px 6px 80px; }
+  .db-game-box { padding: 12px 8px; border-radius: 12px; }
+  .db-canvas-wrapper { margin-bottom: 12px; border-radius: 8px; }
+  .db-nav { padding: 0 16px; }
+}
+
 .db-duo-lbl { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
 .db-duo-score { font-size: 1.8rem; font-weight: 800; font-family: 'Bebas Neue', sans-serif; }
 .db-duo-vs { font-size: 0.75rem; color: var(--muted); text-align: center; }

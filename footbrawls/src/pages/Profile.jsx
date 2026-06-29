@@ -244,7 +244,8 @@ export default function Profile() {
       
       <div style={{ position: "relative", zIndex: 1 }}>
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 28 }}>
+      <div style={{ textAlign: "center", marginBottom: 28, position: "relative" }}>
+        <img src="/logo.png" alt="Logo" style={{ position: "absolute", top: 0, right: 0, height: 28, filter:`drop-shadow(0 0 8px ${C.gold}40)` }} />
         <h1 style={{
           fontFamily:    "'Bebas Neue', sans-serif",
           fontSize:      "3rem",
@@ -259,6 +260,14 @@ export default function Profile() {
         </p>
       </div>
 
+      <style>{`
+        @media (max-width: 768px) {
+          .profile-grid {
+            grid-template-columns: 1fr !important;
+            padding: 0 4px !important;
+          }
+        }
+      `}</style>
       <div style={{
         display:             "grid",
         gridTemplateColumns: "1fr 1.2fr",

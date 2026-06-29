@@ -951,7 +951,7 @@ export default function WhoAreYa() {
 
         {/* NAV */}
         <nav className="wya-nav">
-          {!isRaid && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}
+          <div style={{display:'flex', alignItems:'center', gap:8}}><img src="/logo.png" alt="Logo" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />{!isRaid && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}</div>
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />
             Who Are Ya?

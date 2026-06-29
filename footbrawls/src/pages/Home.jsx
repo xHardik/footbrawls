@@ -458,14 +458,17 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
 
       {/* Logo */}
       <div onClick={() => navigate("/")} style={{
-        fontFamily:"'Bebas Neue',sans-serif",
-        fontSize:"1.65rem", letterSpacing:4,
-        background:`linear-gradient(110deg, #ffe680, ${C.gold} 40%, #ffaa00 65%, ${C.gold})`,
-        WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
+        display: "flex", alignItems: "center", gap: 8,
         cursor:"pointer", flexShrink:0,
-        filter:`drop-shadow(0 0 14px ${C.goldGlow})`,
       }}>
-        FOOTBRAWLS
+        <img src="/logo.png" alt="Logo" style={{ height: 32, filter:`drop-shadow(0 0 8px ${C.goldGlow})` }} />
+        <span style={{
+          fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"1.65rem", letterSpacing:4,
+          background:`linear-gradient(110deg, #ffe680, ${C.gold} 40%, #ffaa00 65%, ${C.gold})`,
+          WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text",
+          filter:`drop-shadow(0 0 14px ${C.goldGlow})`,
+        }}>FOOTBRAWLS</span>
       </div>
 
       {/* Right side */}

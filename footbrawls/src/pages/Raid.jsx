@@ -684,6 +684,7 @@ export default function Raid() {
       ) : 0;
 
       const isUserMvp = userScore > buddyScore;
+      const isBuddyMvp = buddyScore > userScore;
 
       const perf = {
         [user.userId]: userScore,
@@ -698,7 +699,7 @@ export default function Raid() {
         rivalGuildCode: currentMatch?.rivals?.[0]?.homeCountry,
         playerPerformance: perf,
       });
-      setFinalizeResult(res);
+      setFinalizeResult({ ...res, isBuddyMvp });
     } catch (err) { console.error('[Raid] finalize:', err); }
     finally { setFinalizing(false); }
   }, [user]);
@@ -810,8 +811,8 @@ export default function Raid() {
 
         if (s.currentAct===1) {
           if (!!s.scores?.[user.userId]?.act1||l1) {
+            setPhase('act2_interstitial');
             if (isBotBuddy) {
-              setPhase('act2_interstitial');
               const finalNewActs = { ...newActs };
               if (!newActs.act1) {
                 const p1v = p1Scores.act1?.normalized || 0;
@@ -822,8 +823,6 @@ export default function Raid() {
                 newWinners[0] = finalNewActs.act1.winner;
               }
               await updateDoc(sessionRef, { acts: finalNewActs, actWinners: newWinners, currentAct: 2 });
-            } else {
-              setPhase('waiting_act1');
             }
           }
           else {
@@ -831,23 +830,15 @@ export default function Raid() {
             timer = setTimeout(()=>navigate(gameObj.route),2200);
           }
         } else {
-          if (s.currentAct===2) {
+          if (s.currentAct===2 || (s.currentAct===1 && (!!s.scores?.[user.userId]?.act1||l1))) {
             setPhase('act2_interstitial');
-            if (isBotBuddy) {
-              if (!y2) await updateDoc(sessionRef,{[`readyAct2.${user.userId}`]:true});
-              if (!l2) timer = setTimeout(()=>navigate('/games/dribble'), 1000);
-            } else {
-              if (!y2) updateDoc(sessionRef,{[`readyAct2.${user.userId}`]:true});
-              if (y2&&b2&&!l2) timer = setTimeout(()=>navigate('/games/dribble'),2200);
+            if (isBotBuddy && !l2) {
+              timer = setTimeout(()=>navigate('/games/dribble'), 1000);
             }
-          } else if (s.currentAct===3) {
+          } else if (s.currentAct===3 || (s.currentAct===2 && (!!s.scores?.[user.userId]?.act2||l2))) {
             setPhase('act3_interstitial');
-            if (isBotBuddy) {
-              if (!y3) await updateDoc(sessionRef,{[`readyAct3.${user.userId}`]:true});
-              if (!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'), 1000);
-            } else {
-              if (!y3) updateDoc(sessionRef,{[`readyAct3.${user.userId}`]:true});
-              if (y3&&b3&&!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'),2200);
+            if (isBotBuddy && !l3) {
+              timer = setTimeout(()=>navigate('/games/penaltynerve'), 1000);
             }
           } else if (s.currentAct===4) {
             const out = computeRaidOutcome(newActs);
@@ -1374,6 +1365,28 @@ export default function Raid() {
               ))}
             </div>
 
+            {/* Total Points Display */}
+            <div style={{
+              position:'relative', zIndex:2,
+              background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`,
+              borderRadius:14, padding:'14px 20px', marginBottom:16,
+              display:'flex', justifyContent:'space-around', alignItems:'center'
+            }}>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.gold, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Your Team</div>
+                <div style={{ fontSize:22, fontWeight:800, color:T.gold, fontFamily:"'Orbitron',sans-serif" }}>
+                  {(acts.act1?.yourTotal || 0) + (acts.act2?.yourTotal || 0) + (acts.act3?.yourTotal || 0)}
+                </div>
+              </div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:T.muted2, fontWeight:700 }}>VS</div>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.red, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Rivals</div>
+                <div style={{ fontSize:22, fontWeight:800, color:T.red, fontFamily:"'Orbitron',sans-serif" }}>
+                  {(acts.act1?.rivalTotal || 0) + (acts.act2?.rivalTotal || 0) + (acts.act3?.rivalTotal || 0)}
+                </div>
+              </div>
+            </div>
+
             {/* Standings */}
             <div className="raid-card" style={{ padding:'16px 18px', marginBottom:16, position:'relative', zIndex:2 }}>
               <div style={{
@@ -1422,10 +1435,10 @@ export default function Raid() {
             </div>
 
             {/* Castle damage */}
-            {outcome==='win' && !isTraining && (
+            {outcome==='win' && !isTraining && raidType==='challenge' && (
               <div style={{ position:'relative', zIndex:2 }}>
                 <CastleDamageVisual
-                  damagePct={RAID_TYPES[raidType]?.castleDamagePct || 0.20}
+                  damagePct={RAID_TYPES[raidType]?.castleDamagePct ?? 0.02}
                   rivalName={match?.rivals?.[0]?.homeCountry}
                 />
               </div>
@@ -1471,8 +1484,8 @@ export default function Raid() {
                         🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})
                       </span>
                       <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
-                        +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + ((!match?.isBotMatch && !finalizeResult?.xpResults?.mvp) ? 50 : 0)} XP
-                        {(!match?.isBotMatch && !finalizeResult?.xpResults?.mvp) && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                        +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
+                        {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
                       </span>
                     </div>
                   </div>

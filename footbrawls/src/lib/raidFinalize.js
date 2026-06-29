@@ -67,7 +67,7 @@ async function performClientFinalizeFallback(payload) {
       }
     }
 
-    batch.update(attackerRef, attackerUpdate);
+    batch.set(attackerRef, attackerUpdate, { merge: true });
 
     // Defender Guild Update
     let damageDealt = 0;
@@ -100,7 +100,7 @@ async function performClientFinalizeFallback(payload) {
             wins: (dWar.wins || 0) + 1
           };
         }
-        batch.update(defenderRef, dUpdate);
+        batch.set(defenderRef, dUpdate, { merge: true });
       }
     }
 
@@ -117,7 +117,7 @@ async function performClientFinalizeFallback(payload) {
           achievements.guildWarlord = true;
         }
 
-        batch.update(userRef, { stats, achievements });
+        batch.set(userRef, { stats, achievements }, { merge: true });
 
         // sync to localStorage
         try {

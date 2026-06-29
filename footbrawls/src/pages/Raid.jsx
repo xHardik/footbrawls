@@ -641,6 +641,7 @@ export default function Raid() {
   const [readyAct2, setReadyAct2]             = useState({});
   const [readyAct3, setReadyAct3]             = useState({});
   const [toast, setToast]                     = useState("");
+  const [showHelp, setShowHelp]               = useState(false);
   const [castleRaidEntries, setCastleRaidEntries] = useState(() => {
     const today = new Date().toISOString().split('T')[0];
     return parseInt(localStorage.getItem(`castle_raid_entries_${today}`) || '0', 10);
@@ -1048,7 +1049,7 @@ export default function Raid() {
             padding: '7px 14px', borderRadius: 10, fontSize: '.78rem', fontWeight: 700,
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
             transition: 'all 0.2s'
-          }} onClick={() => { setToast("Help guide coming soon!"); setTimeout(() => setToast(""), 2000); }}>
+          }} onClick={() => setShowHelp(true)}>
             <span style={{ fontSize: '1rem' }}>?</span> Help
           </button>
         </div>
@@ -1597,6 +1598,8 @@ export default function Raid() {
           {toast}
         </div>
       )}
+
+      <HelpModal show={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }
@@ -1760,3 +1763,96 @@ const css = {
     letterSpacing:2, margin:'0 0 8px', color:T.text,
   },
 };
+
+/* ─── Help Modal ─────────────────────────────────────────────────────────── */
+function HelpModal({ show, onClose }) {
+  if (!show) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(5,7,15,0.85)', backdropFilter: 'blur(12px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px 16px'
+    }}>
+      <div style={{
+        background: '#0c0f1a', border: `1px solid ${T.gold}40`,
+        borderRadius: 20, width: '100%', maxWidth: 500,
+        maxHeight: '85vh', overflowY: 'auto',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        animation: 'fadeUp 0.3s ease-out',
+        position: 'relative', padding: 24,
+      }} className="help-modal-content">
+        <button onClick={onClose} style={{
+          position: 'absolute', top: 16, right: 16, background: 'rgba(255,255,255,0.1)',
+          border: 'none', borderRadius: '50%', width: 32, height: 32,
+          color: '#fff', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>✕</button>
+
+        <h2 style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 24, color: T.gold, marginBottom: 20, textAlign: 'center' }}>
+          Guild Raids Intel
+        </h2>
+
+        {/* Raid Types */}
+        <section style={{ marginBottom: 24 }}>
+          <h3 style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 16, color: T.text, marginBottom: 12, borderBottom: `1px solid ${T.border2}`, paddingBottom: 6 }}>
+            1. Raid Types
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12, border: `1px solid ${T.border2}` }}>
+              <strong style={{ color: T.text, display: 'block', marginBottom: 4 }}>Training Raids (Practice)</strong>
+              <span style={{ fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+                Practice mode with bots. No stakes, no XP, and no entries consumed. Perfect for mastering the mini-games and testing strategies.
+              </span>
+            </div>
+            <div style={{ background: 'rgba(79,142,247,0.05)', padding: 12, borderRadius: 12, border: `1px solid rgba(79,142,247,0.3)` }}>
+              <strong style={{ color: T.blue, display: 'block', marginBottom: 4 }}>Normal Raids (Free)</strong>
+              <span style={{ fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+                Raid lower tier castles for basic resources. Unlimited entries, great for warming up and grinding base XP for your guild.
+              </span>
+            </div>
+            <div style={{ background: 'rgba(247,195,68,0.05)', padding: 12, borderRadius: 12, border: `1px solid ${T.gold}40` }}>
+              <strong style={{ color: T.gold, display: 'block', marginBottom: 4 }}>Challenge Raids (Costly)</strong>
+              <span style={{ fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+                Costs 1 Entry (max 3/day). Target high-tier enemy castles for massive XP multipliers. Requires strategic plays and perfect communication.
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* MVP Crown (below raid types) */}
+        <section style={{ marginBottom: 24, textAlign: 'center' }}>
+          <div style={{ display: 'inline-block', background: 'rgba(247,195,68,0.1)', border: `1px solid ${T.gold}`, borderRadius: 16, padding: '12px 20px' }}>
+            <div style={{ fontSize: 24, marginBottom: 4 }}>👑</div>
+            <strong style={{ color: T.gold, fontSize: 14 }}>MVP Title</strong>
+            <div style={{ fontSize: 12, color: T.muted, marginTop: 4 }}>
+              Outscore your buddy to claim the MVP crown and earn bonus standing!
+            </div>
+          </div>
+        </section>
+
+        {/* How to Raid */}
+        <section style={{ marginBottom: 24 }}>
+          <h3 style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 16, color: T.text, marginBottom: 12, borderBottom: `1px solid ${T.border2}`, paddingBottom: 6 }}>
+            2. How To Raid
+          </h3>
+          <ul style={{ paddingLeft: 20, margin: 0, fontSize: 13, color: T.muted, lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <li><strong>Act 1 (Mini-Game):</strong> Compete in a quick reflex challenge. Your combined score determines base damage.</li>
+            <li><strong>Act 2 (Matchups):</strong> Face defenders in a 1v1 duel. Pick the correct stat advantage to break their guard.</li>
+            <li><strong>Act 3 (Siege):</strong> The final push! Complete the puzzle or timing challenge to unleash your ultimate combo on the castle.</li>
+            <li><strong>Synergy:</strong> If you and your buddy perfectly sync during Acts, you'll trigger a damage multiplier!</li>
+          </ul>
+        </section>
+        
+        <button className="raid-btn-primary" style={{ width: '100%', padding: 14 }} onClick={onClose}>
+          Understood, Commander
+        </button>
+      </div>
+
+      <style>{`
+        .help-modal-content::-webkit-scrollbar { width: 6px; }
+        .help-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .help-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 8px; }
+      `}</style>
+    </div>
+  );
+}

@@ -662,7 +662,6 @@ export default function Ranks() {
 
       {/* ── Header ── */}
       <div style={{ textAlign: "center", marginBottom: 32, position: "relative" }}>
-        <img src="/logo.png" alt="Logo" style={{ position: "absolute", top: 0, right: 0, height: 28, filter:`drop-shadow(0 0 8px ${C.accent}40)` }} />
         <div style={{
           fontFamily: "'Space Mono', monospace",
           fontSize: "0.6rem",

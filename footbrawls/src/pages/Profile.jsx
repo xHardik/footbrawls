@@ -44,6 +44,19 @@ const KIT_COLORS = {
 /* ─────────────────────────────────────────────────────────────
    HOLOGRAPHIC PLAYER CARD
 ───────────────────────────────────────────────────────────── */
+function getIsoCodeFromFlag(flag) {
+  if (!flag) return "fr";
+  const points = [...flag].map(c => c.codePointAt(0));
+  if (points[0] === 0x1f3f4) {
+    const str = points.slice(1, -1).map(p => String.fromCharCode(p - 0xe0000)).join('');
+    if (str === 'gbeng') return 'gb-eng';
+    if (str === 'gbsct') return 'gb-sct';
+    if (str === 'gbwls') return 'gb-wls';
+    return str;
+  }
+  return points.map(p => String.fromCharCode(p - 127397)).join('').toLowerCase();
+}
+
 function PlayerCard({ kit, user, tier }) {
   const cardRef = useRef(null);
   
@@ -66,6 +79,24 @@ function PlayerCard({ kit, user, tier }) {
   };
 
   const ovr = Math.floor((user?.totalXP || 0) / 100) + 50;
+  const isoCode = getIsoCodeFromFlag(kit.flag);
+  const flagUrl = `https://flagcdn.com/w320/${isoCode}.png`;
+  
+  const ub = user?.xpBreakdown || {};
+  const calcStat = (xp, max) => Math.min(99, 50 + Math.floor(Math.sqrt(xp) * (49 / Math.sqrt(max))));
+  const pac = calcStat(ub.games || 0, 10000);
+  const sho = calcStat(ub.raids || 0, 20000);
+  const pas = calcStat(ub.social || 0, 5000);
+  const dri = calcStat(ub.predictor || 0, 15000);
+  const def = calcStat(ub.trivia || 0, 10000);
+  const phy = calcStat(user?.totalXP || 0, 50000);
+
+  const StatItem = ({ label, val }) => (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <div style={{ fontSize: 18, fontFamily: "'Orbitron', sans-serif", color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{val}</div>
+      <div style={{ fontSize: 12, fontFamily: "'Space Mono', monospace", color: 'rgba(255,255,255,0.7)' }}>{label}</div>
+    </div>
+  );
   
   return (
     <div
@@ -75,37 +106,54 @@ function PlayerCard({ kit, user, tier }) {
       style={{
         width: 260,
         height: 380,
-        borderRadius: 20,
-        background: `linear-gradient(135deg, ${kit.shirtDark} 0%, ${kit.shirt} 100%)`,
-        border: `2px solid ${kit.shirtDark}`,
-        boxShadow: `0 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.2)`,
         transition: 'transform 0.15s ease-out',
         position: 'relative',
-        overflow: 'hidden',
+        cursor: 'pointer',
+        filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))'
+      }}
+    >
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        background: '#0a0d14',
+        clipPath: 'polygon(10% 0, 90% 0, 100% 7%, 100% 92%, 50% 100%, 0 92%, 0 7%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: 20,
-        cursor: 'pointer',
-      }}
-    >
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%)', pointerEvents: 'none' }} />
-      <div style={{ fontSize: 48, marginBottom: 12, marginTop: 10 }}>{kit.flag}</div>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: 2, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-        {user?.nickname || "GUEST"}
-      </div>
-      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 14, color: '#fff', opacity: 0.9, marginBottom: 24 }}>
-        {kit.name} KIT
-      </div>
-      <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: '12px 24px', width: '100%', display: 'flex', justifyContent: 'space-between', boxSizing: 'border-box' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>OVR</div>
-          <div style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", color: tier.color }}>{ovr > 99 ? 99 : ovr}</div>
+        padding: '24px 20px',
+      }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url(${flagUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.65, zIndex: 0 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(10,13,20,0.1) 0%, rgba(10,13,20,0.95) 100%)', zIndex: 0 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%)', pointerEvents: 'none', zIndex: 1 }} />
+        
+        {/* Top section: OVR and POS */}
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', zIndex: 2, padding: '0 10px', marginTop: 10 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 32, fontFamily: "'Orbitron', sans-serif", color: tier.color, textShadow: '0 2px 4px rgba(0,0,0,0.8)', lineHeight: 1 }}>{ovr > 99 ? 99 : ovr}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>ST</div>
+          </div>
+          <div style={{ flex: 1 }} />
         </div>
-        <div style={{ width: 1, background: 'rgba(255,255,255,0.2)' }} />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: "'Space Mono', monospace" }}>POS</div>
-          <div style={{ fontSize: 28, fontFamily: "'Bebas Neue', sans-serif", color: '#fff' }}>ST</div>
+
+        <div style={{ flex: 1 }} />
+        
+        <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, letterSpacing: 2, color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.8)', zIndex: 2, marginBottom: 4 }}>
+          {user?.nickname || "GUEST"}
+        </div>
+        <div style={{ width: '80%', height: 1, background: 'rgba(255,255,255,0.2)', margin: '4px 0 12px 0', zIndex: 2 }} />
+        
+        {/* FIFA Stats Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px', zIndex: 2, width: '100%', padding: '0 10px' }}>
+          <StatItem label="PAC" val={pac} />
+          <StatItem label="DRI" val={dri} />
+          <StatItem label="SHO" val={sho} />
+          <StatItem label="DEF" val={def} />
+          <StatItem label="PAS" val={pas} />
+          <StatItem label="PHY" val={phy} />
+        </div>
+
+        <div style={{ width: '80%', height: 1, background: 'rgba(255,255,255,0.2)', margin: '12px 0 8px 0', zIndex: 2 }} />
+        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.6)', zIndex: 2, textTransform: 'uppercase' }}>
+          {kit.name}
         </div>
       </div>
     </div>
@@ -182,8 +230,12 @@ export default function Profile() {
   const user = getUser();
 
   const countryCode = user?.homeCountry || "FR";
-  const kit = KIT_COLORS[countryCode] || KIT_COLORS.FR;
-  const countryObj = COUNTRIES.find(c => c.code === countryCode);
+  const countryObj = COUNTRIES.find(c => c.code === countryCode) || { name: "FRANCE", flag: "🇫🇷" };
+  const kit = KIT_COLORS[countryCode] || { 
+    ...KIT_COLORS.FR, 
+    flag: countryObj.flag, 
+    name: countryObj.name.toUpperCase() 
+  };
   const currentTier = getTier(user?.totalXP || 0);
 
   const userStats = user?.stats || {};
@@ -204,7 +256,7 @@ export default function Profile() {
 
   const achievements = [
     { id: "strikerHero",      title: "Striker Hero",      desc: "Accumulate 1,000 XP within a single 24-hour period",  unlocked: !!userAchievements.strikerHero,      IconC: icons.Fire },
-    { id: "dedicatedAthlete", title: "Dedicated Athlete", desc: "Play all 9 daily games for 15 consecutive days",      unlocked: !!userAchievements.dedicatedAthlete, IconC: icons.Shield },
+    { id: "dedicatedAthlete", title: "Dedicated Player", desc: "Play all 9 daily games for 15 consecutive days",      unlocked: !!userAchievements.dedicatedAthlete, IconC: icons.Shield },
     { id: "oracle",           title: "Oracle",            desc: "Maintain a flawless 5-match prediction streak",       unlocked: !!userAchievements.oracle,           IconC: icons.Target },
     { id: "triviaGod",        title: "Trivia God",        desc: "Answer 100 Trivia questions correctly overall",       unlocked: !!userAchievements.triviaGod,        IconC: icons.Brain },
     { id: "consulMvp",        title: "Consul MVP",        desc: "Achieve Raid MVP 50 times in a single season",        unlocked: !!userAchievements.consulMvp,        IconC: icons.Crown },
@@ -226,6 +278,16 @@ export default function Profile() {
     return { ...item, xp, percent };
   }).sort((a, b) => b.xp - a.xp); // Sort by highest XP first
 
+  let currentPct = 0;
+  const conicStops = statsBreakdown.map(stat => {
+    if (stat.percent === 0) return null;
+    const start = currentPct;
+    currentPct += stat.percent;
+    return `${stat.color} ${start}% ${currentPct}%`;
+  }).filter(Boolean).join(", ");
+  
+  const hasData = currentPct > 0;
+
   return (
     <div style={{
       fontFamily:   "'Syne', sans-serif",
@@ -235,7 +297,7 @@ export default function Profile() {
       backgroundAttachment: "fixed",
       color:        C.text,
       minHeight:    "100vh",
-      padding:      "24px max(12px, 4vw) 100px",
+      padding:      "80px max(12px, 4vw) 100px",
       boxSizing:    "border-box",
       position:     "relative",
     }}>
@@ -245,18 +307,17 @@ export default function Profile() {
       <div style={{ position: "relative", zIndex: 1 }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 28, position: "relative" }}>
-        <img src="/logo.png" alt="Logo" style={{ position: "absolute", top: 0, right: 0, height: 28, filter:`drop-shadow(0 0 8px ${C.gold}40)` }} />
         <h1 style={{
-          fontFamily:    "'Bebas Neue', sans-serif",
+          fontFamily:    "'Orbitron', sans-serif",
           fontSize:      "3rem",
           letterSpacing: "3px",
           color:         C.gold,
           margin:        0,
         }}>
-          👤 ATHLETE DOSSIER
+          👤 PLAYER PROFILE
         </h1>
         <p style={{ fontSize: "0.85rem", color: C.muted, marginTop: 4 }}>
-          Inspect your athlete career standings, custom national kit, and unlocked accolades
+          Inspect your football career standings, custom national kit, and unlocked accolades
         </p>
       </div>
 
@@ -293,12 +354,12 @@ export default function Profile() {
           overflow:     "hidden",
         }}>
           <div style={{
-            fontFamily:    "'Space Mono', monospace",
-            fontSize:      10,
+            fontFamily:    "'Orbitron', sans-serif",
+            fontSize:      "1.4rem",
             color:         C.gold,
-            textTransform: "uppercase",
             letterSpacing: 2,
-            marginBottom:  16,
+            marginBottom:  32,
+            textShadow:    `0 2px 8px ${C.goldGlow}`
           }}>
             HOLOGRAPHIC PLAYER CARD
           </div>
@@ -318,26 +379,32 @@ export default function Profile() {
             }}>
               📊 Career XP Breakdown
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {statsBreakdown.map((stat, idx) => (
-                <div key={idx}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#ffffff", fontWeight: 500, marginBottom: 4 }}>
-                    <span>{stat.label}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+              {/* Pie Chart */}
+              <div style={{
+                width: 120, height: 120,
+                borderRadius: "50%",
+                background: hasData ? `conic-gradient(${conicStops})` : "rgba(255,255,255,0.1)",
+                boxShadow: "0 0 16px rgba(0,0,0,0.5)",
+                flexShrink: 0,
+                border: "4px solid rgba(0,0,0,0.2)"
+              }} />
+              
+              {/* Legend */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
+                {statsBreakdown.filter(s => s.xp > 0).map((stat, idx) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "#ffffff", fontWeight: 500 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: stat.color, boxShadow: `0 0 6px ${stat.color}88` }} />
+                      <span>{stat.label}</span>
+                    </div>
                     <strong style={{ color: "#ffffff" }}>{stat.xp} XP</strong>
                   </div>
-                  {/* Progress Bar Background */}
-                  <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.15)", borderRadius: 4, overflow: "hidden" }}>
-                    {/* Progress Fill */}
-                    <div style={{
-                      width: `${stat.percent}%`,
-                      height: "100%",
-                      background: stat.color,
-                      borderRadius: 4,
-                      boxShadow: `0 0 8px ${stat.color}88`
-                    }} />
-                  </div>
-                </div>
-              ))}
+                ))}
+                {!hasData && (
+                  <div style={{ fontSize: 12, color: C.muted }}>No XP earned yet.</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -354,7 +421,7 @@ export default function Profile() {
             padding:      20,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-              <h3 style={{ margin: 0, fontFamily: "'Bebas Neue', sans-serif", fontSize: "1.6rem", letterSpacing: 1.5, color: C.text }}>
+              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: "1.6rem", letterSpacing: 1.5, color: C.text }}>
                 {user?.nickname || "Guest Challenger"}
               </h3>
               <span style={{

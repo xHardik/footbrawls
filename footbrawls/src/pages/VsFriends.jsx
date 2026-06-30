@@ -181,6 +181,12 @@ export default function VsFriends() {
     }
   };
 
+  
+  const isMyScoreSubmitted = useMemo(() => {
+    if (!session || !user) return false;
+    return !!session.scores?.[user.userId]?.[`act${session.currentAct}`];
+  }, [session, user]);
+
   const leaveLobby = async () => {
     localStorage.removeItem('active_vs_friends_session_id');
     localStorage.removeItem('active_vs_friends_session_seed');
@@ -397,9 +403,15 @@ export default function VsFriends() {
             </div>
 
             {session.status === 'active' && (
-              <button type="button" style={styles.gameBtn} onClick={handleStartGame}>
-                🎮 Launch Act {session.currentAct}
-              </button>
+              isMyScoreSubmitted ? (
+                <button type="button" style={{...styles.gameBtn, opacity: 0.5, cursor: 'not-allowed'}} disabled>
+                  ⏳ Waiting for opponent...
+                </button>
+              ) : (
+                <button type="button" style={styles.gameBtn} onClick={handleStartGame}>
+                  🎮 Launch Act {session.currentAct}
+                </button>
+              )
             )}
 
             <button type="button" style={styles.leaveBtn} onClick={leaveLobby}>

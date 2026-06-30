@@ -894,7 +894,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           if (nextGame) {
             navigate(nextGame.route);
           } else {
-            navigate('/vsfriends');
+            navigate('/vs-friends');
           }
         }, 2500);
       }
@@ -1254,7 +1254,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
                   if (activeId) {
                     const snap = await getDoc(doc(db, 'gameSessions', activeId));
                     if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                      navigate('/vsfriends');
+                      navigate('/vs-friends');
                       return;
                     }
                   }
@@ -1313,7 +1313,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
                     if (activeId) {
                       const snap = await getDoc(doc(db, 'gameSessions', activeId));
                       if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                        navigate('/vsfriends');
+                        navigate('/vs-friends');
                         return;
                       }
                     }

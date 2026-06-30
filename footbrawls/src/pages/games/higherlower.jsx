@@ -462,7 +462,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
               if (nextGame) {
                 navigate(nextGame.route);
               } else {
-                navigate('/vsfriends');
+                navigate('/vs-friends');
               }
             }, 2500);
           }
@@ -526,7 +526,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             if (nextGame) {
               navigate(nextGame.route);
             } else {
-              navigate('/vsfriends');
+              navigate('/vs-friends');
             }
           }, 2500);
         }
@@ -687,7 +687,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
                     if (activeId) {
                       const snap = await getDoc(doc(db, 'gameSessions', activeId));
                       if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                        navigate('/vsfriends');
+                        navigate('/vs-friends');
                         return;
                       }
                     }

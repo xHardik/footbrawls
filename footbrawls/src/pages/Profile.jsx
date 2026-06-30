@@ -496,3 +496,4 @@ function BottomNav({ active, navigate }) {
     </nav>
   );
 }
+

@@ -503,7 +503,7 @@ export default function DribbleGauntlet() {
         if (nextGame) {
           navigate(nextGame.route);
         } else {
-          navigate('/vsfriends');
+          navigate('/vs-friends');
         }
       }, 2500);
     }
@@ -731,7 +731,7 @@ export default function DribbleGauntlet() {
                         if (activeId) {
                           const snap = await getDoc(doc(db, 'gameSessions', activeId));
                           if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                            navigate('/vsfriends');
+                            navigate('/vs-friends');
                             return;
                           }
                         }
@@ -1140,9 +1140,9 @@ const CSS = `
 .db-sum-xp-lbl { font-size: 0.6rem; color: rgba(240,240,240,0.5); text-transform: uppercase; margin-top: -2px; }
 
 @media (max-width: 600px) {
-  .db-container { padding: 12px 6px 80px; }
-  .db-game-box { padding: 12px 8px; border-radius: 12px; }
-  .db-canvas-wrapper { margin-bottom: 12px; border-radius: 8px; }
+  .db-container { padding: 0px 0px 80px; }
+  .db-game-box { padding: 12px 0px; border-radius: 0px; border: none; }
+  .db-canvas-wrapper { margin-bottom: 12px; border-radius: 0px; border-left: none; border-right: none; }
   .db-nav { padding: 0 16px; }
 }
 

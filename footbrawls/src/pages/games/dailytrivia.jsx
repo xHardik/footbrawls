@@ -695,7 +695,7 @@ export default function DailyTrivia() {
           if (nextGame) {
             navigate(nextGame.route);
           } else {
-            navigate('/vsfriends');
+            navigate('/vs-friends');
           }
         }, 2500);
       }

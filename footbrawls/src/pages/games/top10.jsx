@@ -511,7 +511,8 @@ export default function Top10Guess() {
   const [msg, setMsg]                     = useState(null);
   const [hasWatchedAd, setHasWatchedAd]   = useState(false);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
-  const [isRaid, setIsRaid]               = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
 
   const [stats, setStats]                 = useState(loadStats);
   const [history, setHistory]             = useState(loadHistory);
@@ -867,11 +868,18 @@ export default function Top10Guess() {
 
         {/* NAV */}
         <nav className="t10-nav">
-          {!isRaid && <button className="t10-nav-logo" onClick={() => navigate('/')}>←</button>}
+          {!(isRaid || isVsFriends) && <button className="t10-nav-logo" onClick={() => navigate('/')}>←</button>}
+          {isVsFriends ? (
+          <div className="t10-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="t10-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
           <div className="t10-nav-tag">
             <span className="t10-fire-dot" />
             Top 10 Guess
           </div>
+        )}
           <div className="t10-nav-right">
             <button className="t10-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>
@@ -1010,7 +1018,7 @@ export default function Top10Guess() {
                   <div className="t10-result-title">{title}</div>
                   <div className="t10-result-sub">Category: {activeQuestion.question}</div>
 
-                  {!isRaid && xpAwarded != null && (
+                  {!(isRaid || isVsFriends) && xpAwarded != null && (
                     <div className="t10-xp-badge">
                       {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                     </div>
@@ -1164,7 +1172,7 @@ function HowToPlayModal({ show, onClose }) {
           <li><strong>❤️ Lives:</strong> You start with 3 lives. Every incorrect guess costs you 1 life</li>
           <li><strong>🚫 Double Penalty:</strong> You won't be penalized twice for entering the same incorrect guess</li>
           <li><strong>🏆 Win Condition:</strong> Reveal all 10 items or exit with lives remaining. 6+ correct counts as a win</li>
-          {!isRaid && <li><strong>🎁 XP Rewards:</strong> Earn up to 25 XP based on how many correct items you guess</li>}
+          {!(isRaid || isVsFriends) && <li><strong>🎁 XP Rewards:</strong> Earn up to 25 XP based on how many correct items you guess</li>}
         </ul>
         <button className="t10-modal-close" onClick={onClose}>🚀 Let's Go!</button>
       </div>

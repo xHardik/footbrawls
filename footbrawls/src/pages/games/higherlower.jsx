@@ -149,7 +149,7 @@ function RulesModal({ show, onClose, isRaid }) {
           <li><strong>🔥 Streak:</strong> Build a streak — every correct answer keeps you alive</li>
           <li><strong>❌ Fail:</strong> One wrong answer ends the game immediately</li>
         </ul>
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div className="hl-scoring-box">
             <h3>💰 XP System — Max {MAX_XP} XP</h3>
             <div className="hl-scoring-item"><span>Each Correct Answer</span><span className="hl-scoring-value">Streak +1</span></div>
@@ -291,7 +291,8 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   // Rewarded ad states
   const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
   const [isAdLoading, setIsAdLoading]               = useState(false);
-  const [isRaid, setIsRaid]                         = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
 
   function triggerRewardedAdToSaveStreak() {
     setIsAdLoading(true);
@@ -566,11 +567,18 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
       {/* ── NAV ── */}
       <nav className="hl-nav">
-        {!isRaid && <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>}
-        <div className="hl-nav-tag">
+        {!(isRaid || isVsFriends) && <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>}
+        {isVsFriends ? (
+          <div className="hl-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="hl-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
+          <div className="hl-nav-tag">
           <span className="hl-tag-dot" />
           Higher or Lower
         </div>
+        )}
         <div className="hl-nav-right">
           <button className="hl-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
@@ -594,7 +602,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             <div className="hl-score-label">Current Streak</div>
             <div className="hl-score-value-current">{streak}</div>
           </div>
-          {!isRaid && (
+          {!(isRaid || isVsFriends) && (
             <div className="hl-score-card hl-score-best">
               <div className="hl-score-label">XP Earned</div>
               <div className="hl-score-value-best">{STREAK_XP[Math.min(10, streak)]} XP</div>
@@ -650,12 +658,12 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             <div className="hl-result-score-label">Streak</div>
             <div className="hl-result-phrase">{getResultPhrase(streak)}</div>
 
-            {!isRaid && xpAwarded > 0 && (
+            {!(isRaid || isVsFriends) && xpAwarded > 0 && (
               <div className="hl-xp-badge-earned">+{xpAwarded} XP EARNED</div>
             )}
 
             {/* ── REWARDED AD — Save Streak ── */}
-            {!isRaid && !hasWatchedReviveAd && streak < 10 && (
+            {!(isRaid || isVsFriends) && !hasWatchedReviveAd && streak < 10 && (
               <div className="hl-ad-section">
                 <p className="hl-ad-hint">Streak ended? Watch a quick ad to revive and keep your streak going!</p>
                 <button

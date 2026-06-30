@@ -181,7 +181,7 @@ function RulesModal({ show, onClose, isRaid }) {
           </div>
         ))}
 
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div style={{background:"rgba(26,111,255,0.05)",border:`1px solid ${T.border2}`,borderRadius:14,padding:18,margin:"18px 0 20px"}}>
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1rem",letterSpacing:1,color:T.royal,marginBottom:12,textAlign:"center"}}>
               🌟 XP REWARDS — MAX 30 XP
@@ -437,7 +437,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
 
       <div style={{fontSize:"0.92rem",color:T.muted,marginBottom:26,lineHeight:1.6}}>
         {correctCount} of {PLAYERS_PER_GAME} players guessed correctly
-        {!isRaid && perfect && " — +5 XP FLAWLESS BONUS!"}
+        {!(isRaid || isVsFriends) && perfect && " — +5 XP FLAWLESS BONUS!"}
       </div>
 
       <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,padding:"16px 18px",marginBottom:22,textAlign:"left"}}>
@@ -449,7 +449,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
               <div style={{fontWeight:700,fontSize:"0.88rem",color:T.text}}>{p.name}</div>
               <div style={{fontSize:"0.67rem",color:T.muted2}}>{p.position} · {p.nationality}</div>
             </div>
-            {!isRaid && (
+            {!(isRaid || isVsFriends) && (
               <div style={{fontFamily:"monospace",fontSize:"0.65rem",fontWeight:700,padding:"3px 10px",borderRadius:99,background:"rgba(61,214,140,0.1)",color:T.green}}>
                 {i === 0 ? "+5" : i === 1 ? "+10" : "+10"} XP
               </div>
@@ -612,7 +612,8 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const [revealed, setRevealed]         = useState({});
   const [unlockedHints, setUnlockedHints] = useState({});
   const [isAdLoading, setIsAdLoading]   = useState(false);
-  const [isRaid, setIsRaid]             = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
 
   useEffect(() => { injectFonts(); }, []);
 
@@ -908,7 +909,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         borderBottom:`1px solid rgba(26,111,255,0.25)`,
         boxShadow:"0 10px 30px rgba(26,111,255,0.22)",
       }}>
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <button
             className="tt-nav-logo"
             onClick={() => navigate("/")}

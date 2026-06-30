@@ -585,7 +585,7 @@ function HowToPlayModal({ show, onClose, isRaid }) {
           <li><strong>⚽ Shootout:</strong> Score {MAX_KICKS} goals in a row for the perfect shootout</li>
           <li><strong>📺 Retake:</strong> If the keeper saves one, watch an ad to retake the kick</li>
         </ul>
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div className="pn-scoring-box">
             <h3>💰 Scoring — {XP_PER_GOAL} XP per Goal · Max 25 XP</h3>
             {Array.from({ length: MAX_KICKS }).map((_, i) => (
@@ -643,6 +643,7 @@ export default function PenaltyNerve({ onBack }) {
   const navigate = useNavigate();
   const handleBack = onBack || (() => navigate('/'));
   const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
 
   const [kicks, setKicks]           = useState([]);
   const [phase, setPhase]           = useState('aiming');
@@ -879,11 +880,18 @@ export default function PenaltyNerve({ onBack }) {
       <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
 
       <nav className="pn-nav">
-        {!isRaid && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}
-        <div className="pn-nav-tag">
+        {!(isRaid || isVsFriends) && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}
+        {isVsFriends ? (
+          <div className="pn-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="pn-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
+          <div className="pn-nav-tag">
           <span className="pn-tag-dot" />
           Penalty Nerve
         </div>
+        )}
         <div className="pn-nav-right">
           <button className="pn-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
@@ -896,11 +904,11 @@ export default function PenaltyNerve({ onBack }) {
             Penalty Nerve
           </h1>
           <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-            Score {MAX_KICKS} penalties in a row{!isRaid && ` · ${XP_PER_GOAL} XP per goal · Max ${MAX_KICKS * XP_PER_GOAL} XP`}
+            Score {MAX_KICKS} penalties in a row{!(isRaid || isVsFriends) && ` · ${XP_PER_GOAL} XP per goal · Max ${MAX_KICKS * XP_PER_GOAL} XP`}
           </p>
         </div>
 
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div className="pn-score-box">
             <div>
               <div className="pn-score-label">Current XP</div>
@@ -919,7 +927,7 @@ export default function PenaltyNerve({ onBack }) {
             <div className="pn-result-title" style={{ color: getResultColor(displayGoals) }}>
               {getResultTitle(displayGoals)}
             </div>
-            {!isRaid && <div className="pn-result-score">{displayXP} XP</div>}
+            {!(isRaid || isVsFriends) && <div className="pn-result-score">{displayXP} XP</div>}
             <div className="pn-result-phrase">
               {displayGoals} of {MAX_KICKS} goals scored · New penalties tomorrow
             </div>
@@ -1127,7 +1135,7 @@ export default function PenaltyNerve({ onBack }) {
                 <div className="pn-result-title" style={{ color: getResultColor(goals) }}>
                   {getResultTitle(goals)}
                 </div>
-                {!isRaid && <div className="pn-result-score">{scoreDisplay} XP</div>}
+                {!(isRaid || isVsFriends) && <div className="pn-result-score">{scoreDisplay} XP</div>}
                 <div className="pn-result-phrase">{goals} of {MAX_KICKS} goals scored</div>
 
                 <div className="pn-kick-replay-list">
@@ -1141,7 +1149,7 @@ export default function PenaltyNerve({ onBack }) {
                   ))}
                 </div>
 
-                {!isRaid && xpAwarded != null && (
+                {!(isRaid || isVsFriends) && xpAwarded != null && (
                   <div className="pn-xp-badge">
                     {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                   </div>

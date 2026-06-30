@@ -68,7 +68,10 @@ function getTodayUTC() {
 // ─── Core XP Award Function ───────────────────────────────────────────────────
 export async function awardXP(userId, source, opts = {}) {
   // ─── CENTRAL RAID/MULTIPLAYER INTERCEPTION ──────────────────────────────────
-  const activeSessionId = typeof window !== 'undefined' ? localStorage.getItem('active_game_session_id') : null;
+  const activeRaidId = typeof window !== 'undefined' ? localStorage.getItem('active_game_session_id') : null;
+  const activeVsFriendsId = typeof window !== 'undefined' ? localStorage.getItem('active_vs_friends_session_id') : null;
+  const activeSessionId = activeRaidId || activeVsFriendsId;
+  
   if (activeSessionId) {
     try {
       const sessionRef = doc(db, 'gameSessions', activeSessionId);

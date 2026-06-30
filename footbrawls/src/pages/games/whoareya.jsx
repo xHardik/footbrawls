@@ -714,7 +714,8 @@ export default function WhoAreYa() {
   const [showModal, setShowModal]     = useState(false);
   const [animKey, setAnimKey]         = useState(0);
   const [xpAwarded, setXpAwarded]     = useState(null);
-  const [isRaid, setIsRaid]           = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
   
   // Rewarded ad hint state
   const [unlockedHints, setUnlockedHints] = useState({ position: false, country: false, club: false });
@@ -977,11 +978,18 @@ export default function WhoAreYa() {
 
         {/* NAV */}
         <nav className="wya-nav">
-          <div style={{display:'flex', alignItems:'center', gap:8}}><img src="/logo.png" alt="Logo" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />{!isRaid && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}</div>
+          <div style={{display:'flex', alignItems:'center', gap:8}}><img src="/logo.png" alt="Logo" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />{!(isRaid || isVsFriends) && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}</div>
+          {isVsFriends ? (
+          <div className="wya-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="wya-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />
             Who Are Ya?
           </div>
+        )}
           <div className="wya-nav-right">
             <button className="wya-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>
@@ -1139,7 +1147,7 @@ export default function WhoAreYa() {
                 {target.country} · {target.position} · {target.club} · Age {target.age} · {target.foot}-footed
               </div>
 
-              {!isRaid && xpAwarded != null && (
+              {!(isRaid || isVsFriends) && xpAwarded != null && (
                 <div className="pn-xp-badge">
                   {xpAwarded > 0 ? `+${xpAwarded} XP earned` : 'Daily XP limit reached'}
                 </div>

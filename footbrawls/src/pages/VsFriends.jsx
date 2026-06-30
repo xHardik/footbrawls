@@ -39,7 +39,7 @@ export default function VsFriends() {
   const [mode, setMode] = useState('menu'); // menu | hosting | lobby | results
   const [inviteCode, setInviteCode] = useState('');
   const [inputCode, setInputCode] = useState('');
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem('active_vs_friends_session_id'));
   const [session, setSession] = useState(null);
   const [selectedGames, setSelectedGames] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
@@ -61,7 +61,7 @@ export default function VsFriends() {
           }
         }
       } else {
-        localStorage.removeItem('active_game_session_id');
+        localStorage.removeItem('active_vs_friends_session_id');
         setSessionId(null);
         setMode('menu');
       }
@@ -119,8 +119,8 @@ export default function VsFriends() {
 
     try {
       await setDoc(doc(db, 'gameSessions', sid), sessionData);
-      localStorage.setItem('active_game_session_id', sid);
-      localStorage.setItem('active_game_session_seed', uniqueSessionSeed);
+      localStorage.setItem('active_vs_friends_session_id', sid);
+      localStorage.setItem('active_vs_friends_session_seed', uniqueSessionSeed);
       setSessionId(sid);
       setInviteCode(code);
       setSession(sessionData);
@@ -161,8 +161,8 @@ export default function VsFriends() {
         status: 'active',
       });
 
-      localStorage.setItem('active_game_session_id', sid);
-      localStorage.setItem('active_game_session_seed', data.raidSeed || String(Date.now()));
+      localStorage.setItem('active_vs_friends_session_id', sid);
+      localStorage.setItem('active_vs_friends_session_seed', data.raidSeed || String(Date.now()));
       setSessionId(sid);
       setMode('lobby');
     } catch (err) {
@@ -182,8 +182,8 @@ export default function VsFriends() {
   };
 
   const leaveLobby = async () => {
-    localStorage.removeItem('active_game_session_id');
-    localStorage.removeItem('active_game_session_seed');
+    localStorage.removeItem('active_vs_friends_session_id');
+    localStorage.removeItem('active_vs_friends_session_seed');
     setSessionId(null);
     setSession(null);
     setMode('menu');

@@ -618,7 +618,7 @@ function HowToPlayModal({ show, onClose, isRaid }) {
             <p style={{marginTop:8,fontSize:"0.75rem",color:"rgba(255,255,255,0.35)",fontWeight:700}}>Not in Name</p>
           </div>
         </div>
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div className="wdl-scoring-box">
             <h3>💰 Scoring System — Max 25 XP</h3>
             {scoring.map(([attempt, xp]) => (
@@ -754,7 +754,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [gameOver,  setGameOver]  = useState(false);
   const [solved,    setSolved]    = useState(false);
   const [xpAwarded, setXpAwarded] = useState(0);
-  const [isRaid,    setIsRaid]    = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
   const [score,     setScore]     = useState(0);
   const [msg,       setMsg]       = useState(null);
   const [hint,      setHint]      = useState(null);
@@ -1050,11 +1051,18 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
-        {!isRaid && <button className="wdl-logo" onClick={handleBack}>←</button>}
-        <div className="wdl-nav-tag">
+        {!(isRaid || isVsFriends) && <button className="wdl-logo" onClick={handleBack}>←</button>}
+        {isVsFriends ? (
+          <div className="wdl-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="wdl-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
+          <div className="wdl-nav-tag">
           <span className="wdl-tag-dot" />
           Player Wordle
         </div>
+        )}
         <div className="wdl-nav-right">
           <button className="wdl-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
         </div>
@@ -1071,7 +1079,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         </div>
 
         {/* ── SCORE BOX ── */}
-        {!isRaid && (
+        {!(isRaid || isVsFriends) && (
           <div className="wdl-score-box">
             <div>
               <div className="wdl-score-label">Current XP</div>
@@ -1276,7 +1284,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
               </div>
             )}
 
-            {!isRaid && (
+            {!(isRaid || isVsFriends) && (
               <div 
                 className="wdl-result-score" 
                 style={{ 

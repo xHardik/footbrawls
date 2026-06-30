@@ -279,7 +279,8 @@ export default function DribbleGauntlet() {
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [userXP, setUserXP] = useState(0);
   const [floatingXP, setFloatingXP] = useState(null);
-  const [isRaid, setIsRaid]         = useState(false);
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
 
   const today = getTodayKey();
 
@@ -627,7 +628,7 @@ export default function DribbleGauntlet() {
                 <li><strong>🔁 5 Rounds:</strong> Play 5 complete dribble + shoot sequences each game</li>
                 <li><strong>📺 Retake:</strong> Tackled or saved? Watch a short ad <strong>once per game</strong> to replay</li>
               </ul>
-              {!isRaid && (
+              {!(isRaid || isVsFriends) && (
                 <div className="db-scoring-box">
                   <h3>💰 XP System</h3>
                   <div className="db-scoring-item"><span>Beat the Defender</span><span className="db-scoring-value">+2 XP</span></div>
@@ -642,8 +643,15 @@ export default function DribbleGauntlet() {
 
         {/* Nav */}
         <nav className="db-nav">
-          {!isRaid && <button className="db-logo" onClick={() => navigate('/')}>←</button>}
+          {!(isRaid || isVsFriends) && <button className="db-logo" onClick={() => navigate('/')}>←</button>}
+          {isVsFriends ? (
+          <div className="db-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+            <span className="db-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+            VS FRIENDS
+          </div>
+        ) : (
           <div className="db-nav-tag"><span className="db-tag-dot" />Dribble Gauntlet</div>
+        )}
           <div className="db-nav-right">
             <button className="db-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>
@@ -659,7 +667,7 @@ export default function DribbleGauntlet() {
                 <h1 className="db-page-title">Dribble Gauntlet</h1>
                 <p className="db-page-subtitle">Navigate past defenders · Strike past the keeper</p>
               </div>
-              {!isRaid && (
+              {!(isRaid || isVsFriends) && (
                 <div className="db-live-xp-pill">
                   <span className="db-live-xp-icon">🏆</span>
                   <span className="db-live-xp-val">{alreadyPlayed ? xpAwarded : liveXPGained}</span>
@@ -683,7 +691,7 @@ export default function DribbleGauntlet() {
                   <div className="db-sum-score-sub">Goals Scored</div>
                 </div>
 
-                 {!isRaid && xpAwarded !== null && (
+                 {!(isRaid || isVsFriends) && xpAwarded !== null && (
                   <div className="db-sum-xp-badge">
                     {xpAwarded > 0 ? `+${xpAwarded} XP Earned` : 'Daily XP cap reached'}
                   </div>

@@ -696,7 +696,7 @@ export default function Top10Guess() {
       persist(revealed, newLives, newWrong, 'game');
 
       if (newLives <= 0) {
-        if (!hasWatchedAd && !isRaid) {
+        if (!hasWatchedAd && !(isRaid || isVsFriends)) {
           setTimeout(() => setShowAdOverlay(true), 1500);
         } else {
           setTimeout(() => endGame(revealed, 0), 1500);
@@ -732,7 +732,7 @@ export default function Top10Guess() {
   async function endGame(finalRevealed, finalLives) {
     setPhase('result');
     const correctCount = finalRevealed.filter(Boolean).length;
-    if (!isRaid) {
+    if (!(isRaid || isVsFriends)) {
       const { stats: newStats, history: newHistory } = saveStats(correctCount, puzzleDate);
       setStats(newStats);
       setHistory(newHistory);
@@ -789,7 +789,7 @@ export default function Top10Guess() {
       autoScrollToResult('.t10-result-card', isRaid);
     }
     setXpAwarded(awarded);
-    if (!isRaid) {
+    if (!(isRaid || isVsFriends)) {
       localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
         revealed: finalRevealed,
         lives: finalLives,

@@ -416,7 +416,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         {perfect ? "FLAWLESS GUESSING!" : "GAME OVER!"}
       </div>
 
-      {!isRaid ? (
+      {!(isRaid || isVsFriends) ? (
         <div className="tt-result-score" style={{
           fontFamily:"'Bebas Neue',sans-serif",fontSize:"4.8rem",letterSpacing:2,lineHeight:1,margin:"10px 0",
           background:`linear-gradient(135deg,${T.royal},${T.royalLight} 60%)`,
@@ -596,7 +596,22 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const stateKey    = `tt_state_${puzzleDate}`;
   const [historyAndStats, setHistoryAndStats] = useState(() => loadHistoryAndStats(storageKey, puzzleDate));
 
-  const puzzlePlayers = useMemo(() => getDailyPlayers(players, puzzleDate), [players, puzzleDate]);
+  const puzzlePlayers = useMemo(() => {
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    if (isRaidSession || isVsFriendsSession) {
+      const sessionId = isRaidSession ? localStorage.getItem('active_game_session_id') : localStorage.getItem('active_vs_friends_session_id');
+      const sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
+      const seedVal = getRaidSeed(sessionId, sessionSeed);
+      const salt = isVsFriendsSession ? 303 : 99;
+      const arr = [];
+      for(let i=0; i<3; i++) {
+        arr.push(players[(seedVal + salt + i*7) % players.length]);
+      }
+      return arr;
+    }
+    return getDailyPlayers(players, puzzleDate);
+  }, [players, puzzleDate]);
 
   const [currentIdx, setCurrentIdx]     = useState(0);
   const [selected, setSelected]         = useState(null);
@@ -894,7 +909,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   return (
     <div style={{position:"relative",minHeight:"100vh",background:T.bg,fontFamily:"'DM Sans',sans-serif",color:T.text,overflowX:"hidden"}}>
       <BgLayers/>
-      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="tt-nav" style={{
@@ -970,7 +985,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             correctCount={correctCount}
             players={puzzlePlayers}
             onPlayAgain={handlePlayAgain}
-            isRaid={isRaid}
+            isRaid={isRaid || isVsFriends}
           />
         ) : (
           <>
@@ -1118,7 +1133,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 )}
 
                 {/* Hint Section */}
-                {!gameOver && currentPlayer && !isRaid && (
+                {!gameOver && currentPlayer && !(isRaid || isVsFriends) && (
                   <div style={{ marginTop: 20, width: "100%", maxWidth: 400, display: "flex", justifyContent: "center" }}>
                     {unlockedHints[currentIdx] ? (
                       <div style={{

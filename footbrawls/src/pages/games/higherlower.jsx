@@ -361,23 +361,23 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const attr    = getAttrForRound(round);
 
   const { playerA, playerB } = useMemo(() => {
-    const rawA = getSequencedPlayer(players, round);
-    // If streak is high (streak >= 7), we want a "close call" for playerB
-    if (streak >= 7) {
-      const valA = rawA[attr.key];
-      // Let's scan forward from round + 1 to find a player whose stat value is close to valA
-      // We'll search up to 25 players to find one that is within a 15% difference range.
-      for (let offset = 1; offset <= 25; offset++) {
-        const candidate = getSequencedPlayer(players, round + offset);
-        const valB = candidate[attr.key];
-        if (valA === 0 || valB === 0) continue;
-        const diffPercent = Math.abs(valA - valB) / Math.max(valA, valB);
-        if (diffPercent <= 0.18) { // close call (within 18% difference)
-          return { playerA: rawA, playerB: candidate };
-        }
-      }
+    
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    let sessionId = isRaidSession ? localStorage.getItem('active_game_session_id') : localStorage.getItem('active_vs_friends_session_id');
+    let sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
+    
+    let rawA, rawB;
+    if (isRaidSession || isVsFriendsSession) {
+      const seedVal = getRaidSeed(sessionId, sessionSeed);
+      const salt = isVsFriendsSession ? 606 : 0;
+      const all = Object.values(players);
+      rawA = all[(seedVal + salt + round) % all.length];
+      rawB = all[(seedVal + salt + round + 1) % all.length];
+    } else {
+      rawA = getSequencedPlayer(players, round);
+      rawB = getSequencedPlayer(players, round + 1);
     }
-    const rawB = getSequencedPlayer(players, round + 1);
     return { playerA: rawA, playerB: rawB };
   }, [players, round, streak, attr]);
 
@@ -560,7 +560,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       <div className="hl-bg-layer" />
       <div className="hl-noise" />
 
-      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="hl-nav">

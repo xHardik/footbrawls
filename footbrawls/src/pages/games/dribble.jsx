@@ -513,7 +513,7 @@ export default function DribbleGauntlet() {
       }
     }
     setXpAwarded(earnedXP);
-    if (!isRaid) {
+    if (!(isRaid || isVsFriends)) {
       const dailySave = JSON.parse(localStorage.getItem(DAILY_KEY) || '{}');
       dailySave[today] = { completed: true, xpAwarded: earnedXP, score: wins };
       localStorage.setItem(DAILY_KEY, JSON.stringify(dailySave));
@@ -548,7 +548,7 @@ export default function DribbleGauntlet() {
       
       // Single mode animations & scroll
       const wins = s.results.filter(r => r.goal).length;
-      if (!isRaid) {
+      if (!(isRaid || isVsFriends)) {
         if (wins >= 3) {
           triggerWinConfetti();
         } else {
@@ -783,7 +783,7 @@ export default function DribbleGauntlet() {
 
                   {s.tackled || s.phase === 'shot_result' ? (
                     <div className="db-post-round">
-                      {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && !isRaid && (
+                      {((s.tackled) || (s.phase === 'shot_result' && s.feedback === 'saved')) && !hasWatchedAd && !alreadyPlayed && !(isRaid || isVsFriends) && (
                         <div className="db-ad-box">
                           <div className="db-ad-box-text">Watch a short ad to retake this round</div>
                           <button className="db-ad-go-btn" onClick={triggerRewardedAdToRetakeRound} disabled={isAdLoading}>

@@ -911,7 +911,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         autoScrollToResult('.wdl-result', isRaid);
       }
       setGameOver(true); setSolved(won); setScore(xp); setXpAwarded(xp);
-      if (!isRaid) {
+      if (!(isRaid || isVsFriends)) {
         const { stats: s, history: h } = saveResult(puzzleDate, won, xp);
         setStats(s); setHistory(h);
         localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
@@ -1044,7 +1044,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       <div className="wdl-bg" />
       <div className="wdl-noise" />
 
-      <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid} />
+      <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid || isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">
@@ -1089,7 +1089,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         )}
 
         {/* ── EXTRA TRY REWARDED AD ── */}
-        {gameOver && !solved && !hasWatchedExtraTryAd && !isRaid && (
+        {gameOver && !solved && !hasWatchedExtraTryAd && !(isRaid || isVsFriends) && (
           <div style={{
             margin: "0 auto 20px",
             padding: "20px 24px",
@@ -1214,7 +1214,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
           )}
 
-          {!gameOver && !isRaid && (
+          {!gameOver && !(isRaid || isVsFriends) && (
             <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
               <button
                 className="wdl-btn"

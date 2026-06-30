@@ -750,7 +750,7 @@ export default function WhoAreYa() {
     const sessionId = localStorage.getItem('active_game_session_id');
     const sessionSeed = localStorage.getItem('active_game_session_seed');
     let player;
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       const seedVal = getRaidSeed(sessionId, sessionSeed);
       const idx = (seedVal + 997) % PLAYERS.length;
       player = PLAYERS[idx];
@@ -759,7 +759,8 @@ export default function WhoAreYa() {
     }
 
     setTarget(player);
-    setIsRaid(raid);
+    setIsRaid(isRaidSession);
+    setIsVsFriends(isVsFriendsSession);
 
     if (raid) {
       setGuesses([]);
@@ -894,7 +895,7 @@ export default function WhoAreYa() {
       }
       setXpAwarded(finalXP);
 
-      if (!isRaid) {
+      if (!(isRaid || isVsFriends)) {
         try {
           localStorage.setItem('footbrawls_whoareya', JSON.stringify({
             date: puzzleDate, 
@@ -912,7 +913,7 @@ export default function WhoAreYa() {
       }
     } else {
       // Just save incremental progress
-      if (!isRaid) {
+      if (!(isRaid || isVsFriends)) {
         try {
           localStorage.setItem('footbrawls_whoareya', JSON.stringify({
             date: puzzleDate,
@@ -1024,7 +1025,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.position}    
               onClick={() => triggerRewardedAdForHint('position')}
               loading={loadingKey === 'position'}
-              isRaid={isRaid}
+              isRaid={isRaid || isVsFriends}
             />
             <HintPill 
               icon="🌍" 
@@ -1033,7 +1034,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.country} 
               onClick={() => triggerRewardedAdForHint('country')}
               loading={loadingKey === 'country'}
-              isRaid={isRaid}
+              isRaid={isRaid || isVsFriends}
             />
             <HintPill 
               icon="🏢" 
@@ -1042,7 +1043,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.club}   
               onClick={() => triggerRewardedAdForHint('club')}
               loading={loadingKey === 'club'}
-              isRaid={isRaid}
+              isRaid={isRaid || isVsFriends}
             />
           </div>
 
@@ -1234,7 +1235,7 @@ export default function WhoAreYa() {
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 function HintPill({ icon, label, value, revealed, onClick, loading, isRaid }) {
-  const showClickable = !revealed && !loading && !isRaid;
+  const showClickable = !revealed && !loading && !(isRaid || isVsFriends);
   return (
     <div 
       className={`wya-hint-pill${revealed ? ' revealed' : (showClickable ? ' locked clickable' : ' locked')}`}

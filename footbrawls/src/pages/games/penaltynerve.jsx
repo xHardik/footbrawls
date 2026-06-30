@@ -832,7 +832,7 @@ export default function PenaltyNerve({ onBack }) {
         }
         setXpAwarded(finalAwarded);
 
-        if (!isRaid) {
+        if (!(isRaid || isVsFriends)) {
           const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
           hist[today] = { score: finalXP, goals, xpAwarded: finalAwarded, date: today };
           localStorage.setItem('footbrawls_penaltynerve', JSON.stringify(hist));
@@ -874,7 +874,7 @@ export default function PenaltyNerve({ onBack }) {
       <div className="pn-bg2" />
       <div className="pn-noise" />
 
-      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} />
+      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
 
       <nav className="pn-nav">
         {!(isRaid || isVsFriends) && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}

@@ -137,7 +137,7 @@ const adBreak = (options) => {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function RulesModal({ show, onClose, isRaid }) {
+function RulesModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (
     <div className={`hl-modal-overlay active`} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -562,7 +562,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       <div className="hl-bg-layer" />
       <div className="hl-noise" />
 
-      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="hl-nav">

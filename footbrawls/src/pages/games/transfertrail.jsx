@@ -141,7 +141,7 @@ function BgLayers() {
 }
 
 // ── How to Play Modal ─────────────────────────────────────────────────────────
-function RulesModal({ show, onClose, isRaid }) {
+function RulesModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (
     <div
@@ -392,7 +392,7 @@ function Feedback({ state, message }) {
 }
 
 // ── Result Card ───────────────────────────────────────────────────────────────
-function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain, isRaid }) {
+function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain, isRaid, isVsFriends }) {
   const navigate = useNavigate();
   const perfect = correctCount === PLAYERS_PER_GAME;
 
@@ -911,7 +911,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   return (
     <div style={{position:"relative",minHeight:"100vh",background:T.bg,fontFamily:"'DM Sans',sans-serif",color:T.text,overflowX:"hidden"}}>
       <BgLayers/>
-      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
+      <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="tt-nav" style={{
@@ -987,7 +987,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
             correctCount={correctCount}
             players={puzzlePlayers}
             onPlayAgain={handlePlayAgain}
-            isRaid={isRaid || isVsFriends}
+            isRaid={isRaid} isVsFriends={isVsFriends}
           />
         ) : (
           <>

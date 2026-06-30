@@ -1026,7 +1026,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.position}    
               onClick={() => triggerRewardedAdForHint('position')}
               loading={loadingKey === 'position'}
-              isRaid={isRaid || isVsFriends}
+              isRaid={isRaid} isVsFriends={isVsFriends}
             />
             <HintPill 
               icon="🌍" 
@@ -1035,7 +1035,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.country} 
               onClick={() => triggerRewardedAdForHint('country')}
               loading={loadingKey === 'country'}
-              isRaid={isRaid || isVsFriends}
+              isRaid={isRaid} isVsFriends={isVsFriends}
             />
             <HintPill 
               icon="🏢" 
@@ -1044,7 +1044,7 @@ export default function WhoAreYa() {
               revealed={unlockedHints.club}   
               onClick={() => triggerRewardedAdForHint('club')}
               loading={loadingKey === 'club'}
-              isRaid={isRaid || isVsFriends}
+              isRaid={isRaid} isVsFriends={isVsFriends}
             />
           </div>
 
@@ -1235,7 +1235,7 @@ export default function WhoAreYa() {
 }
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
-function HintPill({ icon, label, value, revealed, onClick, loading, isRaid }) {
+function HintPill({ icon, label, value, revealed, onClick, loading, isRaid, isVsFriends }) {
   const showClickable = !revealed && !loading && !(isRaid || isVsFriends);
   return (
     <div 

@@ -589,7 +589,7 @@ function evaluateGuess(guess, target) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function HowToPlayModal({ show, onClose, isRaid }) {
+function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   const scoring = [
     [1, 25], [2, 23], [3, 21], [4, 19], [5, 17], [6, 15],
@@ -1047,7 +1047,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       <div className="wdl-bg" />
       <div className="wdl-noise" />
 
-      <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid || isVsFriends} />
+      <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid} isVsFriends={isVsFriends} />
 
       {/* ── NAV ── */}
       <nav className="wdl-nav">

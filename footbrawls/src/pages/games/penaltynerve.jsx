@@ -573,7 +573,7 @@ if (typeof window !== "undefined") {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-function HowToPlayModal({ show, onClose, isRaid }) {
+function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (
     <div className={`pn-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
@@ -874,7 +874,7 @@ export default function PenaltyNerve({ onBack }) {
       <div className="pn-bg2" />
       <div className="pn-noise" />
 
-      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid || isVsFriends} />
+      <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
       <nav className="pn-nav">
         {!(isRaid || isVsFriends) && <button className="pn-logo" onClick={() => navigate('/')}>←</button>}

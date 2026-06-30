@@ -866,14 +866,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       const calcScore = won ? (XP_BY_GUESS[newGuesses.length] ?? 0) : 0;
       let xp = calcScore;
       let sessionType = null;
-      let sessionData = null;
+      let sessionData = null; let nextActVal = null;
       if (won || isRaid) {
         const user = getUser();
         if (user?.userId) {
           const r = await awardXP(user.userId, "wordle_correct", { rawXP: calcScore, guessNumber: newGuesses.length, solved: won });
           xp = r?.xpAwarded ?? calcScore;
           sessionType = r?.sessionType;
-          sessionData = r?.session;
+          sessionData = r?.session; nextActVal = r?.nextAct;
         }
       }
 
@@ -887,10 +887,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         setTimeout(() => {
           const el = document.getElementById('vs-friends-loading');
           if (el) el.remove();
-          const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+          const nextGame = sessionData?.gamesList?.[nextActVal - 1];
           if (nextGame) {
             navigate(nextGame.route);
           } else {

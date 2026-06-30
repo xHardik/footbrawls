@@ -741,14 +741,14 @@ export default function Top10Guess() {
     const user = getUser();
     let awarded = 0;
     let sessionType = null;
-    let sessionData = null;
+    let sessionData = null; let nextActVal = null;
     if (user?.userId) {
       try {
         const computedXP = calculateXP(correctCount, wrongGuesses.length);
         const res = await awardXP(user.userId, 'top10_complete', { rawXP: computedXP, correctCount: correctCount });
         awarded = res?.xpAwarded ?? 0;
         sessionType = res?.sessionType;
-        sessionData = res?.session;
+        sessionData = res?.session; nextActVal = res?.nextAct;
       } catch (e) {
         console.error('[Top10Guess] awardXP failed:', e);
       }
@@ -764,10 +764,7 @@ export default function Top10Guess() {
       setTimeout(() => {
         const el = document.getElementById('vs-friends-loading');
         if (el) el.remove();
-        const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+        const nextGame = sessionData?.gamesList?.[nextActVal - 1];
         if (nextGame) {
           navigate(nextGame.route);
         } else {

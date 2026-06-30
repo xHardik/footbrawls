@@ -722,14 +722,14 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   async function endGame(finalXpVal) {
     let xp = 0;
     let sessionType = null;
-    let sessionData = null;
+    let sessionData = null; let nextActVal = null;
     const user = getUser();
     const uid  = userId || user?.userId;
     if (uid) {
       const res = await awardXP(uid, "transferTrail_correct", { rawXP: finalXpVal });
       xp = res?.xpAwarded ?? finalXpVal;
       sessionType = res?.sessionType;
-      sessionData = res?.session;
+      sessionData = res?.session; nextActVal = res?.nextAct;
     } else {
       xp = finalXpVal;
     }
@@ -744,10 +744,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       setTimeout(() => {
         const el = document.getElementById('vs-friends-loading');
         if (el) el.remove();
-        const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+        const nextGame = sessionData?.gamesList?.[nextActVal - 1];
         if (nextGame) {
           navigate(nextGame.route);
         } else {

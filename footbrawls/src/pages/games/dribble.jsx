@@ -477,13 +477,13 @@ export default function DribbleGauntlet() {
     });
     let earnedXP = 0;
     let sessionType = null;
-    let sessionData = null;
+    let sessionData = null; let nextActVal = null;
     try {
       if (user?.userId) {
         const res = await awardXP(user.userId, 'dribble_correct', { rawXP: calculatedXP });
         earnedXP = res?.xpAwarded ?? calculatedXP;
         sessionType = res?.sessionType;
-        sessionData = res?.session;
+        sessionData = res?.session; nextActVal = res?.nextAct;
       } else { earnedXP = calculatedXP; }
     } catch { earnedXP = calculatedXP; }
 
@@ -497,10 +497,7 @@ export default function DribbleGauntlet() {
       setTimeout(() => {
         const el = document.getElementById('vs-friends-loading');
         if (el) el.remove();
-        const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+        const nextGame = sessionData?.gamesList?.[nextActVal - 1];
         if (nextGame) {
           navigate(nextGame.route);
         } else {

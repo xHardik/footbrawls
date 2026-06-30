@@ -153,6 +153,12 @@ export default function Layout({ children, hideMobileNav }) {
   const [timer, setTimer] = useState(60);
   const [sessionData, setSessionData] = useState(null);
 
+  const isVsFriends = typeof window !== 'undefined' && !!localStorage.getItem('active_vs_friends_session_id');
+
+  if (isVsFriends) {
+    return <>{children}</>;
+  }
+
   const handleTimeout = useCallback(async (activeId) => {
     const path = location.pathname.toLowerCase();
     const user = getUser();

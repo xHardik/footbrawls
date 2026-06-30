@@ -251,10 +251,28 @@ export default function VsFriends() {
 
   return (
     <div style={styles.page}>
-      <nav style={styles.nav}>
-        <button type="button" style={styles.backBtn} onClick={() => navigate('/')}>‹</button>
-        <span style={styles.logo}>CUSTOM VS FRIEND</span>
-        <div style={{ width: 40 }} />
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 200,
+        display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
+        padding: '0 24px', height: 58,
+        background: 'rgba(5,7,15,0.85)', backdropFilter: 'blur(24px) saturate(1.4)',
+        borderBottom: `1px solid ${C.green}25`,
+        boxShadow: `0 4px 20px ${C.green}15`
+      }}>
+        <button onClick={() => navigate('/')} style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          border: 'none', cursor: 'pointer', outline: 'none', backgroundColor: 'transparent',
+          justifySelf: 'start'
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px rgba(61,214,140,0.3))` }} />
+          <span style={{
+            fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
+            background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            VS FRIENDS
+          </span>
+        </button>
       </nav>
 
       <main style={styles.main}>

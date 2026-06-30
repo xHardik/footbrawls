@@ -845,14 +845,14 @@ export default function WhoAreYa() {
       let finalXP = 0;
       
       let sessionType = null;
-      let sessionData = null;
+      let sessionData = null; let nextActVal = null;
       const user = getUser();
       if ((isWin || isRaid) && user?.userId) {
         try {
           const res = await awardXP(user.userId, 'whoareya_correct', { rawXP: rawScore, guessNumber: newGuesses.length, solved: isWin });
           finalXP = res?.xpAwarded ?? rawScore;
           sessionType = res?.sessionType;
-          sessionData = res?.session;
+          sessionData = res?.session; nextActVal = res?.nextAct;
         } catch (e) {
           console.error('[WhoAreYa] awardXP failed:', e);
           finalXP = rawScore;
@@ -869,10 +869,7 @@ export default function WhoAreYa() {
         setTimeout(() => {
           const el = document.getElementById('vs-friends-loading');
           if (el) el.remove();
-          const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1]; // currentAct is 1-based, array is 0-based, so this gets the next game!
+          const nextGame = sessionData?.gamesList?.[nextActVal - 1];
           if (nextGame) {
             navigate(nextGame.route);
           } else {

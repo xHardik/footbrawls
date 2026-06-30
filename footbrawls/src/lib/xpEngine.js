@@ -132,7 +132,7 @@ export async function awardXP(userId, source, opts = {}) {
                 normalized
               }
             });
-            return { xpAwarded: 0, raidIntercepted: true, skipDailyIncrement: true, sessionType: session.sessionType, session: session };
+            return { xpAwarded: 0, raidIntercepted: true, skipDailyIncrement: true, sessionType: session.sessionType, session: session, nextAct: currentActVal + 1 };
           }
         }
       }

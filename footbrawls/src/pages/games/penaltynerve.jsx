@@ -778,7 +778,7 @@ export default function PenaltyNerve({ onBack }) {
         let finalAwarded = 0;
         const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
         let sessionType = null;
-        let sessionData = null;
+        let sessionData = null; let nextActVal = null;
         if (finalXP > 0 || isRaid) {
           try {
             const user = getUser();
@@ -790,7 +790,7 @@ export default function PenaltyNerve({ onBack }) {
               if (res?.cappedOut) finalAwarded = 0;
               else finalAwarded = res?.xpAwarded ?? finalXP;
               sessionType = res?.sessionType;
-              sessionData = res?.session;
+              sessionData = res?.session; nextActVal = res?.nextAct;
             }
           } catch (err) {
             console.error('[PenaltyNerve] awardXP failed:', err);
@@ -808,10 +808,7 @@ export default function PenaltyNerve({ onBack }) {
           setTimeout(() => {
             const el = document.getElementById('vs-friends-loading');
             if (el) el.remove();
-            const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+            const nextGame = sessionData?.gamesList?.[nextActVal - 1];
             if (nextGame) {
               navigate(nextGame.route);
             } else {

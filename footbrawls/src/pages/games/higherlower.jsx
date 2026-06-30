@@ -425,7 +425,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         const raw = MAX_XP;
         let xp = 0;
         let sessionType = null;
-        let sessionData = null;
+        let sessionData = null; let nextActVal = null;
         const currentUser = getUser();
         const uid = userId || currentUser?.userId;
         if (uid && raw > 0) {
@@ -456,10 +456,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             setTimeout(() => {
               const el = document.getElementById('vs-friends-loading');
               if (el) el.remove();
-              const uid = getUser()?.userId;
-          let userActCount = 0;
-          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
-          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+              const nextGame = sessionData?.gamesList?.[nextActVal - 1];
               if (nextGame) {
                 navigate(nextGame.route);
               } else {

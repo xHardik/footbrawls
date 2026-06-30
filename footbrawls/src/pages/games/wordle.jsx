@@ -730,10 +730,11 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
   const target = useMemo(() => {
     if (!players.length) return null;
-    const raid = !!localStorage.getItem('active_game_session_id');
-    const sessionId = localStorage.getItem('active_game_session_id');
-    const sessionSeed = localStorage.getItem('active_game_session_seed');
-    if (raid) {
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    const sessionId = isRaidSession ? localStorage.getItem('active_game_session_id') : localStorage.getItem('active_vs_friends_session_id');
+    const sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
+    if (isRaidSession || isVsFriendsSession) {
       const seedVal = getRaidSeed(sessionId, sessionSeed);
       const idx = (seedVal + 101) % players.length;
       return players[idx];
@@ -796,10 +797,12 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   useEffect(() => {
     if (!targetName) return;
 
-    let raid = !!localStorage.getItem('active_game_session_id');
-    setIsRaid(raid);
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    setIsRaid(isRaidSession);
+    setIsVsFriends(isVsFriendsSession);
 
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       setGuesses([]);
       setSolved(false);
       setScore(0);

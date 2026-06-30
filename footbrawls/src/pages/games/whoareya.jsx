@@ -746,9 +746,10 @@ export default function WhoAreYa() {
   }, []);
 
   useEffect(() => {
-    let raid = !!localStorage.getItem('active_game_session_id');
-    const sessionId = localStorage.getItem('active_game_session_id');
-    const sessionSeed = localStorage.getItem('active_game_session_seed');
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    const sessionId = isRaidSession ? localStorage.getItem('active_game_session_id') : localStorage.getItem('active_vs_friends_session_id');
+    const sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
     let player;
     if (isRaidSession || isVsFriendsSession) {
       const seedVal = getRaidSeed(sessionId, sessionSeed);

@@ -640,10 +640,12 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }, []);
 
   useEffect(() => {
-    let raid = !!localStorage.getItem('active_game_session_id');
-    setIsRaid(raid);
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    setIsRaid(isRaidSession);
+    setIsVsFriends(isVsFriendsSession);
 
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       setCurrentIdx(0);
       setXpEarned(0);
       setStreak(0);

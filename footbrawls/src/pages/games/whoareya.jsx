@@ -762,7 +762,7 @@ export default function WhoAreYa() {
     setIsRaid(isRaidSession);
     setIsVsFriends(isVsFriendsSession);
 
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       setGuesses([]);
       setGuessedNames([]);
       setGameOver(false);
@@ -848,7 +848,7 @@ export default function WhoAreYa() {
       let sessionType = null;
       let sessionData = null; let nextActVal = null;
       const user = getUser();
-      if ((isWin || isRaid) && user?.userId) {
+      if ((isWin || isRaid || isVsFriends) && user?.userId) {
         try {
           const res = await awardXP(user.userId, 'whoareya_correct', { rawXP: rawScore, guessNumber: newGuesses.length, solved: isWin });
           finalXP = res?.xpAwarded ?? rawScore;

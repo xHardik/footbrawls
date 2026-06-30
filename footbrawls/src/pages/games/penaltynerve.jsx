@@ -779,7 +779,7 @@ export default function PenaltyNerve({ onBack }) {
         const isRaid = typeof window !== 'undefined' && !!localStorage.getItem('active_game_session_id');
         let sessionType = null;
         let sessionData = null; let nextActVal = null;
-        if (finalXP > 0 || isRaid) {
+        if (finalXP > 0 || isRaid || isVsFriends) {
           try {
             const user = getUser();
             if (!user?.userId) {

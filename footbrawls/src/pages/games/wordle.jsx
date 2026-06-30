@@ -867,7 +867,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       let xp = calcScore;
       let sessionType = null;
       let sessionData = null; let nextActVal = null;
-      if (won || isRaid) {
+      if (won || isRaid || isVsFriends) {
         const user = getUser();
         if (user?.userId) {
           const r = await awardXP(user.userId, "wordle_correct", { rawXP: calcScore, guessNumber: newGuesses.length, solved: won });

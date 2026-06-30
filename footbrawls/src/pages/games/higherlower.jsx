@@ -490,7 +490,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       let sessionData = null;
       const currentUser = getUser();
       const uid = userId || currentUser?.userId;
-      if (uid && (raw > 0 || isRaid)) {
+      if (uid && (raw > 0 || isRaid || isVsFriends)) {
         try {
           const result = await awardXP(uid, "higherLower_correct", { rawXP: raw, streak: streak });
           xp = result?.xpAwarded ?? raw;

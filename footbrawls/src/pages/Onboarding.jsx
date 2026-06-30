@@ -475,7 +475,7 @@ const WC_COUNTRIES = (COUNTRIES || []).filter(c => (WC_2026_TEAMS || []).include
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep]     = useState(1);
-  const [nick, setNick]     = useState('');
+  const [nick, setNick]     = useState(() => 'Player_' + (Math.floor(Math.random() * 90000) + 10000));
   const [home, setHome]     = useState(null);
   const [team, setTeam]     = useState(null);
   const [loading, setLoad]  = useState(false);

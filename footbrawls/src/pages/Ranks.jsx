@@ -621,7 +621,6 @@ export default function Ranks() {
     const unsubUsers = onSnapshot(usersQuery, snap => {
       const list = snap.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(u => u.isBot !== true)
         .slice(0, 50);
       setUsers(list);
     });

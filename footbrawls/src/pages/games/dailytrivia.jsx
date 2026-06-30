@@ -113,6 +113,7 @@ function loadSave(date) {
 }
 
 function persist(date, data) {
+  if (!!localStorage.getItem('active_game_session_id') || !!localStorage.getItem('active_vs_friends_session_id')) return;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify({ date, ...data })); } catch (_) {}
 }
 
@@ -122,6 +123,7 @@ function loadStats() {
 }
 
 function saveStats(score, correct, date) {
+  if (!!localStorage.getItem('active_game_session_id') || !!localStorage.getItem('active_vs_friends_session_id')) return { stats: loadStats(), history: loadHistory() };
   try {
     const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
     history[date] = { score, correct };
@@ -518,11 +520,19 @@ export default function DailyTrivia() {
 
   // ── Load / resume ──
   useEffect(() => {
-    const qs   = pickDailyQuestions(puzzleDate);
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    let seedStr = puzzleDate;
+    if (isRaidSession || isVsFriendsSession) {
+      seedStr = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
+    }
+    const qs   = pickDailyQuestions(seedStr);
     const save = loadSave(puzzleDate);
     setQuestions(qs);
 
-    if (save?.done) {
+    if (isRaidSession || isVsFriendsSession) {
+      setPhase('game');
+    } else if (save?.done) {
       setAnswers(save.answers || []);
       setScore(save.score || 0);
       setXpAwarded(save.xpAwarded ?? null);

@@ -320,10 +320,12 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
   // Load saved state
   useEffect(() => {
-    let raid = !!localStorage.getItem('active_game_session_id');
-    setIsRaid(raid);
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    setIsRaid(isRaidSession);
+    setIsVsFriends(isVsFriendsSession);
 
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       setRound(0);
       setStreak(0);
       setGameOver(false);

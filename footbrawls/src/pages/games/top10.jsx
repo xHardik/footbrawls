@@ -523,10 +523,11 @@ export default function Top10Guess() {
 
   const activeQuestion = useMemo(() => {
     let seed = getDailySeed(puzzleDate);
-    const raid = !!localStorage.getItem('active_game_session_id');
-    const sessionId = localStorage.getItem('active_game_session_id');
-    const sessionSeed = localStorage.getItem('active_game_session_seed');
-    if (raid) {
+    const isRaidSession = !!localStorage.getItem('active_game_session_id');
+    const isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    const sessionId = isRaidSession ? localStorage.getItem('active_game_session_id') : localStorage.getItem('active_vs_friends_session_id');
+    const sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
+    if (isRaidSession || isVsFriendsSession) {
       seed = getRaidSeed(sessionId, sessionSeed);
     }
     const offset = 199;
@@ -537,7 +538,7 @@ export default function Top10Guess() {
   const isClubQuestion = activeQuestion?.question.toLowerCase().includes('club');
 
   function persist(newRevealed, newLives, newWrongGuesses, newPhase, newXpAwarded = null) {
-    if (isRaid) return;
+    if (isRaid || isVsFriends) return;
     const key = `top10_${puzzleDate}_state`;
     localStorage.setItem(key, JSON.stringify({
       revealed: newRevealed,
@@ -550,11 +551,12 @@ export default function Top10Guess() {
   }
 
   useEffect(() => {
-    let isRaid = !!localStorage.getItem('active_game_session_id');
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    setIsRaid(isRaidSession || isVsFriendsSession);
+    setIsVsFriends(isVsFriendsSession);
 
-    setIsRaid(isRaid);
-
-    if (isRaid) {
+    if (isRaidSession || isVsFriendsSession) {
       setPhase('game');
       setRevealed(Array(10).fill(false));
       setLives(1);

@@ -198,7 +198,7 @@ export default function VsFriends() {
         sum += scoreObj.normalized || scoreObj.wins || scoreObj.goals || 0;
       }
     }
-    return sum;
+    return Math.round(sum);
   }, [session]);
 
   const guestTotalPoints = useMemo(() => {
@@ -210,7 +210,7 @@ export default function VsFriends() {
         sum += scoreObj.normalized || scoreObj.wins || scoreObj.goals || 0;
       }
     }
-    return sum;
+    return Math.round(sum);
   }, [session]);
 
   // Overall winner determination logic
@@ -415,6 +415,7 @@ export default function VsFriends() {
               {winnerInfo.text}
             </h1>
 
+            
             <div style={styles.scoreRow}>
               <div style={styles.scoreBox}>
                 <div style={styles.scoreName}>{session.hostName}</div>
@@ -424,6 +425,24 @@ export default function VsFriends() {
                 <div style={styles.scoreName}>{session.guestName}</div>
                 <div style={styles.scoreVal}>{winnerInfo.guestTotalPoints} pts</div>
               </div>
+            </div>
+
+            <div style={styles.breakdownBox}>
+              <h3 style={styles.breakdownTitle}>Match Breakdown</h3>
+              {session.gamesList?.map((g, idx) => {
+                const act = idx + 1;
+                const hs = session.scores?.[session.hostId]?.[`act${act}`];
+                const gs = session.scores?.[session.guestId]?.[`act${act}`];
+                const hScore = Math.round(hs?.normalized || hs?.wins || hs?.goals || 0);
+                const gScore = Math.round(gs?.normalized || gs?.wins || gs?.goals || 0);
+                return (
+                  <div key={idx} style={styles.breakdownRow}>
+                    <div style={styles.bdScore}>{hScore}</div>
+                    <div style={styles.bdGame}>{g.icon} {g.label}</div>
+                    <div style={styles.bdScore}>{gScore}</div>
+                  </div>
+                );
+              })}
             </div>
 
             <button type="button" style={styles.primaryBtn} onClick={leaveLobby}>
@@ -684,8 +703,43 @@ const styles = {
     color: C.muted,
     marginBottom: 4
   },
+  
   scoreVal: {
     fontSize: '2rem',
     fontWeight: 'bold'
+  },
+  breakdownBox: {
+    background: 'rgba(255,255,255,0.02)',
+    border: `1px solid ${C.border}`,
+    borderRadius: 12,
+    padding: '16px',
+    marginBottom: 24,
+    width: '100%',
+    textAlign: 'center'
+  },
+  breakdownTitle: {
+    fontSize: '0.9rem',
+    color: C.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16
+  },
+  breakdownRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '8px 0',
+    borderBottom: `1px solid ${C.border}`,
+  },
+  bdScore: {
+    fontWeight: 'bold',
+    fontSize: '1.2rem',
+    color: C.accent,
+    width: '40px'
+  },
+  bdGame: {
+    flex: 1,
+    fontSize: '0.9rem',
+    color: C.text
   }
 };

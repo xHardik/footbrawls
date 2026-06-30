@@ -307,10 +307,12 @@ export default function DribbleGauntlet() {
     const u = getUser();
     if (u) setUserXP(u.totalXP || 0);
 
-    let raid = !!localStorage.getItem('active_game_session_id');
-    setIsRaid(raid);
+    let isRaidSession = !!localStorage.getItem('active_game_session_id');
+    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+    setIsRaid(isRaidSession);
+    setIsVsFriends(isVsFriendsSession);
 
-    if (raid) {
+    if (isRaidSession || isVsFriendsSession) {
       setAlreadyPlayed(false);
       setXpAwarded(null);
       const s = stRef.current;

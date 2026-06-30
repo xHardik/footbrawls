@@ -88,6 +88,7 @@ export function normScore(gameId, result) {
   else if (cleanId === 'matchpredictor') canonicalId = 'matchPredictor';
   else if (cleanId === 'penaltynerve') canonicalId = 'penaltyNerve';
   else if (cleanId === 'top10') canonicalId = 'top10';
+  else if (cleanId === 'dailytrivia') canonicalId = 'dailyTrivia';
 
   switch (canonicalId) {
     case "whoAreYa":
@@ -104,6 +105,8 @@ export function normScore(gameId, result) {
       return normPenaltyNerve(result.goalsScored, result.totalKicks);
     case "top10":
       return normTop10(result.correctCount ?? result.correct ?? 0);
+    case "dailyTrivia":
+      return result.rawXP || 0;
     default:
       console.warn(`[scoreNorm] Unknown gameId: ${gameId}`);
       return 0;

@@ -475,12 +475,39 @@ export default function DribbleGauntlet() {
       if (r.goal) { calculatedXP += 3; wins++; }
     });
     let earnedXP = 0;
+    let sessionType = null;
+    let sessionData = null;
     try {
       if (user?.userId) {
         const res = await awardXP(user.userId, 'dribble_correct', { rawXP: calculatedXP });
         earnedXP = res?.xpAwarded ?? calculatedXP;
+        sessionType = res?.sessionType;
+        sessionData = res?.session;
       } else { earnedXP = calculatedXP; }
     } catch { earnedXP = calculatedXP; }
+
+    if (sessionType === 'vs_friends') {
+      document.body.insertAdjacentHTML('beforeend', `
+        <div id="vs-friends-loading" style="position:fixed;inset:0;background:rgba(5,7,15,0.95);backdrop-filter:blur(8px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;animation:fadeUp 0.3s ease;">
+          <div style="font-size:3rem;color:#3DD68C;margin-bottom:16px;text-shadow:0 0 20px rgba(61,214,140,0.4);">MATCH COMPLETE!</div>
+          <div style="font-size:1.5rem;color:rgba(255,255,255,0.6);">Loading next act...</div>
+        </div>
+      `);
+      setTimeout(() => {
+        const el = document.getElementById('vs-friends-loading');
+        if (el) el.remove();
+        const uid = getUser()?.userId;
+          let userActCount = 0;
+          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
+          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+        if (nextGame) {
+          navigate(nextGame.route);
+        } else {
+          navigate('/vsfriends');
+        }
+      }, 2500);
+    }
+
     if (isRaid) {
       const activeId = localStorage.getItem('active_game_session_id');
       if (activeId) {

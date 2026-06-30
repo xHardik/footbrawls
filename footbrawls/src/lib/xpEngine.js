@@ -110,7 +110,10 @@ export async function awardXP(userId, source, opts = {}) {
             }
             return { xpAwarded: 0, raidIntercepted: true };
           } else if (session.sessionType === 'vs_friends') {
-            const currentActVal = session.currentAct || 1;
+            let currentActVal = 1;
+            while (session.scores?.[userId]?.[`act${currentActVal}`] !== undefined) {
+              currentActVal++;
+            }
             let normalized = rawScore;
             if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
               normalized = normScore(source, opts);
@@ -126,7 +129,7 @@ export async function awardXP(userId, source, opts = {}) {
                 normalized
               }
             });
-            return { xpAwarded: 0, raidIntercepted: true, skipDailyIncrement: true };
+            return { xpAwarded: 0, raidIntercepted: true, skipDailyIncrement: true, sessionType: session.sessionType, session: session };
           }
         }
       }

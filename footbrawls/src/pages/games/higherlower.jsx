@@ -423,12 +423,16 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       if (newStreak >= 10) {
         const raw = MAX_XP;
         let xp = 0;
+        let sessionType = null;
+        let sessionData = null;
         const currentUser = getUser();
         const uid = userId || currentUser?.userId;
         if (uid && raw > 0) {
           try {
             const result = await awardXP(uid, "higherLower_correct", { rawXP: raw, streak: newStreak });
             xp = result?.xpAwarded ?? raw;
+            sessionType = result?.sessionType;
+            sessionData = result?.session;
           } catch (e) {
             console.error('[HigherLower] awardXP failed:', e);
             xp = raw;
@@ -440,6 +444,29 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           setStreak(newStreak);
           setGameOver(true);
           setXpAwarded(xp);
+
+          if (sessionType === 'vs_friends') {
+            document.body.insertAdjacentHTML('beforeend', `
+              <div id="vs-friends-loading" style="position:fixed;inset:0;background:rgba(5,7,15,0.95);backdrop-filter:blur(8px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;animation:fadeUp 0.3s ease;">
+                <div style="font-size:3rem;color:#3DD68C;margin-bottom:16px;text-shadow:0 0 20px rgba(61,214,140,0.4);">MATCH COMPLETE!</div>
+                <div style="font-size:1.5rem;color:rgba(255,255,255,0.6);">Loading next act...</div>
+              </div>
+            `);
+            setTimeout(() => {
+              const el = document.getElementById('vs-friends-loading');
+              if (el) el.remove();
+              const uid = getUser()?.userId;
+          let userActCount = 0;
+          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
+          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+              if (nextGame) {
+                navigate(nextGame.route);
+              } else {
+                navigate('/vsfriends');
+              }
+            }, 2500);
+          }
+
           if (isRaid) {
             const activeId = localStorage.getItem('active_game_session_id');
             if (activeId) {
@@ -461,12 +488,16 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     } else {
       const raw = STREAK_XP[Math.min(10, streak)];
       let xp = 0;
+      let sessionType = null;
+      let sessionData = null;
       const currentUser = getUser();
       const uid = userId || currentUser?.userId;
       if (uid && (raw > 0 || isRaid)) {
         try {
           const result = await awardXP(uid, "higherLower_correct", { rawXP: raw, streak: streak });
           xp = result?.xpAwarded ?? raw;
+          sessionType = result?.sessionType;
+          sessionData = result?.session;
         } catch (e) {
           console.error('[HigherLower] awardXP failed:', e);
           xp = raw;
@@ -477,6 +508,29 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       setTimeout(() => {
         setGameOver(true);
         setXpAwarded(xp);
+
+        if (sessionType === 'vs_friends') {
+          document.body.insertAdjacentHTML('beforeend', `
+            <div id="vs-friends-loading" style="position:fixed;inset:0;background:rgba(5,7,15,0.95);backdrop-filter:blur(8px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;animation:fadeUp 0.3s ease;">
+              <div style="font-size:3rem;color:#3DD68C;margin-bottom:16px;text-shadow:0 0 20px rgba(61,214,140,0.4);">MATCH COMPLETE!</div>
+              <div style="font-size:1.5rem;color:rgba(255,255,255,0.6);">Loading next act...</div>
+            </div>
+          `);
+          setTimeout(() => {
+            const el = document.getElementById('vs-friends-loading');
+            if (el) el.remove();
+            const uid = getUser()?.userId;
+          let userActCount = 0;
+          while (sessionData?.scores?.[uid]?.["act" + (userActCount + 1)] !== undefined) { userActCount++; }
+          const nextGame = sessionData?.gamesList?.[userActCount + 1];
+            if (nextGame) {
+              navigate(nextGame.route);
+            } else {
+              navigate('/vsfriends');
+            }
+          }, 2500);
+        }
+
         if (isRaid) {
           const activeId = localStorage.getItem('active_game_session_id');
           if (activeId) {

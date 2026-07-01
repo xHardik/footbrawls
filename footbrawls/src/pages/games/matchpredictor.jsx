@@ -122,13 +122,13 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'gs_H5', home:'Uruguay',      away:'Spain',                 kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   { id:'gs_H6', home:'Cape Verde',   away:'Saudi Arabia',          kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   
-  { id:'r32_01', home:'South Africa',away:'Canada',                kickoff:'2026-06-28T19:00:00Z', stage:'Round of 32 · M73', done:false },
-  { id:'r32_02', home:'Germany',     away:'Paraguay',              kickoff:'2026-06-29T17:00:00Z', stage:'Round of 32 · M74', done:false },
-  { id:'r32_03', home:'Netherlands', away:'Morocco',               kickoff:'2026-06-29T21:00:00Z', stage:'Round of 32 · M75', done:false },
-  { id:'r32_04', home:'Brazil',      away:'Japan',                 kickoff:'2026-06-29T23:30:00Z', stage:'Round of 32 · M76', done:false },
-  { id:'r32_05', home:'France',      away:'Sweden',                kickoff:'2026-06-30T18:00:00Z', stage:'Round of 32 · M77', done:false },
-  { id:'r32_06', home:'Ivory Coast', away:'Norway',                kickoff:'2026-06-30T21:00:00Z', stage:'Round of 32 · M78', done:false },
-  { id:'r32_07', home:'Mexico',      away:'Ecuador',               kickoff:'2026-06-30T23:30:00Z', stage:'Round of 32 · M79', done:false },
+  { id:'r32_01', home:'South Africa',away:'Canada',                kickoff:'2026-06-28T19:00:00Z', stage:'Round of 32 · M73', done:true, hs:2, as:1 },
+  { id:'r32_02', home:'Germany',     away:'Paraguay',              kickoff:'2026-06-29T17:00:00Z', stage:'Round of 32 · M74', done:true, hs:3, as:0 },
+  { id:'r32_03', home:'Netherlands', away:'Morocco',               kickoff:'2026-06-29T21:00:00Z', stage:'Round of 32 · M75', done:true, hs:1, as:2 },
+  { id:'r32_04', home:'Brazil',      away:'Japan',                 kickoff:'2026-06-29T23:30:00Z', stage:'Round of 32 · M76', done:true, hs:2, as:1 },
+  { id:'r32_05', home:'France',      away:'Sweden',                kickoff:'2026-06-30T18:00:00Z', stage:'Round of 32 · M77', done:true, hs:4, as:0 },
+  { id:'r32_06', home:'Ivory Coast', away:'Norway',                kickoff:'2026-06-30T21:00:00Z', stage:'Round of 32 · M78', done:true, hs:1, as:3 },
+  { id:'r32_07', home:'Mexico',      away:'Ecuador',               kickoff:'2026-06-30T23:30:00Z', stage:'Round of 32 · M79', done:true, hs:1, as:2 },
   { id:'r32_08', home:'England',     away:'DR Congo',              kickoff:'2026-07-01T18:00:00Z', stage:'Round of 32 · M80', done:false },
   { id:'r32_09', home:'USA',         away:'Bosnia and Herzegovina',kickoff:'2026-07-01T21:00:00Z', stage:'Round of 32 · M81', done:false },
   { id:'r32_10', home:'Belgium',     away:'Senegal',               kickoff:'2026-07-01T23:30:00Z', stage:'Round of 32 · M82', done:false },
@@ -300,7 +300,7 @@ function groupByDate(fixtures) {
   const map = {};
   for (const f of fixtures) {
     const ms = new Date(f.kickoff).getTime();
-    const dateKey = new Date(f.kickoff).toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+    const dateKey = new Date(f.kickoff).toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', timeZone:'UTC' });
     if (!map[dateKey]) map[dateKey] = { ms, items: [] };
     map[dateKey].items.push(f);
   }
@@ -876,7 +876,7 @@ export default function MatchPredictor() {
               const grouped = {};
               for (const f of filteredSchedule) {
                 const dateKey = new Date(f.kickoff).toLocaleDateString(undefined, {
-                  weekday: 'long', month: 'long', day: 'numeric'
+                  weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC'
                 });
                 if (!grouped[dateKey]) grouped[dateKey] = { ts: new Date(f.kickoff).getTime(), items: [] };
                 grouped[dateKey].items.push(f);
@@ -920,7 +920,7 @@ export default function MatchPredictor() {
                           {f.done
                             ? <span className="mp2-sched-ft-badge">FT</span>
                             : <span className="mp2-sched-time">
-                                {new Date(f.kickoff).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+                                {new Date(f.kickoff).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC', timeZoneName: 'short' })}
                                 <span className="mp2-sched-predict-cta">· Tap to predict →</span>
                               </span>
                           }

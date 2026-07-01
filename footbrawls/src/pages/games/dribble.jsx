@@ -316,7 +316,7 @@ export default function DribbleGauntlet() {
       setAlreadyPlayed(false);
       setXpAwarded(null);
       const s = stRef.current;
-      s.phase = 'rules';
+      s.phase = 'dribble';
       s.results = [];
       repaint();
       return;

@@ -337,9 +337,12 @@ export default function VsFriends() {
         {errorMsg && <div style={styles.errorCard}>{errorMsg}</div>}
 
         {mode === 'menu' && (
-          <div style={styles.card}>
-            <h1 style={styles.title}>Play Head-to-Head</h1>
-            <p style={styles.desc}>Select exactly 5 games below, host a lobby, and share the code to play live against your friend!</p>
+          <div style={{...styles.card, padding: '32px 24px', background: 'linear-gradient(180deg, rgba(12,15,26,0.9), rgba(6,8,16,0.95))', boxShadow: `0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)`, position: 'relative', overflow: 'hidden'}}>
+            {/* Background ambient glow */}
+            <div style={{position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 250, height: 250, background: `radial-gradient(circle, ${C.green}30 0%, transparent 70%)`, filter: 'blur(40px)', pointerEvents: 'none'}} />
+            
+            <h1 style={{...styles.title, fontSize: '2.5rem', color: '#fff', textShadow: `0 0 20px rgba(255,255,255,0.2)`}}>CLASH HEAD-TO-HEAD</h1>
+            <p style={{...styles.desc, fontSize: '0.95rem', color: 'rgba(255,255,255,0.6)', maxWidth: 360, margin: '0 auto 24px'}}>Select exactly 5 games, host a lobby, and share the code to battle your friends in real-time!</p>
 
             <div style={styles.gamesSelectGrid}>
               {GAMES_POOL.map(g => {
@@ -351,43 +354,57 @@ export default function VsFriends() {
                     onClick={() => toggleGameSelect(g.id)}
                     style={{
                       ...styles.gameSelectorOption,
-                      border: selected ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
-                      background: selected ? 'rgba(247,195,68,0.1)' : 'rgba(255,255,255,0.02)'
+                      border: selected ? `1px solid ${C.green}` : `1px solid rgba(255,255,255,0.05)`,
+                      background: selected ? `linear-gradient(135deg, ${C.green}20, ${C.green}05)` : 'rgba(255,255,255,0.02)',
+                      boxShadow: selected ? `0 4px 15px ${C.green}20, inset 0 1px 0 rgba(255,255,255,0.1)` : 'none',
+                      transform: selected ? 'translateY(-2px)' : 'none'
                     }}
                   >
-                    <span style={{ fontSize: 20 }}>{g.icon}</span>
-                    <span style={{ fontSize: 11, fontFamily:"'Orbitron',sans-serif", color: selected ? C.accent : C.text }}>{g.label}</span>
+                    <div style={{ 
+                      width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                      background: selected ? `rgba(61,214,140,0.15)` : 'rgba(255,255,255,0.05)',
+                      fontSize: 16
+                    }}>
+                      {g.icon}
+                    </div>
+                    <span style={{ fontSize: 11.5, fontFamily:"'Syne',sans-serif", fontWeight: 700, color: selected ? '#fff' : 'rgba(255,255,255,0.5)', letterSpacing: 0.5 }}>{g.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            <div style={{ margin: '14px 0', fontSize: 12, color: C.muted }}>
-              Selected: <strong style={{ color: C.accent }}>{selectedGames.length}/5</strong>
+            <div style={{ margin: '20px 0', fontSize: 12, color: 'rgba(255,255,255,0.4)', fontFamily:"'Space Mono',monospace" }}>
+              SELECTED: <span style={{ color: selectedGames.length === 5 ? C.green : '#fff', fontWeight: 700 }}>{selectedGames.length}/5</span>
             </div>
 
-            <div style={styles.actionContainer}>
+            <div style={{...styles.actionContainer, marginTop: 16}}>
               <button
                 type="button"
-                style={{ ...styles.primaryBtn, opacity: selectedGames.length === 5 ? 1 : 0.5 }}
+                style={{ 
+                  ...styles.primaryBtn, 
+                  opacity: selectedGames.length === 5 ? 1 : 0.4,
+                  background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
+                  color: '#000',
+                  boxShadow: selectedGames.length === 5 ? `0 8px 25px rgba(61,214,140,0.4)` : 'none'
+                }}
                 disabled={selectedGames.length !== 5 || loading}
                 onClick={startHosting}
               >
-                {loading ? 'Creating Lobby...' : 'Host Friendly Match'}
+                {loading ? 'INITIALIZING...' : 'HOST MATCH'}
               </button>
 
-              <div style={styles.divider}>OR JOIN A ROOM</div>
+              <div style={styles.divider}>OR JOIN MATCH</div>
 
               <div style={styles.joinInputGroup}>
                 <input
                   type="text"
-                  placeholder="6-digit Lobby Code"
-                  style={styles.input}
+                  placeholder="6-DIGIT CODE"
+                  style={{...styles.input, textAlign: 'center', letterSpacing: 4, fontFamily: "'Space Mono', monospace", fontWeight: 700, fontSize: '1.1rem'}}
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 />
-                <button type="button" style={styles.secondaryBtn} onClick={joinLobby} disabled={loading}>
-                  {loading ? 'Joining...' : 'Join Lobby'}
+                <button type="button" style={{...styles.secondaryBtn, background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#fff'}} onClick={joinLobby} disabled={loading || inputCode.length !== 6}>
+                  {loading ? 'JOINING...' : 'JOIN'}
                 </button>
               </div>
             </div>
@@ -477,44 +494,90 @@ export default function VsFriends() {
         )}
 
         {mode === 'results' && session && winnerInfo && (
-          <div style={styles.card}>
-            <h2 style={styles.winTitle}>Tournament Finished</h2>
-            <h1 style={{ ...styles.winnerText, color: winnerInfo.winnerId === user.userId ? C.green : winnerInfo.winnerId ? C.red : C.muted }}>
+          <div style={{...styles.card, padding: '36px 24px', background: 'linear-gradient(180deg, rgba(12,15,26,0.9), rgba(6,8,16,0.95))', boxShadow: `0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)`, position: 'relative', overflow: 'hidden'}}>
+            
+            {/* Dynamic Win/Loss Gradient Aura */}
+            <div style={{
+              position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', 
+              width: 300, height: 300, 
+              background: winnerInfo.winnerId === user.userId 
+                ? `radial-gradient(circle, rgba(61,214,140,0.2) 0%, transparent 70%)` 
+                : winnerInfo.winnerId 
+                  ? `radial-gradient(circle, rgba(232,64,64,0.15) 0%, transparent 70%)`
+                  : `radial-gradient(circle, rgba(242,242,244,0.1) 0%, transparent 70%)`,
+              filter: 'blur(50px)', pointerEvents: 'none'
+            }} />
+
+            <div style={{fontFamily: "'Space Mono', monospace", fontSize: '0.7rem', letterSpacing: 3, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginBottom: 12}}>Tournament Concluded</div>
+            
+            <h1 style={{ 
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: '4rem', lineHeight: 1, letterSpacing: 2, marginBottom: 32,
+              color: winnerInfo.winnerId === user.userId ? C.green : winnerInfo.winnerId ? C.red : '#fff',
+              textShadow: winnerInfo.winnerId === user.userId ? `0 0 30px rgba(61,214,140,0.5)` : winnerInfo.winnerId ? `0 0 30px rgba(232,64,64,0.5)` : `0 0 20px rgba(255,255,255,0.2)`
+            }}>
               {winnerInfo.text}
             </h1>
 
-            
-            <div style={styles.scoreRow}>
-              <div style={styles.scoreBox}>
-                <div style={styles.scoreName}>{session.hostName}</div>
-                <div style={styles.scoreVal}>{winnerInfo.hostTotalPoints} pts</div>
+            {/* Head to Head Score Row */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 16, border: winnerInfo.winnerId === session.hostId ? `1px solid ${C.green}40` : '1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize: '2rem', marginBottom: 8, filter: `drop-shadow(0 0 10px rgba(255,255,255,0.2))` }}>{session.hostFlag}</span>
+                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>{session.hostName}</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: '#fff', letterSpacing: 1 }}>{winnerInfo.hostTotalPoints}</span>
               </div>
-              <div style={styles.scoreBox}>
-                <div style={styles.scoreName}>{session.guestName}</div>
-                <div style={styles.scoreVal}>{winnerInfo.guestTotalPoints} pts</div>
+              
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '1.2rem', color: 'rgba(255,255,255,0.2)', fontWeight: 700 }}>VS</div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 16, border: winnerInfo.winnerId === session.guestId ? `1px solid ${C.green}40` : '1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize: '2rem', marginBottom: 8, filter: `drop-shadow(0 0 10px rgba(255,255,255,0.2))` }}>{session.guestFlag}</span>
+                <span style={{ fontFamily: "'Syne', sans-serif", fontSize: '0.8rem', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>{session.guestName}</span>
+                <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: '2.5rem', color: '#fff', letterSpacing: 1 }}>{winnerInfo.guestTotalPoints}</span>
               </div>
             </div>
 
-            <div style={styles.breakdownBox}>
-              <h3 style={styles.breakdownTitle}>Match Breakdown</h3>
-              {session.gamesList?.map((g, idx) => {
-                const act = idx + 1;
-                const hs = session.scores?.[session.hostId]?.[`act${act}`];
-                const gs = session.scores?.[session.guestId]?.[`act${act}`];
-                const hScore = Math.round(hs?.normalized || hs?.wins || hs?.goals || 0);
-                const gScore = Math.round(gs?.normalized || gs?.wins || gs?.goals || 0);
-                return (
-                  <div key={idx} style={styles.breakdownRow}>
-                    <div style={styles.bdScore}>{hScore}</div>
-                    <div style={styles.bdGame}>{g.icon} {g.label}</div>
-                    <div style={styles.bdScore}>{gScore}</div>
-                  </div>
-                );
-              })}
+            <div style={{ 
+              background: 'rgba(0,0,0,0.3)', borderRadius: 16, padding: '20px 16px', marginBottom: 32,
+              border: '1px solid rgba(255,255,255,0.03)'
+            }}>
+              <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '0.85rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, textAlign: 'left' }}>Performance Breakdown</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {session.gamesList?.map((g, idx) => {
+                  const act = idx + 1;
+                  const hs = session.scores?.[session.hostId]?.[`act${act}`];
+                  const gs = session.scores?.[session.guestId]?.[`act${act}`];
+                  const hScore = Math.round(hs?.normalized || hs?.wins || hs?.goals || 0);
+                  const gScore = Math.round(gs?.normalized || gs?.wins || gs?.goals || 0);
+                  
+                  // Calculate progress bar widths
+                  const maxPossible = Math.max(1, hScore + gScore);
+                  const hPct = (hScore / maxPossible) * 100;
+                  const gPct = (gScore / maxPossible) * 100;
+
+                  return (
+                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontFamily: "'Syne', sans-serif" }}>
+                        <span style={{ color: hScore > gScore ? C.green : 'rgba(255,255,255,0.6)', fontWeight: hScore > gScore ? 700 : 400 }}>{hScore}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{g.icon} {g.label}</span>
+                        <span style={{ color: gScore > hScore ? C.green : 'rgba(255,255,255,0.6)', fontWeight: gScore > hScore ? 700 : 400 }}>{gScore}</span>
+                      </div>
+                      <div style={{ display: 'flex', width: '100%', height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${hPct}%`, background: hScore > gScore ? C.green : 'rgba(255,255,255,0.3)', transition: 'width 1s ease' }} />
+                        <div style={{ width: `${gPct}%`, background: gScore > hScore ? C.green : 'rgba(255,255,255,0.3)', transition: 'width 1s ease' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <button type="button" style={styles.primaryBtn} onClick={leaveLobby}>
-              Back to Menu
+            <button type="button" style={{
+              ...styles.primaryBtn,
+              background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
+              color: '#000', padding: '14px 0', fontSize: '1rem',
+              boxShadow: `0 8px 25px rgba(61,214,140,0.3)`
+            }} onClick={leaveLobby}>
+              RETURN TO MENU
             </button>
           </div>
         )}

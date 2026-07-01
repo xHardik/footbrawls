@@ -387,18 +387,7 @@ function CastleTab({ guild, user }) {
           ))}
         </div>
       </div>
-      <div className="fb-stat-row">
-        {[
-          { val:warRecord.wins,     lbl:"Raid Wins",   color:"var(--green)" },
-          { val:warRecord.losses,   lbl:"Raid Losses", color:"var(--red)"   },
-          { val:warRecord.draws??0, lbl:"Draws",       color:"var(--muted)" },
-        ].map(s => (
-          <div key={s.lbl} className="fb-stat-tile">
-            <span className="fb-stat-num" style={{ color:s.color }}>{s.val}</span>
-            <span className="fb-stat-lbl">{s.lbl}</span>
-          </div>
-        ))}
-      </div>
+
       <div>
         <div className="fb-section-hdr"><span className="fb-section-label">XP Split</span><div className="fb-section-line"/></div>
         <div style={{ display:"flex", gap:12 }}>

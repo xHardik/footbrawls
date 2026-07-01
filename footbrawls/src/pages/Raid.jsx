@@ -1015,7 +1015,7 @@ export default function Raid() {
       {/* ── Nav ── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 200,
-        display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '0 24px', height: 58,
         background: 'rgba(5,7,15,0.85)', backdropFilter: 'blur(24px) saturate(1.4)',
         borderBottom: `1px solid ${T.gold}25`,

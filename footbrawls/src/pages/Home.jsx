@@ -1240,7 +1240,7 @@ function ActionButtons({ onRaid, onFriends }) {
         </div>
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:rH?"0 0 20px rgba(168,85,247,0.6)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(168,85,247,0.6)",letterSpacing:1,marginTop:5}}>STAGE 5 · TEAM UP</div>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(168,85,247,0.6)",letterSpacing:1,marginTop:5}}>BUCKLE UP · TEAM UP</div>
         </div>
         <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.purple,background:rH?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",border:`1px solid rgba(168,85,247,${rH?0.55:0.25})`,textTransform:"uppercase",boxShadow:rH?"0 0 14px rgba(168,85,247,0.35)":"none",transition:"all 0.2s"}}>JOIN RAID →</div>
       </div>
@@ -1728,6 +1728,7 @@ export default function Home() {
     setLocalUser(u);
     localStorage.removeItem('active_game_session_id');
     localStorage.removeItem('active_game_session_seed');
+    localStorage.removeItem('active_vs_friends_session_id');
   }, []);
 
   useEffect(() => { const t = setInterval(() => setMockSecs(s => Math.max(0,s-1)), 1000); return () => clearInterval(t); }, []);

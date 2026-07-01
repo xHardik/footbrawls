@@ -1,6 +1,6 @@
-// src/pages/games/whoareya.jsx
-// Football "Who Are Ya?" — Footbrawls edition
-// UI faithfully ported from cricket to football with Google AdBreak integration
+
+
+
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ const SCORES = [25, 23, 21, 19, 17, 15, 13, 11];
 const STATS_KEY = 'footbrawls_whoareya_stats';
 const HISTORY_KEY = 'footbrawls_whoareya_history';
 
-// ─── Continent/Region Map for Football Players ────────────────────────────────
+
 const COUNTRY_REGIONS = {
   ARG: 'South America',
   BRA: 'South America',
@@ -47,7 +47,7 @@ const COUNTRY_REGIONS = {
   JPN: 'Asia'
 };
 
-// ─── Injected CSS ──────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
@@ -573,7 +573,7 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 }
 `;
 
-// Initialize Google AdBreak queue safely
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
@@ -604,21 +604,21 @@ if (typeof window !== "undefined") {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+
 function roleBadgeClass(position) {
   if (!position) return '';
   const p = position.toLowerCase();
-  if (p.includes('forward')) return 'batter';      // mapping to yellow badge CSS
-  if (p.includes('midfielder')) return 'allround';  // mapping to blue badge CSS
-  if (p.includes('defender')) return 'bowler';      // mapping to red badge CSS
-  if (p.includes('goalkeeper')) return 'wk';        // mapping to green badge CSS
+  if (p.includes('forward')) return 'batter';      
+  if (p.includes('midfielder')) return 'allround';  
+  if (p.includes('defender')) return 'bowler';      
+  if (p.includes('goalkeeper')) return 'wk';        
   return '';
 }
 
 function evaluateGuess(guess, target) {
   const sameCountry = guess.countryCode === target.countryCode;
   
-  // Continent/Region determination
+  
   const guessRegion = COUNTRY_REGIONS[guess.countryCode] || 'Other';
   const targetRegion = COUNTRY_REGIONS[target.countryCode] || 'Other';
   const sameRegion = !sameCountry && guessRegion === targetRegion;
@@ -700,7 +700,7 @@ function saveResult(puzzleDate, won, score) {
   return { stats, history };
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+
 export default function WhoAreYa() {
   const navigate = useNavigate();
   const [target, setTarget]           = useState(null);
@@ -717,7 +717,7 @@ export default function WhoAreYa() {
   const [isRaid, setIsRaid] = useState(false);
   const [isVsFriends, setIsVsFriends] = useState(false);
   
-  // Rewarded ad hint state
+  
   const [unlockedHints, setUnlockedHints] = useState({ position: false, country: false, club: false });
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [loadingKey, setLoadingKey] = useState(null);
@@ -735,7 +735,7 @@ export default function WhoAreYa() {
     setTimeout(() => setMsg(null), duration);
   }
 
-  // Inject CSS once
+  
   useEffect(() => {
     if (!document.getElementById('wya-injected-css')) {
       const s = document.createElement('style');
@@ -785,7 +785,7 @@ export default function WhoAreYa() {
     }
   }, [puzzleDate]);
 
-  // Dropdown filtering
+  
   useEffect(() => {
     if (!search.trim()) { setDropdown([]); return; }
     const q = search.toLowerCase();
@@ -886,7 +886,7 @@ export default function WhoAreYa() {
           localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
         }
       } else {
-        // Single mode animations & scroll
+        
         if (isWin) {
           triggerWinConfetti();
         } else {
@@ -913,7 +913,7 @@ export default function WhoAreYa() {
         setStats(s); setHistory(h);
       }
     } else {
-      // Just save incremental progress
+      
       if (!(isRaid || isVsFriends)) {
         try {
           localStorage.setItem('footbrawls_whoareya', JSON.stringify({
@@ -959,7 +959,7 @@ export default function WhoAreYa() {
         <div className="wya-bg-layer" />
         <div className="wya-noise" />
 
-        {/* Msg Banner */}
+        
         {msg && (
           <div style={{
             position: "fixed", top: "80px", left: "50%", transform: "translateX(-50%)",
@@ -972,10 +972,10 @@ export default function WhoAreYa() {
           </div>
         )}
 
-        {/* How to Play Modal */}
+        
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
-        {/* NAV */}
+        
         <nav className="wya-nav">
           <div style={{display:'flex', alignItems:'center', gap:8}}><img src="/logo.png" alt="Logo" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />{!(isRaid || isVsFriends) && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}</div>
           {isVsFriends ? (
@@ -994,14 +994,14 @@ export default function WhoAreYa() {
           </div>
         </nav>
 
-        {/* MAIN */}
+        
         <main className="wya-main">
           <header className="wya-page-header">
             <h1>Who Are Ya?</h1>
             <p>Guess the mystery footballer in {MAX_ATTEMPTS} tries</p>
           </header>
 
-          {/* Attempts Indicator */}
+          
           <div className="wya-attempts-indicator">
             <div className="wya-attempts-label">
               {gameOver ? 'Game Finished' : `${attemptsLeft} guesses left`}
@@ -1017,7 +1017,7 @@ export default function WhoAreYa() {
             </div>
           </div>
 
-          {/* Hint Strip */}
+          
           <div className="wya-hint-strip">
             <HintPill 
               icon="🧢" 
@@ -1048,14 +1048,14 @@ export default function WhoAreYa() {
             />
           </div>
 
-          {/* Legend */}
+          
           <div className="wya-legend-bar">
             <div className="wya-legend-item"><div className="wya-legend-dot green" />Correct</div>
             <div className="wya-legend-item"><div className="wya-legend-dot yellow" />Close</div>
             <div className="wya-legend-item"><div className="wya-legend-dot red" />Wrong</div>
           </div>
 
-          {/* Search */}
+          
           {!gameOver && (
             <div className="wya-search-wrapper">
               <input
@@ -1094,7 +1094,7 @@ export default function WhoAreYa() {
             </div>
           )}
 
-          {/* Column Headers */}
+          
           {guesses.length > 0 && (
             <div className="wya-col-headers">
               {['Player', 'Country', 'Pos', 'Club', 'Age', 'Foot'].map(h => (
@@ -1103,7 +1103,7 @@ export default function WhoAreYa() {
             </div>
           )}
 
-          {/* Guess Rows */}
+          
           <div className="wya-guesses-wrap">
             {[...guesses].reverse().map((g, rowI) => (
               <div key={`${animKey}-${rowI}`} className="wya-guess-row">
@@ -1112,7 +1112,7 @@ export default function WhoAreYa() {
             ))}
           </div>
 
-          {/* Result Card */}
+          
           {gameOver && (
             <div className="wya-result-card">
               <div className={`wya-result-badge ${won ? 'win' : 'lose'}`}>
@@ -1192,14 +1192,14 @@ export default function WhoAreYa() {
             </div>
           )}
 
-          {/* Dashboard */}
+          
           <div className="wya-bottom-section">
             <div className="wya-section-divider">
               <span className="wya-section-label">Your Progress</span>
               <div className="wya-section-line" />
             </div>
             <div className="wya-dashboard-grid">
-              {/* Streak Card */}
+              
               <div className="wya-dash-card">
                 <div className="wya-dash-card-hdr">
                   <span className="wya-dash-icon">📅</span>
@@ -1212,7 +1212,7 @@ export default function WhoAreYa() {
                   <span><span className="wya-dot-sample today" />Today</span>
                 </div>
               </div>
-              {/* Stats Card */}
+              
               <div className="wya-dash-card">
                 <div className="wya-dash-card-hdr">
                   <span className="wya-dash-icon">📊</span>
@@ -1234,7 +1234,7 @@ export default function WhoAreYa() {
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+
 function HintPill({ icon, label, value, revealed, onClick, loading, isRaid, isVsFriends }) {
   const showClickable = !revealed && !loading && !(isRaid || isVsFriends);
   return (
@@ -1322,7 +1322,7 @@ function StreakDots({ history, puzzleDate, gameOver, won, xpAwarded, attempts })
     dots.push({ cls, xp });
   }
 
-  // Slice to last 30 entries
+  
   const last30Dots = dots.slice(-30);
 
   return (

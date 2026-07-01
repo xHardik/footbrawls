@@ -1,5 +1,5 @@
-// src/components/Nav.jsx
-// Top navigation bar — logo, XP bar, tier badge, midnight countdown
+
+
 
 import { useState, useEffect } from "react";
 import { getUser } from "../lib/user";
@@ -18,7 +18,7 @@ const C = {
   muted2:  "rgba(242,242,244,0.28)",
 };
 
-// ─── Tier config ──────────────────────────────────────────────────────────────
+
 const TIERS = [
   { name: "lurker",  min: 0,   color: C.muted,   bg: "rgba(242,242,244,0.05)", label: "LURKER"  },
   { name: "fan",     min: 50,  color: C.blue,    bg: "rgba(79,142,247,0.15)",  label: "FAN"     },
@@ -31,7 +31,7 @@ function getTier(totalXP = 0) {
   return [...TIERS].reverse().find(t => totalXP >= t.min) || TIERS[0];
 }
 
-// ─── Midnight countdown ───────────────────────────────────────────────────────
+
 function getMsUntilMidnightUTC() {
   const now = new Date();
   const midnight = new Date();
@@ -48,7 +48,7 @@ function formatCountdown(ms) {
   return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
 }
 
-// ─── XP Bar ───────────────────────────────────────────────────────────────────
+
 const DAILY_CAP = 200;
 
 function XPBar({ dailyXP = 0, tier }) {
@@ -76,18 +76,18 @@ function XPBar({ dailyXP = 0, tier }) {
   );
 }
 
-// ─── Main Nav ─────────────────────────────────────────────────────────────────
+
 export default function Nav() {
   const [user, setUser]           = useState(null);
   const [countdown, setCountdown] = useState(getMsUntilMidnightUTC());
 
-  // Load user
+  
   useEffect(() => {
     const u = getUser();
     setUser(u);
   }, []);
 
-  // Countdown tick
+  
   useEffect(() => {
     const id = setInterval(() => {
       setCountdown(getMsUntilMidnightUTC());
@@ -104,7 +104,7 @@ export default function Nav() {
     <>
       <style>{NAV_CSS}</style>
       <nav style={s.nav}>
-        {/* Logo */}
+        
         <a href="/" style={s.logo}>
           <span style={s.logoIcon}>⚽</span>
           <span style={s.logoText}>
@@ -113,23 +113,23 @@ export default function Nav() {
           </span>
         </a>
 
-        {/* Right side */}
+        
         <div style={s.right}>
-          {/* Countdown */}
+          
           <div style={s.countdown} title="Time until daily reset (UTC midnight)">
             <span style={s.countdownIcon}>🕛</span>
             <span style={s.countdownTime}>{formatCountdown(countdown)}</span>
           </div>
 
-          {/* User chip */}
+          
           {user ? (
             <div style={s.userChip}>
-              {/* XP bar + label stacked above */}
+              
               <div style={s.xpSection}>
                 <XPBar dailyXP={effectiveDailyXP} tier={tier} />
               </div>
 
-              {/* Flag + nickname + tier badge */}
+              
               <div style={s.identity}>
                 <span style={s.flag}>{user.flag || "🏳️"}</span>
                 <span style={s.nickname}>{user.nickname || "Player"}</span>
@@ -156,7 +156,7 @@ export default function Nav() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const s = {
   nav: {
     position: "sticky",
@@ -173,7 +173,7 @@ const s = {
     borderBottom: `1px solid ${C.border}`,
   },
 
-  // Logo
+  
   logo: {
     display: "flex",
     alignItems: "center",
@@ -193,14 +193,14 @@ const s = {
   logoBrawls: { color: C.green },
   logoGg: { color: C.muted, fontSize: 14 },
 
-  // Right cluster
+  
   right: {
     display: "flex",
     alignItems: "center",
     gap: 12,
   },
 
-  // Countdown
+  
   countdown: {
     display: "flex",
     alignItems: "center",
@@ -220,7 +220,7 @@ const s = {
     letterSpacing: 1,
   },
 
-  // User chip
+  
   userChip: {
     display: "flex",
     flexDirection: "column",
@@ -232,7 +232,7 @@ const s = {
     minWidth: 140,
   },
 
-  // XP section
+  
   xpSection: { width: "100%" },
   xpWrap: {
     display: "flex",
@@ -261,7 +261,7 @@ const s = {
     textAlign: "right",
   },
 
-  // Identity row
+  
   identity: {
     display: "flex",
     alignItems: "center",
@@ -288,7 +288,7 @@ const s = {
     flexShrink: 0,
   },
 
-  // Join button (no user)
+  
   joinBtn: {
     fontFamily: "'Barlow Condensed', sans-serif",
     fontWeight: 700,

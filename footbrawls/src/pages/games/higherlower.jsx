@@ -1,13 +1,4 @@
-/**
- * HigherLower.jsx
- * Compare two players on age, caps, goals, and market value.
- * Streak-based — keep going until you get one wrong.
- * Daily seed determines the starting pair; each correct answer advances
- * to the next player in the seeded sequence.
- *
- * Usage:
- *   <HigherLower players={playersArray} userId={uid} onComplete={(result) => {}} />
- */
+
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -44,7 +35,7 @@ function getSequencedPlayer(players, roundOffset) {
   if (raid) {
     seed = getRaidSeed(sessionId, sessionSeed);
   }
-  const baseOffset = 67; // GAME_OFFSETS.higherLower
+  const baseOffset = 67; 
   return players[(seed + baseOffset + roundOffset) % players.length];
 }
 
@@ -110,7 +101,7 @@ function loadHistoryAndStats() {
   }
 }
 
-// ─── Ad helper ────────────────────────────────────────────────────────────────
+
 
 const adBreak = (options) => {
   if (window.adBreak) {
@@ -135,7 +126,7 @@ const adBreak = (options) => {
   }
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+
 
 function RulesModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
@@ -269,7 +260,7 @@ function StreakDots({ history, puzzleDate, gameOver, currentStreak }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+
 
 export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const navigate = useNavigate();
@@ -277,7 +268,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   const [streak, setStreak]       = useState(0);
   const [gameOver, setGameOver]   = useState(false);
   const [revealed, setRevealed]   = useState(false);
-  const [animState, setAnimState] = useState(null); // "correct" | "wrong"
+  const [animState, setAnimState] = useState(null); 
   const [xpAwarded, setXpAwarded] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [historyAndStats, setHistoryAndStats] = useState(() => loadHistoryAndStats());
@@ -288,7 +279,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     setTimeout(() => setMsg(null), duration);
   }
 
-  // Rewarded ad states
+  
   const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
   const [isAdLoading, setIsAdLoading]               = useState(false);
   const [isRaid, setIsRaid] = useState(false);
@@ -318,7 +309,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     });
   }
 
-  // Load saved state
+  
   useEffect(() => {
     let isRaidSession = !!localStorage.getItem('active_game_session_id');
     let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
@@ -347,7 +338,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     }
   }, []);
 
-  // Inject CSS & Config H5 games ads
+  
   useEffect(() => {
     if (!document.getElementById("hl-css")) {
       const s = document.createElement("style");
@@ -415,7 +406,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
     else if (choice === "lower")  correct = valB < valA;
     else if (choice === "equal")  correct = valB === valA;
 
-    // Equal edge case — treat as correct
+    
     if (valA === valB) correct = true;
 
     setRevealed(true);
@@ -537,8 +528,8 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
             localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
           }
         } else {
-          // Single mode animations & scroll
-          const isWin = streak >= 10; // Max streak
+          
+          const isWin = streak >= 10; 
           if (isWin) {
             triggerWinConfetti();
           } else {
@@ -558,13 +549,13 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
 
   return (
     <div className="hl-root">
-      {/* Background layers */}
+      
       <div className="hl-bg-layer" />
       <div className="hl-noise" />
 
       <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
-      {/* ── NAV ── */}
+      
       <nav className="hl-nav">
         {!(isRaid || isVsFriends) && <button className="hl-nav-logo" onClick={() => navigate('/')}>←</button>}
         {isVsFriends ? (
@@ -583,19 +574,19 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         </div>
       </nav>
 
-      {/* ── PAGE ── */}
+      
       <main className="hl-page">
 
-        {/* Messages */}
+        
         {msg && <div className={`hl-msg hl-msg-${msg.type}`}>{msg.text}</div>}
 
-        {/* Page header */}
+        
         <div className="hl-page-header">
           <h1>Higher or Lower</h1>
           <p>Football Stats Edition — build the longest streak!</p>
         </div>
 
-        {/* Score row */}
+        
         <div className="hl-score-row">
           <div className="hl-score-card hl-score-current" style={isRaid ? { width: '100%' } : {}}>
             <div className="hl-score-label">Current Streak</div>
@@ -609,10 +600,10 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           )}
         </div>
 
-        {/* ── GAME AREA ── */}
+        
         {!gameOver && (
           <>
-            {/* Attribute prompt */}
+            
             <div className="hl-prompt-row">
               Does <strong className="hl-name-hl">{playerB?.name}</strong> have a{" "}
               <span className="hl-attr-badge">{attr.label}</span>{" "}
@@ -648,7 +639,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           </>
         )}
 
-        {/* ── RESULT CARD ── */}
+        
         {gameOver && (
           <div className="hl-result-card">
             <div className="hl-result-badge">Game Complete</div>
@@ -661,7 +652,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
               <div className="hl-xp-badge-earned">+{xpAwarded} XP EARNED</div>
             )}
 
-            {/* ── REWARDED AD — Save Streak ── */}
+            
             {!(isRaid || isVsFriends) && !hasWatchedReviveAd && streak < 10 && (
               <div className="hl-ad-section">
                 <p className="hl-ad-hint">Streak ended? Watch a quick ad to revive and keep your streak going!</p>
@@ -709,14 +700,14 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
           </div>
         )}
 
-        {/* Dashboard / Progress */}
+        
         <div className="hl-bottom-section">
           <div className="hl-section-divider">
             <span className="hl-section-label">Your Progress</span>
             <div className="hl-section-line" />
           </div>
           <div className="hl-dashboard-grid">
-            {/* Streak Card */}
+            
             <div className="hl-dash-card">
               <div className="hl-dash-card-hdr">
                 <span className="hl-dash-icon">📅</span>
@@ -729,7 +720,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
                 <span><span className="hl-dot-sample today" />Today</span>
               </div>
             </div>
-            {/* Stats Card */}
+            
             <div className="hl-dash-card">
               <div className="hl-dash-card-hdr">
                 <span className="hl-dash-icon">📊</span>
@@ -750,7 +741,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   );
 }
 
-// ─── CSS ──────────────────────────────────────────────────────────────────────
+
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');

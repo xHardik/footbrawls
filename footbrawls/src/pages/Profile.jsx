@@ -52,7 +52,7 @@ function getIsoCode(flag) {
   return pts.map(p => String.fromCharCode(p - 127397)).join('').toLowerCase();
 }
 
-/* ── PLAYER CARD ── */
+
 function PlayerCard({ kit, user, tier }) {
   const ref = useRef(null);
   const onMove = e => {
@@ -85,23 +85,23 @@ function PlayerCard({ kit, user, tier }) {
       position: "relative",
       filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.6))",
     }}>
-      {/* Card shape */}
+      
       <div style={{
         position: "absolute", inset: 0,
         clipPath: "polygon(8% 0, 92% 0, 100% 6%, 100% 93%, 50% 100%, 0 93%, 0 6%)",
         background: "#080c18",
         overflow: "hidden",
       }}>
-        {/* Flag bg */}
+        
         <img src={flagUrl} alt="" style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover", opacity:0.55 }} />
-        {/* Gradient overlay */}
+        
         <div style={{ position:"absolute", inset:0, background:"linear-gradient(180deg, rgba(5,8,15,0.15) 0%, rgba(5,8,15,0.92) 60%)" }} />
-        {/* Shimmer */}
+        
         <div style={{ position:"absolute", inset:0, background:"linear-gradient(130deg, rgba(255,255,255,0.18) 0%, transparent 45%)", pointerEvents:"none" }} />
 
-        {/* Content */}
+        
         <div style={{ position:"relative", zIndex:2, height:"100%", display:"flex", flexDirection:"column", padding:"18px 16px 16px" }}>
-          {/* OVR */}
+          
           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between" }}>
             <div>
               <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:38, lineHeight:1, color:tier.color, textShadow:`0 0 20px ${tier.color}66` }}>{ovr}</div>
@@ -112,7 +112,7 @@ function PlayerCard({ kit, user, tier }) {
 
           <div style={{ flex:1 }} />
 
-          {/* Name */}
+          
           <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:22, letterSpacing:1.5, color:"#fff", textShadow:"0 2px 8px rgba(0,0,0,0.8)", marginBottom:2 }}>
             {(user?.nickname || "GUEST").slice(0,10)}
           </div>
@@ -120,10 +120,10 @@ function PlayerCard({ kit, user, tier }) {
             {kit.name}
           </div>
 
-          {/* Divider */}
+          
           <div style={{ height:0.5, background:"rgba(255,255,255,0.15)", marginBottom:12 }} />
 
-          {/* Stats grid */}
+          
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"6px 20px" }}>
             {stats.map(s => (
               <div key={s.l} style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -138,7 +138,7 @@ function PlayerCard({ kit, user, tier }) {
   );
 }
 
-/* ── XP BAR ── */
+
 function XPBar({ label, xp, max, color }) {
   const pct = Math.min(100, (xp / max) * 100);
   return (
@@ -154,7 +154,7 @@ function XPBar({ label, xp, max, color }) {
   );
 }
 
-/* ── ICONS ── */
+
 const Icon = {
   Ball:   ({s=18,c="currentColor"}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke={c} strokeWidth="1.5"/><path d="M12 2c0 0-2.5 3-2.5 5s2.5 5 2.5 5 2.5-2 2.5-5S12 2 12 2z" fill={c} opacity="0.7"/><path d="M2 12h4l2 3-2 3H2M22 12h-4l-2 3 2 3h4" stroke={c} strokeWidth="1.2" fill="none" opacity="0.6"/><path d="M5 5.5l3 2.5 1 4-4-2-1.5-4zM19 5.5l-3 2.5-1 4 4-2 1.5-4zM8 19l1-4 3-1 3 1 1 4" stroke={c} strokeWidth="1.2" fill="none" opacity="0.6"/></svg>,
   Shield: ({s=18,c="currentColor"}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke={c} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
@@ -167,7 +167,7 @@ const Icon = {
   Crown:  ({s=18,c="currentColor"}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M4 19L5 8L9 11L12 5L15 11L19 8L20 19H4Z" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/></svg>,
 };
 
-/* ── MAIN COMPONENT ── */
+
 export default function Profile() {
   const navigate = useNavigate();
   const user = getUser();
@@ -244,7 +244,7 @@ export default function Profile() {
     { id: "guildWarlord",     title: "Guild Warlord",   desc: "100k total raid damage",           icon: Icon.Swords, xp: Math.floor((user?.stats?.totalRaidDamage||0)/1000), max: 100 },
   ].map(a => ({ ...a, unlocked: !!(user?.achievements?.[a.id]) }));
 
-  // Next tier progress
+  
   const tierIdx = TIERS.findIndex(t => t.name === tier.name);
   const nextTier = TIERS[tierIdx + 1];
   const tierPct = nextTier ? Math.min(100, ((totalXP - tier.min) / (nextTier.min - tier.min)) * 100) : 100;
@@ -276,7 +276,7 @@ export default function Profile() {
 
       <div style={{ position:"relative", zIndex:1, maxWidth:860, margin:"0 auto" }}>
 
-        {/* ── HEADER ── */}
+        
         <div style={{ textAlign:"center", marginBottom:32 }}>
           <div style={{ display:"inline-flex", alignItems:"center", gap:10, marginBottom:12,
             background:"rgba(247,195,68,0.06)", border:`1px solid rgba(247,195,68,0.15)`,
@@ -292,7 +292,7 @@ export default function Profile() {
           </p>
         </div>
 
-        {/* ── TIER PROGRESS BAR ── */}
+        
         <div style={{ maxWidth:500, margin:"0 auto 32px", padding:"16px 20px",
           background:"rgba(255,255,255,0.03)", border:`1px solid ${C.border}`,
           borderRadius:14 }}>
@@ -309,13 +309,13 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* ── MAIN GRID ── */}
+        
         <div className="profile-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1.25fr", gap:20 }}>
 
-          {/* LEFT: Card + XP Breakdown */}
+          
           <div className="profile-col" style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-            {/* Player Card */}
+            
             <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${C.border}`,
               borderRadius:16, padding:24, display:"flex", flexDirection:"column", alignItems:"center" }}>
               <div style={{ fontSize:10, fontFamily:"'Space Mono',monospace", color:C.muted,
@@ -323,7 +323,7 @@ export default function Profile() {
               <PlayerCard kit={kit} user={user} tier={tier} />
             </div>
 
-            {/* XP Breakdown Pie Chart */}
+            
             <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${C.border}`,
               borderRadius:16, padding:20 }}>
               <div style={{ fontSize:10, fontFamily:"'Space Mono',monospace", color:C.gold,
@@ -368,10 +368,10 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* RIGHT: Stats + Achievements */}
+          
           <div className="profile-col" style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
-            {/* Quick Stats */}
+            
             <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${C.border}`,
               borderRadius:16, padding:20 }}>
               <div style={{ fontSize:10, fontFamily:"'Space Mono',monospace", color:C.gold,
@@ -393,7 +393,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Achievements */}
+            
             <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${C.border}`,
               borderRadius:16, padding:20 }}>
               <div style={{ fontSize:10, fontFamily:"'Space Mono',monospace", color:C.gold,
@@ -450,7 +450,7 @@ export default function Profile() {
   );
 }
 
-/* ── BOTTOM NAV ── */
+
 function BottomNav({ active, navigate }) {
   const [pressed, setPressed] = useState(null);
   const items = [

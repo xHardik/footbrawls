@@ -103,18 +103,18 @@ function CastleSVG({ level, hpPct, accent }) {
   const t = CASTLE_THEMES[level] || CASTLE_THEMES[1];
   const uid = `lvl${level}`;
 
-  // HP-driven visual states
-  const litOpacity     = Math.max(0.08, hpPct / 100);                    // whole lit layer dims with hp
-  const crackOpacity   = Math.max(0, Math.min(1, (60 - hpPct) / 50));   // cracks appear below 60%, max at 10%
-  const windowOpacity  = Math.max(0.08, (hpPct / 100) * 0.92);          // windows dim with hp
+  
+  const litOpacity     = Math.max(0.08, hpPct / 100);                    
+  const crackOpacity   = Math.max(0, Math.min(1, (60 - hpPct) / 50));   
+  const windowOpacity  = Math.max(0.08, (hpPct / 100) * 0.92);          
   const torchOpacity   = Math.max(0.05, (hpPct / 100) * 0.9);
   const glowOpacity    = Math.max(0.02, (hpPct / 100) * 0.95);
-  const smokeOpacity   = Math.max(0, (40 - hpPct) / 40);                // smoke/dust appears at low hp
+  const smokeOpacity   = Math.max(0, (40 - hpPct) / 40);                
 
   return (
     <svg width="100%" viewBox="0 0 380 200" style={{ display:"block", borderRadius:10, overflow:"hidden" }}>
       <defs>
-        {/* Stone patterns */}
+        
         <pattern id={`sb-${uid}`} x="0" y="0" width="18" height="12" patternUnits="userSpaceOnUse">
           <rect width="18" height="12" fill={t.stoneDark}/>
           <rect x="0.5" y="0.5" width="16.5" height="5.2" rx="0.4" fill={t.brickDark} stroke={t.stoneDark2} strokeWidth="0.35"/>
@@ -170,14 +170,14 @@ function CastleSVG({ level, hpPct, accent }) {
           <stop offset="100%" stopColor="#000000" stopOpacity="0"/>
         </radialGradient>
 
-        {/* Crack gradient — darker at center to give depth */}
+        
         <linearGradient id={`crack-${uid}`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#000000" stopOpacity="0.9"/>
           <stop offset="50%" stopColor="#1a0a00" stopOpacity="0.6"/>
           <stop offset="100%" stopColor="#000000" stopOpacity="0.8"/>
         </linearGradient>
 
-        {/* Ember/smoke filter for low HP */}
+        
         <filter id={`smoke-${uid}`} x="-20%" y="-20%" width="140%" height="140%">
           <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="noise"/>
           <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" result="displaced"/>
@@ -192,7 +192,7 @@ function CastleSVG({ level, hpPct, accent }) {
         )}
       </defs>
 
-      {/* ── DARK BASE (always visible) ── */}
+      
       <g>
         <rect width="380" height="200" fill={`url(#sky-d-${uid})`}/>
         {[[30,14],[72,6],[140,10],[210,5],[275,9],[340,6],[360,18]].map(([x,y],i)=>(
@@ -201,7 +201,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <rect x="0" y="178" width="380" height="22" fill={`url(#gnd-d-${uid})`}/>
         <rect x="0" y="176" width="380" height="3" fill={t.stoneDark2} opacity="0.7"/>
 
-        {/* LEFT TOWER */}
+        
         <rect x="25" y="68" width="68" height="112" fill={`url(#sb-${uid})`}/>
         <rect x="25" y="68" width="68" height="112" fill={`url(#wi-d-${uid})`}/>
         <rect x="25" y="68" width="68" height="112" fill="none" stroke={t.stoneDark2} strokeWidth="0.6"/>
@@ -215,7 +215,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <line x1="59" y1="55" x2="59" y2="26" stroke={t.stoneDark2} strokeWidth="1.6"/>
         <polygon points="59,26 59,40 76,33" fill={t.stoneDark2}/>
 
-        {/* RIGHT TOWER */}
+        
         <rect x="287" y="68" width="68" height="112" fill={`url(#sb2-${uid})`}/>
         <rect x="287" y="68" width="68" height="112" fill={`url(#wi-d-${uid})`}/>
         <rect x="287" y="68" width="68" height="112" fill="none" stroke={t.stoneDark2} strokeWidth="0.6"/>
@@ -229,7 +229,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <line x1="321" y1="55" x2="321" y2="26" stroke={t.stoneDark2} strokeWidth="1.6"/>
         <polygon points="321,26 321,40 304,33" fill={t.stoneDark2}/>
 
-        {/* MAIN WALL */}
+        
         <rect x="89" y="100" width="202" height="80" fill={`url(#sb-${uid})`}/>
         <rect x="89" y="100" width="202" height="80" fill={`url(#wi-d-${uid})`}/>
         <rect x="89" y="100" width="202" height="80" fill="none" stroke={t.stoneDark2} strokeWidth="0.6"/>
@@ -261,7 +261,7 @@ function CastleSVG({ level, hpPct, accent }) {
         </>}
       </g>
 
-      {/* ── LIT CASTLE — entire group fades with HP ── */}
+      
       <g opacity={litOpacity} style={{ transition: "opacity 0.6s ease" }}>
         <rect width="380" height="200" fill={`url(#sky-l-${uid})`}/>
         <circle cx="320" cy="28" r="16" fill={t.windowGlow} opacity="0.1"/>
@@ -272,7 +272,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <ellipse cx="92" cy="179" rx="28" ry="5" fill={t.windowGlow} opacity={glowOpacity * 0.15}/>
         <ellipse cx="288" cy="179" rx="28" ry="5" fill={t.windowGlow} opacity={glowOpacity * 0.15}/>
 
-        {/* LEFT TOWER lit */}
+        
         <rect x="25" y="68" width="68" height="112" fill={`url(#sl-${uid})`}/>
         <rect x="25" y="68" width="68" height="112" fill={`url(#wi-l-${uid})`}/>
         <rect x="25" y="68" width="68" height="112" fill="none" stroke={t.stoneLit2} strokeWidth="0.6"/>
@@ -287,7 +287,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <ellipse cx="52" cy="99" rx="20" ry="16" fill={t.windowGlow} opacity={glowOpacity * 0.18}/>
         <rect x="46" y="142" width="22" height="28" rx="2" fill={t.windowLit} opacity={windowOpacity * 0.92}/>
         <ellipse cx="57" cy="155" rx="16" ry="11" fill={t.windowGlow} opacity={glowOpacity * 0.22}/>
-        {/* LT torch */}
+        
         <rect x="88" y="112" width="3.5" height="11" rx="1" fill={`${t.stoneLit}88`}/>
         <ellipse cx="89" cy="110" rx="3.5" ry="4.5" fill={t.windowLit} opacity={torchOpacity}/>
         <ellipse cx="89" cy="107" rx="2" ry="2.5" fill="#fffde0" opacity={torchOpacity}/>
@@ -296,7 +296,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <polygon points="59,22 59,38 80,30" fill={t.flagLit}/>
         <ellipse cx="70" cy="30" rx="13" ry="9" fill={t.flagLit} opacity="0.18"/>
 
-        {/* RIGHT TOWER lit */}
+        
         <rect x="287" y="68" width="68" height="112" fill={`url(#sl2-${uid})`}/>
         <rect x="287" y="68" width="68" height="112" fill={`url(#wi-l-${uid})`}/>
         <rect x="287" y="68" width="68" height="112" fill="none" stroke={t.stoneLit2} strokeWidth="0.6"/>
@@ -319,7 +319,7 @@ function CastleSVG({ level, hpPct, accent }) {
         <polygon points="321,22 321,38 300,30" fill={t.flagLit}/>
         <ellipse cx="310" cy="30" rx="13" ry="9" fill={t.flagLit} opacity="0.18"/>
 
-        {/* MAIN WALL lit */}
+        
         <rect x="89" y="100" width="202" height="80" fill={`url(#sl-${uid})`}/>
         <rect x="89" y="100" width="202" height="80" fill={`url(#wi-l-${uid})`}/>
         <rect x="89" y="100" width="202" height="80" fill="none" stroke={t.stoneLit2} strokeWidth="0.6"/>
@@ -385,42 +385,42 @@ function CastleSVG({ level, hpPct, accent }) {
         </>}
       </g>
 
-      {/* ── CRACKS — appear as HP drops below 60% ── */}
+      
       <g opacity={crackOpacity} style={{ transition: "opacity 0.8s ease" }}>
-        {/* Each crack: dark stroke for the gap + lighter edge lines for 3D depth */}
+        
 
-        {/* Left tower — main diagonal crack */}
+        
         <path d="M55 72 L51 84 L57 92 L53 106 L58 118" stroke={`url(#crack-${uid})`} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
         <path d="M55 72 L51 84 L57 92 L53 106 L58 118" stroke="rgba(255,200,100,0.07)" strokeWidth="0.6" fill="none" strokeLinecap="round"/>
-        {/* Left tower — small branch crack */}
+        
         <path d="M57 92 L63 98 L60 107" stroke="rgba(0,0,0,0.8)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
         <path d="M57 92 L63 98 L60 107" stroke="rgba(255,200,100,0.05)" strokeWidth="0.4" fill="none" strokeLinecap="round"/>
-        {/* Left tower — upper battlement crack */}
+        
         <path d="M42 58 L46 68" stroke="rgba(0,0,0,0.75)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
 
-        {/* Right tower — diagonal crack */}
+        
         <path d="M325 75 L321 88 L327 97 L322 112 L328 125" stroke={`url(#crack-${uid})`} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
         <path d="M325 75 L321 88 L327 97 L322 112 L328 125" stroke="rgba(255,200,100,0.07)" strokeWidth="0.6" fill="none" strokeLinecap="round"/>
-        {/* Right tower — branch */}
+        
         <path d="M322 112 L315 118 L318 128" stroke="rgba(0,0,0,0.8)" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
-        {/* Right tower — battlement crack */}
+        
         <path d="M338 58 L334 70" stroke="rgba(0,0,0,0.75)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
 
-        {/* Main wall — left crack */}
+        
         <path d="M120 104 L116 116 L122 126 L118 140 L124 152" stroke={`url(#crack-${uid})`} strokeWidth="2" fill="none" strokeLinecap="round"/>
         <path d="M120 104 L116 116 L122 126 L118 140 L124 152" stroke="rgba(255,200,100,0.06)" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
         <path d="M122 126 L130 132" stroke="rgba(0,0,0,0.7)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
 
-        {/* Main wall — right crack */}
+        
         <path d="M258 106 L262 118 L256 130 L261 144" stroke={`url(#crack-${uid})`} strokeWidth="2" fill="none" strokeLinecap="round"/>
         <path d="M258 106 L262 118 L256 130 L261 144" stroke="rgba(255,200,100,0.06)" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
         <path d="M256 130 L248 136" stroke="rgba(0,0,0,0.7)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
 
-        {/* Gate arch crack */}
+        
         <path d="M188 128 L184 140 L190 150" stroke="rgba(0,0,0,0.85)" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
         <path d="M188 128 L184 140 L190 150" stroke="rgba(255,200,100,0.06)" strokeWidth="0.5" fill="none" strokeLinecap="round"/>
 
-        {/* Rubble dots at crack bases — only at very low HP */}
+        
         {hpPct < 30 && <>
           <circle cx="58" cy="180" r="2" fill={t.stoneDark} opacity="0.8"/>
           <circle cx="52" cy="178" r="1.5" fill={t.stoneDark2} opacity="0.6"/>
@@ -431,10 +431,10 @@ function CastleSVG({ level, hpPct, accent }) {
         </>}
       </g>
 
-      {/* ── SMOKE / EMBER PARTICLES — low HP only ── */}
+      
       {smokeOpacity > 0.05 && (
         <g opacity={smokeOpacity} style={{ transition: "opacity 1s ease" }}>
-          {/* Smoke wisps rising from cracks */}
+          
           <ellipse cx="55" cy="68" rx="5" ry="8" fill="rgba(80,60,40,0.35)" filter={`url(#smoke-${uid})`}>
             <animate attributeName="cy" values="68;55;68" dur="3s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="0.35;0.05;0.35" dur="3s" repeatCount="indefinite"/>
@@ -448,7 +448,7 @@ function CastleSVG({ level, hpPct, accent }) {
             <animate attributeName="opacity" values="0.25;0.04;0.25" dur="2.8s" repeatCount="indefinite"/>
           </ellipse>
 
-          {/* Ember sparks */}
+          
           <circle cx="62" cy="115" r="1.2" fill="#e84040" opacity="0.8">
             <animate attributeName="cy" values="115;100;115" dur="1.8s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="0.8;0;0.8" dur="1.8s" repeatCount="indefinite"/>
@@ -464,7 +464,7 @@ function CastleSVG({ level, hpPct, accent }) {
         </g>
       )}
 
-      {/* ── DAMAGE OVERLAY — dark red vignette at very low HP ── */}
+      
       {hpPct < 40 && (
         <rect
           width="380" height="200"
@@ -479,7 +479,7 @@ function CastleSVG({ level, hpPct, accent }) {
   );
 }
 
-// ── Demo wrapper (replace with your real props in production) ─────────────────
+
 export default function CastleHP({ hp = 7000, maxHp = 10000, contributors = [], guildLevel = 3 }) {
   const hpPct    = Math.min(100, Math.round((hp / maxHp) * 100));
   const hpColor  = hpPct >= 70 ? C.green : hpPct >= 35 ? C.accent : C.red;

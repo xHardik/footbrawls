@@ -1,12 +1,4 @@
-/**
- * TransferTrail.jsx
- * Show a player's club transfer history — user guesses WHO the player is.
- * 3 players per session, scoring system, streak bonuses.
- * Royal blue theme for FootBrawls.
- *
- * Storage key: footbrawls_transfertrail
- * Props: players (default PLAYERS), userId, onComplete
- */
+
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +11,7 @@ import { PLAYERS } from "../../lib/players.js";
 import { ClubLogo } from "../../lib/wikiAssets.jsx";
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
 
-// Initialize Google AdBreak queue safely
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
@@ -43,14 +35,14 @@ const adBreak = (options) => {
   }
 };
 
-// ── Config ────────────────────────────────────────────────────────────────────
+
 const PLAYERS_PER_GAME = 3;
 const MAX_ATTEMPTS     = 3;
 const XP_TABLE         = [5, 10, 10];
 const PERFECT_BONUS_XP = 5;
 const TOTAL_XP         = 25;
 
-// ── Seeded daily puzzle ───────────────────────────────────────────────────────
+
 function seededRandom(seed) {
   let s = seed;
   return () => {
@@ -79,7 +71,7 @@ function getDailyPlayers(players, dateStr) {
   return picked;
 }
 
-// ── Font injection ────────────────────────────────────────────────────────────
+
 function injectFonts() {
   if (document.getElementById("tt-fonts")) return;
   const l = document.createElement("link");
@@ -88,7 +80,7 @@ function injectFonts() {
   document.head.appendChild(l);
 }
 
-// ── Design tokens — Royal Blue theme ─────────────────────────────────────────
+
 const T = {
   bg:      "#04080f",
   surface: "rgba(255,255,255,0.035)",
@@ -107,7 +99,7 @@ const T = {
   muted2:  "rgba(240,240,240,0.28)",
 };
 
-// ── CSS keyframes ─────────────────────────────────────────────────────────────
+
 const KEYFRAMES = `
   @keyframes ttFadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
   @keyframes ttShimmer  { from{background-position:0% center} to{background-position:200% center} }
@@ -119,7 +111,7 @@ const KEYFRAMES = `
   @keyframes ttPulse    { 0%,100%{filter:drop-shadow(0 0 18px rgba(26,111,255,0.4))} 50%{filter:drop-shadow(0 0 38px rgba(26,111,255,0.75))} }
 `;
 
-// ── Background ────────────────────────────────────────────────────────────────
+
 function BgLayers() {
   return (
     <>
@@ -140,7 +132,7 @@ function BgLayers() {
   );
 }
 
-// ── How to Play Modal ─────────────────────────────────────────────────────────
+
 function RulesModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (
@@ -218,7 +210,7 @@ function RulesModal({ show, onClose, isRaid, isVsFriends }) {
   );
 }
 
-// ── Transfer History List ─────────────────────────────────────────────────────
+
 function TransferHistory({ clubs }) {
   return (
     <div style={{
@@ -276,7 +268,7 @@ function TransferHistory({ clubs }) {
   );
 }
 
-// ── Search Dropdown ───────────────────────────────────────────────────────────
+
 function SearchDropdown({ players, onSelect, disabled }) {
   const [query, setQuery]     = useState("");
   const [open, setOpen]       = useState(false);
@@ -373,7 +365,7 @@ function SearchDropdown({ players, onSelect, disabled }) {
   );
 }
 
-// ── Feedback banner ───────────────────────────────────────────────────────────
+
 function Feedback({ state, message }) {
   if (!state) return null;
   const isCorrect = state === "correct";
@@ -391,7 +383,7 @@ function Feedback({ state, message }) {
   );
 }
 
-// ── Result Card ───────────────────────────────────────────────────────────────
+
 function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgain, isRaid, isVsFriends }) {
   const navigate = useNavigate();
   const perfect = correctCount === PLAYERS_PER_GAME;
@@ -458,7 +450,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
         ))}
       </div>
 
-      {/* Play Again button removed to enforce once-per-day play limit */}
+      
       <div style={{ marginTop: 18 }}>
         {isRaid ? (
           <button 
@@ -502,7 +494,7 @@ function ResultCard({ xpEarned, correctCount, players: puzzlePlayers, onPlayAgai
   );
 }
 
-// ── Stats History Loader ──────────────────────────────────────────────────────
+
 function loadHistoryAndStats(storageKey, puzzleDate) {
   try {
     const history = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -538,7 +530,7 @@ function loadHistoryAndStats(storageKey, puzzleDate) {
   }
 }
 
-// ── StreakDots Subcomponent ───────────────────────────────────────────────────
+
 function StreakDots({ history, puzzleDate, gameOver, currentXP, currentSolved }) {
   const today = new Date();
   const dots = [];
@@ -588,7 +580,7 @@ function StreakDots({ history, puzzleDate, gameOver, currentXP, currentSolved })
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+
 export default function TransferTrail({ players = PLAYERS, userId, onComplete }) {
   const navigate = useNavigate();
   const puzzleDate  = getActivePuzzleDate();
@@ -775,7 +767,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
     } else {
-      // Single mode animations & scroll
+      
       const isWin = correctCount >= 2;
       if (isWin) {
         triggerWinConfetti();
@@ -913,7 +905,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       <BgLayers/>
       <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
-      {/* ── NAV ── */}
+      
       <nav className="tt-nav" style={{
         position:"sticky",top:0,zIndex:200,
         display:"grid",gridTemplateColumns:"1fr auto 1fr",
@@ -966,10 +958,10 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         </div>
       </nav>
 
-      {/* ── PAGE ── */}
+      
       <main className="tt-main" style={{position:"relative",zIndex:1,maxWidth:800,margin:"0 auto",padding:"32px 5% 80px",boxSizing:"border-box"}}>
 
-        {/* Header */}
+        
         <div style={{marginBottom:22,animation:"ttFadeUp 0.45s ease"}}>
           <h1 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(2rem,5vw,3rem)",letterSpacing:2,lineHeight:1,marginBottom:4,color:T.text}}>
             Transfer History
@@ -991,7 +983,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           />
         ) : (
           <>
-            {/* Player strip */}
+            
             <div className="tt-player-strip" style={{
               background:T.surface,border:`1px solid ${T.border}`,
               borderLeft:`3px solid ${T.royal}`,borderRadius:16,
@@ -1022,7 +1014,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
               </div>
             </div>
 
-            {/* Progress bar */}
+            
             <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
               {puzzlePlayers.map((p, i) => (
                 <div key={p.name} style={{
@@ -1039,7 +1031,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
               <span style={{fontFamily:"monospace",fontSize:"0.66rem",fontWeight:700,color:T.muted2,whiteSpace:"nowrap"}}>{currentIdx + 1}/{PLAYERS_PER_GAME}</span>
             </div>
 
-            {/* Main grid */}
+            
             <div className="tt-main-grid" style={{
               display:"grid",
               gridTemplateColumns:"280px 1fr",
@@ -1134,7 +1126,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                   </div>
                 )}
 
-                {/* Hint Section */}
+                
                 {!gameOver && currentPlayer && !(isRaid || isVsFriends) && (
                   <div style={{ marginTop: 20, width: "100%", maxWidth: 400, display: "flex", justifyContent: "center" }}>
                     {unlockedHints[currentIdx] ? (
@@ -1183,7 +1175,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
               </div>
             </div>
 
-            {/* Controls */}
+            
             <div className="tt-controls" style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
               <button
                 className="tt-control-btn"
@@ -1203,14 +1195,14 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
           </>
         )}
 
-        {/* Dashboard / Progress */}
+        
         <div className="tt-bottom-section">
           <div className="tt-section-divider">
             <span className="tt-section-label">Your Progress</span>
             <div className="tt-section-line" />
           </div>
           <div className="tt-dashboard-grid">
-            {/* Streak Card */}
+            
             <div className="tt-dash-card">
               <div className="tt-dash-card-hdr">
                 <span className="tt-dash-icon">📅</span>
@@ -1229,7 +1221,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 <span><span className="tt-dot-sample today" />Today</span>
               </div>
             </div>
-            {/* Stats Card */}
+            
             <div className="tt-dash-card">
               <div className="tt-dash-card-hdr">
                 <span className="tt-dash-icon">📊</span>
@@ -1247,7 +1239,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
 
       </main>
 
-      {/* Responsive & Dashboard Styling */}
+      
       <style>{`
         @media (max-width: 700px) {
           .tt-main-grid { grid-template-columns: 1fr !important; }

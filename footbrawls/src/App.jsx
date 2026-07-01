@@ -1,4 +1,4 @@
-// src/App.jsx
+
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getUser } from './lib/user';
 import Onboarding from './pages/Onboarding';

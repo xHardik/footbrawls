@@ -1,8 +1,4 @@
-/**
- * Wordle.jsx — Player Wordle for Footbrawls
- * UI theme ported from Crickingo wordle.html/wordle.js
- * Fully synced to Crickingo HTML fidelity: spacing, modal, responsive, nav tooltip
- */
+
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -15,13 +11,13 @@ import { PLAYERS } from "../../lib/players.js";
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
 import { PlayerPhoto } from "../../lib/wikiAssets.jsx";
 
-// ─── XP table ────────────────────────────────────────────────────────────────
+
 const XP_BY_GUESS  = { 1:25, 2:23, 3:21, 4:19, 5:17, 6:15 };
 const MAX_GUESSES  = 6;
 const STATS_KEY    = "footbrawls_wordle_stats";
 const HISTORY_KEY  = "footbrawls_wordle_history";
 
-// ─── Injected CSS (1-to-1 with Crickingo wordle.html) ────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900&display=swap');
 
@@ -534,7 +530,7 @@ html { scroll-behavior: smooth; }
 }
 `;
 
-// ─── Stat helpers ─────────────────────────────────────────────────────────────
+
 function getToday() {
   return new Date().toISOString().split('T')[0];
 }
@@ -572,7 +568,7 @@ function saveResult(puzzleDate, won, score) {
   return { stats, history };
 }
 
-// ─── Tile evaluation ──────────────────────────────────────────────────────────
+
 function evaluateGuess(guess, target) {
   const g = guess.toUpperCase().split("");
   const t = target.toUpperCase().split("");
@@ -588,7 +584,7 @@ function evaluateGuess(guess, target) {
   return results;
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+
 function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   const scoring = [
@@ -686,16 +682,16 @@ function StreakDots({ history, today, puzzleDate, gameOver, won, xpAwarded, atte
   );
 }
 
-// Initialize Google AdBreak queue safely
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
   } else {
-    // Fallback/Mock for local testing when AdSense is not loaded or in sandbox
+    
     console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
     if (options.beforeAd) options.beforeAd();
     
-    // Simulate user behavior: automatically grant reward in development
+    
     setTimeout(() => {
       if (options.type === 'reward') {
         const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
@@ -713,7 +709,7 @@ const adBreak = (options) => {
   }
 };
 
-// Initialize AdConfig safely
+
 if (typeof window !== "undefined") {
   window.adConfig = window.adConfig || function() {
     (window.adConfig.q = window.adConfig.q || []).push(arguments);
@@ -725,7 +721,7 @@ if (typeof window !== "undefined") {
   });
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleDate = getActivePuzzleDate();
   const target = useMemo(() => {
@@ -766,7 +762,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [maxGuesses, setMaxGuesses] = useState(6);
   const [revealing,  setRevealing]  = useState(false);
   
-  // Rewarded ad states
+  
   const [rewardHints, setRewardHints] = useState([]);
   const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
@@ -785,7 +781,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const puzzleNum  = Math.max(1, Math.floor((new Date(puzzleDate + "T00:00:00") - launch) / 86400000) + 1);
   const dateLabel  = new Date(puzzleDate + "T00:00:00").toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
 
-  // Inject CSS
+  
   useEffect(() => {
     if (!document.getElementById("wdl-css")) {
       const s = document.createElement("style"); s.id = "wdl-css"; s.textContent = CSS;
@@ -793,7 +789,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     }
   }, []);
 
-  // Load saved state
+  
   useEffect(() => {
     if (!targetName) return;
 
@@ -905,7 +901,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
         }
       } else {
-        // Single mode animations & scroll
+        
         if (won) {
           triggerWinConfetti();
         } else {
@@ -940,14 +936,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
     if (target.age && target.foot) hints.push(`Age: ${target.age} · Foot: ${target.foot}`);
     if (targetName) hints.push(`First letter of name is "${targetName[0]}"`);
 
-    // Find the first hint not yet in rewardHints
+    
     const nextHint = hints.find(h => !rewardHints.includes(h));
     if (nextHint) {
       const newRewardHints = [...rewardHints, nextHint];
       setRewardHints(newRewardHints);
       showMsg("Hint unlocked successfully!", "success");
 
-      // Update local storage save state if game is already saved
+      
       const saved = JSON.parse(localStorage.getItem(`footbrawls_wordle_${puzzleDate}`) || "null");
       if (saved) {
         localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
@@ -1019,7 +1015,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         localStorage.setItem(`wordle_revivals_watched_${puzzleDate}`, String(next));
         setRevivalsWatchedCount(next);
 
-        // Update local storage to reflect game is active again
+        
         localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
           guesses,
           solved: false,
@@ -1049,7 +1045,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid} isVsFriends={isVsFriends} />
 
-      {/* ── NAV ── */}
+      
       <nav className="wdl-nav">
         {!(isRaid || isVsFriends) && <button className="wdl-logo" onClick={handleBack}>←</button>}
         {isVsFriends ? (
@@ -1070,7 +1066,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       <div className="wdl-page">
 
-        {/* ── HEADER ── */}
+        
         <div style={{ marginBottom: 24, animation: "fadeUp 0.5s ease both" }}>
           <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5, color: "var(--accent3)" }}>
             Player Wordle
@@ -1078,7 +1074,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           <p style={{ color: "var(--muted)", fontSize: "0.88rem" }}>Guess the footballer's name in {maxGuesses} tries</p>
         </div>
 
-        {/* ── SCORE BOX ── */}
+        
         {!(isRaid || isVsFriends) && (
           <div className="wdl-score-box">
             <div>
@@ -1091,7 +1087,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         )}
 
-        {/* ── EXTRA TRY REWARDED AD ── */}
+        
         {gameOver && !solved && !hasWatchedExtraTryAd && !(isRaid || isVsFriends) && (
           <div style={{
             margin: "0 auto 20px",
@@ -1138,7 +1134,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         )}
 
-        {/* ── HINTS ── */}
+        
         {(hint || rewardHints.length > 0) && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
             {hint && (
@@ -1156,10 +1152,10 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         )}
 
-        {/* ── MESSAGE ── */}
+        
         {msg && <div className={`wdl-msg wdl-msg-${msg.type}`}>{msg.text}</div>}
 
-        {/* ── GAME CARD ── */}
+        
         <div className="wdl-game-card">
           <div className="wdl-legend">
             <div className="wdl-legend-item">
@@ -1173,7 +1169,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
           </div>
 
-          {/* Board */}
+          
           <div className="wdl-board">
             {guesses.map((g, ri) => (
               <div key={ri} className="wdl-row">
@@ -1197,7 +1193,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             ))}
           </div>
 
-          {/* Input */}
+          
           {!gameOver && (
             <div className="wdl-input-row">
               <input
@@ -1243,7 +1239,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           <div className="wdl-attempt-counter">Attempts: {guesses.length} / {maxGuesses}</div>
         </div>
 
-        {/* ── CONTROLS ── */}
+        
         {!gameOver && (
           <div className="wdl-controls">
             {isRaid ? (
@@ -1269,7 +1265,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         )}
 
-        {/* ── RESULT CARD ── */}
+        
         {gameOver && (
           <div className="wdl-result">
             <div className="wdl-result-title" style={{ color: solved ? "var(--green)" : "var(--accent2)" }}>
@@ -1342,7 +1338,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         )}
 
-        {/* ── DASHBOARD ── */}
+        
         <div className="wdl-bottom-section">
           <div className="wdl-section-div">
             <span className="wdl-section-label">Your Progress</span>
@@ -1386,7 +1382,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
           </div>
         </div>
 
-      </div>{/* end .wdl-page */}
+      </div>
     </div>
   );
 }

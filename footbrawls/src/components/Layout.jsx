@@ -1,6 +1,6 @@
-// src/components/Layout.jsx
-// Persistent sidebar layout wrapping all game pages
-// Shows guild HP, curse, XP progress, and game nav
+
+
+
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -199,7 +199,7 @@ export default function Layout({ children, hideMobileNav }) {
     navigate('/raid');
   }, [location.pathname, navigate]);
 
-  // Timer & Session listener in Raid mode
+  
   useEffect(() => {
     const isRaid = !!localStorage.getItem('active_game_session_id');
     const activeId = localStorage.getItem('active_game_session_id');
@@ -224,7 +224,7 @@ export default function Layout({ children, hideMobileNav }) {
         const data = snap.data();
         setSessionData(data);
 
-        // Auto-redirect to /raid once player's score is submitted for the current act
+        
         const uid = getUser()?.userId;
         const act = data.currentAct || 1;
         const hasScoreLocally = localStorage.getItem(`raid_completed_act${act}_${activeId}`) === 'true';
@@ -241,7 +241,7 @@ export default function Layout({ children, hideMobileNav }) {
     };
   }, [location.pathname, handleTimeout, navigate]);
 
-  // Live guild data
+  
   useEffect(() => {
     injectFonts();
     if (!user?.homeCountry) return;
@@ -252,7 +252,7 @@ export default function Layout({ children, hideMobileNav }) {
     return () => unsub();
   }, [user?.homeCountry]);
 
-  // Live user doc listener (Firestore sync)
+  
   useEffect(() => {
     if (!user?.userId) return;
     const ref = doc(db, 'users', user.userId);
@@ -275,7 +275,7 @@ export default function Layout({ children, hideMobileNav }) {
     return () => unsub();
   }, [user?.userId]);
 
-  // Sync state from localStorage periodically and on location changes
+  
   useEffect(() => {
     const syncState = () => {
       const today = getTodayKey();
@@ -314,7 +314,7 @@ export default function Layout({ children, hideMobileNav }) {
 
     const intervalId = setInterval(syncState, 1000);
     
-    // Also sync on window focus/visibility change
+    
     window.addEventListener('focus', syncState);
     document.addEventListener('visibilitychange', syncState);
 
@@ -325,7 +325,7 @@ export default function Layout({ children, hideMobileNav }) {
     };
   }, [completedGames, userXP, user, location.pathname]);
 
-  // Inject CSS
+  
   useEffect(() => {
     if (!document.getElementById("ly-css")) {
       const s = document.createElement("style");
@@ -335,7 +335,7 @@ export default function Layout({ children, hideMobileNav }) {
     }
   }, []);
 
-  // Clear legacy raid session storage to prevent redirect loops
+  
   useEffect(() => {
     localStorage.removeItem('active_raid_session');
   }, []);
@@ -367,7 +367,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
 
     return (
       <div className="ly-raid-layout" style={{ minHeight: '100vh', background: '#04080f', color: '#f2f2f4', display: 'flex', flexDirection: 'column' }}>
-        {/* Raid Header HUD */}
+        
         <div style={{
           background: 'rgba(6, 8, 16, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -380,7 +380,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           top: 0,
           zIndex: 1000
         }}>
-          {/* Left: Raid Info */}
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: '1.2rem' }}>⚔️</span>
             <div>
@@ -389,7 +389,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
             </div>
           </div>
 
-          {/* Center: Countdown Timer */}
+          
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.62rem', letterSpacing: 1.5, color: 'rgba(242, 242, 244, 0.5)', textTransform: 'uppercase', fontFamily: "'Space Mono', monospace" }}>Time Remaining</div>
             <div style={{
@@ -403,7 +403,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
             </div>
           </div>
 
-          {/* Right: Teammate Status */}
+          
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.62rem', letterSpacing: 1, color: 'rgba(242, 242, 244, 0.5)', textTransform: 'uppercase' }}>Teammate Status</div>
             <div style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>
@@ -412,7 +412,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           </div>
         </div>
 
-        {/* Main Content Area */}
+        
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
@@ -423,25 +423,25 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
   return (
     <div className="ly-root">
 
-      {/* Sleek Mobile Navigation Header Bar */}
+      
       {!hideMobileNav && !location.pathname.startsWith('/games/') && !location.pathname.startsWith('/guild/') && (
         <div className="ly-mobile-nav">
           <button className="ly-back-btn" onClick={() => navigate('/')}>
             ← BACK
           </button>
           <div className="ly-mobile-title">FOOTBRAWLS</div>
-          <div style={{ width: 62 }}></div> {/* Spacer to balance layout */}
+          <div style={{ width: 62 }}></div> 
         </div>
       )}
 
-      {/* Sidebar (Only shown on Desktop, hidden on Mobile) */}
+      
       <div className="ly-sidebar">
-        {/* Logo */}
+        
         <div className="ly-logo" onClick={() => navigate('/')}>
           <span className="ly-logo-text">Footbrawls</span>
         </div>
 
-        {/* User Card */}
+        
         {user && (
           <div className="ly-user-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'space-between' }}>
@@ -451,7 +451,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           </div>
         )}
 
-        {/* Daily XP progress */}
+        
         <div className="ly-section">
           <div className="ly-section-label">Daily XP</div>
           <div className="ly-xp-row">
@@ -463,7 +463,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           </div>
         </div>
 
-        {/* Guild Castle HP and Curse status */}
+        
         {guild && (
           <div className="ly-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div className="ly-section-label" style={{ alignSelf: 'stretch', textAlign: 'left' }}>Your Castle</div>
@@ -485,7 +485,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           </div>
         )}
 
-        {/* Games list with status */}
+        
         <div className="ly-section">
           <div className="ly-section-label">Games</div>
           <div className="ly-game-list">
@@ -523,7 +523,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           </div>
         </div>
 
-        {/* Guild room button */}
+        
         <div
           className="ly-guild-btn"
           onClick={() => navigate(`/guild/${user?.homeCountry}`)}
@@ -532,7 +532,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
         </div>
       </div>
 
-      {/* Main Content Area */}
+      
       <div className={`ly-main ${hideMobileNav ? 'no-mobile-nav' : ''}`}>
         {children}
       </div>

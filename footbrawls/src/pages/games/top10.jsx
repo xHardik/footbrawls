@@ -1,6 +1,6 @@
-// src/pages/games/top10.jsx
-// Football "Top 10" Guess — Footbrawls edition
-// Players get a category and try to guess the top 10 items with only 3 lives.
+
+
+
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ import { usePlayerWikiPhoto, useClubWikiLogo } from '../../lib/wikiAssets.jsx';
 import { getActivePuzzleDate, getDailySeed, getRaidSeed } from '../../lib/dailySeed.js';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+
 const STATS_KEY   = 'footbrawls_top10_stats';
 const HISTORY_KEY = 'footbrawls_top10_history';
 
@@ -28,14 +28,14 @@ const POPULAR_CLUBS = [
   "Leeds United", "Valencia", "Sevilla", "Villarreal"
 ];
 
-// Helper to normalize strings for comparison (remove accents, punctuation, lowercase, spaces)
+
 function normalize(str) {
   if (!str) return '';
   return str
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove diacritics
-    .replace(/[^a-z0-9\s]/g, "") // alphanumeric only
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/[^a-z0-9\s]/g, "") 
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -57,7 +57,7 @@ function saveStats(correctCount, today) {
     const entries = Object.values(history);
     const stats = {
       played: entries.length,
-      won: entries.filter(e => e.correct >= 6).length, // 6+ correct is a win
+      won: entries.filter(e => e.correct >= 6).length, 
       bestScore: Math.max(...entries.map(e => e.correct)),
       avgScore: Math.round((entries.reduce((s, e) => s + e.correct, 0) / entries.length) * 10) / 10,
       streak: 0,
@@ -78,7 +78,7 @@ function calculateXP(correct, wrongCount) {
     if (wrongCount === 0) return 25;
     if (wrongCount === 1) return 20;
     if (wrongCount === 2) return 15;
-    return 10; // 3+ wrong guesses (e.g. ad continue)
+    return 10; 
   }
   if (correct >= 6) return 10;
   return 5;
@@ -108,7 +108,7 @@ function WikiAvatar({ name, isClub }) {
   );
 }
 
-// ─── AdBreak shim ─────────────────────────────────────────────────────────────
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
@@ -130,7 +130,7 @@ if (typeof window !== 'undefined') {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-// ─── Injected CSS ──────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700;9..40,900&display=swap');
 
@@ -495,12 +495,12 @@ body{font-family:'DM Sans',sans-serif}
 }
 `;
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+
 export default function Top10Guess() {
   const navigate = useNavigate();
 
-  // States
-  const [phase, setPhase]                 = useState('start'); // 'start' | 'game' | 'result'
+  
+  const [phase, setPhase]                 = useState('start'); 
   const [revealed, setRevealed]           = useState(Array(10).fill(false));
   const [lives, setLives]                 = useState(3);
   const [query, setQuery]                 = useState("");
@@ -586,7 +586,7 @@ export default function Top10Guess() {
     }
   }, [puzzleDate]);
 
-  // Inject CSS
+  
   useEffect(() => {
     if (!document.getElementById('t10-injected-css')) {
       const s = document.createElement('style');
@@ -601,23 +601,23 @@ export default function Top10Guess() {
     setTimeout(() => setMsg(null), duration);
   }
 
-  // Generate suggestions list based on text input
+  
   const suggestions = useMemo(() => {
     const qNorm = normalize(query);
     if (qNorm.length < 2) return [];
 
-    // Suggestions pool: 1. Active question answers (so they are always suggestible!)
+    
     const activeQuestionAnswers = activeQuestion?.answers?.map(ans => ({
       name: ans?.name ? ans.name.split(' (')[0] : '',
       type: isClubQuestion ? 'club' : 'player'
     })).filter(item => item.name) || [];
 
-    // 2. Player names and popular clubs
+    
     const playerSuggestions = (PLAYERS || []).map(p => ({ name: p?.name || '', type: 'player' })).filter(item => item.name);
     const clubSuggestions = (POPULAR_CLUBS || []).map(c => ({ name: c || '', type: 'club' })).filter(item => item.name);
     const combined = [...activeQuestionAnswers, ...playerSuggestions, ...clubSuggestions];
 
-    // Filter unique matches
+    
     const matches = [];
     const seen = new Set();
 
@@ -630,13 +630,13 @@ export default function Top10Guess() {
         matches.push(item);
         seen.add(normName);
       }
-      if (matches.length >= 6) break; // cap suggestions at 6
+      if (matches.length >= 6) break; 
     }
 
     return matches;
   }, [query, activeQuestion, isClubQuestion]);
 
-  // Start a new session
+  
   function startGame() {
     setRevealed(Array(10).fill(false));
     setLives(3);
@@ -652,12 +652,12 @@ export default function Top10Guess() {
     setTimeout(() => inputRef.current?.focus(), 100);
   }
 
-  // Handle submissions
+  
   function handleGuess(guessStr) {
     const norm = normalize(guessStr);
     if (!norm) return;
 
-    // Search active question's answers accepts lists
+    
     let foundIdx = -1;
     for (let i = 0; i < activeQuestion.answers.length; i++) {
       const ans = activeQuestion.answers[i];
@@ -679,7 +679,7 @@ export default function Top10Guess() {
         setQuery("");
         persist(newRevealed, lives, wrongGuesses, 'game');
 
-        // Check if won (all 10 revealed)
+        
         if (newRevealed.every(Boolean)) {
           setTimeout(() => endGame(newRevealed, lives), 1500);
         }
@@ -781,7 +781,7 @@ export default function Top10Guess() {
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
     } else {
-      // Single mode animations & scroll
+      
       const isWin = correctCount >= 7;
       if (isWin) {
         triggerWinConfetti();
@@ -818,7 +818,7 @@ export default function Top10Guess() {
     else { navigator.clipboard?.writeText(text); showMsg('Result copied!', 'success'); }
   }
 
-  // Render components
+  
   const correctCount = revealed.filter(Boolean).length;
   const missedCount = 10 - correctCount;
 
@@ -865,7 +865,7 @@ export default function Top10Guess() {
           </div>
         )}
 
-        {/* NAV */}
+        
         <nav className="t10-nav">
           {!(isRaid || isVsFriends) && <button className="t10-nav-logo" onClick={() => navigate('/')}>←</button>}
           {isVsFriends ? (
@@ -886,7 +886,7 @@ export default function Top10Guess() {
 
         <main className="t10-main">
 
-          {/* START PHASE */}
+          
           {phase === 'start' && (
             <div className="t10-start">
               <div className="t10-start-title">Top 10 Guess</div>
@@ -898,10 +898,10 @@ export default function Top10Guess() {
             </div>
           )}
 
-          {/* GAMEPLAY PHASE */}
+          
           {phase === 'game' && activeQuestion && (
             <>
-              {/* HUD */}
+              
               <div className="t10-hud">
                 <div className="t10-hud-item">
                   <div className="t10-hud-val green">{correctCount}/10</div>
@@ -923,13 +923,13 @@ export default function Top10Guess() {
                 </div>
               </div>
 
-              {/* Question */}
+              
               <div className="t10-q-card">
                 <div className="t10-q-meta">FOOTBALL STATISTIC</div>
                 <div className="t10-q-title">Top 10: {activeQuestion.question}</div>
               </div>
 
-              {/* Guess input */}
+              
               <div className="t10-guess-zone">
                 <form
                   onSubmit={(e) => {
@@ -949,7 +949,7 @@ export default function Top10Guess() {
                   <button type="submit" className="t10-submit-btn">Submit</button>
                 </form>
 
-                {/* Suggestions Dropdown */}
+                
                 {suggestions.length > 0 && (
                   <div className="t10-suggestions">
                     {suggestions.map((item, idx) => (
@@ -971,14 +971,14 @@ export default function Top10Guess() {
                 )}
               </div>
 
-              {/* Feedback Alert */}
+              
               {feedback && (
                 <div className={`t10-feedback ${feedback.cls}`} key={feedback.text}>
                   {feedback.text}
                 </div>
               )}
 
-              {/* Top 10 Board */}
+              
               <div className="t10-board">
                 {activeQuestion.answers.map((ans, idx) => (
                   <div key={idx} className={`t10-row ${revealed[idx] ? 'revealed' : 'locked'}`}>
@@ -1002,7 +1002,7 @@ export default function Top10Guess() {
             </>
           )}
 
-          {/* RESULT PHASE */}
+          
           {phase === 'result' && activeQuestion && (() => {
             const pct = Math.round((correctCount / 10) * 100);
             let badgeCls, title, badgeText;
@@ -1069,7 +1069,7 @@ export default function Top10Guess() {
             );
           })()}
 
-          {/* DASHBOARD PANEL */}
+          
           <div className="t10-bottom-section">
             <div className="t10-section-divider">
               <span className="t10-section-label">Your Progress</span>
@@ -1121,7 +1121,7 @@ export default function Top10Guess() {
   );
 }
 
-// ─── Streak Dots ──────────────────────────────────────────────────────────────
+
 function StreakDots({ history, puzzleDate, phase }) {
   const dots  = [];
   const base = new Date(puzzleDate + "T00:00:00Z");
@@ -1158,7 +1158,7 @@ function StreakDots({ history, puzzleDate, phase }) {
   );
 }
 
-// ─── How to Play Modal ────────────────────────────────────────────────────────
+
 function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (

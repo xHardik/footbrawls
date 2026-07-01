@@ -1,4 +1,4 @@
-// src/pages/TermsOfService.jsx
+
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
@@ -178,7 +178,7 @@ export default function TermsOfService() {
           }}
         >← BACK TO ARENA</button>
 
-        {/* Header */}
+        
         <div style={{ marginBottom: "52px" }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
@@ -202,7 +202,7 @@ export default function TermsOfService() {
           }}>The rules of the arena. By playing, you agree to compete with honour.</p>
         </div>
 
-        {/* Terms */}
+        
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {terms.map((t, idx) => (
             <div
@@ -256,7 +256,7 @@ export default function TermsOfService() {
           ))}
         </div>
 
-        {/* Agreement note */}
+        
         <div style={{
           marginTop: "32px", padding: "18px 24px",
           background: "rgba(247,195,68,0.04)", border: "1px solid rgba(247,195,68,0.1)",

@@ -1,6 +1,4 @@
-/**
- * PenaltyNerve.jsx — Penalty Shootout for Footbrawls
- */
+
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -1072,17 +1070,24 @@ export default function PenaltyNerve({ onBack }) {
       <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
       <nav className="pn-nav">
-        {!(isRaid || isVsFriends) && <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'#E84040', fontSize:'1.6rem', fontWeight: 800, cursor:'pointer', justifySelf:'start', padding: '0 8px 0 0' }}>←</button>}
+        <div style={{ justifySelf: 'start' }}>
+          {!(isRaid || isVsFriends) && <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'#E84040', fontSize:'1.6rem', fontWeight: 800, cursor:'pointer', padding: '0 8px 0 0' }}>←</button>}
+        </div>
         {isVsFriends ? (
           <div className="pn-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
             <span className="pn-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
             VS FRIENDS
           </div>
+        ) : isRaid ? (
+          <div className="pn-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7' }}>
+            <span className="pn-tag-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
+            RAID
+          </div>
         ) : (
           <div className="pn-nav-tag">
-          <span className="pn-tag-dot" />
-          Penalty Nerve
-        </div>
+            <span className="pn-tag-dot" />
+            Penalty Nerve
+          </div>
         )}
         <div className="pn-nav-right">
           <button className="pn-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
@@ -1090,7 +1095,6 @@ export default function PenaltyNerve({ onBack }) {
       </nav>
 
       <div className="pn-page2">
-
         <div style={{ marginBottom: 24, animation: "pnFadeUp 0.5s ease both" }}>
           <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(2.2rem,5vw,3.2rem)", letterSpacing: 2, lineHeight: 1, marginBottom: 5, color: "var(--accent3)" }}>
             Penalty Nerve
@@ -1228,13 +1232,13 @@ export default function PenaltyNerve({ onBack }) {
                     })}
                   </div>
 
-                  {/* Goalkeeper — re-keyed each kick so animations restart cleanly */}
+                  
                   <div key={gkKey} className={`pn-goalkeeper ${gkPhaseClass} ${gkDiveClass}`}>
                     <svg viewBox="0 0 52 92" className="pn-gk-svg" xmlns="http://www.w3.org/2000/svg">
-                      {/* Ground shadow */}
+                      
                       <ellipse className="pn-gk-shadow" cx="26" cy="90" rx="13" ry="2" />
 
-                      {/* === RIGHT ARM (behind torso) — upper arm + forearm + glove === */}
+                      
                       <g className="pn-gk-arm pn-gk-arm-right">
                         <rect className="pn-gk-jersey-arm" x="35" y="28" width="7" height="12" rx="3.5" />
                         <g className="pn-gk-forearm-right">
@@ -1243,7 +1247,7 @@ export default function PenaltyNerve({ onBack }) {
                         </g>
                       </g>
 
-                      {/* === LEFT ARM (behind torso) — upper arm + forearm + glove === */}
+                      
                       <g className="pn-gk-arm pn-gk-arm-left">
                         <rect className="pn-gk-jersey-arm" x="10" y="28" width="7" height="12" rx="3.5" />
                         <g className="pn-gk-forearm-left">
@@ -1252,22 +1256,22 @@ export default function PenaltyNerve({ onBack }) {
                         </g>
                       </g>
 
-                      {/* Legs */}
+                      
                       <rect className="pn-gk-leg pn-gk-leg-left"  x="17" y="56" width="8" height="24" rx="4" />
                       <rect className="pn-gk-leg pn-gk-leg-right" x="27" y="56" width="8" height="24" rx="4" />
 
-                      {/* Boots */}
+                      
                       <ellipse className="pn-gk-boot" cx="21" cy="82" rx="7" ry="3.5" />
                       <ellipse className="pn-gk-boot" cx="31" cy="82" rx="7" ry="3.5" />
 
-                      {/* Shorts */}
+                      
                       <rect className="pn-gk-shorts" x="15" y="46" width="22" height="14" rx="4" />
 
-                      {/* Jersey torso */}
+                      
                       <rect className="pn-gk-jersey" x="13" y="20" width="26" height="30" rx="6" />
                       <text className="pn-gk-number" x="26" y="38">1</text>
 
-                      {/* Neck + Head */}
+                      
                       <rect className="pn-gk-skin" x="23" y="13" width="6" height="8" rx="2" />
                       <circle className="pn-gk-skin" cx="26" cy="10" r="8.5" />
                       <path className="pn-gk-hair" d="M17.5 10 a8.5 8.5 0 0 1 17 0 q-1.5 -4 -4 -4.5 q-2 2 -4.5 1.2 q-2.5 -1.2 -4.5 0 q-2.5 1.2 -4 3.3 Z" />

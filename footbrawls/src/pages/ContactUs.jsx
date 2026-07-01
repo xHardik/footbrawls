@@ -1,4 +1,4 @@
-// src/pages/ContactUs.jsx
+
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
@@ -184,7 +184,7 @@ export default function ContactUs() {
           }}
         >← BACK TO ARENA</button>
 
-        {/* Header */}
+        
         <div style={{ marginBottom: "52px" }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
@@ -209,13 +209,13 @@ export default function ContactUs() {
           }}>Reach the Footbrawls Arena support team. We respond within 24 hours.</p>
         </div>
 
-        {/* Two-col layout */}
+        
         <div className="contact-grid">
 
-          {/* Left: Email + Social */}
+          
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-            {/* Email card */}
+            
             <div style={{
               background: "rgba(10,13,24,0.6)", backdropFilter: "blur(24px)",
               border: `1px solid ${C.border}`, borderRadius: "18px",
@@ -255,7 +255,7 @@ export default function ContactUs() {
               </a>
             </div>
 
-            {/* Community card */}
+            
             <div style={{
               background: "rgba(10,13,24,0.6)", backdropFilter: "blur(24px)",
               border: `1px solid ${C.border}`, borderRadius: "18px",
@@ -319,7 +319,7 @@ export default function ContactUs() {
             </div>
           </div>
 
-          {/* Right: form */}
+          
           <div style={{
             background: "rgba(10,13,24,0.6)", backdropFilter: "blur(24px)",
             border: `1px solid ${C.border}`, borderRadius: "18px",
@@ -411,7 +411,7 @@ export default function ContactUs() {
           </div>
         </div>
 
-        {/* Response time note */}
+        
         <div style={{
           marginTop: "20px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
           padding: "12px 20px",

@@ -38,18 +38,18 @@ function simBot(seed, who) {
   return Math.min(ROUNDS, w);
 }
 
-// ── FIX: always pick two ADJACENT zones so far-right never wraps to far-left ──
+
 function getGKZones(round) {
-  // Pick a start index 0–4 so the pair [z, z+1] is always adjacent, never wraps
-  const z1 = Math.floor(rand(SEED + round * 17, 2) * 5); // 0-4
-  const z2 = z1 + 1;                                      // always z1+1, max = 5
+  
+  const z1 = Math.floor(rand(SEED + round * 17, 2) * 5); 
+  const z2 = z1 + 1;                                      
   return [z1, z2];
 }
 
-// Zone X positions inside the goal (6 zones across 138 px starting at 211)
-// Each zone is 23 px wide; centre = 211 + i*23 + 11
+
+
 function zoneScreenX(i) { return 211 + i * 23 + 11; }
-function zoneScreenY()  { return 18; } // mid-height of goal bar
+function zoneScreenY()  { return 18; } 
 
 const botScores = { buddy: simBot(SEED, 'buddy'), rival: simBot(SEED, 'rival') };
 
@@ -72,35 +72,35 @@ function initState() {
     gkX: 280, gkY: 42,
     gkDiveX: 280, gkDiveY: 42,
     gkDiving: false,
-    gkDiveDir: 0, // -1 left, 0 center, +1 right — for arm draw
+    gkDiveDir: 0, 
   };
 }
 
-// ─── Canvas draw helpers ────────────────────────────────────────────────────
+
 
 function drawField(ctx) {
   const W = 560, H = 320;
   ctx.canvas.width = W; ctx.canvas.height = H;
-  // Striped grass
+  
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i % 2 === 0 ? '#4a9e4a' : '#459645';
     ctx.fillRect(i * 94, 0, 94, H);
   }
-  // Pitch boundary
+  
   ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
   ctx.strokeRect(150, 10, 260, 300);
-  // Goal box fill
+  
   ctx.fillStyle = 'rgba(255,255,255,0.07)'; ctx.fillRect(210, 10, 140, 10);
   ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 2;
   ctx.strokeRect(210, 10, 140, 10);
-  // Goal posts
+  
   ctx.fillStyle = '#fff';
   ctx.fillRect(208, 10, 4, 18); ctx.fillRect(348, 10, 4, 18);
   ctx.fillRect(210, 10, 140, 3);
-  // Centre arc
+  
   ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(280, 320, 70, Math.PI, 0); ctx.stroke();
-  // Halfway line
+  
   ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.moveTo(0, 210); ctx.lineTo(560, 210); ctx.stroke();
 }
@@ -114,7 +114,7 @@ function drawGoalZones(ctx, st) {
 
     let bg, stroke, lw;
     if (revealed && gkBlocked && isChosen) {
-      // Player chose a blocked zone
+      
       bg = 'rgba(232,64,64,0.55)'; stroke = '#E84040'; lw = 2;
     } else if (revealed && gkBlocked) {
       bg = 'rgba(232,64,64,0.38)'; stroke = '#E84040'; lw = 1.5;
@@ -127,34 +127,34 @@ function drawGoalZones(ctx, st) {
     ctx.fillStyle = bg; ctx.fillRect(x, 10, 22, 18);
     ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.strokeRect(x, 10, 22, 18);
 
-    // Zone label
+    
     ctx.fillStyle = revealed && gkBlocked ? '#ffaaaa' : isChosen ? '#3DD68C' : 'rgba(255,255,255,0.75)';
     ctx.font = '7px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(ZONE_SHORT[i], x + 11, 19);
   }
 }
 
-// ── FIX: draw GK covering BOTH blocked zones with arms extending to each ──
+
 function drawGK(ctx, st) {
   if (st.gkDiving) {
-    // GK body sits between the two blocked zone centres
+    
     const x1 = zoneScreenX(st.gkZones[0]);
     const x2 = zoneScreenX(st.gkZones[1]);
     const midX = (x1 + x2) / 2;
     const bodyY = st.gkDiveY;
 
-    // Draw arms reaching to each blocked zone
+    
     ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 7; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(midX, bodyY); ctx.lineTo(x1, bodyY - 4); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(midX, bodyY); ctx.lineTo(x2, bodyY - 4); ctx.stroke();
 
-    // Body circle
+    
     ctx.fillStyle = '#ff9f1c';
     ctx.beginPath(); ctx.arc(midX, bodyY, 13, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(midX, bodyY, 13, 0, Math.PI * 2); ctx.stroke();
 
-    // Gloves at zone endpoints
+    
     ctx.fillStyle = '#fff';
     ctx.beginPath(); ctx.arc(x1, bodyY - 4, 5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(x2, bodyY - 4, 5, 0, Math.PI * 2); ctx.fill();
@@ -163,7 +163,7 @@ function drawGK(ctx, st) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('GK', midX, bodyY);
   } else {
-    // Idle — centred in goal
+    
     const x = st.gkX, y = st.gkY;
     ctx.fillStyle = '#ff9f1c';
     ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
@@ -172,7 +172,7 @@ function drawGK(ctx, st) {
     ctx.fillStyle = 'white'; ctx.font = 'bold 8px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('GK', x, y - 2);
-    // Idle arms out
+    
     ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 5; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x - 28, y - 5); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x + 15, y); ctx.lineTo(x + 28, y - 5); ctx.stroke();
@@ -261,7 +261,7 @@ function StreakDots({ history, today }) {
   return <div className="db-streak-dots">{dots}</div>;
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────
+
 export default function DribbleGauntlet() {
   const navigate = useNavigate();
   const user = getUser();
@@ -378,7 +378,7 @@ export default function DribbleGauntlet() {
     });
   };
 
-  // Animation helpers
+  
   const animateTo = (tx, ty, dur, cb) => {
     const s = stRef.current;
     const sx = s.ballX, sy = s.ballY, spx = s.playerX, spy = s.playerY;
@@ -408,13 +408,13 @@ export default function DribbleGauntlet() {
     rafRef.current = requestAnimationFrame(step);
   };
 
-  // ── FIX: GK dives to midpoint between the TWO blocked zones ──
+  
   const animateGKDive = (dur, cb) => {
     const s = stRef.current;
     const x1 = zoneScreenX(s.gkZones[0]);
     const x2 = zoneScreenX(s.gkZones[1]);
     const targetX = (x1 + x2) / 2;
-    const targetY = 20; // dive up to bar level
+    const targetY = 20; 
     const sx = s.gkX, sy = s.gkY;
     s.gkDiving = true;
     const start = performance.now();
@@ -459,7 +459,7 @@ export default function DribbleGauntlet() {
     const s = stRef.current;
     if (s.zonePick === null) return;
     const gkBlocked = s.gkZones.includes(s.zonePick);
-    // GK dives to cover its two adjacent zones
+    
     animateGKDive(340, () => {});
     setTimeout(() => {
       animateBallOnly(zoneScreenX(s.zonePick), 15, 420, async () => {
@@ -548,7 +548,7 @@ export default function DribbleGauntlet() {
         saveStatsAndXP(s.results);
       }
       
-      // Single mode animations & scroll
+      
       const wins = s.results.filter(r => r.goal).length;
       if (!(isRaid || isVsFriends)) {
         if (wins >= 3) {
@@ -607,7 +607,7 @@ export default function DribbleGauntlet() {
     if (floatingXP) { const t = setTimeout(() => setFloatingXP(null), 1200); return () => clearTimeout(t); }
   }, [floatingXP]);
 
-  // Blocked zone labels for hint text
+  
   const blockedHint = s.gkZones.map(i => ZONE_SHORT[i]).join(' & ');
 
   return (
@@ -616,7 +616,7 @@ export default function DribbleGauntlet() {
         <div className="db-bg2" />
         <div className="db-noise" />
 
-        {/* Modal */}
+        
         {showModal && (
           <div className="db-modal-overlay active" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
             <div className="db-modal-box">
@@ -640,7 +640,7 @@ export default function DribbleGauntlet() {
           </div>
         )}
 
-        {/* Nav */}
+        
         <nav className="db-nav">
           {!(isRaid || isVsFriends) && <button className="db-logo" onClick={() => navigate('/')}>←</button>}
           {isVsFriends ? (
@@ -656,10 +656,10 @@ export default function DribbleGauntlet() {
           </div>
         </nav>
 
-        {/* Main */}
+        
         <div className="db-container">
 
-          {/* Header */}
+          
           <div className="db-page-header">
             <div className="db-header-row">
               <div>
@@ -679,7 +679,7 @@ export default function DribbleGauntlet() {
 
           <div className="db-game-box">
             {s.phase === 'summary' ? (
-              /* ── SUMMARY ── */
+              
               <div className="db-summary-card">
                 <span className="db-sum-badge">Session Complete</span>
                 <h2 className="db-sum-title" style={{ color: w === 'you' ? 'var(--green)' : w === 'rival' ? 'var(--accent2)' : 'var(--muted)' }}>
@@ -748,7 +748,7 @@ export default function DribbleGauntlet() {
               </div>
             ) : (
               <>
-                {/* HUD */}
+                
                 <div className="db-hud">
                   <div className="db-hud-left">
                     <span className="db-act-label">Act 2 · Standalone</span>
@@ -768,14 +768,14 @@ export default function DribbleGauntlet() {
                   </div>
                 </div>
 
-                {/* Canvas */}
+                
                 <div className="db-canvas-wrapper">
                   <canvas ref={canvasRef} width={560} height={320} className="db-canvas" />
                 </div>
 
-                {/* Controls */}
+                
                 <div className="db-controls">
-                  {/* Feedback banner */}
+                  
                   {s.feedback && (
                     <div className={`db-feedback db-fb-${feedbackMap[s.feedback]?.cls}`}>
                       <span className="db-fb-icon">{feedbackMap[s.feedback]?.icon}</span>
@@ -798,7 +798,7 @@ export default function DribbleGauntlet() {
                       </button>
                     </div>
                   ) : !s.shotPhase ? (
-                    /* Dribble phase */
+                    
                     <div className="db-phase-block">
                       <div className="db-ctrl-label">
                         <span className="db-phase-badge dribble">Dribble</span>
@@ -822,7 +822,7 @@ export default function DribbleGauntlet() {
                       </button>
                     </div>
                   ) : (
-                    /* Shot phase */
+                    
                     <div className="db-phase-block">
                       <div className="db-ctrl-label">
                         <span className="db-phase-badge shoot">Shoot</span>
@@ -849,7 +849,7 @@ export default function DribbleGauntlet() {
             )}
           </div>
 
-          {/* Dashboard */}
+          
           <div className="db-bottom-section">
             <div className="db-section-div">
               <span className="db-section-label">Your Progress</span>
@@ -891,7 +891,7 @@ export default function DribbleGauntlet() {
   );
 }
 
-// ─── Stylesheet ─────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;900&display=swap');
 

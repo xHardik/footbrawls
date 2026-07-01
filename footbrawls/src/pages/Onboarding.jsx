@@ -1,12 +1,12 @@
-// src/pages/Onboarding.jsx
-// 3-step onboarding: Nickname → Home Country → Support Team
+
+
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUser, getUser } from '../lib/user';
 import { COUNTRIES, WC_2026_TEAMS } from '../lib/countries';
 
-// ─── Colour tokens ────────────────────────────────────────────────────────────
+
 const C = {
   bg:      '#060810',
   border:  'rgba(255,255,255,0.07)',
@@ -20,7 +20,7 @@ const C = {
   muted2:  'rgba(242,242,244,0.28)',
 };
 
-// ─── Google fonts ─────────────────────────────────────────────────────────────
+
 function injectFonts() {
   if (document.getElementById('fb-ob-fonts')) return;
   const l = document.createElement('link');
@@ -31,7 +31,7 @@ function injectFonts() {
   document.head.appendChild(l);
 }
 
-// ─── Injected CSS (no class collisions with other pages) ──────────────────────
+
 const CSS = `
 @font-face {
   font-family: "TwemojiFlags";
@@ -59,7 +59,7 @@ const CSS = `
 .ob-list::-webkit-scrollbar-thumb    { background:rgba(255,255,255,.08); border-radius:99px; }
 `;
 
-// ─── SVG icon kit ─────────────────────────────────────────────────────────────
+
 const Ic = {
   Person: (p={}) => (
     <svg width={p.s||22} height={p.s||22} viewBox="0 0 24 24" fill="none"
@@ -148,7 +148,7 @@ const Ic = {
   ),
 };
 
-// ─── Footballer silhouette ────────────────────────────────────────────────────
+
 function Silhouette() {
   return (
     <div style={{
@@ -156,7 +156,7 @@ function Silhouette() {
       width: 280, height: 440,
       zIndex: 1, pointerEvents: 'none',
     }}>
-      {/* warm glow behind figure */}
+      
       <div style={{
         position: 'absolute', right: -20, bottom: -20,
         width: 320, height: 360, borderRadius: '50%',
@@ -165,34 +165,34 @@ function Silhouette() {
       }}/>
       <svg viewBox="0 0 280 440" fill="none" xmlns="http://www.w3.org/2000/svg"
         style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', height: '100%', opacity: .15 }}>
-        {/* head */}
+        
         <ellipse cx="164" cy="46" rx="22" ry="24" fill="#F7C344"/>
-        {/* neck */}
+        
         <rect x="156" y="67" width="13" height="15" rx="4" fill="#F7C344"/>
-        {/* torso */}
+        
         <path d="M128 84C121 86 114 103 112 126L116 180L154 187L192 178L196 124C194 101 186 85 179 84L164 80L151 79Z" fill="#F7C344"/>
-        {/* left arm raised */}
+        
         <path d="M128 91C115 87 97 76 86 63C80 56 78 50 82 46C86 42 92 45 97 51L120 84Z" fill="#F7C344"/>
-        {/* right arm */}
+        
         <path d="M179 91C192 95 209 105 219 118C225 126 223 134 217 136C211 138 205 132 199 124L183 95Z" fill="#F7C344"/>
-        {/* left leg planted */}
+        
         <path d="M120 178C116 199 112 237 110 270L125 271L138 236L145 200Z" fill="#F7C344"/>
-        {/* left boot */}
+        
         <path d="M108 269C102 270 93 275 89 282C87 288 91 292 99 292L132 289L132 269Z" fill="#F7C344"/>
-        {/* right leg raised for kick */}
+        
         <path d="M163 178C169 199 180 235 195 258L209 251L192 223L181 193Z" fill="#F7C344"/>
-        {/* right shin */}
+        
         <path d="M193 255C205 271 220 286 230 298L240 288L222 275L207 249Z" fill="#F7C344"/>
-        {/* right boot */}
+        
         <path d="M228 298C223 308 219 317 223 324C227 329 238 329 247 322C255 316 257 308 251 303L241 291Z" fill="#F7C344"/>
-        {/* ball */}
+        
         <circle cx="74" cy="318" r="29" fill="none" stroke="#F7C344" strokeWidth="2" opacity=".6"/>
         <path d="M74 289C79 297 82 308 74 315C66 308 69 297 74 289Z" fill="#F7C344" opacity=".4"/>
         <path d="M45 305L56 312L55 322L45 325" stroke="#F7C344" strokeWidth="1.5" fill="none" opacity=".4"/>
         <path d="M103 305L92 312L93 322L103 325" stroke="#F7C344" strokeWidth="1.5" fill="none" opacity=".4"/>
-        {/* ground shadow */}
+        
         <ellipse cx="100" cy="350" rx="60" ry="7" fill="#F7C344" opacity=".05"/>
-        {/* motion lines */}
+        
         <line x1="240" y1="272" x2="268" y2="255" stroke="#F7C344" strokeWidth="1.3" opacity=".2" strokeDasharray="4 7"/>
         <line x1="234" y1="285" x2="265" y2="274" stroke="#F7C344" strokeWidth=".9" opacity=".14" strokeDasharray="3 8"/>
       </svg>
@@ -200,7 +200,7 @@ function Silhouette() {
   );
 }
 
-// ─── Goalkeeper silhouette ───────────────────────────────────────────────────
+
 function GoalkeeperSilhouette() {
   return (
     <div style={{
@@ -208,7 +208,7 @@ function GoalkeeperSilhouette() {
       width: 280, height: 440,
       zIndex: 1, pointerEvents: 'none',
     }}>
-      {/* cool glow behind figure */}
+      
       <div style={{
         position: 'absolute', left: -20, bottom: -20,
         width: 320, height: 360, borderRadius: '50%',
@@ -217,28 +217,28 @@ function GoalkeeperSilhouette() {
       }}/>
       <svg viewBox="0 0 280 440" fill="none" xmlns="http://www.w3.org/2000/svg"
         style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', opacity: .15 }}>
-        {/* head */}
+        
         <ellipse cx="116" cy="116" rx="21" ry="23" fill="#F7C344"/>
-        {/* neck */}
+        
         <rect x="111" y="137" width="10" height="15" rx="3" fill="#F7C344"/>
-        {/* torso */}
+        
         <path d="M96 150 C96 150 136 140 136 140 C136 140 176 150 176 150 L166 220 L136 225 L106 220 Z" fill="#F7C344"/>
-        {/* left arm (reaching far left and slightly up) */}
+        
         <path d="M96 155 C70 145 40 135 15 130 C8 128 3 124 5 118 C8 112 17 114 26 118 L86 145 Z" fill="#F7C344"/>
-        {/* right arm (reaching far right and slightly up) */}
+        
         <path d="M176 155 C202 145 232 135 257 130 C264 128 269 124 267 118 C264 112 255 114 246 118 L186 145 Z" fill="#F7C344"/>
-        {/* left hand */}
+        
         <ellipse cx="10" cy="125" rx="8" ry="12" fill="#F7C344"/>
-        {/* right hand */}
+        
         <ellipse cx="262" cy="125" rx="8" ry="12" fill="#F7C344"/>
-        {/* left leg */}
+        
         <path d="M106 220 C96 245 80 280 70 310 C66 316 68 322 75 324 C82 326 90 320 94 312 L121 240 Z" fill="#F7C344"/>
-        {/* right leg */}
+        
         <path d="M166 220 C176 245 192 280 202 310 C206 316 204 322 197 324 C190 326 182 320 178 312 L151 240 Z" fill="#F7C344"/>
-        {/* ball */}
+        
         <circle cx="136" cy="50" r="24" fill="none" stroke="#F7C344" strokeWidth="2" opacity=".6"/>
         <path d="M136 26C141 34 144 45 136 52C128 45 131 34 136 26Z" fill="#F7C344" opacity=".4"/>
-        {/* motion lines */}
+        
         <line x1="40" y1="272" x2="68" y2="255" stroke="#F7C344" strokeWidth="1.3" opacity=".2" strokeDasharray="4 7"/>
         <line x1="34" y1="285" x2="65" y2="274" stroke="#F7C344" strokeWidth=".9" opacity=".14" strokeDasharray="3 8"/>
       </svg>
@@ -246,7 +246,7 @@ function GoalkeeperSilhouette() {
   );
 }
 
-// ─── Stadium BG ───────────────────────────────────────────────────────────────
+
 
 function StadiumBg() {
   return (
@@ -266,7 +266,7 @@ function StadiumBg() {
   );
 }
 
-// ─── Progress rail ────────────────────────────────────────────────────────────
+
 function Rail({ step }) {
   const nodes = [
     { n: 1, lbl: 'Nickname', icon: <Ic.Person s={15} c="currentColor"/> },
@@ -278,7 +278,7 @@ function Rail({ step }) {
       <div style={{ display: 'flex', alignItems: 'center' }}>
         {nodes.map((node, i) => (
           <div key={node.n} style={{ display: 'contents' }}>
-            {/* node */}
+            
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, flex: 1 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: '50%',
@@ -299,7 +299,7 @@ function Rail({ step }) {
                 transition: 'color .3s',
               }}>{node.lbl}</span>
             </div>
-            {/* connector */}
+            
             {i < 2 && (
               <div style={{
                 flex: 2, height: 2, position: 'relative', top: -14, borderRadius: 2, overflow: 'hidden',
@@ -320,7 +320,7 @@ function Rail({ step }) {
   );
 }
 
-// ─── Step hero ────────────────────────────────────────────────────────────────
+
 function Hero({ icon, rgb, title, sub }) {
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, marginBottom: 36 }}>
@@ -338,7 +338,7 @@ function Hero({ icon, rgb, title, sub }) {
   );
 }
 
-// ─── Bullet row ───────────────────────────────────────────────────────────────
+
 function Bullet({ icon, ibg, iborder, text }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'rgba(255,255,255,.025)', border: `1px solid ${C.border}`, borderRadius: 10 }}>
@@ -348,7 +348,7 @@ function Bullet({ icon, ibg, iborder, text }) {
   );
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+
 function Stat({ num, label, color, bg, border }) {
   return (
     <div style={{ padding: '16px 20px', background: bg, border: `1px solid ${border}`, borderRadius: 12 }}>
@@ -358,7 +358,7 @@ function Stat({ num, label, color, bg, border }) {
   );
 }
 
-// ─── Text input ───────────────────────────────────────────────────────────────
+
 function TxtInput({ value, onChange, onKeyDown, placeholder, maxLength, autoFocus }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -387,7 +387,7 @@ function TxtInput({ value, onChange, onKeyDown, placeholder, maxLength, autoFocu
   );
 }
 
-// ─── Search input ─────────────────────────────────────────────────────────────
+
 function SrchInput({ value, onChange, placeholder, autoFocus }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -412,7 +412,7 @@ function SrchInput({ value, onChange, placeholder, autoFocus }) {
   );
 }
 
-// ─── Country item ─────────────────────────────────────────────────────────────
+
 function Item({ country, selected, onClick }) {
   return (
     <button
@@ -435,7 +435,7 @@ function Item({ country, selected, onClick }) {
   );
 }
 
-// ─── CTA button ───────────────────────────────────────────────────────────────
+
 function CTA({ children, onClick, disabled, loading }) {
   return (
     <button
@@ -458,7 +458,7 @@ function CTA({ children, onClick, disabled, loading }) {
   );
 }
 
-// ─── Error line ───────────────────────────────────────────────────────────────
+
 function Err({ msg }) {
   if (!msg) return null;
   return (
@@ -468,10 +468,10 @@ function Err({ msg }) {
   );
 }
 
-// ─── WC country list ──────────────────────────────────────────────────────────
+
 const WC_COUNTRIES = (COUNTRIES || []).filter(c => (WC_2026_TEAMS || []).includes(c.code));
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function Onboarding() {
   const navigate = useNavigate();
   const [step, setStep]     = useState(1);
@@ -513,31 +513,31 @@ export default function Onboarding() {
 
   return (
     <div className="ob-root" style={{ minHeight: '100vh', background: C.bg, color: C.text, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 0 64px', position: 'relative', overflowX: 'hidden' }}>
-      {/* inject CSS once */}
+      
       <style dangerouslySetInnerHTML={{ __html: CSS }}/>
 
       <StadiumBg/>
       <Silhouette/>
       <GoalkeeperSilhouette/>
 
-      {/* ── nav ── */}
+      
       <nav style={{ position: 'sticky', top: 0, zIndex: 200, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 70, background: 'rgba(6,8,16,.85)', backdropFilter: 'blur(28px)', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px', boxSizing: 'border-box' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,rgba(247,195,68,.75) 30%,rgba(255,220,100,.9) 50%,rgba(247,195,68,.75) 70%,transparent)' }}/>
         <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.5rem', letterSpacing: 4, background: 'linear-gradient(110deg,#ffe680,#F7C344 40%,#ffaa00 65%,#F7C344)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>FOOTBRAWLS</span>
         <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.5rem', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: C.muted2 }}>Step {step} / 3</span>
       </nav>
 
-      {/* ── rail ── */}
+      
       <Rail step={step}/>
 
-      {/* ── content — key forces remount + animation on step change ── */}
+      
       <div
         key={'step-' + step}
         className="ob-step-content"
         style={{ width: '100%', maxWidth: 550, marginTop: 40, position: 'relative', zIndex: 5, padding: '0 20px', boxSizing: 'border-box' }}
       >
 
-        {/* ════ STEP 1 ════ */}
+        
         {step === 1 && (
           <div>
             <Hero
@@ -586,7 +586,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* ════ STEP 2 ════ */}
+        
         {step === 2 && (
           <div>
             <Hero
@@ -618,7 +618,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* ════ STEP 3 ════ */}
+        
         {step === 3 && (
           <div>
             <Hero
@@ -628,7 +628,7 @@ export default function Onboarding() {
               sub={`Any WC 2026 qualifier. <strong style="color:#4F8EF7">20% of your daily XP</strong> goes directly to their castle — pick the team you bleed for.`}
             />
 
-            {/* home nation reminder */}
+            
             {home && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(247,195,68,.05)', border: '1px solid rgba(247,195,68,.14)', borderRadius: 10, marginBottom: 10 }}>
                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,195,68,.5)' }}>Home</span>
@@ -637,7 +637,7 @@ export default function Onboarding() {
               </div>
             )}
 
-            {/* quick stats */}
+            
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginBottom: 14 }}>
               {[
                 { n: '9',   l: 'Daily\nGames',    c: C.accent },

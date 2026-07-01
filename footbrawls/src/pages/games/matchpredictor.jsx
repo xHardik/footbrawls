@@ -1,6 +1,6 @@
-// src/pages/games/MatchPredictor.jsx
-// WC 2026 Match Predictor — whoareya UI applied, full fixture schedule from seed-fixtures.cjs
-// Yellow/orange accent theme, nav bar, noise layer, CSS vars, pill animations, section dividers
+
+
+
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,86 +9,86 @@ import { collection, query, where, getDocs, doc, setDoc, getDoc, orderBy, limit,
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine';
 
-// ── Full fixture schedule from seed-fixtures.cjs ─────────────────────────────
+
 const ALL_FIXTURES_SCHEDULE = [
-  // GROUP A
+  
   { id:'gs_A1', home:'Mexico',       away:'South Africa',          kickoff:'2026-06-11T18:00:00Z', stage:'Group A · MD1', done:true,  hs:2, as:0 },
   { id:'gs_A2', home:'South Korea',  away:'Czechia',               kickoff:'2026-06-11T23:00:00Z', stage:'Group A · MD1', done:true,  hs:2, as:1 },
   { id:'gs_A3', home:'Czechia',      away:'South Africa',          kickoff:'2026-06-18T16:00:00Z', stage:'Group A · MD2', done:true,  hs:1, as:1 },
   { id:'gs_A4', home:'Mexico',       away:'South Korea',           kickoff:'2026-06-19T02:00:00Z', stage:'Group A · MD2', done:true,  hs:1, as:0 },
   { id:'gs_A5', home:'Czechia',      away:'Mexico',                kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:true, hs:0, as:2 },
   { id:'gs_A6', home:'South Africa', away:'South Korea',           kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:true, hs:2, as:1 },
-  // GROUP B
+  
   { id:'gs_B1', home:'Canada',       away:'Bosnia and Herzegovina',kickoff:'2026-06-12T19:00:00Z', stage:'Group B · MD1', done:true,  hs:1, as:1 },
   { id:'gs_B2', home:'Qatar',        away:'Switzerland',           kickoff:'2026-06-13T20:00:00Z', stage:'Group B · MD1', done:true,  hs:1, as:1 },
   { id:'gs_B3', home:'Switzerland',  away:'Bosnia and Herzegovina',kickoff:'2026-06-18T19:00:00Z', stage:'Group B · MD2', done:true,  hs:4, as:1 },
   { id:'gs_B4', home:'Canada',       away:'Qatar',                 kickoff:'2026-06-18T22:00:00Z', stage:'Group B · MD2', done:true,  hs:6, as:0 },
   { id:'gs_B5', home:'Switzerland',  away:'Canada',                kickoff:'2026-06-24T19:00:00Z', stage:'Group B · MD3', done:true, hs:3, as:2 },
   { id:'gs_B6', home:'Bosnia and Herzegovina', away:'Qatar',       kickoff:'2026-06-24T19:00:00Z', stage:'Group B · MD3', done:true, hs:1, as:3 },
-  // GROUP C
+  
   { id:'gs_C1', home:'Brazil',       away:'Morocco',               kickoff:'2026-06-13T19:00:00Z', stage:'Group C · MD1', done:true,  hs:1, as:1 },
   { id:'gs_C2', home:'Haiti',        away:'Scotland',              kickoff:'2026-06-14T01:00:00Z', stage:'Group C · MD1', done:true,  hs:0, as:1 },
   { id:'gs_C3', home:'Scotland',     away:'Morocco',               kickoff:'2026-06-19T22:00:00Z', stage:'Group C · MD2', done:true,  hs:0, as:1 },
   { id:'gs_C4', home:'Brazil',       away:'Haiti',                 kickoff:'2026-06-20T01:00:00Z', stage:'Group C · MD2', done:true,  hs:3, as:0 },
   { id:'gs_C5', home:'Scotland',     away:'Brazil',                kickoff:'2026-06-24T22:00:00Z', stage:'Group C · MD3', done:true,  hs:0, as:3 },
   { id:'gs_C6', home:'Morocco',      away:'Haiti',                 kickoff:'2026-06-24T22:00:00Z', stage:'Group C · MD3', done:true,  hs:2, as:0 },
-  // GROUP D
+  
   { id:'gs_D1', home:'USA',          away:'Paraguay',              kickoff:'2026-06-13T01:00:00Z', stage:'Group D · MD1', done:true,  hs:4, as:1 },
   { id:'gs_D2', home:'Australia',    away:'Türkiye',               kickoff:'2026-06-14T04:00:00Z', stage:'Group D · MD1', done:true,  hs:2, as:0 },
   { id:'gs_D3', home:'USA',          away:'Australia',             kickoff:'2026-06-19T19:00:00Z', stage:'Group D · MD2', done:true,  hs:2, as:0 },
   { id:'gs_D4', home:'Türkiye',      away:'Paraguay',              kickoff:'2026-06-20T04:00:00Z', stage:'Group D · MD2', done:true,  hs:0, as:1 },
   { id:'gs_D5', home:'Türkiye',      away:'USA',                   kickoff:'2026-06-26T02:00:00Z', stage:'Group D · MD3', done:true,  hs:1, as:2 },
   { id:'gs_D6', home:'Paraguay',     away:'Australia',             kickoff:'2026-06-26T02:00:00Z', stage:'Group D · MD3', done:true,  hs:1, as:1 },
-  // GROUP E
+  
   { id:'gs_E1', home:'Germany',      away:'Curaçao',               kickoff:'2026-06-14T18:00:00Z', stage:'Group E · MD1', done:true,  hs:7, as:1 },
   { id:'gs_E2', home:'Ivory Coast',  away:'Ecuador',               kickoff:'2026-06-14T22:00:00Z', stage:'Group E · MD1', done:true,  hs:1, as:0 },
   { id:'gs_E3', home:'Germany',      away:'Ivory Coast',           kickoff:'2026-06-20T20:00:00Z', stage:'Group E · MD2', done:true,  hs:3, as:1 },
   { id:'gs_E4', home:'Ecuador',      away:'Curaçao',               kickoff:'2026-06-21T00:00:00Z', stage:'Group E · MD2', done:true,  hs:2, as:0 },
   { id:'gs_E5', home:'Ecuador',      away:'Germany',               kickoff:'2026-06-25T20:00:00Z', stage:'Group E · MD3', done:true,  hs:0, as:3 },
   { id:'gs_E6', home:'Curaçao',      away:'Ivory Coast',           kickoff:'2026-06-25T20:00:00Z', stage:'Group E · MD3', done:true,  hs:0, as:2 },
-  // GROUP F
+  
   { id:'gs_F1', home:'Netherlands',  away:'Japan',                 kickoff:'2026-06-14T20:00:00Z', stage:'Group F · MD1', done:true,  hs:2, as:2 },
   { id:'gs_F2', home:'Sweden',       away:'Tunisia',               kickoff:'2026-06-15T02:00:00Z', stage:'Group F · MD1', done:true,  hs:5, as:1 },
   { id:'gs_F3', home:'Netherlands',  away:'Sweden',                kickoff:'2026-06-20T17:00:00Z', stage:'Group F · MD2', done:true,  hs:2, as:1 },
   { id:'gs_F4', home:'Tunisia',      away:'Japan',                 kickoff:'2026-06-21T04:00:00Z', stage:'Group F · MD2', done:true,  hs:1, as:2 },
   { id:'gs_F5', home:'Japan',        away:'Sweden',                kickoff:'2026-06-25T23:00:00Z', stage:'Group F · MD3', done:true,  hs:1, as:1 },
   { id:'gs_F6', home:'Tunisia',      away:'Netherlands',           kickoff:'2026-06-25T23:00:00Z', stage:'Group F · MD3', done:true,  hs:0, as:2 },
-  // GROUP G
+  
   { id:'gs_G2', home:'Belgium',      away:'Egypt',                 kickoff:'2026-06-15T22:00:00Z', stage:'Group G · MD1', done:true,  hs:1, as:1 },
   { id:'gs_G4', home:'Iran',         away:'New Zealand',           kickoff:'2026-06-16T04:00:00Z', stage:'Group G · MD1', done:true,  hs:2, as:2 },
   { id:'gs_G5', home:'Belgium',      away:'Iran',                  kickoff:'2026-06-21T19:00:00Z', stage:'Group G · MD2', done:true,  hs:3, as:1 },
   { id:'gs_G6', home:'New Zealand',  away:'Egypt',                 kickoff:'2026-06-22T01:00:00Z', stage:'Group G · MD2', done:true,  hs:1, as:2 },
   { id:'gs_G7', home:'Egypt',        away:'Iran',                  kickoff:'2026-06-27T03:00:00Z', stage:'Group G · MD3', done:true,  hs:2, as:1 },
   { id:'gs_G8', home:'New Zealand',  away:'Belgium',               kickoff:'2026-06-27T03:00:00Z', stage:'Group G · MD3', done:true,  hs:0, as:3 },
-  // GROUP H Completed Status and scores
+  
   { id:'gs_G1', home:'Spain',        away:'Cape Verde',            kickoff:'2026-06-15T16:00:00Z', stage:'Group H · MD1', done:true,  hs:3, as:0 },
   { id:'gs_G3', home:'Saudi Arabia', away:'Uruguay',               kickoff:'2026-06-15T22:00:00Z', stage:'Group H · MD1', done:true,  hs:1, as:2 },
   { id:'gs_H3', home:'Spain',        away:'Saudi Arabia',          kickoff:'2026-06-21T16:00:00Z', stage:'Group H · MD2', done:true,  hs:2, as:0 },
   { id:'gs_H4', home:'Uruguay',      away:'Cape Verde',            kickoff:'2026-06-21T22:00:00Z', stage:'Group H · MD2', done:true,  hs:3, as:1 },
   { id:'gs_H5', home:'Uruguay',      away:'Spain',                 kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   { id:'gs_H6', home:'Cape Verde',   away:'Saudi Arabia',          kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
-  // GROUP I
+  
   { id:'gs_I1', home:'France',       away:'Senegal',               kickoff:'2026-06-16T19:00:00Z', stage:'Group I · MD1', done:true, hs:3, as:1},
   { id:'gs_I2', home:'Iraq',         away:'Norway',                kickoff:'2026-06-16T22:00:00Z', stage:'Group I · MD1', done:true, hs:1, as:4},
   { id:'gs_I3', home:'France',       away:'Iraq',                  kickoff:'2026-06-22T21:00:00Z', stage:'Group I · MD2', done:true, hs:4, as:0 },
   { id:'gs_I4', home:'Norway',       away:'Senegal',               kickoff:'2026-06-23T00:00:00Z', stage:'Group I · MD2', done:true, hs:2, as:1 },
   { id:'gs_I5', home:'Norway',       away:'France',                kickoff:'2026-06-26T19:00:00Z', stage:'Group I · MD3', done:true, hs:1, as:1 },
   { id:'gs_I6', home:'Senegal',      away:'Iraq',                  kickoff:'2026-06-26T19:00:00Z', stage:'Group I · MD3', done:true, hs:2, as:0 },
-  // GROUP J
+  
   { id:'gs_J1', home:'Argentina',    away:'Algeria',               kickoff:'2026-06-17T01:00:00Z', stage:'Group J · MD1', done:true, hs:3, as:0 },
   { id:'gs_J2', home:'Austria',      away:'Jordan',                kickoff:'2026-06-17T04:00:00Z', stage:'Group J · MD1', done:true,hs:2, as:1 },
   { id:'gs_J3', home:'Argentina',    away:'Austria',               kickoff:'2026-06-22T17:00:00Z', stage:'Group J · MD2', done:true, hs:2, as:0 },
   { id:'gs_J4', home:'Jordan',       away:'Algeria',               kickoff:'2026-06-23T03:00:00Z', stage:'Group J · MD2', done:true, hs:1, as:2 },
   { id:'gs_J5', home:'Algeria',      away:'Austria',               kickoff:'2026-06-28T02:00:00Z', stage:'Group J · MD3', done:true, hs:1, as:2 },
   { id:'gs_J6', home:'Jordan',       away:'Argentina',             kickoff:'2026-06-28T02:00:00Z', stage:'Group J · MD3', done:true, hs:0, as:3 },
-  // GROUP K
+  
   { id:'gs_K1', home:'Portugal',     away:'DR Congo',              kickoff:'2026-06-17T17:00:00Z', stage:'Group K · MD1', done:true,  hs:2, as:0 },
   { id:'gs_K2', home:'Uzbekistan',   away:'Colombia',              kickoff:'2026-06-18T02:00:00Z', stage:'Group K · MD1', done:true,  hs:1, as:3 },
   { id:'gs_K3', home:'Portugal',     away:'Uzbekistan',            kickoff:'2026-06-23T17:00:00Z', stage:'Group K · MD2', done:true,  hs:4, as:0 },
   { id:'gs_K4', home:'Colombia',     away:'DR Congo',              kickoff:'2026-06-24T02:00:00Z', stage:'Group K · MD2', done:true,  hs:2, as:1 },
   { id:'gs_K5', home:'Colombia',     away:'Portugal',              kickoff:'2026-06-27T23:30:00Z', stage:'Group K · MD3', done:true,  hs:1, as:2 },
   { id:'gs_K6', home:'DR Congo',     away:'Uzbekistan',            kickoff:'2026-06-27T23:30:00Z', stage:'Group K · MD3', done:true,  hs:1, as:1 },
-  // GROUP L
+  
   { id:'gs_L1', home:'England',      away:'Croatia',               kickoff:'2026-06-17T20:00:00Z', stage:'Group L · MD1', done:true,  hs:1, as:1 },
   { id:'gs_L2', home:'Ghana',        away:'Panama',                kickoff:'2026-06-17T23:00:00Z', stage:'Group L · MD1', done:true,  hs:2, as:0 },
   { id:'gs_L3', home:'England',      away:'Ghana',                 kickoff:'2026-06-23T20:00:00Z', stage:'Group L · MD2', done:true,  hs:3, as:1 },
@@ -96,7 +96,7 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'gs_L5', home:'Panama',       away:'England',               kickoff:'2026-06-27T21:00:00Z', stage:'Group L · MD3', done:true,  hs:0, as:4 },
   { id:'gs_L6', home:'Croatia',      away:'Ghana',                 kickoff:'2026-06-27T21:00:00Z', stage:'Group L · MD3', done:true,  hs:2, as:1 },
   
-  // GROUP Stage MD3 Completed
+  
   { id:'gs_A5', home:'Czechia',      away:'Mexico',                kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:true,  hs:1, as:2 },
   { id:'gs_A6', home:'South Africa', away:'South Korea',           kickoff:'2026-06-25T00:00:00Z', stage:'Group A · MD3', done:true,  hs:0, as:2 },
   { id:'gs_B5', home:'Switzerland',  away:'Canada',                kickoff:'2026-06-24T19:00:00Z', stage:'Group B · MD3', done:true,  hs:2, as:2 },
@@ -121,7 +121,7 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'gs_H4', home:'Uruguay',      away:'Cape Verde',            kickoff:'2026-06-21T22:00:00Z', stage:'Group H · MD2', done:true,  hs:3, as:1 },
   { id:'gs_H5', home:'Uruguay',      away:'Spain',                 kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   { id:'gs_H6', home:'Cape Verde',   away:'Saudi Arabia',          kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
-  // KNOCKOUT - ROUND OF 32 (Aligned with official FIFA 2026 Knockout Bracket Match 73 to Match 88)
+  
   { id:'r32_01', home:'South Africa',away:'Canada',                kickoff:'2026-06-28T19:00:00Z', stage:'Round of 32 · M73', done:false },
   { id:'r32_02', home:'Germany',     away:'Paraguay',              kickoff:'2026-06-29T17:00:00Z', stage:'Round of 32 · M74', done:false },
   { id:'r32_03', home:'Netherlands', away:'Morocco',               kickoff:'2026-06-29T21:00:00Z', stage:'Round of 32 · M75', done:false },
@@ -139,7 +139,7 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'r32_15', home:'Colombia',    away:'Ghana',                 kickoff:'2026-07-03T21:00:00Z', stage:'Round of 32 · M87', done:false },
   { id:'r32_16', home:'Australia',   away:'Egypt',                 kickoff:'2026-07-03T23:30:00Z', stage:'Round of 32 · M88', done:false },
   
-  // ROUND of 16 (Aligned to match outcomes)
+  
   { id:'r16_01', home:'Canada',      away:'Germany',               kickoff:'2026-07-04T17:00:00Z', stage:'Round of 16 · M1', done:false },
   { id:'r16_02', home:'Morocco',     away:'Brazil',                kickoff:'2026-07-04T21:00:00Z', stage:'Round of 16 · M2', done:false },
   { id:'r16_03', home:'France',      away:'Norway',                kickoff:'2026-07-05T20:00:00Z', stage:'Round of 16 · M3', done:false },
@@ -149,20 +149,20 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'r16_07', home:'Switzerland', away:'Argentina',             kickoff:'2026-07-07T16:00:00Z', stage:'Round of 16 · M7', done:false },
   { id:'r16_08', home:'Colombia',    away:'Australia',             kickoff:'2026-07-07T20:00:00Z', stage:'Round of 16 · M8', done:false },
   
-  // QUARTER FINALS
+  
   { id:'qf_01',  home:'Germany',     away:'Brazil',                kickoff:'2026-07-09T20:00:00Z', stage:'Quarter-Final 1', done:false },
   { id:'qf_02',  home:'France',      away:'England',               kickoff:'2026-07-10T19:00:00Z', stage:'Quarter-Final 2', done:false },
   { id:'qf_03',  home:'Belgium',     away:'Portugal',              kickoff:'2026-07-11T21:00:00Z', stage:'Quarter-Final 3', done:false },
   { id:'qf_04',  home:'Argentina',   away:'Colombia',              kickoff:'2026-07-12T01:00:00Z', stage:'Quarter-Final 4', done:false },
   
-  // SEMI FINALS
+  
   { id:'sf_01',  home:'Brazil',      away:'France',                kickoff:'2026-07-14T19:00:00Z', stage:'Semi-Final 1',    done:false },
   { id:'sf_02',  home:'Portugal',    away:'Argentina',             kickoff:'2026-07-15T19:00:00Z', stage:'Semi-Final 2',    done:false },
   { id:'3rd',    home:'Brazil',      away:'Portugal',              kickoff:'2026-07-18T21:00:00Z', stage:'3rd Place Playoff',done:false },
   { id:'final',  home:'France',      away:'Argentina',             kickoff:'2026-07-19T19:00:00Z', stage:'⚽ FINAL',          done:false },
 ];
 
-// Convert static schedule entry to fixture-like object
+
 function scheduleToFixture(s) {
   return {
     id: s.id,
@@ -179,7 +179,7 @@ function scheduleToFixture(s) {
   };
 }
 
-// ── Team data ─────────────────────────────────────────────────────────────────
+
 const TEAM_FLAGS = {
   Argentina:'🇦🇷', France:'🇫🇷', Brazil:'🇧🇷', England:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', Spain:'🇪🇸', Germany:'🇩🇪',
   Portugal:'🇵🇹', Netherlands:'🇳🇱', Belgium:'🇧🇪', Croatia:'🇭🇷', Morocco:'🇲🇦', Senegal:'🇸🇳',
@@ -265,7 +265,7 @@ function getPlayers(name) {
   return TEAM_PLAYERS[name] || [];
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
@@ -295,7 +295,7 @@ function formatKickoff(fixture) {
   });
 }
 
-// Group schedule by date for the schedule panel
+
 function groupByDate(fixtures) {
   const map = {};
   for (const f of fixtures) {
@@ -307,7 +307,7 @@ function groupByDate(fixtures) {
   return Object.entries(map).sort((a, b) => a[1].ms - b[1].ms).map(([date, { items }]) => ({ date, items }));
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+
 export default function MatchPredictor() {
   const navigate = useNavigate();
   const user = getUser();
@@ -321,8 +321,8 @@ export default function MatchPredictor() {
   const [submitted, setSubmitted]         = useState(false);
   const [loading, setLoading]             = useState(true);
   const [xpAwarded, setXpAwarded]         = useState(null);
-  const [activeTab, setActiveTab]         = useState('predict'); // 'predict' | 'schedule'
-  const [scheduleFilter, setScheduleFilter] = useState('all');  // 'all' | 'upcoming' | 'results'
+  const [activeTab, setActiveTab]         = useState('predict'); 
+  const [scheduleFilter, setScheduleFilter] = useState('all');  
   const [unlockedInsights, setUnlockedInsights] = useState(false);
   const [isAdLoading, setIsAdLoading]     = useState(false);
   const [showModal, setShowModal]         = useState(false);
@@ -330,7 +330,7 @@ export default function MatchPredictor() {
   const [insightSource, setInsightSource] = useState('Footbrawls Users');
 
   useEffect(() => {
-    // Disable DB listener so it doesn't override static team updates with outdated group placeholders
+    
     setDbFixtures([]);
   }, []);
 
@@ -349,7 +349,7 @@ export default function MatchPredictor() {
     setUnlockedInsights(saved === 'true');
   }, [selected?.id]);
 
-  // Fetch community predictions dynamically with variance
+  
   useEffect(() => {
     if (!selected) return;
     (async () => {
@@ -365,7 +365,7 @@ export default function MatchPredictor() {
           const temp = data.current_weather?.temperature || 15;
           const wind = data.current_weather?.windspeed || 10;
           
-          // Apply a small, weather-dependent shift (e.g. up to +/- 3%)
+          
           const weatherShiftH = Math.round((temp % 7) - 3);
           const weatherShiftA = Math.round((wind % 7) - 3);
 
@@ -392,7 +392,7 @@ export default function MatchPredictor() {
     })();
   }, [selected?.id]);
 
-  // Load upcoming fixtures from static schedule
+  
   useEffect(() => {
     async function loadFixtures() {
       loadFromStatic();
@@ -413,7 +413,7 @@ export default function MatchPredictor() {
     loadFixtures();
   }, []);
 
-  // Load saved prediction for selected fixture
+  
   useEffect(() => {
     if (!selected || !user) return;
     const cached = predictions[selected.id];
@@ -497,35 +497,35 @@ export default function MatchPredictor() {
   );
   const isLocked = submitted || isMatchLive || selected?.isComplete || Date.now() > locksAtMs;
 
-  // Community insight percentages (deterministic from fixture object)
+  
   function getInsightPercents(fixture) {
     if (!fixture) return { home: 45, draw: 25, away: 30 };
     const ratingA = TEAM_RATINGS[fixture.homeTeam] || 75;
     const ratingB = TEAM_RATINGS[fixture.awayTeam] || 75;
     
-    // Base probability based on ratings difference + home advantage (+3 to home rating)
+    
     const diff = (ratingA + 3) - ratingB; 
     
-    // Map diff to home/away win probabilities
+    
     let homeProb = 45 + diff * 2.5;
     let awayProb = 30 - diff * 2.5;
     
-    // Bound probabilities
+    
     homeProb = Math.max(10, Math.min(85, homeProb));
     awayProb = Math.max(10, Math.min(85, awayProb));
     
-    // Add minor deterministic variance based on fixture.id char codes
+    
     let hash = 0;
     const fid = fixture.id || "";
     for (let i = 0; i < fid.length; i++) hash = fid.charCodeAt(i) + ((hash << 5) - hash);
-    const varH = (Math.abs(hash) % 7) - 3; // -3% to +3%
+    const varH = (Math.abs(hash) % 7) - 3; 
     const varA = (Math.abs(hash >> 2) % 7) - 3;
     
     let home = Math.round(homeProb + varH);
     let away = Math.round(awayProb + varA);
     let draw = 100 - home - away;
     
-    // Ensure bounds
+    
     if (home < 5) { home = 5; draw = 100 - home - away; }
     if (away < 5) { away = 5; draw = 100 - home - away; }
     if (draw < 5) { draw = 5; home = 100 - draw - away; }
@@ -558,7 +558,7 @@ export default function MatchPredictor() {
       <div className="mp2-bg-layer" />
       <div className="mp2-noise" />
 
-      {/* ── Nav ── */}
+      
       <nav className="mp2-nav">
         <button className="mp2-nav-logo" onClick={() => navigate('/')}>←</button>
         <div className="mp2-nav-tag">
@@ -571,14 +571,14 @@ export default function MatchPredictor() {
       </nav>
       <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
 
-      {/* ── Page Header ── */}
+      
       <div className="mp2-main">
         <div className="mp2-page-header">
           <h1 className="mp2-title">MATCH PREDICTOR</h1>
           <p className="mp2-subtitle">Predict WC 2026 results · Earn up to 60 XP per match</p>
         </div>
 
-        {/* ── XP Rules strip ── */}
+        
         <div className="mp2-rules-strip">
           {[
             { pts: '+15 XP', label: 'Correct Result' },
@@ -591,7 +591,7 @@ export default function MatchPredictor() {
           ))}
         </div>
 
-        {/* ── Tab Bar ── */}
+        
         <div className="mp2-tab-bar">
           {[
             { id: 'predict',     label: '⚽ Predict' },
@@ -607,11 +607,11 @@ export default function MatchPredictor() {
           ))}
         </div>
 
-        {/* ══════════════ PREDICT TAB ══════════════ */}
+        
         {activeTab === 'predict' && (
           <div className="mp2-predict-layout">
 
-            {/* Fixture selector pills */}
+            
             {fixtures.length > 1 && (
               <div className="mp2-fixture-scroll">
                 {fixtures.map(f => (
@@ -631,10 +631,10 @@ export default function MatchPredictor() {
 
             {selected && (
               <div className="mp2-predict-grid">
-                {/* ── Main Prediction Card ── */}
+                
                 <div className="mp2-card mp2-match-card">
 
-                  {/* Scoreboard */}
+                  
                   <div className="mp2-scoreboard">
                     <div className="mp2-team home">
                       <div className="mp2-flag-circle">{getFlag(selected.homeTeam)}</div>
@@ -663,14 +663,14 @@ export default function MatchPredictor() {
                     </div>
                   </div>
 
-                  {/* Section Divider */}
+                  
                   <div className="mp2-section-divider">
                     <span className="mp2-section-label">Who wins?</span>
                     <div className="mp2-section-line" />
                     <span className="mp2-pts-badge green">+15 XP</span>
                   </div>
 
-                  {/* Pick Winner */}
+                  
                   <div className="mp2-pick-grid">
                     {[
                       { value: 'home', label: selected.homeTeam, flag: getFlag(selected.homeTeam) },
@@ -692,7 +692,7 @@ export default function MatchPredictor() {
                     ))}
                   </div>
 
-                  {/* Community Insights */}
+                  
                   {!isLocked && (
                     <div className="mp2-insights-wrapper">
                       {unlockedInsights && insightVotes ? (
@@ -726,14 +726,14 @@ export default function MatchPredictor() {
                     </div>
                   )}
 
-                  {/* Section Divider */}
+                  
                   <div className="mp2-section-divider" style={{ marginTop: 24 }}>
                     <span className="mp2-section-label">Top scorer?</span>
                     <div className="mp2-section-line" />
                     <span className="mp2-pts-badge blue">+5 XP</span>
                   </div>
 
-                  {/* Scorer select */}
+                  
                   <select
                     className="mp2-select"
                     value={pickedScorer}
@@ -752,7 +752,7 @@ export default function MatchPredictor() {
                     </optgroup>
                   </select>
 
-                  {/* Submit / Banner */}
+                  
                   <div style={{ marginTop: 24 }}>
                     {isLocked && !submitted ? (
                       <div className="mp2-submitted-banner locked">
@@ -775,7 +775,7 @@ export default function MatchPredictor() {
                     )}
                   </div>
 
-                  {/* Result reveal */}
+                  
                   {selected.isComplete && predictions[selected.id] && (
                     <div className="mp2-result-reveal">
                       <div className="mp2-result-reveal-label">Full Time Result</div>
@@ -805,9 +805,9 @@ export default function MatchPredictor() {
                   )}
                 </div>
 
-                {/* ── Sidebar ── */}
+                
                 <div className="mp2-sidebar">
-                  {/* Your prediction summary */}
+                  
                   {submitted && (
                     <div className="mp2-card mp2-pred-summary">
                       <div className="mp2-card-header">
@@ -830,7 +830,7 @@ export default function MatchPredictor() {
                     </div>
                   )}
 
-                  {/* Scoring Rules */}
+                  
                   <div className="mp2-card">
                     <div className="mp2-card-header">
                       <span className="mp2-card-title">Scoring Rules</span>
@@ -853,7 +853,7 @@ export default function MatchPredictor() {
           </div>
         )}
 
-        {/* ══════════════ SCHEDULE TAB ══════════════ */}
+        
         {activeTab === 'schedule' && (
           <div>
             <div className="mp2-schedule-filters">
@@ -940,7 +940,7 @@ export default function MatchPredictor() {
   );
 }
 
-// ─── How to Play Modal ────────────────────────────────────────────────────────
+
 function HowToPlayModal({ show, onClose }) {
   if (!show) return null;
   return (
@@ -966,7 +966,7 @@ function HowToPlayModal({ show, onClose }) {
   );
 }
 
-// ── CSS ───────────────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=Space+Mono:wght@400;700&display=swap');
 

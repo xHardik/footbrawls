@@ -1,4 +1,4 @@
-// src/pages/PrivacyPolicy.jsx
+
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
@@ -203,7 +203,7 @@ export default function PrivacyPolicy() {
           }}
         >← BACK TO ARENA</button>
 
-        {/* Header */}
+        
         <div style={{ marginBottom: "52px" }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
@@ -230,7 +230,7 @@ export default function PrivacyPolicy() {
           }}>We keep things clean on the pitch and in our data practices.</p>
         </div>
 
-        {/* Sections */}
+        
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {sections.map((s, idx) => (
             <div
@@ -271,7 +271,7 @@ export default function PrivacyPolicy() {
                   }}>{s.title}</h2>
                   <p style={{ margin: "0 0 14px 0", fontSize: "0.89rem", lineHeight: "1.68", color: C.muted }}>{s.desc}</p>
 
-                  {/* Tags */}
+                  
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                     {s.chips.map((chip, ci) => (
                       <span key={ci} style={{
@@ -289,7 +289,7 @@ export default function PrivacyPolicy() {
           ))}
         </div>
 
-        {/* Trust badge */}
+        
         <div style={{
           marginTop: "32px",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",

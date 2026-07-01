@@ -54,7 +54,7 @@ const Icon = {
   ),
 };
 
-// ─── Same CSS vars / design tokens as Home.jsx ────────────────────────────────
+
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
@@ -275,8 +275,8 @@ function CastleTab({ guild, user }) {
     if (!isRuined) return;
     const ruinedTime = guild?.ruinedAt
       ? (guild.ruinedAt.toMillis ? guild.ruinedAt.toMillis() : new Date(guild.ruinedAt).getTime())
-      : (Date.now() - 45 * 60 * 1000); // fallback 45 mins ago
-    const expiry = ruinedTime + 3 * 60 * 60 * 1000; // 3 hours cooldown
+      : (Date.now() - 45 * 60 * 1000); 
+    const expiry = ruinedTime + 3 * 60 * 60 * 1000; 
 
     const updateTimer = () => {
       const diff = expiry - Date.now();
@@ -483,7 +483,7 @@ function ChatTab({ user, guild, tier, canChat }) {
   );
 }
 
-// ─── Bottom Nav — accepts toast/setToast as props (Option A) ──────────────────
+
 function BottomNav({ navigate, toast, setToast }) {
   const items = [
     { id:"home",  label:"Games", IconC:Icon.Ball,   route:"/"      },
@@ -532,7 +532,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
   const [guildLoading,   setGuildLoading] = useState(true);
   const [overallLeaderboard, setOverallLeaderboard] = useState([]);
   const [tab,            setTab]          = useState("chat");
-  const [toast,          setToast]        = useState(""); // ← lifted from BottomNav
+  const [toast,          setToast]        = useState(""); 
 
   useEffect(() => {
   const localUser = getUser();
@@ -544,7 +544,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
   );
   return unsub;
 }, []);
-  // Inject CSS once
+  
   useEffect(() => {
     if (!document.getElementById("fb-guild-css")) {
       const s = document.createElement("style");
@@ -554,7 +554,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
     }
   }, []);
 
-  // Guild doc listener
+  
   useEffect(() => {
     if (!user?.homeCountry) { setGuildLoading(false); return; }
     const unsub = onSnapshot(
@@ -565,7 +565,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
     return unsub;
   }, [user.homeCountry]);
 
-  // Overall Guild Leaderboard listener
+  
   useEffect(() => {
     if (!user?.homeCountry) return;
     const q = query(
@@ -584,7 +584,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
     return unsub;
   }, [user.homeCountry]);
 
-  // Level-up celebration toast
+  
   useEffect(() => {
     if (!guild?.levelUpPending) return;
     const config = getGuildLevel(guild.levelUpTo);
@@ -622,7 +622,7 @@ const [user, setUser] = useState(() => getUser() || FALLBACK_USER);
         )}
       </div>
 
-      {/* BottomNav now receives toast state as props */}
+      
       <BottomNav navigate={navigate} toast={toast} setToast={setToast} />
     </div>
   );

@@ -1,4 +1,4 @@
-// src/pages/AboutUs.jsx
+
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -134,7 +134,7 @@ export default function AboutUs() {
       position: "relative",
       overflowX: "hidden"
     }}>
-      {/* Stadium background overlay */}
+      
       <div style={{
         position: "absolute",
         inset: 0,
@@ -143,7 +143,7 @@ export default function AboutUs() {
         pointerEvents: "none"
       }} />
 
-      {/* Grid Pattern */}
+      
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0)',
@@ -155,7 +155,7 @@ export default function AboutUs() {
 
       <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "700px" }}>
 
-        {/* Back Button */}
+        
         <button
           onClick={() => navigate(-1)}
           style={{
@@ -189,7 +189,7 @@ export default function AboutUs() {
           ← BACK TO ARENA
         </button>
 
-        {/* Title */}
+        
         <h1 style={{
           fontFamily: "'Bebas Neue', sans-serif",
           fontSize: "4.2rem",
@@ -216,7 +216,7 @@ export default function AboutUs() {
           The Ultimate Football Gaming Arena
         </p>
 
-        {/* Cards */}
+        
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           {sections.map((item, idx) => (
             <div
@@ -244,7 +244,7 @@ export default function AboutUs() {
                 e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.2)";
               }}
             >
-              {/* Icon badge */}
+              
               <div style={{
                 width: 44, height: 44, flexShrink: 0,
                 background: "rgba(247,195,68,0.07)",

@@ -48,13 +48,13 @@ function MessageBubble({ msg, isSelf }) {
   );
 }
 
-// ─── Locked input bar — shows XP progress and how to unlock ──────────────────
+
 function LockedInput({ totalXP = 0 }) {
   const xpNeeded = Math.max(0, 50 - totalXP);
   const progress = Math.min(100, Math.round((totalXP / 50) * 100));
   return (
     <div style={{ borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
-      {/* XP progress bar */}
+      
       <div style={{ padding:"10px 14px 0" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
           <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.58rem", color:"rgba(242,242,244,0.3)", letterSpacing:1 }}>CHAT UNLOCK PROGRESS</span>
@@ -64,7 +64,7 @@ function LockedInput({ totalXP = 0 }) {
           <div style={{ width:`${progress}%`, height:"100%", borderRadius:99, background:"linear-gradient(90deg,#F7C344,#ffd700)", transition:"width 0.6s ease", boxShadow:"0 0 8px rgba(247,195,68,0.4)" }} />
         </div>
       </div>
-      {/* Locked input */}
+      
       <div style={{ padding:"0 12px 10px", display:"flex", gap:8, alignItems:"center" }}>
         <div style={{ flex:1, background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
           <span style={{ fontSize:16 }}>🔒</span>
@@ -77,7 +77,7 @@ function LockedInput({ totalXP = 0 }) {
         </div>
         <div style={{ width:42, height:42, borderRadius:12, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.07)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:"rgba(242,242,244,0.15)", flexShrink:0 }}>🔒</div>
       </div>
-      {/* How to earn XP tip */}
+      
       <div style={{ margin:"0 12px 12px", padding:"8px 12px", background:"rgba(247,195,68,0.06)", border:"1px solid rgba(247,195,68,0.14)", borderRadius:10, display:"flex", alignItems:"center", gap:10 }}>
         <span style={{ fontSize:18, flexShrink:0 }}>⚡</span>
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"0.72rem", color:"rgba(242,242,244,0.45)", lineHeight:1.4 }}>
@@ -88,7 +88,7 @@ function LockedInput({ totalXP = 0 }) {
   );
 }
 
-// ─── Main GuildChat ───────────────────────────────────────────────────────────
+
 export default function GuildChat({
   guildCode   = "IND",
   currentUid  = "",
@@ -109,7 +109,7 @@ export default function GuildChat({
   const isInitialRef = useRef(true);
   const inputRef  = useRef(null);
 
-  // Everyone reads — no XP gate on the listener
+  
   useEffect(() => {
     if (!guildCode) return;
     const q = query(
@@ -169,7 +169,7 @@ export default function GuildChat({
   return (
     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:18, display:"flex", flexDirection:"column", height:480, overflow:"hidden", position:"relative" }}>
 
-      {/* Toast */}
+      
       {toast && (
         <div style={{ position:"absolute", top:60, left:"50%", transform:"translateX(-50%)", zIndex:50, background:"rgba(12,15,26,0.97)", border:"1px solid rgba(247,195,68,0.35)", borderRadius:999, color:"#F7C344", padding:"9px 20px", fontFamily:"'Space Mono',monospace", fontSize:"0.68rem", fontWeight:700, whiteSpace:"nowrap", pointerEvents:"none", boxShadow:"0 8px 28px rgba(0,0,0,0.5)", animation:"toastIn 0.2s ease" }}>
           {toast}
@@ -177,7 +177,7 @@ export default function GuildChat({
         </div>
       )}
 
-      {/* Header */}
+      
       <div style={{ padding:"12px 16px", borderBottom:"1px solid rgba(255,255,255,0.07)", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:18 }}>💬</span>
@@ -199,7 +199,7 @@ export default function GuildChat({
         )}
       </div>
 
-      {/* Messages — visible to ALL users regardless of XP */}
+      
       <div ref={containerRef} style={{ flex:1, overflowY:"auto", padding:"12px 14px", display:"flex", flexDirection:"column" }}>
         {loading && (
           <div style={{ display:"flex", justifyContent:"center", padding:20 }}>
@@ -218,12 +218,12 @@ export default function GuildChat({
         ))}
       </div>
 
-      {/* Error bar */}
+      
       {error && (
         <div style={{ padding:"6px 16px", background:"rgba(232,64,64,0.1)", borderTop:"1px solid rgba(232,64,64,0.2)", fontFamily:"'Space Mono',monospace", fontSize:"0.62rem", color:"#E84040", fontWeight:600 }}>{error}</div>
       )}
 
-      {/* Bottom — unlocked input OR locked progress bar */}
+      
       {canChat ? (
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.07)", flexShrink:0 }}>
           <div style={{ padding:"10px 12px 8px", display:"flex", gap:8, alignItems:"center" }}>

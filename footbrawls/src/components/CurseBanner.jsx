@@ -14,10 +14,10 @@ const C = {
   muted2:  "rgba(242,242,244,0.28)",
 };
 
-// ─── State config per PRD §7.2 ────────────────────────────────────────────────
-// blessed  → team won a real WC match → +25% XP for 24h
-// cursed   → team lost a real WC match → -25% XP, lifted by 3 raid wins
-// neutral  → no modifier active
+
+
+
+
 const STATE_CONFIG = {
   blessed: {
     icon: "⚡",
@@ -66,7 +66,7 @@ const STATE_CONFIG = {
   },
 };
 
-// ─── Animated pulse dot ───────────────────────────────────────────────────────
+
 function PulseDot({ color }) {
   return (
     <div style={{ position: "relative", width: 10, height: 10, flexShrink: 0 }}>
@@ -99,7 +99,7 @@ function PulseDot({ color }) {
   );
 }
 
-// ─── Raid wins progress (for cursed state) ────────────────────────────────────
+
 function RaidWinsProgress({ winsNeeded = 3, winsEarned = 0 }) {
   const remaining = winsNeeded - winsEarned;
   return (
@@ -142,7 +142,7 @@ function RaidWinsProgress({ winsNeeded = 3, winsEarned = 0 }) {
   );
 }
 
-// ─── Countdown timer ──────────────────────────────────────────────────────────
+
 function ExpiryTimer({ secondsLeft, label, color }) {
   const [secs, setSecs] = useState(secondsLeft);
   useEffect(() => {
@@ -173,16 +173,8 @@ function ExpiryTimer({ secondsLeft, label, color }) {
   );
 }
 
-// ─── Main CurseBanner ─────────────────────────────────────────────────────────
-/**
- * Props:
- *   status      {"blessed"|"cursed"|"neutral"}
- *   team        {string}   — e.g. "India"
- *   match       {string}   — e.g. "India vs Brazil"
- *   blessedSecs {number}   — seconds remaining on blessing (blessed only)
- *   raidWins    {number}   — raid wins earned toward lifting curse (cursed only)
- *   raidWinsNeeded {number} — always 3 per PRD
- */
+
+
 export default function CurseBanner({
   status = "blessed",
   team = "India",
@@ -205,7 +197,7 @@ export default function CurseBanner({
         fontFamily: "'Outfit', sans-serif",
       }}
     >
-      {/* Ambient glow */}
+      
       <div
         style={{
           position: "absolute",
@@ -219,7 +211,7 @@ export default function CurseBanner({
         }}
       />
 
-      {/* Top row */}
+      
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 26, lineHeight: 1 }}>{cfg.icon}</span>
@@ -244,7 +236,7 @@ export default function CurseBanner({
           </div>
         </div>
 
-        {/* XP modifier badge */}
+        
         <div
           style={{
             display: "inline-flex",
@@ -266,7 +258,7 @@ export default function CurseBanner({
         </div>
       </div>
 
-      {/* Description */}
+      
       <p
         style={{
           fontSize: 12,
@@ -279,17 +271,17 @@ export default function CurseBanner({
         {cfg.desc(team)}
       </p>
 
-      {/* Blessed: countdown timer */}
+      
       {status === "blessed" && (
         <ExpiryTimer secondsLeft={blessedSecs} label={cfg.timerLabel} color={C.green} />
       )}
 
-      {/* Cursed: raid wins progress */}
+      
       {status === "cursed" && (
         <RaidWinsProgress winsNeeded={raidWinsNeeded} winsEarned={raidWins} />
       )}
 
-      {/* Neutral: next match nudge */}
+      
       {status === "neutral" && (
         <div
           style={{
@@ -309,7 +301,7 @@ export default function CurseBanner({
   );
 }
 
-// ─── Dev preview ─────────────────────────────────────────────────────────────
+
 export function CurseBannerPreview() {
   const [status, setStatus] = useState("blessed");
 
@@ -319,7 +311,7 @@ export function CurseBannerPreview() {
       <CurseBanner status="cursed" team="India" match="India vs Brazil" raidWins={1} raidWinsNeeded={3} />
       <CurseBanner status="neutral" team="Japan" match="—" />
 
-      {/* Toggle */}
+      
       <div style={{ display: "flex", gap: 8 }}>
         {["blessed","cursed","neutral"].map((s) => (
           <button

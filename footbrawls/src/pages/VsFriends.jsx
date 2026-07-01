@@ -1,4 +1,4 @@
-// src/pages/VsFriends.jsx
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '../lib/user';
@@ -36,7 +36,7 @@ export default function VsFriends() {
   const navigate = useNavigate();
   const user = useMemo(() => getUser(), []);
 
-  const [mode, setMode] = useState('menu'); // menu | hosting | lobby | results
+  const [mode, setMode] = useState('menu'); 
   const [inviteCode, setInviteCode] = useState('');
   const [inputCode, setInputCode] = useState('');
   const [sessionId, setSessionId] = useState(() => localStorage.getItem('active_vs_friends_session_id'));
@@ -45,7 +45,7 @@ export default function VsFriends() {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Sync state with storage / Firebase
+  
   useEffect(() => {
     if (!sessionId) return;
     const ref = doc(db, 'gameSessions', sessionId);
@@ -80,7 +80,7 @@ export default function VsFriends() {
   };
 
   const generateInviteCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+    return Math.floor(100000 + Math.random() * 900000).toString(); 
   };
 
   const startHosting = async () => {
@@ -96,7 +96,7 @@ export default function VsFriends() {
     const sid = `vs_${Date.now()}`;
     const playlist = selectedGames.map(id => GAMES_POOL.find(g => g.id === id));
 
-    // Custom randomized seed generated on hosting to bypass daily seeds and stay unique
+    
     const uniqueSessionSeed = String(Math.floor(100000 + Math.random() * 900000));
 
     const sessionData = {
@@ -173,7 +173,7 @@ export default function VsFriends() {
   };
 
 
-  // --- BOT LOGIC ---
+  
   useEffect(() => {
     if (session && session.isBotMatch && session.hostId === user?.userId && session.status === 'active') {
       let changed = false;
@@ -222,7 +222,7 @@ export default function VsFriends() {
     }
     setLoading(false);
   };
-  // -----------------
+  
 
   const handleStartGame = () => {
     if (!session) return;
@@ -271,7 +271,7 @@ export default function VsFriends() {
     return Math.round(sum);
   }, [session]);
 
-  // Overall winner determination logic
+  
   const winnerInfo = useMemo(() => {
     if (!session || session.status !== 'completed') return null;
     let text = 'Draw Match!';
@@ -288,7 +288,7 @@ export default function VsFriends() {
     return { hostTotalPoints, guestTotalPoints, text, winnerId };
   }, [session, hostTotalPoints, guestTotalPoints]);
 
-  // Act-advancement trigger when both scores are submitted
+  
   useEffect(() => {
     if (!session || session.status !== 'active') return;
     const currentActVal = session.currentAct || 1;
@@ -338,7 +338,7 @@ export default function VsFriends() {
 
         {mode === 'menu' && (
           <div style={{...styles.card, padding: '32px 24px', background: 'linear-gradient(180deg, rgba(12,15,26,0.9), rgba(6,8,16,0.95))', boxShadow: `0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)`, position: 'relative', overflow: 'hidden'}}>
-            {/* Background ambient glow */}
+            
             <div style={{position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', width: 250, height: 250, background: `radial-gradient(circle, ${C.green}30 0%, transparent 70%)`, filter: 'blur(40px)', pointerEvents: 'none'}} />
             
             <h1 style={{...styles.title, fontSize: '2.5rem', color: '#fff', textShadow: `0 0 20px rgba(255,255,255,0.2)`}}>CLASH HEAD-TO-HEAD</h1>
@@ -496,7 +496,7 @@ export default function VsFriends() {
         {mode === 'results' && session && winnerInfo && (
           <div style={{...styles.card, padding: '36px 24px', background: 'linear-gradient(180deg, rgba(12,15,26,0.9), rgba(6,8,16,0.95))', boxShadow: `0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)`, position: 'relative', overflow: 'hidden'}}>
             
-            {/* Dynamic Win/Loss Gradient Aura */}
+            
             <div style={{
               position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)', 
               width: 300, height: 300, 
@@ -518,7 +518,7 @@ export default function VsFriends() {
               {winnerInfo.text}
             </h1>
 
-            {/* Head to Head Score Row */}
+            
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 20, marginBottom: 32 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: 16, border: winnerInfo.winnerId === session.hostId ? `1px solid ${C.green}40` : '1px solid rgba(255,255,255,0.05)' }}>
                 <span style={{ fontSize: '2rem', marginBottom: 8, filter: `drop-shadow(0 0 10px rgba(255,255,255,0.2))` }}>{session.hostFlag}</span>
@@ -549,7 +549,7 @@ export default function VsFriends() {
                   const hScore = Math.round(hs?.normalized || hs?.wins || hs?.goals || 0);
                   const gScore = Math.round(gs?.normalized || gs?.wins || gs?.goals || 0);
                   
-                  // Calculate progress bar widths
+                  
                   const maxPossible = Math.max(1, hScore + gScore);
                   const hPct = (hScore / maxPossible) * 100;
                   const gPct = (gScore / maxPossible) * 100;

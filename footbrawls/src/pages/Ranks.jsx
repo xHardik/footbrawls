@@ -5,7 +5,7 @@ import { db } from "../lib/firebase";
 import { getUser } from "../lib/user";
 import { getGuildLevel } from "../lib/guildLevels";
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+
 const C = {
   bg:      "#060810",
   surface: "rgba(255,255,255,0.035)",
@@ -21,14 +21,14 @@ const C = {
   muted2:  "rgba(242,242,244,0.28)",
 };
 
-// Podium rank colors: gold / silver / bronze
+
 const PODIUM = [
   { border: "#FFD700", bg: "rgba(247,195,68,0.05)"   },
   { border: "#C0C0C0", bg: "rgba(168,180,192,0.04)"  },
   { border: "#CD7F32", bg: "rgba(205,127,50,0.04)"   },
 ];
 
-// ─── Tier Config ──────────────────────────────────────────────────────────────
+
 const TIERS = [
   { min: 0,    color: C.muted,    bg: "rgba(242,242,244,0.06)", label: "LURKER",  dot: "○" },
   { min: 50,   color: C.blue,     bg: "rgba(59,130,246,0.1)",   label: "FAN",     dot: "◆" },
@@ -46,9 +46,9 @@ function formatXP(n) {
   return String(n);
 }
 
-// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
 const Icons = {
-  // Crown for top-3 podium positions
+  
   Crown: ({ rank }) => {
     const colors = ["#FFD700", "#C0C0C0", "#CD7F32"];
     const c = colors[rank] ?? C.muted;
@@ -120,7 +120,7 @@ const Icons = {
   ),
 };
 
-// ─── Injected CSS ─────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
 
@@ -265,7 +265,7 @@ const CSS = `
 }
 `;
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+
 
 function SectionDivider({ label }) {
   return (
@@ -307,7 +307,7 @@ function GuildBadge({ lvlConfig }) {
   );
 }
 
-// Podium row (rank 1–3)
+
 function PodiumRow({ item, rank, isLast, renderBadge, renderScore }) {
   const pc = PODIUM[rank];
   return (
@@ -335,7 +335,7 @@ function PodiumRow({ item, rank, isLast, renderBadge, renderScore }) {
   );
 }
 
-// Normal row (rank 4+)
+
 function NormalRow({ item, rank, isLast, renderBadge, renderScore }) {
   return (
     <div
@@ -359,7 +359,7 @@ function NormalRow({ item, rank, isLast, renderBadge, renderScore }) {
   );
 }
 
-// ─── Individuals List ─────────────────────────────────────────────────────────
+
 function IndividualsList({ users, currentUser }) {
   if (!users.length) {
     return (
@@ -420,7 +420,7 @@ function IndividualsList({ users, currentUser }) {
   });
 }
 
-// ─── Guilds List ──────────────────────────────────────────────────────────────
+
 function GuildsList({ guilds, currentUser }) {
   if (!guilds.length) {
     return (
@@ -480,7 +480,7 @@ function GuildsList({ guilds, currentUser }) {
   });
 }
 
-// ─── Bottom Nav ───────────────────────────────────────────────────────────────
+
 const NAV_ITEMS = [
   { id: "home",    label: "Games",  route: "/",        color: "#F7C344", Icon: Icons.Ball    },
   { id: "guild",   label: "Guild",  route: "/guild",   color: "#3DD68C", Icon: Icons.Shield  },
@@ -502,7 +502,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
       paddingBottom: "env(safe-area-inset-bottom,0px)",
       boxShadow: "0 -12px 40px rgba(0,0,0,0.7)",
     }}>
-      {/* Gold shimmer top edge */}
+      
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 1,
         background: "linear-gradient(90deg,transparent,rgba(247,195,68,0.15) 30%,rgba(247,195,68,0.35) 50%,rgba(247,195,68,0.15) 70%,transparent)",
@@ -547,7 +547,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
               transform: isPressed ? "scale(0.88)" : "scale(1)",
             }}
           >
-            {/* Active indicator bar */}
+            
             {isActive && (
               <div style={{
                 position: "absolute", top: 0, left: "50%",
@@ -558,7 +558,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
                 boxShadow: `0 0 12px ${item.color}cc`,
               }} />
             )}
-            {/* Active radial glow */}
+            
             {isActive && (
               <div style={{
                 position: "absolute", inset: 0,
@@ -567,7 +567,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
               }} />
             )}
 
-            {/* Icon container */}
+            
             <div style={{
               position: "relative",
               width: 28, height: 28,
@@ -588,16 +588,16 @@ function BottomNav({ active, navigate, onUnavailable }) {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function Ranks() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("individuals"); // "individuals" | "guilds"
+  const [tab, setTab] = useState("individuals"); 
   const [users, setUsers] = useState([]);
   const [guilds, setGuilds] = useState([]);
   const [loading, setLoading] = useState(true);
   const currentUser = getUser();
 
-  // Inject CSS
+  
   useEffect(() => {
     if (!document.getElementById("rk-styles")) {
       const s = document.createElement("style");
@@ -607,11 +607,11 @@ export default function Ranks() {
     }
   }, []);
 
-  // Firestore subscriptions
+  
   useEffect(() => {
     setLoading(true);
 
-    // Top users — fetch extra to filter bots, keep top 50 humans
+    
     const usersQuery = query(
       collection(db, "users"),
       orderBy("totalXP", "desc"),
@@ -625,7 +625,7 @@ export default function Ranks() {
       setUsers(list);
     });
 
-    // All guilds — sort + slice in JS to avoid composite index requirement
+    
     const unsubGuilds = onSnapshot(query(collection(db, "guilds")), snap => {
       const list = snap.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
@@ -653,13 +653,13 @@ export default function Ranks() {
       padding: "28px max(12px, 4vw) 100px",
       boxSizing: "border-box",
     }}>
-      {/* Ambient top shimmer */}
+      
       <div style={{
         position: "fixed", top: 0, left: 0, right: 0, height: 1, pointerEvents: "none",
         background: "linear-gradient(90deg,transparent,rgba(247,195,68,0.12),transparent)",
       }} />
 
-      {/* ── Header ── */}
+      
       <div style={{ textAlign: "center", marginBottom: 32, position: "relative" }}>
         <div style={{
           fontFamily: "'Space Mono', monospace",
@@ -689,7 +689,7 @@ export default function Ranks() {
         </p>
       </div>
 
-      {/* ── Tab Bar ── */}
+      
       <div style={{
         display: "flex",
         background: "rgba(255,255,255,0.025)",
@@ -731,7 +731,7 @@ export default function Ranks() {
         ))}
       </div>
 
-      {/* ── Leaderboard Card ── */}
+      
       <div style={{
         background: "rgba(255,255,255,0.015)",
         border: `1px solid ${C.border}`,

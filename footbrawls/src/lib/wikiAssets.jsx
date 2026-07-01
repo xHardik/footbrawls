@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// Hook to dynamically get a player's Wikipedia photo
+
 export function usePlayerWikiPhoto(playerName) {
   const [photoUrl, setPhotoUrl] = useState('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>');
 
@@ -41,7 +41,7 @@ export function usePlayerWikiPhoto(playerName) {
   return photoUrl;
 }
 
-// Hook to dynamically get a club's Wikipedia logo
+
 export function useClubWikiLogo(clubName) {
   const [logoUrl, setLogoUrl] = useState('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>');
 
@@ -56,7 +56,7 @@ export function useClubWikiLogo(clubName) {
       return;
     }
 
-    // Normalizations for common football club Wikipedia names
+    
     let wikiQuery = clubName.trim().replace(/\s+/g, '_');
     if (clubName === 'Arsenal') wikiQuery = 'Arsenal_F.C.';
     else if (clubName === 'Real Madrid') wikiQuery = 'Real_Madrid_CF';
@@ -109,7 +109,7 @@ export function useClubWikiLogo(clubName) {
   return logoUrl;
 }
 
-// React component to display player photo
+
 export function PlayerPhoto({ name, size = 26, style = {} }) {
   const photo = usePlayerWikiPhoto(name);
   return (
@@ -129,7 +129,7 @@ export function PlayerPhoto({ name, size = 26, style = {} }) {
   );
 }
 
-// React component to display club logo
+
 export function ClubLogo({ club, size = 26, style = {} }) {
   const logo = useClubWikiLogo(club);
   return (
@@ -147,7 +147,7 @@ export function ClubLogo({ club, size = 26, style = {} }) {
   );
 }
 
-// Hook to dynamically get a national team's Wikipedia crest
+
 export function useNationalTeamWikiLogo(teamName) {
   const [logoUrl, setLogoUrl] = useState('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>');
 
@@ -179,7 +179,7 @@ export function useNationalTeamWikiLogo(teamName) {
   return logoUrl;
 }
 
-// React component to display national team logo
+
 export function NationalTeamLogo({ teamName, size = 26, style = {} }) {
   const logo = useNationalTeamWikiLogo(teamName);
   return (

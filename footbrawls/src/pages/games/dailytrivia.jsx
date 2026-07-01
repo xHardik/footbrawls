@@ -1,7 +1,7 @@
-// src/pages/games/dailytrivia.jsx
-// Football "Daily Trivia" — Footbrawls edition
-// One 10-question quiz per day, seeded by date. Includes streak tracking,
-// XP integration, AdBreak midrolls, and category scoring breakdown.
+
+
+
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getActivePuzzleDate } from '../../lib/dailySeed.js';
@@ -12,7 +12,7 @@ import { db } from '../../lib/firebase.js';
 import { TRIVIA_QUESTIONS } from '../../lib/questions.js';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+
 const QUESTIONS_PER_DAY = 10;
 const SECONDS_PER_Q     = 20;
 const SAVE_KEY          = 'footbrawls_dailytrivia';
@@ -26,7 +26,7 @@ function getMultiplier(consecutive) {
   if (consecutive === 4) return 1.8;
   if (consecutive === 5) return 2.0;
   if (consecutive === 6) return 2.5;
-  return 3.0; // 7+ capped
+  return 3.0; 
 }
 
 function getMaxPossibleScore(count) {
@@ -58,7 +58,7 @@ const CATEGORY_META = {
   rules:     { label: 'Rules',     icon: '📋', color: '#f472b6', bg: 'rgba(244,114,182,.12)', border: 'rgba(244,114,182,.3)' },
 };
 
-// ─── AdBreak shim ─────────────────────────────────────────────────────────────
+
 const adBreak = (options) => {
   if (window.adBreak) {
     window.adBreak(options);
@@ -80,9 +80,9 @@ if (typeof window !== 'undefined') {
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
 
-// ─── Date-seeded shuffle ──────────────────────────────────────────────────────
+
 function seededRand(seed) {
-  // Simple LCG seeded by date string
+  
   let s = [...seed].reduce((acc, c) => acc * 31 + c.charCodeAt(0), 0) >>> 0;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
 }
@@ -90,7 +90,7 @@ function seededRand(seed) {
 function pickDailyQuestions(date) {
   const rand    = seededRand(date);
   const bank    = [...TRIVIA_QUESTIONS];
-  // Shuffle using seeded random so the same date always picks the same 10
+  
   for (let i = bank.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     [bank[i], bank[j]] = [bank[j], bank[i]];
@@ -98,7 +98,7 @@ function pickDailyQuestions(date) {
   return bank.slice(0, QUESTIONS_PER_DAY);
 }
 
-// ─── Scoring ──────────────────────────────────────────────────────────────────
+
 function calcPoints(timeLeft, consecutive) {
   const elapsed = SECONDS_PER_Q - timeLeft;
   const base = Math.max(100, 1000 - elapsed * 50);
@@ -106,7 +106,7 @@ function calcPoints(timeLeft, consecutive) {
   return Math.round(base * mult);
 }
 
-// ─── Persistence ─────────────────────────────────────────────────────────────
+
 function loadSave(date) {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); return s.date === date ? s : null; }
   catch { return null; }
@@ -151,7 +151,7 @@ function loadHistory() {
   catch { return {}; }
 }
 
-// ─── Injected CSS ──────────────────────────────────────────────────────────────
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700;9..40,900&display=swap');
 
@@ -482,7 +482,7 @@ body{font-family:'DM Sans',sans-serif}
 
 const LETTERS = ['A', 'B', 'C', 'D'];
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function DailyTrivia() {
   const navigate = useNavigate();
   const puzzleDate   = getActivePuzzleDate();
@@ -490,14 +490,14 @@ export default function DailyTrivia() {
 
   const [questions, setQuestions]   = useState([]);
   const [current, setCurrent]       = useState(0);
-  const [answers, setAnswers]       = useState([]);  // true/false per question
+  const [answers, setAnswers]       = useState([]);  
   const [score, setScore]           = useState(0);
   const [combo, setCombo]           = useState(0);
   const [timeLeft, setTimeLeft]     = useState(SECONDS_PER_Q);
   const [answered, setAnswered]     = useState(false);
   const [chosenIdx, setChosenIdx]   = useState(null);
   const [feedback, setFeedback]     = useState(null);
-  const [phase, setPhase]           = useState('loading'); // loading | game | result | done
+  const [phase, setPhase]           = useState('loading'); 
   const [xpAwarded, setXpAwarded]   = useState(null);
   const [stats, setStats]           = useState(loadStats);
   const [history, setHistory]       = useState(loadHistory);
@@ -508,7 +508,7 @@ export default function DailyTrivia() {
   const timerRef  = useRef(null);
   const countRef  = useRef(null);
 
-  // ── Inject CSS ──
+  
   useEffect(() => {
     if (!document.getElementById('dt-injected-css')) {
       const s = document.createElement('style');
@@ -521,7 +521,7 @@ export default function DailyTrivia() {
   const isRaidSession = !!localStorage.getItem('active_game_session_id');
   const isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
 
-  // ── Load / resume ──
+  
   useEffect(() => {
     let seedStr = puzzleDate;
     if (isRaidSession || isVsFriendsSession) {
@@ -539,11 +539,11 @@ export default function DailyTrivia() {
       setXpAwarded(save.xpAwarded ?? null);
       setPhase('done');
     } else if (save?.answers?.length > 0) {
-      // Resume mid-game
+      
       setAnswers(save.answers);
       setScore(save.score || 0);
       setCurrent(save.answers.length);
-      // Calculate initial combo from trailing true values in save.answers
+      
       let currentCombo = 0;
       for (let i = save.answers.length - 1; i >= 0; i--) {
         if (save.answers[i]) {
@@ -559,7 +559,7 @@ export default function DailyTrivia() {
     }
   }, [puzzleDate]);
 
-  // ── Midnight countdown for "done" state ──
+  
   useEffect(() => {
     if (phase !== 'done') return;
     function tick() {
@@ -578,7 +578,7 @@ export default function DailyTrivia() {
     return () => clearInterval(countRef.current);
   }, [phase]);
 
-  // ── Timer ──
+  
   const stopTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
@@ -596,14 +596,14 @@ export default function DailyTrivia() {
   useEffect(() => {
     if (phase === 'game' && questions.length > 0 && !answered) startTimer();
     return stopTimer;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [phase, current, answered, questions.length]);
 
-  // Timeout
+  
   useEffect(() => {
     if (phase !== 'game' || answered || timeLeft > 0) return;
     handleAnswer(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [timeLeft, phase, answered]);
 
   useEffect(() => () => { stopTimer(); clearInterval(countRef.current); }, [stopTimer]);
@@ -613,7 +613,7 @@ export default function DailyTrivia() {
     setTimeout(() => setMsg(null), duration);
   }
 
-  // ── Answer ──
+  
   function handleAnswer(idx) {
     if (answered) return;
     stopTimer();
@@ -650,7 +650,7 @@ export default function DailyTrivia() {
 
     persist(puzzleDate, { answers: newAnswers, score: newScore, done: false });
 
-    // Midroll ad every 5 questions
+    
     if ((current + 1) % 5 === 0 && current + 1 < QUESTIONS_PER_DAY) {
       adBreak({ type: 'next', name: `daily-trivia-q${current + 1}`, adBreakDone: () => {} });
     }
@@ -700,7 +700,7 @@ export default function DailyTrivia() {
           }
         }, 2500);
       }
-      // Single mode animations & scroll
+      
       const isWin = correct >= 7;
       if (isWin) {
         triggerWinConfetti();
@@ -738,7 +738,7 @@ export default function DailyTrivia() {
     else { navigator.clipboard?.writeText(text); showMsg('Result copied!', 'success'); }
   }
 
-  // ── Derived ──
+  
   const timerPct   = (timeLeft / SECONDS_PER_Q) * 100;
   const timerColor = timerPct > 55
     ? 'linear-gradient(90deg,var(--accent3),#93c5fd)'
@@ -749,7 +749,7 @@ export default function DailyTrivia() {
   const correct    = answers.filter(Boolean).length;
   const accuracy   = answers.length ? Math.round((correct / answers.length) * 100) : 0;
 
-  // Category breakdown for results
+  
   const catBreakdown = Object.keys(CATEGORY_META).map(cat => {
     const catQs = questions.map((q, i) => ({ q, correct: answers[i] })).filter(x => x.q.cat === cat);
     return { cat, total: catQs.length, correct: catQs.filter(x => x.correct).length };
@@ -805,7 +805,7 @@ export default function DailyTrivia() {
             <p>Daily Puzzle #{puzzleNumber} · 10 football questions · one chance per day</p>
           </header>
 
-          {/* ── GAME ── */}
+          
           {phase === 'game' && questions.length > 0 && (() => {
             const q = questions[current];
             const meta = CATEGORY_META[q.cat] || CATEGORY_META.history;
@@ -895,7 +895,7 @@ export default function DailyTrivia() {
             );
           })()}
 
-          {/* ── RESULT (just finished today) ── */}
+          
           {phase === 'result' && (() => {
             const pct = Math.round((correct / questions.length) * 100);
             const wrong = answers.filter(a => !a).length;
@@ -968,7 +968,7 @@ export default function DailyTrivia() {
             );
           })()}
 
-          {/* ── DONE (already played today) ── */}
+          
           {phase === 'done' && (
             <div className="dt-already-card">
               <span className="dt-already-icon">📋</span>
@@ -985,7 +985,7 @@ export default function DailyTrivia() {
             </div>
           )}
 
-          {/* ── DASHBOARD ── */}
+          
           <div className="dt-bottom-section" style={{ marginTop: 28 }}>
             <div className="dt-section-divider">
               <span className="dt-section-label">Your Progress</span>
@@ -1037,7 +1037,7 @@ export default function DailyTrivia() {
   );
 }
 
-// ─── Streak Dots ──────────────────────────────────────────────────────────────
+
 function StreakDots({ history, puzzleDate, phase }) {
   const today = new Date();
   const dots  = [];
@@ -1073,7 +1073,7 @@ function StreakDots({ history, puzzleDate, phase }) {
   );
 }
 
-// ─── How to Play Modal ────────────────────────────────────────────────────────
+
 function HowToPlayModal({ show, onClose }) {
   if (!show) return null;
   return (

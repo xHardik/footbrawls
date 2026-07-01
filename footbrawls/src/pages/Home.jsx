@@ -374,14 +374,14 @@ const GlobalStyles = () => (
   `}</style>
 );
 
-// ── STADIUM BACKGROUND ────────────────────────────────────────────────────────
+
 function StadiumBg() {
   return (
     <div style={{position:"fixed",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
-      {/* Deep space base */}
+      
       <div style={{position:"absolute",inset:0,background:`radial-gradient(ellipse 120% 80% at 50% -20%, rgba(12,20,40,0.95) 0%, ${C.bg} 60%)`}}/>
 
-      {/* Pitch grid */}
+      
       <div style={{
         position:"absolute",inset:0,
         backgroundImage:`
@@ -393,11 +393,11 @@ function StadiumBg() {
         animation:"pitchPulse 6s ease-in-out infinite",
       }}/>
 
-      {/* Centre circle */}
+      
       <div style={{position:"absolute",width:600,height:600,top:"50%",left:"50%",transform:"translate(-50%,-50%)",borderRadius:"50%",border:"1px solid rgba(255,255,255,0.03)",opacity:0.7}}/>
       <div style={{position:"absolute",width:10,height:10,borderRadius:"50%",top:"50%",left:"50%",transform:"translate(-50%,-50%)",background:"rgba(255,255,255,0.05)"}}/>
 
-      {/* Floodlight beam left */}
+      
       <div style={{
         position:"absolute",
         top:"-10%", left:"8%",
@@ -408,7 +408,7 @@ function StadiumBg() {
         animation:"floodlightSweep 12s ease-in-out infinite",
       }}/>
 
-      {/* Floodlight beam right */}
+      
       <div style={{
         position:"absolute",
         top:"-10%", right:"8%",
@@ -420,20 +420,20 @@ function StadiumBg() {
         animationDelay:"3s",
       }}/>
 
-      {/* Gold atmospheric glow top */}
+      
       <div style={{position:"absolute",width:900,height:500,top:-200,left:"50%",transform:"translateX(-50%)",borderRadius:"50%",background:"radial-gradient(ellipse, rgba(247,195,68,0.09) 0%, transparent 65%)",filter:"blur(60px)"}}/>
 
-      {/* Blue glow bottom */}
+      
       <div style={{position:"absolute",width:600,height:400,bottom:-100,right:-100,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(79,142,247,0.06) 0%, transparent 70%)",filter:"blur(80px)"}}/>
       <div style={{position:"absolute",width:400,height:300,bottom:-80,left:-60,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(61,214,140,0.04) 0%, transparent 70%)",filter:"blur(60px)"}}/>
 
-      {/* Film grain */}
+      
       <div style={{position:"fixed",inset:0,opacity:0.022,backgroundImage:"url(\"data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",backgroundSize:"256px"}}/>
     </div>
   );
 }
 
-// ── TOP NAV ───────────────────────────────────────────────────────────────────
+
 function TopNav({ user, dailyXP, xpPct, navigate }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -453,10 +453,10 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
       boxShadow: scrolled ? "0 4px 40px rgba(0,0,0,0.7)" : "none",
       transition:"all 0.3s ease",
     }}>
-      {/* Gold top bar */}
+      
       <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent 0%,${C.gold} 30%,rgba(255,220,100,0.9) 50%,${C.gold} 70%,transparent 100%)`,opacity:0.6}}/>
 
-      {/* Logo */}
+      
       <div onClick={() => navigate("/")} style={{
         display: "flex", alignItems: "center", gap: 8,
         cursor:"pointer", flexShrink:0,
@@ -471,9 +471,9 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
         }}>FOOTBRAWLS</span>
       </div>
 
-      {/* Right side */}
+      
       <div style={{display:"flex", alignItems:"center", gap:8}}>
-        {/* XP progress */}
+        
         <div className="home-top-nav-xp" style={{
           display:"flex", alignItems:"center", gap:8,
           padding:"6px 14px", borderRadius:100,
@@ -489,7 +489,7 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
           <span style={{fontSize:"0.55rem", color:C.muted2}}>XP</span>
         </div>
 
-        {/* User pill */}
+        
         <div style={{
           display:"flex", alignItems:"center", gap:7,
           padding:"5px 13px", borderRadius:100,
@@ -508,9 +508,9 @@ function TopNav({ user, dailyXP, xpPct, navigate }) {
 
 
 
-// ── HERO SECTION WITH STADIUM BACKGROUND ─────────────────────────────────────
-// Drop-in replacement for your existing HeroSection component.
-// No other files need to change — StadiumBg still handles the rest of the page.
+
+
+
 
 function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navigate }) {
   return (
@@ -524,7 +524,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
       padding:"0 28px 36px",
     }}>
 
-      {/* ── STADIUM PHOTO ── */}
+      
       <img
         src="/stadium.jpg"
         alt=""
@@ -534,23 +534,23 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           width:"100%", height:"100%",
           objectFit:"cover", objectPosition:"center 28%",
           zIndex:0,
-          // subtle zoom on mount for life
+          
           animation:"stadiumZoom 18s ease-in-out infinite alternate",
         }}
       />
 
-      {/* ── OVERLAYS ── */}
-      {/* Main dark gradient — bottom-heavy so text pops */}
+      
+      
       <div style={{
         position:"absolute", inset:0, zIndex:1,
         background:"linear-gradient(180deg, rgba(5,8,15,0.28) 0%, rgba(5,8,15,0.52) 35%, rgba(5,8,15,0.88) 70%, rgba(5,8,15,0.97) 100%)",
       }}/>
-      {/* Side vignette — left-heavy so copy stays legible */}
+      
       <div style={{
         position:"absolute", inset:0, zIndex:1,
         background:"linear-gradient(90deg, rgba(5,8,15,0.55) 0%, rgba(5,8,15,0.1) 55%, transparent 100%)",
       }}/>
-      {/* Gold atmospheric bloom from top */}
+      
       <div style={{
         position:"absolute", top:-80, left:"50%", transform:"translateX(-50%)",
         width:900, height:420, borderRadius:"50%", zIndex:1,
@@ -558,16 +558,16 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
         filter:"blur(40px)", pointerEvents:"none",
       }}/>
 
-      {/* ── GOLD TOP BAR ── */}
+      
       <div style={{
         position:"absolute", top:0, left:0, right:0, height:3, zIndex:3,
         background:"linear-gradient(90deg,transparent 0%,rgba(247,195,68,0.7) 30%,rgba(255,220,100,0.9) 50%,rgba(247,195,68,0.7) 70%,transparent 100%)",
       }}/>
 
-      {/* ── ALL CONTENT ── */}
+      
       <div style={{position:"relative", zIndex:2}}>
 
-        {/* Broadcast corner accent */}
+        
         <div style={{
           position:"absolute", top:0, left:-28, bottom:0, width:4,
           background:`linear-gradient(180deg, ${C.gold}, transparent)`,
@@ -597,7 +597,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           Nine daily football games, one obsession. Earn XP, defend your guild's fortress, become a legend.
         </p>
 
-        {/* Stat strip */}
+        
         <div style={{
           display:"grid", gridTemplateColumns:"repeat(3,1fr)",
           gap:10, marginBottom:18,
@@ -631,7 +631,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           ))}
         </div>
 
-        {/* XP progress bar */}
+        
         <div style={{marginBottom:20}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
             <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,letterSpacing:1.5,color:C.muted2,textTransform:"uppercase"}}>Daily XP Progress</span>
@@ -644,7 +644,7 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           </div>
         </div>
 
-        {/* CTA strip */}
+        
         <div style={{display:"flex", gap:10}}>
           <button
             onClick={() => navigate("/guild")}
@@ -683,12 +683,12 @@ function HeroSection({ user, dailyXP, xpPct, doneCount, gamesTotal, guild, navig
           </button>
         </div>
 
-      </div>{/* end content */}
+      </div>
     </div>
   );
 }
 
-// ── ANIMATED FOOTBALL ─────────────────────────────────────────────────────────
+
 function BouncingFootball() {
   return (
     <div style={{position:"relative",width:88,flexShrink:0,alignSelf:"stretch",display:"flex",alignItems:"flex-end",justifyContent:"center",overflow:"visible"}}>
@@ -725,7 +725,7 @@ function BouncingFootball() {
   );
 }
 
-// ── MATCH / FIXTURE CARD ──────────────────────────────────────────────────────
+
 function MatchCard({ fixture, fallbackSecs }) {
   const [secs,setSecs]=useState(fallbackSecs);
   useEffect(()=>{
@@ -751,7 +751,7 @@ function MatchCard({ fixture, fallbackSecs }) {
       display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, flexWrap:"wrap",
       boxShadow: isLive ? "0 0 40px rgba(232,64,64,0.12), inset 0 1px 0 rgba(255,255,255,0.05)" : "inset 0 1px 0 rgba(255,255,255,0.04)",
     }}>
-      {/* Broadcast stripe */}
+      
       <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:isLive?"linear-gradient(90deg,transparent,rgba(232,64,64,0.8),transparent)":"linear-gradient(90deg,transparent,rgba(247,195,68,0.5),transparent)"}}/>
 
       <div style={{minWidth:0, flex:1}}>
@@ -780,7 +780,7 @@ function MatchCard({ fixture, fallbackSecs }) {
   );
 }
 
-// ── SECTION DIVIDER ───────────────────────────────────────────────────────────
+
 function SectionDivider({ label, count, right, color = C.gold }) {
   return (
     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,marginTop:36}}>
@@ -796,7 +796,7 @@ function SectionDivider({ label, count, right, color = C.gold }) {
   );
 }
 
-// ── GAME PORTAL CARD ──────────────────────────────────────────────────────────
+
 const GAME_THEMES = {
   detective:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(249,115,22,0.18),rgba(5,8,15,0.95) 60%)", accent:"rgba(249,115,22,0.6)",  label:"DETECTIVE ROOM"   },
   broadcast:  { bg:"radial-gradient(ellipse at 70% 30%,rgba(247,195,68,0.2),rgba(5,8,15,0.95) 60%)",  accent:"rgba(247,195,68,0.6)",  label:"PREDICTION STUDIO" },
@@ -836,13 +836,13 @@ function GamePortalCard({ game, done, onPlay }) {
         minHeight:132,
       }}
     >
-      {/* Top accent bar */}
+      
       <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.3,transition:"all 0.25s"}}/>
 
-      {/* Sweep shimmer */}
+      
       <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}14,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
 
-      {/* Icon + XP */}
+      
       <div style={{position:"relative",zIndex:2,display:"flex",alignItems:"flex-start",justifyContent:"space-between",width:"100%",marginBottom:12}}>
         <div style={{
           width:44,height:44,
@@ -871,7 +871,7 @@ function GamePortalCard({ game, done, onPlay }) {
         </div>
       </div>
 
-      {/* Name + desc */}
+      
       <div style={{position:"relative",zIndex:2,width:"100%"}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
           <div style={{
@@ -902,7 +902,7 @@ function GamePortalCard({ game, done, onPlay }) {
   );
 }
 
-// ── FORTRESS GUILD CARD ───────────────────────────────────────────────────────
+
 function FortressGuildCard({ guild, navigate }) {
   const [hovered, setHovered] = useState(false);
   const hp = guild.castleHP ?? 0;
@@ -931,14 +931,14 @@ function FortressGuildCard({ guild, navigate }) {
         transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
       }}
     >
-      {/* Banner top */}
+      
       <div style={{
         padding:"18px 20px 16px",
         background:"linear-gradient(180deg,rgba(255,255,255,0.03),transparent)",
         borderBottom:`1px solid ${C.border}`,
         display:"flex", alignItems:"center", gap:14,
       }}>
-        {/* Emblem */}
+        
         <div style={{
           width:64, height:64, borderRadius:16, flexShrink:0,
           background:"rgba(6,182,212,0.06)",
@@ -950,7 +950,7 @@ function FortressGuildCard({ guild, navigate }) {
           position:"relative",
         }}>
           {guild.flag}
-          {/* Rank crown */}
+          
           <div style={{position:"absolute",top:-6,right:-6,width:18,height:18,borderRadius:"50%",background:C.gold,border:`2px solid ${C.bg}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <Icon.Star size={9} color="#000"/>
           </div>
@@ -991,7 +991,7 @@ function FortressGuildCard({ guild, navigate }) {
         }}>ENTER →</div>
       </div>
 
-      {/* Fortress HP section */}
+      
       <div style={{padding:"16px 20px 18px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1003,18 +1003,18 @@ function FortressGuildCard({ guild, navigate }) {
           </span>
         </div>
 
-        {/* Fortified HP track */}
+        
         <div style={{position:"relative",height:12,borderRadius:99,background:"rgba(255,255,255,0.05)",overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
-          {/* Segment fill */}
+          
           <div style={{width:`${hpPct}%`,height:"100%",borderRadius:99,background:`linear-gradient(90deg,${hpColor}66,${hpColor})`,boxShadow:`0 0 10px ${hpGlow}`,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",position:"relative"}}>
             <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(255,255,255,0.25),transparent)",borderRadius:99}}/>
             <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)",animation:"hpShimmer 2.5s ease-in-out infinite"}}/>
           </div>
-          {/* Checkpoint notches */}
+          
           {battlemarkers.slice(1,-1).map(p=>(
             <div key={p} style={{position:"absolute",top:0,left:`${p}%`,width:1,height:"100%",background:"rgba(0,0,0,0.5)"}}/>
           ))}
-          {/* Siege cracks when hp low */}
+          
           {hpPct < 35 && (
             <>
               <div style={{position:"absolute",top:"20%",left:`${hpPct + 3}%`,width:1,height:"60%",background:"rgba(232,64,64,0.5)",animation:"fortressCrumble 1.5s ease infinite"}}/>
@@ -1023,7 +1023,7 @@ function FortressGuildCard({ guild, navigate }) {
           )}
         </div>
 
-        {/* HP legend */}
+        
         <div style={{display:"flex",justifyContent:"space-between",marginTop:7,alignItems:"center"}}>
           <div style={{display:"flex",gap:12}}>
             {[{c:C.green,l:"70–100% Fortified"},{c:C.gold,l:"35–69% Holding"},{c:C.red,l:"0–34% Siege"}].map(({c,l})=>(
@@ -1037,13 +1037,13 @@ function FortressGuildCard({ guild, navigate }) {
         </div>
       </div>
 
-      {/* Sweep shimmer */}
+      
       <div style={{position:"absolute",top:0,left:hovered?"-5%":"-130%",width:"55%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(6,182,212,0.06),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
     </div>
   );
 }
 
-// ── WORLD CHAT ────────────────────────────────────────────────────────────────
+
 function WorldChat({ messages, user, navigate }) {
   const [input,setInput]=useState("");
   const [sending,setSending]=useState(false);
@@ -1090,7 +1090,7 @@ function WorldChat({ messages, user, navigate }) {
       boxShadow: focused ? "0 0 0 1px rgba(255,255,255,0.05),0 8px 32px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.2)",
       transition:"box-shadow 0.2s, border-color 0.2s",
     }}>
-      {/* Chat header */}
+      
       <div style={{
         display:"flex",alignItems:"center",justifyContent:"space-between",
         padding:"14px 18px",borderBottom:`1px solid ${C.border}`,
@@ -1110,7 +1110,7 @@ function WorldChat({ messages, user, navigate }) {
         </button>
       </div>
 
-      {/* Messages */}
+      
       <div ref={containerRef} style={{
         height:"min(280px,50vh)",overflowY:"auto",
         padding:"14px 16px",
@@ -1137,7 +1137,7 @@ function WorldChat({ messages, user, navigate }) {
               flexDirection: isMe ? "row-reverse" : "row",
               marginTop: prevSameSender ? 2 : 10,
             }}>
-              {/* Avatar */}
+              
               <div style={{
                 width:28,height:28,borderRadius:8,
                 background: isMe ? "rgba(61,214,140,0.1)" : "rgba(255,255,255,0.05)",
@@ -1147,7 +1147,7 @@ function WorldChat({ messages, user, navigate }) {
                 opacity: prevSameSender ? 0 : 1,
               }}>{m.flag||"🏴"}</div>
 
-              {/* Bubble */}
+              
               <div style={{maxWidth:"72%",display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",gap:2}}>
                 {!prevSameSender && (
                   <div style={{display:"flex",alignItems:"center",gap:5,flexDirection:isMe?"row-reverse":"row"}}>
@@ -1174,14 +1174,14 @@ function WorldChat({ messages, user, navigate }) {
         })}
       </div>
 
-      {/* Error */}
+      
       {err && (
         <div style={{padding:"7px 18px",fontFamily:"'Space Mono',monospace",fontSize:"0.52rem",color:C.red,background:"rgba(232,64,64,0.06)",borderTop:"1px solid rgba(232,64,64,0.1)",display:"flex",alignItems:"center",gap:6}}>
           <Icon.Warning size={12} color={C.red}/> {err}
         </div>
       )}
 
-      {/* Input */}
+      
       <div style={{padding:"12px 14px",borderTop:`1px solid ${C.border}`,background:"rgba(0,0,0,0.18)"}}>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <div style={{width:32,height:32,borderRadius:8,background:"rgba(255,255,255,0.05)",border:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"0.95rem",flexShrink:0}}>{user.flag||"🏴"}</div>
@@ -1207,7 +1207,7 @@ function WorldChat({ messages, user, navigate }) {
   );
 }
 
-// ── ACTION BUTTONS ────────────────────────────────────────────────────────────
+
 function ActionButtons({ onRaid, onFriends }) {
   const [rH,setRH]=useState(false);
   const [fH,setFH]=useState(false);
@@ -1220,7 +1220,7 @@ function ActionButtons({ onRaid, onFriends }) {
   };
   return (
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
-      {/* Raid */}
+      
       <div
         onClick={onRaid}
         onMouseEnter={()=>setRH(true)}
@@ -1245,7 +1245,7 @@ function ActionButtons({ onRaid, onFriends }) {
         <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.purple,background:rH?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",border:`1px solid rgba(168,85,247,${rH?0.55:0.25})`,textTransform:"uppercase",boxShadow:rH?"0 0 14px rgba(168,85,247,0.35)":"none",transition:"all 0.2s"}}>JOIN RAID →</div>
       </div>
 
-      {/* VS Friends */}
+      
       <div
         onClick={onFriends}
         onMouseEnter={()=>setFH(true)}
@@ -1273,8 +1273,8 @@ function ActionButtons({ onRaid, onFriends }) {
   );
 }
 
-// ── FOOTER COMPONENT ─────────────────────────────────────────────────────────
-// SVG icon set for footer (no emojis)
+
+
 const FooterIcons = {
   Stadium: () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
@@ -1351,15 +1351,13 @@ function Footer({ navigate }) {
 
   return (
     <>
-      {/* ══════════════════════════════════════════════════
-          FOOTER SECTION — fully isolated visual block
-      ══════════════════════════════════════════════════ */}
+      
       <div style={{
         marginTop: "0",
         position: "relative",
         width: "100%",
       }}>
-        {/* Top pitch-line row — marks the boundary of the footer section */}
+        
         <div style={{
           height: "52px",
           background: "linear-gradient(180deg, rgba(5,8,15,0) 0%, rgba(247,195,68,0.04) 100%)",
@@ -1372,7 +1370,7 @@ function Footer({ navigate }) {
           position: "relative",
           overflow: "hidden",
         }}>
-          {/* Horizontal dashes flanking the motif */}
+          
           <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(247,195,68,0.18))", marginLeft: 24 }}/>
           <div style={{
             width: 30, height: 30, borderRadius: "50%",
@@ -1400,7 +1398,7 @@ function Footer({ navigate }) {
         </div>
       </div>
 
-      {/* ── Footer body ── */}
+      
       <footer style={{
         position: "relative",
         width: "100%",
@@ -1408,7 +1406,7 @@ function Footer({ navigate }) {
         background: "linear-gradient(180deg, rgba(4,6,12,0.98) 0%, #03050d 100%)",
         borderTop: "1px solid rgba(255,255,255,0.03)",
       }}>
-        {/* Footballer silhouette – right */}
+        
         <div style={{ position: "absolute", right: 0, bottom: 0, width: 240, height: 380, zIndex: 0, pointerEvents: "none" }}>
           <div style={{
             position: "absolute", right: -10, bottom: -10, width: 300, height: 320, borderRadius: "50%",
@@ -1433,7 +1431,7 @@ function Footer({ navigate }) {
           </svg>
         </div>
 
-        {/* Goalkeeper silhouette – left */}
+        
         <div style={{ position: "absolute", left: 0, bottom: 0, width: 240, height: 380, zIndex: 0, pointerEvents: "none" }}>
           <div style={{
             position: "absolute", left: -10, bottom: -10, width: 300, height: 320, borderRadius: "50%",
@@ -1456,10 +1454,10 @@ function Footer({ navigate }) {
           </svg>
         </div>
 
-        {/* Main body */}
+        
         <div className="footer-container">
 
-          {/* Stats row */}
+          
           <div className="footer-stats-row">
             {stats.map((s, i) => (
               <div key={i} className="footer-stat-item">
@@ -1481,12 +1479,12 @@ function Footer({ navigate }) {
 
           <div style={{ height: "1px", background: "rgba(255,255,255,0.05)", marginBottom: "40px" }} />
 
-          {/* Two-column: Brand left, Links right */}
+          
           <div className="footer-main-grid">
 
-            {/* Brand block */}
+            
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {/* Logo */}
+              
               <div
                 onClick={() => navigate("/")}
                 style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", width: "fit-content" }}
@@ -1518,7 +1516,7 @@ function Footer({ navigate }) {
                 The ultimate football guild battle simulator. Play daily seeded puzzles, earn XP, and defend your nation's castle in the global arena.
               </p>
 
-              {/* Social buttons */}
+              
               <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
                 {socials.map(s => (
                   <a
@@ -1544,7 +1542,7 @@ function Footer({ navigate }) {
               </div>
             </div>
 
-            {/* Nav links */}
+            
             <div>
               <div style={{
                 fontFamily: "'Space Mono', monospace",
@@ -1591,7 +1589,7 @@ function Footer({ navigate }) {
             </div>
           </div>
 
-          {/* Bottom bar */}
+          
           <div style={{
             borderTop: "1px solid rgba(255,255,255,0.05)",
             paddingTop: "20px",
@@ -1652,7 +1650,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
       paddingBottom:"env(safe-area-inset-bottom,0px)",
       boxShadow:"0 -1px 0 rgba(255,255,255,0.04),0 -12px 40px rgba(0,0,0,0.7)",
     }}>
-      {/* Gold top edge */}
+      
       <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,rgba(247,195,68,0.15),rgba(247,195,68,0.3) 50%,rgba(247,195,68,0.15),transparent)"}}/>
       {items.map(item=>{
         const isActive = item.id === active;
@@ -1699,7 +1697,7 @@ function BottomNav({ active, navigate, onUnavailable }) {
   );
 }
 
-// ── TOAST ─────────────────────────────────────────────────────────────────────
+
 function Toast({ message }) {
   if (!message) return null;
   return (
@@ -1709,7 +1707,7 @@ function Toast({ message }) {
   );
 }
 
-// ── HOME PAGE ─────────────────────────────────────────────────────────────────
+
 export default function Home() {
   const navigate = useNavigate();
   const [toast, setToast] = useState("");
@@ -1796,12 +1794,12 @@ export default function Home() {
       <div style={{position:"relative", zIndex:1, flex:1, width:"100%", maxWidth:920, margin:"0 auto", boxSizing:"border-box"}}>
 
 
-        {/* Hero */}
+        
         <HeroSection user={user} dailyXP={dailyXP} xpPct={xpPct} doneCount={doneCount} gamesTotal={games.length} guild={guild} navigate={navigate}/>
 
         <div style={{padding:"0 24px 110px", boxSizing:"border-box"}}>
 
-          {/* Fixture(s) */}
+          
           <div style={{marginTop:8}}>
             {nextFixtures.length > 0
               ? nextFixtures.map(f => <div key={f.id} style={{marginBottom:10}}><MatchCard fixture={f} fallbackSecs={mockSecs}/></div>)
@@ -1809,7 +1807,7 @@ export default function Home() {
             }
           </div>
 
-          {/* Game Portals */}
+          
           <div id="games-section">
             <SectionDivider label="Game Portals" count={`${doneCount}/${games.length} Complete`} color={C.gold}/>
             <div className="home-games-grid">
@@ -1824,14 +1822,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Action CTAs */}
+          
           <ActionButtons onRaid={() => navigate("/raid")} onFriends={() => navigate("/vs-friends")}/>
 
-          {/* Fortress Guild */}
+          
           <SectionDivider label="Your Nation" color={C.teal}/>
           <FortressGuildCard guild={guild} navigate={navigate}/>
 
-          {/* World Chat */}
+          
           <SectionDivider label="World Chat" right="ALL NATIONS LIVE" color={C.green}/>
           <WorldChat messages={worldChat} user={user} navigate={navigate}/>
 

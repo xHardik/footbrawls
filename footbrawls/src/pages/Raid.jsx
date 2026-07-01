@@ -19,7 +19,7 @@ import {
 } from '../lib/raidEngine';
 import { RAID_TYPES, R, BUDDY_TIMEOUT_MS } from '../lib/raidConstants';
 
-/* ─── Icons ─────────────────────────────────────────────────────────────── */
+
 const ShieldIcon = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M12 3L4 7v6c0 4.4 3.4 8.5 8 9.5 4.6-1 8-5.1 8-9.5V7l-8-4z"
@@ -77,7 +77,7 @@ const PersonIcon = ({ size = 20, color = 'currentColor' }) => (
   </svg>
 );
 
-/* ─── Custom inline icons to replace emojis ─────────────────────────────── */
+
 const TrophyIcon = ({ size = 28, color = '#F7C344' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
@@ -137,7 +137,7 @@ const SwordSingleIcon = ({ size = 36, color = '#F7C344' }) => (
   </svg>
 );
 
-/* ─── Side figure: Attacker (right side) ────────────────────────────────── */
+
 function AttackerFigure() {
   return (
     <div style={{
@@ -153,52 +153,52 @@ function AttackerFigure() {
       }} />
       <svg viewBox="0 0 220 400" fill="none" xmlns="http://www.w3.org/2000/svg"
         style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', height: '100%', opacity: 0.13 }}>
-        {/* helmet */}
+        
         <ellipse cx="148" cy="44" rx="22" ry="20" fill="#F7C344" />
         <path d="M126 44 Q126 24 148 22 Q170 24 170 44" fill="#e8a800" />
-        {/* visor slit */}
+        
         <rect x="133" y="42" width="30" height="5" rx="2" fill="#04060f" opacity="0.6" />
-        {/* neck */}
+        
         <rect x="141" y="62" width="14" height="12" rx="3" fill="#F7C344" />
-        {/* torso — armoured plate */}
+        
         <path d="M118 74 C110 76 104 94 102 118 L106 170 L148 178 L190 168 L194 116 C192 92 186 76 178 74 L163 70 L148 68 L133 70 Z" fill="#F7C344" />
-        {/* chest plate line */}
+        
         <path d="M148 74 L148 170" stroke="#e8a800" strokeWidth="2" opacity="0.4" />
         <path d="M120 100 L176 100" stroke="#e8a800" strokeWidth="1.5" opacity="0.3" />
-        {/* pauldron left */}
+        
         <ellipse cx="113" cy="84" rx="14" ry="10" fill="#e8a800" />
-        {/* pauldron right */}
+        
         <ellipse cx="183" cy="84" rx="14" ry="10" fill="#e8a800" />
-        {/* left arm — raised with sword */}
+        
         <path d="M118 88 C105 84 88 72 76 55 C70 47 69 40 74 36 C79 32 86 36 91 43 L112 82 Z" fill="#F7C344" />
-        {/* sword blade */}
+        
         <path d="M68 28 L52 8" stroke="#F7C344" strokeWidth="4" strokeLinecap="round" />
         <path d="M60 36 L44 20" stroke="#e8a800" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-        {/* sword crossguard */}
+        
         <path d="M62 32 L74 20" stroke="#F7C344" strokeWidth="6" strokeLinecap="round" />
-        {/* right arm — holding shield low */}
+        
         <path d="M178 92 C192 98 210 112 218 128 C222 136 220 143 214 144 C208 145 202 138 197 130 L180 100 Z" fill="#F7C344" />
-        {/* shield */}
+        
         <path d="M218 152 C218 152 234 140 240 128 C246 116 242 106 234 108 C228 110 220 120 218 132 C216 120 208 110 202 108 C194 106 190 116 196 128 C202 140 218 152 218 152 Z" fill="#e8a800" opacity="0.8" />
-        {/* left leg */}
+        
         <path d="M120 168 C116 192 112 228 110 260 L126 261 L138 226 L145 192 Z" fill="#F7C344" />
-        {/* left boot */}
+        
         <path d="M108 259 C102 260 93 265 89 272 C87 278 91 282 100 282 L132 279 L132 259 Z" fill="#e8a800" />
-        {/* right leg */}
+        
         <path d="M168 168 C174 190 184 226 198 248 L212 241 L194 214 L182 185 Z" fill="#F7C344" />
-        {/* right boot */}
+        
         <path d="M196 246 C208 260 222 274 232 284 L242 274 L224 262 L207 240 Z" fill="#e8a800" />
-        {/* motion lines */}
+        
         <line x1="46" y1="10" x2="30" y2="4" stroke="#F7C344" strokeWidth="1.2" opacity="0.18" strokeDasharray="4 6" />
         <line x1="50" y1="18" x2="32" y2="14" stroke="#F7C344" strokeWidth="0.8" opacity="0.12" strokeDasharray="3 7" />
-        {/* ground shadow */}
+        
         <ellipse cx="140" cy="348" rx="55" ry="6" fill="#F7C344" opacity="0.04" />
       </svg>
     </div>
   );
 }
 
-/* ─── Side figure: Defender / Shield-bearer (left side) ─────────────────── */
+
 function DefenderFigure() {
   return (
     <div style={{
@@ -214,43 +214,43 @@ function DefenderFigure() {
       }} />
       <svg viewBox="0 0 220 400" fill="none" xmlns="http://www.w3.org/2000/svg"
         style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100%', opacity: 0.13 }}>
-        {/* helmet */}
+        
         <ellipse cx="72" cy="82" rx="21" ry="19" fill="#A855F7" />
         <path d="M51 82 Q51 63 72 61 Q93 63 93 82" fill="#7c3aed" />
-        {/* crest / plume */}
+        
         <path d="M72 63 C68 52 60 44 58 36 C62 38 68 46 72 52 C76 46 82 38 86 36 C84 44 76 52 72 63 Z" fill="#A855F7" opacity="0.6" />
-        {/* visor */}
+        
         <rect x="57" y="80" width="30" height="5" rx="2" fill="#04060f" opacity="0.5" />
-        {/* neck */}
+        
         <rect x="65" y="99" width="14" height="11" rx="3" fill="#A855F7" />
-        {/* torso */}
+        
         <path d="M42 110 C34 112 28 130 26 154 L30 206 L72 214 L114 204 L118 152 C116 128 110 112 102 110 L87 106 L72 104 L57 106 Z" fill="#A855F7" />
         <path d="M72 110 L72 206" stroke="#7c3aed" strokeWidth="2" opacity="0.35" />
         <path d="M44 138 L100 138" stroke="#7c3aed" strokeWidth="1.5" opacity="0.25" />
-        {/* pauldrons */}
+        
         <ellipse cx="37" cy="122" rx="14" ry="10" fill="#7c3aed" />
         <ellipse cx="107" cy="122" rx="14" ry="10" fill="#7c3aed" />
-        {/* left arm — holding large tower shield */}
+        
         <path d="M42 126 C28 122 10 118 -4 118 C-12 118 -14 124 -10 130 C-6 136 6 138 18 136 L36 128 Z" fill="#A855F7" />
-        {/* tower shield */}
+        
         <rect x="-18" y="104" width="32" height="52" rx="4" fill="#7c3aed" opacity="0.85" />
         <path d="M-18 156 L2 170 L22 156" fill="#7c3aed" opacity="0.85" />
-        {/* shield emblem */}
+        
         <path d="M2 116 L-6 130 L2 128 L2 142 L10 128 L2 130 Z" fill="#A855F7" opacity="0.6" />
-        {/* right arm — sword ready */}
+        
         <path d="M102 128 C116 124 134 114 148 104 C154 100 155 94 150 90 C145 86 138 90 133 96 L106 120 Z" fill="#A855F7" />
-        {/* sword — at guard position */}
+        
         <path d="M150 86 L168 68" stroke="#A855F7" strokeWidth="4" strokeLinecap="round" />
         <path d="M144 90 L168 82" stroke="#7c3aed" strokeWidth="5" strokeLinecap="round" opacity="0.7" />
-        {/* left leg */}
+        
         <path d="M44 204 C40 228 36 264 34 296 L50 297 L62 262 L69 228 Z" fill="#A855F7" />
         <path d="M32 295 C26 296 17 300 13 308 C11 314 15 318 24 318 L56 315 L56 295 Z" fill="#7c3aed" />
-        {/* right leg */}
+        
         <path d="M92 204 C98 226 108 262 122 286 L136 279 L118 252 L107 222 Z" fill="#A855F7" />
         <path d="M120 284 C132 298 146 312 156 322 L166 312 L148 299 L131 278 Z" fill="#7c3aed" />
-        {/* ground shadow */}
+        
         <ellipse cx="72" cy="348" rx="52" ry="5" fill="#A855F7" opacity="0.04" />
-        {/* motion lines from shield bash */}
+        
         <line x1="-20" y1="116" x2="-38" y2="110" stroke="#A855F7" strokeWidth="1.2" opacity="0.16" strokeDasharray="4 6" />
         <line x1="-20" y1="128" x2="-40" y2="126" stroke="#A855F7" strokeWidth="0.8" opacity="0.1" strokeDasharray="3 7" />
       </svg>
@@ -258,7 +258,7 @@ function DefenderFigure() {
   );
 }
 
-/* ─── Design tokens ──────────────────────────────────────────────────────── */
+
 const T = {
   bg:        '#04060f',
   bg2:       '#080b18',
@@ -285,7 +285,7 @@ const T = {
   muted2:    'rgba(240,242,255,0.25)',
 };
 
-/* ─── Global styles injection ────────────────────────────────────────────── */
+
 function injectStyles() {
   if (document.getElementById('raid-ui-v2')) return;
   const el = document.createElement('style');
@@ -426,7 +426,7 @@ function injectStyles() {
   document.head.appendChild(el);
 }
 
-/* ─── Ambient orbs background ────────────────────────────────────────────── */
+
 function AmbientBg({ accent = T.gold }) {
   return (
     <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
@@ -447,7 +447,7 @@ function AmbientBg({ accent = T.gold }) {
         top:'50%', left:'60%', animation:'raid-orb 18s ease-in-out infinite',
         animationDelay:'-9s',
       }} />
-      {/* Scanline overlay */}
+      
       <div style={{
         position:'absolute', inset:0,
         backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 4px)',
@@ -457,7 +457,7 @@ function AmbientBg({ accent = T.gold }) {
   );
 }
 
-/* ─── Spinner ────────────────────────────────────────────────────────────── */
+
 function Spinner({ size = 40, color = T.gold }) {
   return (
     <div style={{
@@ -470,7 +470,7 @@ function Spinner({ size = 40, color = T.gold }) {
   );
 }
 
-/* ─── Glowing badge ──────────────────────────────────────────────────────── */
+
 function GlowBadge({ children, color = T.gold, glow }) {
   const g = glow || `${color}40`;
   return (
@@ -483,7 +483,7 @@ function GlowBadge({ children, color = T.gold, glow }) {
   );
 }
 
-/* ─── Section wrapper ────────────────────────────────────────────────────── */
+
 function Section({ children, style = {} }) {
   return (
     <div style={{ animation:'raid-fadeUp .4s ease', ...style }}>
@@ -492,7 +492,7 @@ function Section({ children, style = {} }) {
   );
 }
 
-/* ─── Act winner badge ───────────────────────────────────────────────────── */
+
 function ActBadge({ winner }) {
   if (!winner) return <span style={{ color:T.muted2, fontSize:12 }}>—</span>;
   const cfg = {
@@ -507,7 +507,7 @@ function ActBadge({ winner }) {
   );
 }
 
-/* ─── Confetti / heartbreak particle canvas ──────────────────────────────── */
+
 function ParticleEffect({ type }) {
   const canvasRef = useCallback(canvas => {
     if (!canvas) return;
@@ -541,7 +541,7 @@ function ParticleEffect({ type }) {
           ctx.fillStyle = p.color;
           ctx.fillRect(-p.size/2, -p.size, p.size, p.size*2);
         } else {
-          // draw a small broken heart shape instead of emoji
+          
           ctx.fillStyle = `rgba(255,77,106,0.7)`;
           ctx.beginPath();
           ctx.arc(-p.size/4, -p.size/4, p.size/3, Math.PI, 0);
@@ -567,7 +567,7 @@ function ParticleEffect({ type }) {
   );
 }
 
-/* ─── Castle HP visual ───────────────────────────────────────────────────── */
+
 function CastleDamageVisual({ damagePct, rivalName }) {
   const [hp, setHp] = useState(100);
   useEffect(() => {
@@ -613,12 +613,10 @@ function CastleDamageVisual({ damagePct, rivalName }) {
   );
 }
 
-/* ─── fmtSecs ────────────────────────────────────────────────────────────── */
+
 function fmtSecs(ms) { return Math.ceil(ms / 1000); }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
-═══════════════════════════════════════════════════════════════════════════ */
+
 export default function Raid() {
   const navigate = useNavigate();
   const user     = useMemo(() => getUser(), []);
@@ -649,7 +647,7 @@ export default function Raid() {
 
   useEffect(() => { injectStyles(); }, []);
 
-  /* ── Ready handlers ── */
+  
   const handleReadyAct2 = async () => {
     if (!activeSessionId) return;
     try { await updateDoc(doc(db,'gameSessions',activeSessionId),{[`readyAct2.${user.userId}`]:true}); }
@@ -661,8 +659,8 @@ export default function Raid() {
     catch(e) { console.error('[Raid] Ready Act 3:', e); }
   };
 
-  /* ── Finalize ── */
-  // We only run this ONCE per user when the raid finishes.
+  
+  
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType, scores) => {
     if (finalizing) return;
     setFinalizing(true);
@@ -676,7 +674,7 @@ export default function Raid() {
         setCastleRaidEntries(nextCount);
       }
 
-      // Fix: Determine scores specifically by user.userId to avoid the "Both MVP" bug.
+      
       const uScores = scores?.[user.userId] || {};
       const userScore = (uScores.act1?.normalized || 0) +
         ((uScores.act2?.wins || 0) * 20) +
@@ -685,7 +683,7 @@ export default function Raid() {
       let buddyScore = 0;
       if (currentMatch?.buddy?.userId) {
         if (currentMatch.isBotMatch) {
-          // Bots don't have individual score documents, they are in the acts object
+          
           buddyScore = (currentActs.act1?.buddyScore || 0) +
             ((currentActs.act2?.buddyRoundWins || 0) * 20) +
             ((currentActs.act3?.buddyGoals || 0) * 20);
@@ -718,7 +716,7 @@ export default function Raid() {
     finally { setFinalizing(false); }
   }, [user]);
 
-  /* ── Firestore subscription ── */
+  
   useEffect(() => {
     if (!activeSessionId) { setPhase('lobby'); return; }
     const sessionRef = doc(db,'gameSessions',activeSessionId);
@@ -772,7 +770,7 @@ export default function Raid() {
           const bw  = isBotBuddy ? (is1v1 ? 0 : bots2.buddyWins) : (p2Scores.act2?.wins || 0);
           if (isBotBuddy || p2Scores.act2) {
             const yt = p1w + bw;
-            const rt = is1v1 ? Math.min(3, bots2.rivalWins) : bots2.rivalWins; // Keep bot wins reasonable for 1v1
+            const rt = is1v1 ? Math.min(3, bots2.rivalWins) : bots2.rivalWins; 
             newActs.act2 = { winner:determineActWinner(yt,rt), playerRoundWins:p1w, buddyRoundWins:bw, rivalBotWins:rt, yourTotal:yt, rivalTotal:rt };
             newWinners[1] = newActs.act2.winner; updated = true;
           }
@@ -805,7 +803,7 @@ export default function Raid() {
         const l2 = localStorage.getItem(`raid_completed_act2_${activeSessionId}`)==='true';
         const l3 = localStorage.getItem(`raid_completed_act3_${activeSessionId}`)==='true';
 
-        // Self-healing
+        
         if (l1&&!s.scores?.[user.userId]?.act1&&s.status==='active')
           updateDoc(sessionRef,{[`scores.${user.userId}.act1`]:{gameId:gameObj?.id||'unknown',rawScore:0,normalized:0}});
         if (l2&&!s.scores?.[user.userId]?.act2&&s.status==='active')
@@ -823,52 +821,44 @@ export default function Raid() {
         const y2 = r2[user.userId]===true, b2 = isBotBuddy||(r2[buddyObj?.userId]===true);
         const y3 = r3[user.userId]===true, b3 = isBotBuddy||(r3[buddyObj?.userId]===true);
 
+        const myAct1Done = !!s.scores?.[user.userId]?.act1 || l1;
+        const myAct2Done = !!s.scores?.[user.userId]?.act2 || l2;
+        const myAct3Done = !!s.scores?.[user.userId]?.act3 || l3;
+        const raidDone = s.currentAct === 4 || (myAct3Done && newActs.act3);
+
         if (timer) clearTimeout(timer);
 
-        if (s.currentAct===1) {
-          if (!!s.scores?.[user.userId]?.act1||l1) {
-            setPhase('waiting_teammate');
-            if (isBotBuddy) {
-              const finalNewActs = { ...newActs };
-              if (!newActs.act1) {
-                const p1v = p1Scores.act1?.normalized || 0;
-                const bv = bots1.buddy;
-                const yt = sumAct1Duo(p1v, bv);
-                const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
-                finalNewActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
-                newWinners[0] = finalNewActs.act1.winner;
-              }
-              await updateDoc(sessionRef, { acts: finalNewActs, actWinners: newWinners, currentAct: 2 });
+        if (raidDone) {
+          const out = computeRaidOutcome(newActs);
+          setOutcome(out); setPhase('results');
+          await finalizeRaidFromState(newActs,out,currentMatch,s.raidType, s.scores);
+          await updateDoc(sessionRef,{status:'completed'});
+          localStorage.removeItem('active_game_session_id');
+        } else if (!myAct1Done) {
+          setPhase('matched');
+          timer = setTimeout(()=>navigate(gameObj.route), 2200);
+        } else if (!myAct2Done) {
+          setPhase('starting_act2');
+          timer = setTimeout(()=>navigate('/games/dribble'), 1200);
+          
+          if (isBotBuddy && s.currentAct === 1) {
+            const finalNewActs = { ...newActs };
+            if (!newActs.act1) {
+              const p1v = p1Scores.act1?.normalized || 0;
+              const bv = bots1.buddy;
+              const yt = sumAct1Duo(p1v, bv);
+              const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
+              finalNewActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
+              newWinners[0] = finalNewActs.act1.winner;
             }
+            await updateDoc(sessionRef, { acts: finalNewActs, actWinners: newWinners, currentAct: 2 });
           }
-          else {
-            setPhase('matched');
-            timer = setTimeout(()=>navigate(gameObj.route),2200);
-          }
-        } else if (s.currentAct===2) {
-          if (!!s.scores?.[user.userId]?.act2||l2) {
-            setPhase('waiting_teammate');
-            if (isBotBuddy && !l3) {
-              timer = setTimeout(()=>navigate('/games/penaltynerve'), 800);
-            }
-          } else {
-            setPhase('waiting_teammate');
-            if (!l2) timer = setTimeout(()=>navigate('/games/dribble'), 800);
-          }
-        } else if (s.currentAct===3) {
-          if (!!s.scores?.[user.userId]?.act3||l3) {
-            setPhase('waiting_teammate');
-          } else {
-            setPhase('waiting_teammate');
-            if (!l3) timer = setTimeout(()=>navigate('/games/penaltynerve'), 800);
-          }
-        } else if (s.currentAct===4) {
-            const out = computeRaidOutcome(newActs);
-            setOutcome(out); setPhase('results');
-            await finalizeRaidFromState(newActs,out,currentMatch,s.raidType, s.scores);
-            await updateDoc(sessionRef,{status:'completed'});
-            localStorage.removeItem('active_game_session_id');
-          }
+        } else if (!myAct3Done) {
+          setPhase('starting_act3');
+          timer = setTimeout(()=>navigate('/games/penaltynerve'), 1200);
+        } else {
+          setPhase('waiting_teammate');
+        }
       } catch(err) {
         console.error('[Raid] snapshot error:', err);
         localStorage.removeItem('active_game_session_id');
@@ -892,7 +882,7 @@ export default function Raid() {
     return () => { unsub(); window.removeEventListener('beforeunload',handleUnload); if(timer)clearTimeout(timer); };
   }, [activeSessionId, user, navigate, finalizeRaidFromState]);
 
-  /* ── Start search ── */
+  
   const startSearch = useCallback(async type => {
     if (!user) return;
 
@@ -970,7 +960,7 @@ export default function Raid() {
     } catch(err) { console.error('[Raid] search:', err); setPhase('lobby'); }
   }, [user]);
 
-  /* ── Standings ── */
+  
   const standings = useMemo(() => {
     if (!match) return [];
     const a1b = acts.act1?.gameId ? simulateBotAct1Scores(acts.act1.gameId, raidSeed) : { rival1:0, rival2:0 };
@@ -1003,16 +993,14 @@ export default function Raid() {
     </div>
   );
 
-  /* ════════════════════════════════════════════════════════════════════════
-     RENDER
-  ════════════════════════════════════════════════════════════════════════ */
+  
   return (
     <div style={css.page}>
       <AmbientBg accent={outcome==='win' ? T.green : outcome==='loss' ? T.red : T.gold} />
       <AttackerFigure />
       <DefenderFigure />
 
-      {/* ── Nav ── */}
+      
       <nav style={{
         position: 'sticky', top: 0, zIndex: 200,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1050,10 +1038,10 @@ export default function Raid() {
 
       <main style={css.main}>
 
-        {/* ═══ LOBBY ══════════════════════════════════════════════════════ */}
+        
         {phase === 'lobby' && (
           <Section>
-            {/* Hero */}
+            
             <div style={{ textAlign:'center', marginBottom:36 }}>
               <div style={{
                 width:80, height:80, borderRadius:20, margin:'0 auto 20px',
@@ -1071,7 +1059,7 @@ export default function Raid() {
               </p>
             </div>
 
-            {/* Mode cards */}
+            
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {Object.values(RAID_TYPES).map(mode => {
                 const isChallenge = mode.id === 'challenge';
@@ -1153,11 +1141,11 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ SEARCHING ══════════════════════════════════════════════════ */}
+        
         {phase === 'searching' && (
           <Section>
             <div style={{ textAlign:'center', padding:'60px 0' }}>
-              {/* Radar-style animation */}
+              
               <div style={{ position:'relative', width:120, height:120, margin:'0 auto 28px' }}>
                 {[0,1,2].map(i => (
                   <div key={i} style={{
@@ -1182,7 +1170,7 @@ export default function Raid() {
                 Matchmaking in progress
               </p>
 
-              {/* Timer bar */}
+              
               <div style={{
                 width:200, height:4, background:'rgba(255,255,255,.08)',
                 borderRadius:99, margin:'0 auto 10px', overflow:'hidden',
@@ -1204,7 +1192,7 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ WAITING TEAMMATE ═══════════════════════════════════════════ */}
+        
         {phase === 'waiting_teammate' && (
           <Section>
             <div style={{ textAlign:'center', padding:'60px 0' }}>
@@ -1222,7 +1210,7 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ MATCHED ════════════════════════════════════════════════════ */}
+        
         {phase === 'matched' && match && (
           <Section>
             <div style={{ textAlign:'center', marginBottom:24 }}>
@@ -1231,7 +1219,7 @@ export default function Raid() {
             </div>
 
             <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:12, alignItems:'center', marginBottom:24 }}>
-              {/* Duo */}
+              
               <div className="raid-card" style={{ padding:16 }}>
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2, color:T.green, marginBottom:12, textTransform:'uppercase' }}>
                   {raidType === 'training' ? 'You' : 'Your Duo'}
@@ -1247,13 +1235,13 @@ export default function Raid() {
                 ))}
               </div>
 
-              {/* VS */}
+              
               <div style={{
                 fontFamily:"'Orbitron',sans-serif", fontSize:16, fontWeight:900,
                 color:T.muted2, letterSpacing:2, textAlign:'center',
               }}>VS</div>
 
-              {/* Rivals */}
+              
               <div className="raid-card" style={{ padding:16 }}>
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2, color:T.red, marginBottom:12, textTransform:'uppercase' }}>
                   Rivals
@@ -1285,7 +1273,29 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ ACT 2 INTERSTITIAL ═════════════════════════════════════════ */}
+        {phase === 'starting_act2' && (
+          <Section>
+            <InterstitialCard
+              icon={<SwordsIcon size={42} color={T.gold} />}
+              actLabel="Act 2 — Dribble"
+              title="GET READY"
+              subtitle="Act 2 is starting..."
+            />
+          </Section>
+        )}
+
+        {phase === 'starting_act3' && (
+          <Section>
+            <InterstitialCard
+              icon={<SwordsIcon size={42} color={T.red} />}
+              actLabel="Act 3 — Penalty Nerve"
+              title="FINAL ACT"
+              subtitle="Act 3 is starting..."
+            />
+          </Section>
+        )}
+
+        
         {phase === 'act2_interstitial' && match && (
           <Section>
             <InterstitialCard
@@ -1316,7 +1326,7 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ ACT 3 INTERSTITIAL ═════════════════════════════════════════ */}
+        
         {phase === 'act3_interstitial' && match && (
           <Section>
             <InterstitialCard
@@ -1347,12 +1357,12 @@ export default function Raid() {
           </Section>
         )}
 
-        {/* ═══ RESULTS ════════════════════════════════════════════════════ */}
+        
         {phase === 'results' && (
           <Section style={{ position:'relative' }}>
             <ParticleEffect type={outcome === 'win' ? 'win' : 'loss'} />
 
-            {/* Outcome banner */}
+            
             <div style={{
               position:'relative', zIndex:2,
               textAlign:'center', padding:'24px 20px',
@@ -1380,7 +1390,7 @@ export default function Raid() {
               </div>
             </div>
 
-            {/* Act summary pills */}
+            
             <div style={{
               position:'relative', zIndex:2,
               display:'flex', gap:8, justifyContent:'center', marginBottom:20,
@@ -1397,7 +1407,7 @@ export default function Raid() {
               ))}
             </div>
 
-            {/* Total Points Display */}
+            
             <div style={{
               position:'relative', zIndex:2,
               background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`,
@@ -1419,7 +1429,7 @@ export default function Raid() {
               </div>
             </div>
 
-            {/* Standings */}
+            
             <div className="raid-card" style={{ padding:'16px 18px', marginBottom:16, position:'relative', zIndex:2 }}>
               <div style={{
                 fontFamily:"'Orbitron',sans-serif", fontSize:10, letterSpacing:2,
@@ -1466,7 +1476,7 @@ export default function Raid() {
               </div>
             </div>
 
-            {/* Castle damage */}
+            
             {outcome==='win' && !isTraining && raidType==='challenge' && (
               <div style={{ position:'relative', zIndex:2 }}>
                 <CastleDamageVisual
@@ -1476,7 +1486,7 @@ export default function Raid() {
               </div>
             )}
 
-            {/* XP box */}
+            
             {!isTraining && (
               <div style={{
                 position:'relative', zIndex:2,
@@ -1499,7 +1509,7 @@ export default function Raid() {
                   </div>
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                    {/* User XP row */}
+                    
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
                       <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.text }}>
                         👤 You ({user.nickname})
@@ -1510,7 +1520,7 @@ export default function Raid() {
                       </span>
                     </div>
 
-                    {/* Teammate XP row */}
+                    
                     {!isTraining && match?.buddy && (
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
                         <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
@@ -1560,7 +1570,7 @@ export default function Raid() {
 
       </main>
 
-      {/* ─── BOTTOM NAV ────────────────────────────────────────── */}
+      
       <nav className="raid-bottom-nav">
         {[
           { id: "home",  label: "Games", IconC: BallIcon,   route: "/" },
@@ -1597,7 +1607,7 @@ export default function Raid() {
   );
 }
 
-/* ─── Shared interstitial card ───────────────────────────────────────────── */
+
 function InterstitialCard({
   icon, actLabel, actWinners, upToAct,
   title, subtitle, breakdown,
@@ -1606,7 +1616,7 @@ function InterstitialCard({
 }) {
   return (
     <div className="raid-card" style={{ padding:24 }}>
-      {/* Header */}
+      
       <div style={{ textAlign:'center', marginBottom:20 }}>
         <div style={{ display:'flex', justifyContent:'center', marginBottom:10, animation:'raid-float 2.5s ease-in-out infinite' }}>
           {icon}
@@ -1623,7 +1633,7 @@ function InterstitialCard({
         </p>
       </div>
 
-      {/* Act results row */}
+      
       <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:18 }}>
         {Array.from({ length:upToAct }, (_,i) => (
           <div key={i} style={{ textAlign:'center' }}>
@@ -1635,7 +1645,7 @@ function InterstitialCard({
         ))}
       </div>
 
-      {/* Point breakdown */}
+      
       <div style={{
         background:'rgba(255,255,255,.025)', border:`1px solid ${T.border}`,
         borderRadius:14, padding:16, marginBottom:18,
@@ -1647,7 +1657,7 @@ function InterstitialCard({
           {breakdown.label}
         </div>
 
-        {/* Your duo */}
+        
         <div style={{ marginBottom:10 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
             <span style={{ fontSize:13, fontWeight:600, color:T.gold, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
@@ -1667,7 +1677,7 @@ function InterstitialCard({
 
         <div style={{ height:'1px', background:'rgba(255,255,255,.07)', margin:'10px 0' }} />
 
-        {/* Rivals */}
+        
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
           <span style={{ fontSize:13, fontWeight:600, color:T.red, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
             <SwordsIcon size={13} color={T.red} /> Rivals
@@ -1681,7 +1691,7 @@ function InterstitialCard({
         </p>
       </div>
 
-      {/* CTA area */}
+      
       {isFinished ? (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 0' }}>
           <Spinner size={24} />
@@ -1721,7 +1731,7 @@ function InterstitialCard({
   );
 }
 
-/* ─── Styles ─────────────────────────────────────────────────────────────── */
+
 const css = {
   page: {
     minHeight:'100vh',
@@ -1757,7 +1767,7 @@ const css = {
   },
 };
 
-/* ─── Help Modal ─────────────────────────────────────────────────────────── */
+
 function HelpModal({ show, onClose }) {
   if (!show) return null;
   return (
@@ -1785,7 +1795,7 @@ function HelpModal({ show, onClose }) {
           Guild Raids Intel
         </h2>
 
-        {/* Raid Types */}
+        
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 16, color: T.text, marginBottom: 12, borderBottom: `1px solid ${T.border2}`, paddingBottom: 6 }}>
             1. Raid Types
@@ -1812,7 +1822,7 @@ function HelpModal({ show, onClose }) {
           </div>
         </section>
 
-        {/* MVP Crown (below raid types) */}
+        
         <section style={{ marginBottom: 24, textAlign: 'center' }}>
           <div style={{ display: 'inline-block', background: 'rgba(247,195,68,0.1)', border: `1px solid ${T.gold}`, borderRadius: 16, padding: '12px 20px' }}>
             <div style={{ fontSize: 24, marginBottom: 4 }}>👑</div>
@@ -1823,7 +1833,7 @@ function HelpModal({ show, onClose }) {
           </div>
         </section>
 
-        {/* How to Raid */}
+        
         <section style={{ marginBottom: 24 }}>
           <h3 style={{ fontFamily: "'Orbitron',sans-serif", fontSize: 16, color: T.text, marginBottom: 12, borderBottom: `1px solid ${T.border2}`, paddingBottom: 6 }}>
             2. How To Raid

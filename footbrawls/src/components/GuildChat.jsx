@@ -28,7 +28,7 @@ function timeAgo(ts) {
 function MessageBubble({ msg, isSelf }) {
   const tierColor = TIER_COLORS[msg.tier] || "rgba(242,242,244,0.4)";
   return (
-    <div style={{ display:"flex", flexDirection:isSelf?"row-reverse":"row", alignItems:"flex-end", gap:8, marginBottom:10 }}>
+    <div style={{ display:"flex", flexDirection:isSelf?"row-reverse":"row", alignItems:"flex-start", gap:8, marginBottom:10 }}>
       {!isSelf && (
         <div style={{ width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.05)", border:`2px solid ${tierColor}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>
           {msg.flag || "🏳️"}

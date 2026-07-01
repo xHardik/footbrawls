@@ -204,15 +204,23 @@ export default function Profile() {
   ];
 
   const effectiveTotal = Math.max(totalBreakdownXP, totalXP);
+  
+  const mappedKeys = ALL_CATEGORIES.map(c => c.key);
+  const DYNAMIC_COLORS = ["#14b8a6", "#ec4899", "#8b5cf6", "#f97316", "#3b82f6", "#ef4444"];
+  let cIdx = 0;
+  
+  Object.keys(userBreakdown).forEach(k => {
+    if (!mappedKeys.includes(k) && k !== 'other') {
+      const label = k.charAt(0).toUpperCase() + k.slice(1).replace(/_/g, " ");
+      ALL_CATEGORIES.push({ key: k, label, color: DYNAMIC_COLORS[cIdx % DYNAMIC_COLORS.length] });
+      cIdx++;
+      mappedKeys.push(k);
+    }
+  });
+
   const statsBreakdown = ALL_CATEGORIES.map(item => {
     let xp = userBreakdown[item.key] || 0;
-    if (item.key === "other") {
-      // Add any unaccounted categories to "other"
-      const mappedKeys = ALL_CATEGORIES.map(c => c.key);
-      Object.keys(userBreakdown).forEach(k => {
-        if (!mappedKeys.includes(k)) xp += userBreakdown[k];
-      });
-    }
+
     const percent = effectiveTotal > 0 ? (xp / effectiveTotal) * 100 : 0;
     return { ...item, xp, percent };
   }).filter(item => item.xp > 0).sort((a, b) => b.xp - a.xp);

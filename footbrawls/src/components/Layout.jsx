@@ -424,7 +424,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
     <div className="ly-root">
 
       {/* Sleek Mobile Navigation Header Bar */}
-      {!hideMobileNav && (
+      {!hideMobileNav && !location.pathname.startsWith('/games/') && !location.pathname.startsWith('/guild/') && (
         <div className="ly-mobile-nav">
           <button className="ly-back-btn" onClick={() => navigate('/')}>
             ← BACK

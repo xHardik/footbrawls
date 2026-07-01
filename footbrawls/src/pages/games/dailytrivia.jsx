@@ -518,10 +518,11 @@ export default function DailyTrivia() {
     }
   }, []);
 
+  const isRaidSession = !!localStorage.getItem('active_game_session_id');
+  const isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
+
   // ── Load / resume ──
   useEffect(() => {
-    let isRaidSession = !!localStorage.getItem('active_game_session_id');
-    let isVsFriendsSession = !!localStorage.getItem('active_vs_friends_session_id');
     let seedStr = puzzleDate;
     if (isRaidSession || isVsFriendsSession) {
       seedStr = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');

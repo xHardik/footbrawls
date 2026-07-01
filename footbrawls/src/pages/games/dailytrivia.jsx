@@ -781,8 +781,8 @@ export default function DailyTrivia() {
           boxShadow: "0 10px 30px rgba(13, 148, 136, 0.22)",
           borderBottom: "1px solid rgba(13, 148, 136, 0.25)"
         }}>
-          {!(isRaid || isVsFriends) && <button className="dt-nav-logo" onClick={() => navigate('/')}>←</button>}
-          {isVsFriends ? (
+          {!(isRaidSession || isVsFriendsSession) && <button className="dt-nav-logo" onClick={() => navigate('/')}>←</button>}
+          {isVsFriendsSession ? (
           <div className="dt-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
             <span className="dt-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
             VS FRIENDS

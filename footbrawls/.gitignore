@@ -28,3 +28,4 @@ serviceAccount.json
 .vercel
 .env*
 chaabi.json
+.firebaserc

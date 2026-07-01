@@ -89,6 +89,10 @@ export function useClubWikiLogo(clubName) {
     else if (clubName === 'Everton') wikiQuery = 'Everton_F.C.';
     else if (clubName === 'Udinese') wikiQuery = 'Udinese_Calcio';
     else if (clubName === 'PSV') wikiQuery = 'PSV_Eindhoven';
+    else if (clubName === 'Lille') wikiQuery = 'Lille_OSC';
+    else if (clubName === 'Gent') wikiQuery = 'K.A.A._Gent';
+    else if (!wikiQuery.includes('_')) wikiQuery += '_F.C.';
+
 
     fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiQuery)}`)
       .then((res) => res.json())

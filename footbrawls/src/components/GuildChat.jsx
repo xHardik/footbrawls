@@ -35,15 +35,13 @@ function MessageBubble({ msg, isSelf }) {
         </div>
       )}
       <div style={{ maxWidth:"72%", display:"flex", flexDirection:"column", alignItems:isSelf?"flex-end":"flex-start" }}>
-        {!isSelf && (
-          <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:3 }}>
-            <span style={{ fontSize:11, fontWeight:700, color:tierColor, fontFamily:"'Syne',sans-serif" }}>{msg.nickname}</span>
-            <span style={{ fontSize:9, color:tierColor, background:`${tierColor}18`, border:`1px solid ${tierColor}33`, borderRadius:99, padding:"1px 6px", fontFamily:"'Space Mono',monospace", fontWeight:600 }}>{msg.tier}</span>
-          </div>
-        )}
         <div style={{ background:isSelf?"#3DD68C":"rgba(255,255,255,0.06)", color:isSelf?"#060810":"#F2F2F4", padding:"8px 12px", borderRadius:isSelf?"14px 14px 4px 14px":"4px 14px 14px 14px", fontSize:13, lineHeight:1.45, fontFamily:"'Syne',sans-serif", fontWeight:isSelf?600:400, wordBreak:"break-word", border:isSelf?"none":"1px solid rgba(255,255,255,0.08)" }}>
+          {!isSelf && (
+            <span style={{ fontSize:12, fontWeight:800, color:tierColor, marginRight:8, display:"inline-block" }}>{msg.nickname}</span>
+          )}
           {msg.text}
         </div>
+
         <span style={{ fontSize:9, color:"rgba(242,242,244,0.28)", marginTop:3, fontFamily:"'Space Mono',monospace" }}>{timeAgo(msg.timestamp)}</span>
       </div>
     </div>

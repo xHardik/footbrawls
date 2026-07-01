@@ -177,9 +177,13 @@ export default function Profile() {
   const kit = KIT_COLORS[countryCode] || { ...KIT_COLORS.FR, flag: countryObj.flag, name: countryObj.name.toUpperCase() };
   const tier = getTier(user?.totalXP || 0);
 
-  const userBreakdown = user?.xpBreakdown || {};
+  const userBreakdown = { ...(user?.xpBreakdown || {}) };
   const totalBreakdownXP = Object.values(userBreakdown).reduce((a, b) => a + b, 0);
   const totalXP = user?.totalXP || 0;
+  
+  if (totalXP > totalBreakdownXP) {
+    userBreakdown.other = (userBreakdown.other || 0) + (totalXP - totalBreakdownXP);
+  }
 
   const ALL_CATEGORIES = [
     { key: "raids", label: "Guild Raids", color: "#3b82f6" },
@@ -199,9 +203,17 @@ export default function Profile() {
     { key: "trivia", label: "Legacy Trivia", color: "#F7C344" },
   ];
 
+  const effectiveTotal = Math.max(totalBreakdownXP, totalXP);
   const statsBreakdown = ALL_CATEGORIES.map(item => {
-    const xp = userBreakdown[item.key] || 0;
-    const percent = totalBreakdownXP > 0 ? (xp / totalBreakdownXP) * 100 : 0;
+    let xp = userBreakdown[item.key] || 0;
+    if (item.key === "other") {
+      // Add any unaccounted categories to "other"
+      const mappedKeys = ALL_CATEGORIES.map(c => c.key);
+      Object.keys(userBreakdown).forEach(k => {
+        if (!mappedKeys.includes(k)) xp += userBreakdown[k];
+      });
+    }
+    const percent = effectiveTotal > 0 ? (xp / effectiveTotal) * 100 : 0;
     return { ...item, xp, percent };
   }).filter(item => item.xp > 0).sort((a, b) => b.xp - a.xp);
 

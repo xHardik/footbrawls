@@ -844,7 +844,7 @@ export default function Top10Guess() {
           </div>
         )}
 
-        <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
+        <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
 
         {showAdOverlay && (
           <div className="t10-modal-overlay active">
@@ -1159,7 +1159,7 @@ function StreakDots({ history, puzzleDate, phase }) {
 }
 
 // ─── How to Play Modal ────────────────────────────────────────────────────────
-function HowToPlayModal({ show, onClose }) {
+function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
   return (
     <div className={`t10-modal-overlay${show ? ' active' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>

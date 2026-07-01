@@ -1633,63 +1633,63 @@ function InterstitialCard({
         </p>
       </div>
 
-      
-      <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:18 }}>
-        {Array.from({ length:upToAct }, (_,i) => (
-          <div key={i} style={{ textAlign:'center' }}>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:1.5, color:T.muted2, marginBottom:5, textTransform:'uppercase' }}>
-              Act {i+1}
-            </div>
-            <ActBadge winner={actWinners[i]} />
-          </div>
-        ))}
-      </div>
-
-      
-      <div style={{
-        background:'rgba(255,255,255,.025)', border:`1px solid ${T.border}`,
-        borderRadius:14, padding:16, marginBottom:18,
-      }}>
-        <div style={{
-          fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2,
-          color:T.muted, textTransform:'uppercase', marginBottom:12,
-        }}>
-          {breakdown.label}
-        </div>
-
-        
-        <div style={{ marginBottom:10 }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-            <span style={{ fontSize:13, fontWeight:600, color:T.gold, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
-              <ShieldIcon size={13} color={T.gold} /> Your Duo
-            </span>
-            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.gold }}>
-              {breakdown.yourTotal} pts
-            </span>
-          </div>
-          {breakdown.yourRows.map((row, i) => (
-            <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0 4px 12px', fontSize:12, color:T.muted, fontFamily:"'Inter',sans-serif" }}>
-              <span>{row.name}</span>
-              <span>{row.score} pts</span>
+      {upToAct > 0 && (
+        <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:18 }}>
+          {Array.from({ length:upToAct }, (_,i) => (
+            <div key={i} style={{ textAlign:'center' }}>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:1.5, color:T.muted2, marginBottom:5, textTransform:'uppercase' }}>
+                Act {i+1}
+              </div>
+              <ActBadge winner={actWinners ? actWinners[i] : null} />
             </div>
           ))}
         </div>
+      )}
 
-        <div style={{ height:'1px', background:'rgba(255,255,255,.07)', margin:'10px 0' }} />
+      {breakdown && (
+        <div style={{
+          background:'rgba(255,255,255,.025)', border:`1px solid ${T.border}`,
+          borderRadius:14, padding:16, marginBottom:18,
+        }}>
+          <div style={{
+            fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2,
+            color:T.muted, textTransform:'uppercase', marginBottom:12,
+          }}>
+            {breakdown.label}
+          </div>
 
-        
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-          <span style={{ fontSize:13, fontWeight:600, color:T.red, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
-            <SwordsIcon size={13} color={T.red} /> Rivals
-          </span>
-          <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.red }}>
-            {breakdown.rivalTotal} pts
-          </span>
+          <div style={{ marginBottom:10 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+              <span style={{ fontSize:13, fontWeight:600, color:T.gold, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
+                <ShieldIcon size={13} color={T.gold} /> Your Duo
+              </span>
+              <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.gold }}>
+                {breakdown.yourTotal} pts
+              </span>
+            </div>
+            {breakdown.yourRows.map((row, i) => (
+              <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0 4px 12px', fontSize:12, color:T.muted, fontFamily:"'Inter',sans-serif" }}>
+                <span>{row.name}</span>
+                <span>{row.score} pts</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ height:'1px', background:'rgba(255,255,255,.07)', margin:'10px 0' }} />
+
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+            <span style={{ fontSize:13, fontWeight:600, color:T.red, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
+              <SwordsIcon size={13} color={T.red} /> Rivals
+            </span>
+            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.red }}>
+              {breakdown.rivalTotal} pts
+            </span>
+          </div>
+          <p style={{ fontSize:11, color:T.muted2, fontStyle:'italic', paddingLeft:12, fontFamily:"'Inter',sans-serif" }}>
+            {breakdown.rivalNote}
+          </p>
         </div>
-        <p style={{ fontSize:11, color:T.muted2, fontStyle:'italic', paddingLeft:12, fontFamily:"'Inter',sans-serif" }}>
-          {breakdown.rivalNote}
-        </p>
-      </div>
+      )}
 
       
       {isFinished ? (

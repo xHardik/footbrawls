@@ -323,16 +323,16 @@ function Rail({ step }) {
 // ─── Step hero ────────────────────────────────────────────────────────────────
 function Hero({ icon, rgb, title, sub }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 20 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, marginBottom: 36 }}>
       <div style={{
-        width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+        width: 64, height: 64, borderRadius: 18, flexShrink: 0,
         background: `rgba(${rgb},.08)`, border: `1.5px solid rgba(${rgb},.28)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: `0 0 20px rgba(${rgb},.1)`,
       }}>{icon}</div>
       <div>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2rem', letterSpacing: 2, lineHeight: 1, color: C.text, marginBottom: 5 }}>{title}</div>
-        <div style={{ fontSize: '.78rem', color: C.muted, lineHeight: 1.65 }} dangerouslySetInnerHTML={{ __html: sub }}/>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2.5rem', letterSpacing: 2, lineHeight: 1, color: C.text, marginBottom: 5 }}>{title}</div>
+        <div style={{ fontSize: '0.95rem', color: C.muted, lineHeight: 1.65 }} dangerouslySetInnerHTML={{ __html: sub }}/>
       </div>
     </div>
   );
@@ -341,9 +341,9 @@ function Hero({ icon, rgb, title, sub }) {
 // ─── Bullet row ───────────────────────────────────────────────────────────────
 function Bullet({ icon, ibg, iborder, text }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'rgba(255,255,255,.025)', border: `1px solid ${C.border}`, borderRadius: 10 }}>
-      <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: ibg, border: `1px solid ${iborder}` }}>{icon}</div>
-      <span style={{ fontSize: '.8rem', color: C.muted, lineHeight: 1.45 }} dangerouslySetInnerHTML={{ __html: text }}/>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: 'rgba(255,255,255,.025)', border: `1px solid ${C.border}`, borderRadius: 10 }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: ibg, border: `1px solid ${iborder}` }}>{icon}</div>
+      <span style={{ fontSize: '0.9rem', color: C.muted, lineHeight: 1.45 }} dangerouslySetInnerHTML={{ __html: text }}/>
     </div>
   );
 }
@@ -351,8 +351,8 @@ function Bullet({ icon, ibg, iborder, text }) {
 // ─── Stat card ────────────────────────────────────────────────────────────────
 function Stat({ num, label, color, bg, border }) {
   return (
-    <div style={{ padding: '12px 14px', background: bg, border: `1px solid ${border}`, borderRadius: 12 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.7rem', letterSpacing: 2, color, lineHeight: 1 }}>{num}</div>
+    <div style={{ padding: '16px 20px', background: bg, border: `1px solid ${border}`, borderRadius: 12 }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '2.2rem', letterSpacing: 2, color, lineHeight: 1 }}>{num}</div>
       <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.44rem', fontWeight: 700, letterSpacing: .8, textTransform: 'uppercase', color: C.muted2, marginTop: 5, lineHeight: 1.5 }}>{label}</div>
     </div>
   );
@@ -362,14 +362,14 @@ function Stat({ num, label, color, bg, border }) {
 function TxtInput({ value, onChange, onKeyDown, placeholder, maxLength, autoFocus }) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ position: 'relative', marginBottom: 12 }}>
+    <div style={{ position: 'relative', marginBottom: 20 }}>
       <input
         value={value} onChange={onChange} onKeyDown={onKeyDown}
         placeholder={placeholder} maxLength={maxLength} autoFocus={autoFocus}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', boxSizing: 'border-box',
-          padding: '14px 52px 14px 16px',
+          padding: '18px 52px 18px 20px',
           background: focused ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.05)',
           border: `1.5px solid ${focused ? 'rgba(247,195,68,.5)' : 'rgba(255,255,255,.1)'}`,
           boxShadow: focused ? '0 0 0 3px rgba(247,195,68,.07)' : 'none',
@@ -392,7 +392,7 @@ function SrchInput({ value, onChange, placeholder, autoFocus }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ position: 'relative', marginBottom: 8 }}>
-      <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: .35, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', opacity: .35, pointerEvents: 'none' }}>
         <Ic.Search s={14} c={C.text}/>
       </div>
       <input
@@ -400,11 +400,11 @@ function SrchInput({ value, onChange, placeholder, autoFocus }) {
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', boxSizing: 'border-box',
-          padding: '11px 14px 11px 36px',
+          padding: '14px 18px 14px 44px',
           background: focused ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.05)',
           border: `1.5px solid ${focused ? 'rgba(247,195,68,.38)' : 'rgba(255,255,255,.08)'}`,
           borderRadius: 11, color: C.text,
-          fontFamily: "'Syne',sans-serif", fontSize: '.88rem',
+          fontFamily: "'Syne',sans-serif", fontSize: '1rem',
           outline: 'none', transition: 'all .2s',
         }}
       />
@@ -420,15 +420,15 @@ function Item({ country, selected, onClick }) {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', gap: 11,
-        padding: '10px 13px',
+        padding: '14px 18px',
         background: selected ? 'rgba(247,195,68,.08)' : 'rgba(255,255,255,.025)',
         border: `1px solid ${selected ? 'rgba(247,195,68,.42)' : C.border2}`,
         borderRadius: 10, cursor: 'pointer', color: C.text,
-        fontFamily: "'Syne',sans-serif", fontSize: '.87rem', fontWeight: 600,
+        fontFamily: "'Syne',sans-serif", fontSize: '1rem', fontWeight: 600,
         textAlign: 'left', width: '100%', transition: 'all .15s',
       }}
     >
-      <span style={{ fontSize: '1.2rem', lineHeight: 1, flexShrink: 0 }}>{country.flag}</span>
+      <span style={{ fontSize: '1.5rem', lineHeight: 1, flexShrink: 0 }}>{country.flag}</span>
       <span style={{ flex: 1 }}>{country.name}</span>
       {selected ? <Ic.Check s={14} c={C.accent}/> : <Ic.ChevR s={13} c={C.muted2}/>}
     </button>
@@ -443,11 +443,11 @@ function CTA({ children, onClick, disabled, loading }) {
       disabled={disabled || loading}
       onClick={onClick}
       style={{
-        width: '100%', padding: '15px', border: 'none', borderRadius: 13,
-        fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.1rem', letterSpacing: 3,
+        width: '100%', padding: '20px', border: 'none', borderRadius: 13,
+        fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.25rem', letterSpacing: 3,
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        transition: 'all .2s', marginTop: 4,
+        transition: 'all .2s', marginTop: 20,
         background: disabled ? 'rgba(255,255,255,.07)' : C.accent,
         color: disabled ? C.muted2 : C.bg,
         boxShadow: disabled ? 'none' : '0 0 28px rgba(247,195,68,.2)',
@@ -521,7 +521,7 @@ export default function Onboarding() {
       <GoalkeeperSilhouette/>
 
       {/* ── nav ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 200, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56, background: 'rgba(6,8,16,.85)', backdropFilter: 'blur(28px)', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px', boxSizing: 'border-box' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 200, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 70, background: 'rgba(6,8,16,.85)', backdropFilter: 'blur(28px)', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px', boxSizing: 'border-box' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,transparent,rgba(247,195,68,.75) 30%,rgba(255,220,100,.9) 50%,rgba(247,195,68,.75) 70%,transparent)' }}/>
         <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.5rem', letterSpacing: 4, background: 'linear-gradient(110deg,#ffe680,#F7C344 40%,#ffaa00 65%,#F7C344)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>FOOTBRAWLS</span>
         <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.5rem', fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: C.muted2 }}>Step {step} / 3</span>
@@ -534,7 +534,7 @@ export default function Onboarding() {
       <div
         key={'step-' + step}
         className="ob-step-content"
-        style={{ width: '100%', maxWidth: 500, marginTop: 28, position: 'relative', zIndex: 5, padding: '0 20px', boxSizing: 'border-box' }}
+        style={{ width: '100%', maxWidth: 550, marginTop: 40, position: 'relative', zIndex: 5, padding: '0 20px', boxSizing: 'border-box' }}
       >
 
         {/* ════ STEP 1 ════ */}
@@ -547,7 +547,7 @@ export default function Onboarding() {
               sub={`How the world will know you in every fortress, every raid, every leaderboard. <strong style="color:#F7C344">Choose wisely.</strong>`}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 18 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
               <Bullet
                 icon={<Ic.Star  s={14} c={C.accent}/>}
                 ibg="rgba(247,195,68,.08)" iborder="rgba(247,195,68,.22)"
@@ -575,7 +575,7 @@ export default function Onboarding() {
             />
 
             {nick.trim().length >= 2 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', background: 'rgba(247,195,68,.05)', border: '1px solid rgba(247,195,68,.18)', borderRadius: 10, marginBottom: 12, animation: 'ob-pop .35s ease' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', background: 'rgba(247,195,68,.05)', border: '1px solid rgba(247,195,68,.18)', borderRadius: 10, marginBottom: 20, animation: 'ob-pop .35s ease' }}>
                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,195,68,.55)' }}>Preview</span>
                 <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.15rem', letterSpacing: 2, color: C.accent }}>{nick.trim().toUpperCase()}</span>
               </div>
@@ -613,7 +613,7 @@ export default function Onboarding() {
               {filtC.slice(0, 200).map(c => (
                 <Item key={c.code} country={c} selected={false} onClick={() => pickCountry(c)}/>
               ))}
-              {filtC.length === 0 && <p style={{ color: C.muted, fontSize: '.8rem', textAlign: 'center', padding: 20 }}>No countries found</p>}
+              {filtC.length === 0 && <p style={{ color: C.muted, fontSize: '0.9rem', textAlign: 'center', padding: 20 }}>No countries found</p>}
             </div>
           </div>
         )}
@@ -632,7 +632,7 @@ export default function Onboarding() {
             {home && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 13px', background: 'rgba(247,195,68,.05)', border: '1px solid rgba(247,195,68,.14)', borderRadius: 10, marginBottom: 10 }}>
                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(247,195,68,.5)' }}>Home</span>
-                <span style={{ fontSize: '1.1rem' }}>{home.flag}</span>
+                <span style={{ fontSize: '1.25rem' }}>{home.flag}</span>
                 <span style={{ fontSize: '.85rem', fontWeight: 600, color: C.text }}>{home.name}</span>
               </div>
             )}
@@ -642,7 +642,7 @@ export default function Onboarding() {
               {[
                 { n: '9',   l: 'Daily\nGames',    c: C.accent },
                 { n: '250', l: 'Max XP\nper Day',  c: C.green  },
-                { n: '32',  l: 'WC 2026\nNations', c: C.blue   },
+                { n: '48',  l: 'WC 2026\nNations', c: C.blue   },
               ].map(s => (
                 <div key={s.l} style={{ padding: 10, background: 'rgba(255,255,255,.03)', border: `1px solid ${C.border}`, borderRadius: 10, textAlign: 'center' }}>
                   <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: '1.45rem', letterSpacing: 1, color: s.c, lineHeight: 1 }}>{s.n}</div>
@@ -653,11 +653,11 @@ export default function Onboarding() {
 
             <SrchInput value={tSrch} onChange={e => setTSrch(e.target.value)} placeholder="Search WC 2026 nation…" autoFocus/>
 
-            <div className="ob-list" style={{ maxHeight: 244, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 12 }}>
+            <div className="ob-list" style={{ maxHeight: 244, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 20 }}>
               {filtT.map(c => (
                 <Item key={c.code} country={c} selected={team?.code === c.code} onClick={() => { setTeam(c); setErr(''); }}/>
               ))}
-              {filtT.length === 0 && <p style={{ color: C.muted, fontSize: '.8rem', textAlign: 'center', padding: 20 }}>No teams found</p>}
+              {filtT.length === 0 && <p style={{ color: C.muted, fontSize: '0.9rem', textAlign: 'center', padding: 20 }}>No teams found</p>}
             </div>
 
             <Err msg={err}/>
@@ -668,7 +668,7 @@ export default function Onboarding() {
             <button
               className="ob-back"
               onClick={() => { setStep(2); setTSrch(''); setTeam(null); }}
-              style={{ background: 'none', border: 'none', color: C.muted2, fontSize: '.78rem', fontFamily: "'Syne',sans-serif", cursor: 'pointer', padding: '10px 0', marginTop: 4, display: 'flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}
+              style={{ background: 'none', border: 'none', color: C.muted2, fontSize: '0.95rem', fontFamily: "'Syne',sans-serif", cursor: 'pointer', padding: '10px 0', marginTop: 20, display: 'flex', alignItems: 'center', gap: 6, transition: 'color .2s' }}
             >
               <Ic.ArrL s={14} c="currentColor"/>Back
             </button>

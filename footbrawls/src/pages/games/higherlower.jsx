@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto } from "../../lib/wikiAssets.jsx";
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
+import RewardedAd from '../../components/RewardedAd';
 
 const GAME_ID = "higherLower";
 const MAX_XP   = 25;
@@ -103,29 +104,7 @@ function loadHistoryAndStats() {
 
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to save your streak?`);
-        if (confirmReward) {
-          if (options.adViewed) options.adViewed();
-        } else {
-          if (options.adDismissed) options.adDismissed();
-        }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
-    }, 1000);
-  }
-};
+
 
 
 
@@ -283,31 +262,29 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
   
   const [hasWatchedReviveAd, setHasWatchedReviveAd] = useState(false);
   const [isAdLoading, setIsAdLoading]               = useState(false);
+  const [isAdOpen, setIsAdOpen] = useState(false);
   const [isRaid, setIsRaid] = useState(false);
   const [isVsFriends, setIsVsFriends] = useState(false);
 
   function triggerRewardedAdToSaveStreak() {
-    setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: "higher-lower-save-streak",
-      beforeAd: () => setIsAdLoading(true),
-      afterAd:  () => setIsAdLoading(false),
-      adDismissed: () => {
-        showMsg("Ad dismissed. Streak not saved.", "error");
-      },
-      adViewed: () => {
-        const nextRound = round + 1;
-        setRound(nextRound);
-        setRevealed(false);
-        setAnimState(null);
-        setGameOver(false);
-        setHasWatchedReviveAd(true);
-        persist({ round: nextRound, streak, gameOver: false, xpAwarded, hasWatchedReviveAd: true });
-        showMsg("Streak saved! Keep going!", "success");
-      },
-      adBreakDone: () => setIsAdLoading(false),
-    });
+    setIsAdOpen(true);
+  }
+
+  function handleAdComplete() {
+    setIsAdOpen(false);
+    const nextRound = round + 1;
+    setRound(nextRound);
+    setRevealed(false);
+    setAnimState(null);
+    setGameOver(false);
+    setHasWatchedReviveAd(true);
+    persist({ round: nextRound, streak, gameOver: false, xpAwarded, hasWatchedReviveAd: true });
+    showMsg("Streak saved! Keep going!", "success");
+  }
+
+  function handleAdError() {
+    setIsAdOpen(false);
+    showMsg("Ad failed to load. Streak not saved.", "error");
   }
 
   
@@ -347,9 +324,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
       s.textContent = CSS;
       document.head.appendChild(s);
     }
-    if (window.adConfig) {
-      window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
-    }
+
   }, []);
 
   const attr    = getAttrForRound(round);
@@ -738,6 +713,7 @@ export default function HigherLower({ players = PLAYERS, userId, onComplete }) {
         </div>
 
       </main>
+      <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={() => setIsAdOpen(false)} />
     </div>
   );
 }

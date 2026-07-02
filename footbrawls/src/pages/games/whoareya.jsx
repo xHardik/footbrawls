@@ -574,36 +574,9 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 `;
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to unlock hint: ${options.name}?`);
-        if (confirmReward) {
-          if (options.adViewed) options.adViewed();
-        } else {
-          if (options.adDismissed) options.adDismissed();
-        }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
-    }, 1000);
-  }
-};
 
-if (typeof window !== "undefined") {
-  window.adConfig = window.adConfig || function() {
-    (window.adConfig.q = window.adConfig.q || []).push(arguments);
-  };
-  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
-}
+
+
 
 
 function roleBadgeClass(position) {
@@ -721,6 +694,7 @@ export default function WhoAreYa() {
   
   const [unlockedHints, setUnlockedHints] = useState({ position: false, country: false, club: false });
   const [isAdLoading, setIsAdLoading] = useState(false);
+  const [isAdOpen, setIsAdOpen] = useState(false);
   const [loadingKey, setLoadingKey] = useState(null);
   const [msg, setMsg] = useState(null);
 

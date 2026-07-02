@@ -266,25 +266,7 @@ function getPlayers(name) {
 }
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const ok = window.confirm(`[TEST AD] Watch ad to unlock Community Predictions?`);
-        if (ok) { if (options.adViewed) options.adViewed(); }
-        else    { if (options.adDismissed) options.adDismissed(); }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: 'mocked' });
-    }, 800);
-  }
-};
+
 
 function formatKickoff(fixture) {
   const ms = fixture.kickoffAt?.toMillis?.() ?? 0;
@@ -444,21 +426,19 @@ export default function MatchPredictor() {
   }
 
   function triggerRewardedAdForInsights() {
-    if (!selected) return;
-    setIsAdLoading(true);
-    adBreak({
-      type: 'reward',
-      name: 'match-predictor-insights',
-      beforeAd: () => setIsAdLoading(true),
-      afterAd:  () => setIsAdLoading(false),
-      adDismissed: () => setIsAdLoading(false),
-      adViewed: () => {
-        setUnlockedInsights(true);
-        localStorage.setItem(`mp_insights_${selected.id}`, 'true');
-      },
-      adBreakDone: () => setIsAdLoading(false),
-    });
+    setIsAdOpen(true);
   }
+  const handleAdComplete = () => {
+    setIsAdOpen(false);
+    setHasWatchedInsightAd(true);
+    setInsightsUnlocked(true);
+    persist({ hasWatchedInsightAd: true, insightsUnlocked: true });
+    showMsg("Expert Insights Unlocked!", "success");
+  };
+  const handleAdError = () => {
+    setIsAdOpen(false);
+    showMsg("No ad available right now, try again shortly.", "error");
+  };
 
   async function submitPrediction() {
     if (!selected || !user || !pickedWinner || !pickedScorer) return;

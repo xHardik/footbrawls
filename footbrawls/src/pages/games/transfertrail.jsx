@@ -10,31 +10,10 @@ import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
 import { ClubLogo } from "../../lib/wikiAssets.jsx";
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
+import RewardedAd from '../../components/RewardedAd';
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to unlock hint: ${options.name}?`);
-        if (confirmReward) {
-          if (options.adViewed) options.adViewed();
-        } else {
-          if (options.adDismissed) options.adDismissed();
-        }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
-    }, 1000);
-  }
-};
+
 
 
 const PLAYERS_PER_GAME = 3;
@@ -623,6 +602,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const [revealed, setRevealed]         = useState({});
   const [unlockedHints, setUnlockedHints] = useState({});
   const [isAdLoading, setIsAdLoading]   = useState(false);
+  const [isAdOpen, setIsAdOpen]         = useState(false);
   const [isRaid, setIsRaid] = useState(false);
   const [isVsFriends, setIsVsFriends] = useState(false);
 
@@ -699,37 +679,28 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   const currentPlayer = puzzlePlayers[currentIdx];
 
   function triggerRewardedAdForHint() {
-    setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: `transfer-trail-hint-p${currentIdx}`,
-      beforeAd: () => {
-        setIsAdLoading(true);
-      },
-      afterAd: () => {
-        setIsAdLoading(false);
-      },
-      adDismissed: () => {
-        console.log("Ad dismissed. Hint not unlocked.");
-      },
-      adViewed: () => {
-        const updated = { ...unlockedHints, [currentIdx]: true };
-        setUnlockedHints(updated);
-        persist({
-          currentIdx,
-          xpEarned,
-          streak,
-          correctCount,
-          gameOver,
-          revealed,
-          xpAwarded,
-          unlockedHints: updated,
-        });
-      },
-      adBreakDone: () => {
-        setIsAdLoading(false);
-      }
+    setIsAdOpen(true);
+  }
+
+  function handleAdComplete() {
+    setIsAdOpen(false);
+    const updated = { ...unlockedHints, [currentIdx]: true };
+    setUnlockedHints(updated);
+    persist({
+      currentIdx,
+      xpEarned,
+      streak,
+      correctCount,
+      gameOver,
+      revealed,
+      xpAwarded,
+      unlockedHints: updated,
     });
+  }
+
+  function handleAdError() {
+    setIsAdOpen(false);
+    console.log("Ad error. Hint not unlocked.");
   }
 
   async function endGame(finalXpVal) {
@@ -771,7 +742,6 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
     } else {
-      
       const isWin = correctCount >= 2;
       if (isWin) {
         triggerWinConfetti();
@@ -782,14 +752,14 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
     }
     setXpAwarded(xp);
     setGameOver(true);
-    persist({ 
-      currentIdx: currentIdx + 1, 
-      xpEarned: finalXpVal, 
-      streak: 0, 
-      correctCount, 
-      gameOver: true, 
-      revealed, 
-      xpAwarded: xp 
+    persist({
+      currentIdx: currentIdx + 1,
+      xpEarned: finalXpVal,
+      streak: 0,
+      correctCount,
+      gameOver: true,
+      revealed,
+      xpAwarded: xp
     });
     if (onComplete) onComplete({ gameId: "transferTrail", solved: finalXpVal > 0, xpAwarded: xp });
   }
@@ -908,6 +878,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
     <div style={{position:"relative",minHeight:"100vh",background:T.bg,fontFamily:"'DM Sans',sans-serif",color:T.text,overflowX:"hidden"}}>
       <BgLayers/>
       <RulesModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
+      <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={() => setIsAdOpen(false)} />
 
       
       <nav className="tt-nav" style={{

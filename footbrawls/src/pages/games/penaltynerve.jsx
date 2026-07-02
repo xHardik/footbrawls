@@ -7,6 +7,7 @@ import { getUser } from '../../lib/user';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
+import RewardedAd from '../../components/RewardedAd';
 
 const HISTORY_KEY = 'footbrawls_penaltynerve_history';
 const STATS_KEY   = 'footbrawls_penaltynerve_stats';
@@ -739,33 +740,9 @@ function saveResult(today, goals, xp) {
   return { stats, history };
 }
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
-        if (confirmReward) { if (options.adViewed) options.adViewed(); }
-        else               { if (options.adDismissed) options.adDismissed(); }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
-    }, 1000);
-  }
-};
 
-if (typeof window !== "undefined") {
-  window.adConfig = window.adConfig || function() {
-    (window.adConfig.q = window.adConfig.q || []).push(arguments);
-  };
-  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
-}
+
+
 
 function HowToPlayModal({ show, onClose, isRaid, isVsFriends }) {
   if (!show) return null;
@@ -829,6 +806,7 @@ function StreakDots({ history, today }) {
         <span><span className="pn-dot-sample pn-ds-miss" />Missed</span>
         <span><span className="pn-dot-sample pn-ds-today" />Today</span>
       </div>
+
     </div>
   );
 }
@@ -859,6 +837,7 @@ export default function PenaltyNerve({ onBack }) {
 
   const [hasWatchedAd, setHasWatchedAd] = useState(false);
   const [isAdLoading, setIsAdLoading]   = useState(false);
+  const [isAdOpen, setIsAdOpen]         = useState(false);
 
   const seed  = getDailySeed();
   const today = getToday();
@@ -869,31 +848,30 @@ export default function PenaltyNerve({ onBack }) {
   }
 
   function triggerRewardedAdToRetakeKick() {
-    setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: "penalty-nerve-retake",
-      beforeAd: () => setIsAdLoading(true),
-      afterAd:  () => setIsAdLoading(false),
-      adDismissed: () => showMsg("Ad dismissed. Kick not retaken.", "error"),
-      adViewed: () => {
-        const newKicks = [...kicks];
-        if (newKicks.length > 0 && newKicks[newKicks.length - 1].saved) newKicks.pop();
-        setKicks(newKicks);
-        setPhase('aiming');
-        setLastResult(null);
-        setHasWatchedAd(true);
-        setGkKey(k => k + 1);
-        showMsg("Retake granted! Pick your corner.", "success");
-        const newGoals = newKicks.filter(k => !k.saved).length;
-        scoreRef.current = newGoals * XP_PER_GOAL;
-        setScoreDisplay(scoreRef.current);
-        const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
-        delete hist[today];
-        localStorage.setItem('footbrawls_penaltynerve', JSON.stringify(hist));
-      },
-      adBreakDone: () => setIsAdLoading(false)
-    });
+    setIsAdOpen(true);
+  }
+
+  function handleAdComplete() {
+    setIsAdOpen(false);
+    const newKicks = [...kicks];
+    if (newKicks.length > 0 && newKicks[newKicks.length - 1].saved) newKicks.pop();
+    setKicks(newKicks);
+    setPhase('aiming');
+    setLastResult(null);
+    setHasWatchedAd(true);
+    setGkKey(k => k + 1);
+    showMsg("Retake granted! Pick your corner.", "success");
+    const newGoals = newKicks.filter(k => !k.saved).length;
+    scoreRef.current = newGoals * XP_PER_GOAL;
+    setScoreDisplay(scoreRef.current);
+    const hist = JSON.parse(localStorage.getItem('footbrawls_penaltynerve') || '{}');
+    delete hist[today];
+    localStorage.setItem('footbrawls_penaltynerve', JSON.stringify(hist));
+  }
+
+  function handleAdError() {
+    setIsAdOpen(false);
+    showMsg("Ad failed to load. Please try again.", "error");
   }
 
   useEffect(() => {
@@ -1444,6 +1422,13 @@ export default function PenaltyNerve({ onBack }) {
         </div>
 
       </div>
+
+      <RewardedAd
+        isOpen={isAdOpen}
+        onComplete={handleAdComplete}
+        onError={handleAdError}
+        onClose={() => setIsAdOpen(false)}
+      />
     </div>
   );
 }

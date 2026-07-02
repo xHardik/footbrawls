@@ -10,6 +10,7 @@ import { getUser } from '../../lib/user';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase.js';
 import { TRIVIA_QUESTIONS } from '../../lib/questions.js';
+import RewardedAd from '../../components/RewardedAd';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
 
 
@@ -59,27 +60,9 @@ const CATEGORY_META = {
 };
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log('[AdSense H5 Mock] adBreak:', options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.adViewed)    options.adViewed();
-      if (options.afterAd)     options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: 'mocked' });
-    }, 600);
-  }
-};
 
-if (typeof window !== 'undefined') {
-  window.adConfig = window.adConfig || function () {
-    (window.adConfig.q = window.adConfig.q || []).push(arguments);
-  };
-  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
-}
+
+
 
 
 function seededRand(seed) {
@@ -505,6 +488,8 @@ export default function DailyTrivia() {
   const [showModal, setShowModal]   = useState(false);
   const [countdown, setCountdown]   = useState('');
   const [msg, setMsg]               = useState(null);
+  const [isAdOpen, setIsAdOpen] = useState(false);
+  const [pendingAdAction, setPendingAdAction] = useState(null);
 
   const timerRef  = useRef(null);
   const countRef  = useRef(null);
@@ -653,12 +638,22 @@ export default function DailyTrivia() {
 
     
     if ((current + 1) % 5 === 0 && current + 1 < QUESTIONS_PER_DAY) {
-      adBreak({ type: 'next', name: `daily-trivia-q${current + 1}`, adBreakDone: () => {} });
+      setPendingAdAction('next'); setIsAdOpen(true);
     }
 
     setTimeout(() => advance(current + 1, newAnswers, newScore), 1500);
   }
 
+  
+  const handleAdComplete = () => {
+    setIsAdOpen(false);
+    if (pendingAdAction === 'next') setPendingAdAction(null);
+  };
+  const handleAdError = () => {
+    setIsAdOpen(false);
+    setPendingAdAction(null);
+  };
+  
   async function advance(nextIdx, allAnswers, finalScore) {
     if (nextIdx >= questions.length) {
       stopTimer();
@@ -764,6 +759,13 @@ export default function DailyTrivia() {
 
   return (
     <>
+      
+      <RewardedAd 
+        isOpen={isAdOpen} 
+        onComplete={handleAdComplete}
+        onError={handleAdError}
+        onClose={() => setIsAdOpen(false)}
+      />
       <div className="dt-page">
         <div className="dt-bg" />
         <div className="dt-noise" />

@@ -683,44 +683,10 @@ function StreakDots({ history, today, puzzleDate, gameOver, won, xpAwarded, atte
 }
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    
-    console.log("[AdSense H5 Mock] Triggering ad placement:", options.name);
-    if (options.beforeAd) options.beforeAd();
-    
-    
-    setTimeout(() => {
-      if (options.type === 'reward') {
-        const confirmReward = window.confirm(`[TEST AD] Watch this rewarded ad to get your reward?`);
-        if (confirmReward) {
-          if (options.adViewed) options.adViewed();
-        } else {
-          if (options.adDismissed) options.adDismissed();
-        }
-      } else {
-        if (options.adViewed) options.adViewed();
-      }
-      if (options.afterAd) options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: "mocked" });
-    }, 1000);
-  }
-};
 
 
-if (typeof window !== "undefined") {
-  window.adConfig = window.adConfig || function() {
-    (window.adConfig.q = window.adConfig.q || []).push(arguments);
-  };
-  window.adConfig({
-    preloadAdBreaks: 'on',
-    sound: 'on',
-    videoAdOnly: true
-  });
-}
+
+
 
 
 export default function Wordle({ players = PLAYERS, onBack }) {
@@ -767,6 +733,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [rewardHints, setRewardHints] = useState([]);
   const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
+  const [isAdOpen, setIsAdOpen] = useState(false);
   const [hintsWatchedCount, setHintsWatchedCount] = useState(() => {
     const key = `wordle_hints_watched_${puzzleDate}`;
     return parseInt(localStorage.getItem(key) || '0', 10);

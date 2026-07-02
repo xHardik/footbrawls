@@ -541,14 +541,10 @@ function ParticleEffect({ type }) {
           ctx.fillStyle = p.color;
           ctx.fillRect(-p.size/2, -p.size, p.size, p.size*2);
         } else {
-          
-          ctx.fillStyle = `rgba(255,77,106,0.7)`;
-          ctx.beginPath();
-          ctx.arc(-p.size/4, -p.size/4, p.size/3, Math.PI, 0);
-          ctx.arc(p.size/4, -p.size/4, p.size/3, Math.PI, 0);
-          ctx.lineTo(0, p.size/2);
-          ctx.closePath();
-          ctx.fill();
+          ctx.font = `${Math.floor(p.size * 2)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('💔', 0, 0);
         }
         ctx.restore();
       }
@@ -681,15 +677,15 @@ export default function Raid() {
         ((uScores.act3?.goals || 0) * 20);
 
       let buddyScore = 0;
-      if (currentMatch?.buddy?.userId) {
+      if (currentMatch?.buddy?.userId && currentMatch.buddy.userId !== user.userId) {
         if (currentMatch.isBotMatch) {
           
-          buddyScore = (currentActs.act1?.buddyScore || 0) +
+          buddyScore = ((currentActs.act1?.buddyScore || 0) * 100) +
             ((currentActs.act2?.buddyRoundWins || 0) * 20) +
             ((currentActs.act3?.buddyGoals || 0) * 20);
         } else {
           const bScores = scores?.[currentMatch.buddy.userId] || {};
-          buddyScore = (bScores.act1?.normalized || 0) +
+          buddyScore = ((bScores.act1?.normalized || 0) * 100) +
             ((bScores.act2?.wins || 0) * 20) +
             ((bScores.act3?.goals || 0) * 20);
         }
@@ -969,12 +965,17 @@ export default function Raid() {
     const a3t = (acts.act3?.rivalBotGoals||0)*20;
     const a3r1 = Math.round(a3t/2), a3r2 = a3t-a3r1;
     const list = [
-      { nickname:user.nickname, flag:user.flag||'', act1:acts.act1?.playerScore||0, act2:(acts.act2?.playerRoundWins||0)*20, act3:(acts.act3?.playerGoals||0)*20, isUser:true },
-      { nickname:match.buddy?.nickname||'Buddy', flag:match.buddy?.flag||'', act1:acts.act1?.buddyScore||0, act2:(acts.act2?.buddyRoundWins||0)*20, act3:(acts.act3?.buddyGoals||0)*20 },
-      { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1, act2:a2r1, act3:a3r1 },
-      { nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2, act2:a2r2, act3:a3r2 },
-    ].map(p => ({ ...p, total:+(p.act1+p.act2+p.act3).toFixed(1) }));
-    return list.sort((a,b)=>b.total-a.total);
+      { nickname:user.nickname, flag:user.flag||'', act1:(acts.act1?.playerScore||0)*100, act2:(acts.act2?.playerRoundWins||0)*20, act3:(acts.act3?.playerGoals||0)*20, isUser:true, team:'you' },
+    ];
+    if (match.buddy?.userId !== user.userId) {
+      list.push({ nickname:match.buddy?.nickname||'Buddy', flag:match.buddy?.flag||'', act1:(acts.act1?.buddyScore||0)*100, act2:(acts.act2?.buddyRoundWins||0)*20, act3:(acts.act3?.buddyGoals||0)*20, isUser:false, team:'you' });
+    }
+    list.push(
+      { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1*100, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
+      { nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2*100, act2:a2r2, act3:a3r2, isUser:false, team:'rival' }
+    );
+    const finalList = list.map(p => ({ ...p, total:Math.round(p.act1+p.act2+p.act3) }));
+    return finalList.sort((a,b)=>b.total-a.total);
   }, [user, match, acts, raidSeed]);
 
   const xpPreview   = getRaidXpPreview(raidType, outcome);
@@ -1417,14 +1418,14 @@ export default function Raid() {
               <div style={{ textAlign:'center' }}>
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.gold, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Your Team</div>
                 <div style={{ fontSize:22, fontWeight:800, color:T.gold, fontFamily:"'Orbitron',sans-serif" }}>
-                  {(acts.act1?.yourTotal || 0) + (acts.act2?.yourTotal || 0) + (acts.act3?.yourTotal || 0)}
+                  {standings.filter(p => p.team === 'you').reduce((sum, p) => sum + (p.total || 0), 0)}
                 </div>
               </div>
               <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:T.muted2, fontWeight:700 }}>VS</div>
               <div style={{ textAlign:'center' }}>
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.red, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Rivals</div>
                 <div style={{ fontSize:22, fontWeight:800, color:T.red, fontFamily:"'Orbitron',sans-serif" }}>
-                  {(acts.act1?.rivalTotal || 0) + (acts.act2?.rivalTotal || 0) + (acts.act3?.rivalTotal || 0)}
+                  {standings.filter(p => p.team === 'rival').reduce((sum, p) => sum + (p.total || 0), 0)}
                 </div>
               </div>
             </div>
@@ -1443,7 +1444,7 @@ export default function Raid() {
                 {standings.map((p, idx) => {
                   const rankColor = idx===0 ? T.gold : idx===1 ? T.muted : T.muted2;
                   return (
-                    <div key={p.nickname} className="raid-standing-row" style={{
+                    <div key={`${p.nickname}_${idx}`} className="raid-standing-row" style={{
                       background: p.isUser ? `${T.purple}12` : 'rgba(255,255,255,.02)',
                       border:`1px solid ${p.isUser ? T.purple+'40' : 'rgba(255,255,255,.06)'}`,
                       boxShadow: p.isUser ? `0 0 16px ${T.purpleGlow}` : 'none',
@@ -1459,7 +1460,7 @@ export default function Raid() {
                             {p.nickname} {p.isUser && <span style={{ color:T.purple, fontSize:11 }}>(You)</span>}
                           </div>
                           <div style={{ fontSize:10, color:T.muted2, fontFamily:"'Inter',sans-serif" }}>
-                            {p.act1} · {p.act2} · {p.act3} pts
+                            {Math.round(p.act1)} · {Math.round(p.act2)} · {Math.round(p.act3)} pts
                           </div>
                         </div>
                       </div>
@@ -1521,7 +1522,7 @@ export default function Raid() {
                     </div>
 
                     
-                    {!isTraining && match?.buddy && (
+                    {!isTraining && match?.buddy && match.buddy.userId !== user.userId && (
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
                         <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
                           🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})

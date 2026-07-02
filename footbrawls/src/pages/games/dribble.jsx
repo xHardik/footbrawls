@@ -513,6 +513,9 @@ export default function DribbleGauntlet() {
       if (activeId) {
         localStorage.setItem(`raid_completed_act2_${activeId}`, 'true');
       }
+      setTimeout(() => {
+        navigate('/raid');
+      }, 2000);
     }
     setXpAwarded(earnedXP);
     if (!(isRaid || isVsFriends)) {
@@ -642,7 +645,7 @@ export default function DribbleGauntlet() {
 
         
         <nav className="db-nav">
-          {!(isRaid || isVsFriends) && <button className="db-logo" onClick={() => navigate('/')}>←</button>}
+          {!(isRaid || isVsFriends) ? <button className="db-logo" onClick={() => navigate('/')}>←</button> : <div style={{width:32}}></div>}
           {isVsFriends ? (
           <div className="db-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
             <span className="db-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
@@ -724,23 +727,9 @@ export default function DribbleGauntlet() {
 
                 <div className="db-summary-actions">
                   {isRaid ? (
-                    <button 
-                      className="db-action-btn db-btn-go" 
-                      onClick={async () => {
-                        const activeId = localStorage.getItem('active_game_session_id');
-                        if (activeId) {
-                          const snap = await getDoc(doc(db, 'gameSessions', activeId));
-                          if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                            navigate('/vs-friends');
-                            return;
-                          }
-                        }
-                        navigate('/raid');
-                      }} 
-                      style={{ width: '100%' }}
-                    >
-                      ⚔️ Return to Lobby
-                    </button>
+                    <div style={{color:'var(--muted)', fontSize:'0.9rem', textAlign:'center', marginTop:16}}>
+                      {isVsFriends ? "Loading next act..." : "Returning to Raid..."}
+                    </div>
                   ) : (
                     <button className="db-action-btn db-btn-go" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
                   )}
@@ -1140,7 +1129,7 @@ const CSS = `
 .db-sum-xp-lbl { font-size: 0.6rem; color: rgba(240,240,240,0.5); text-transform: uppercase; margin-top: -2px; }
 
 @media (max-width: 600px) {
-  .db-container { padding: 0px 0px 80px; }
+  .db-container { padding: 0px 0px 120px; }
   .db-game-box { padding: 12px 0px; border-radius: 0px; border: none; }
   .db-canvas-wrapper { margin-bottom: 12px; border-radius: 0px; border-left: none; border-right: none; }
   .db-nav { padding: 0 16px; }

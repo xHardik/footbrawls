@@ -596,9 +596,12 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       const sessionSeed = isRaidSession ? localStorage.getItem('active_game_session_seed') : localStorage.getItem('active_vs_friends_session_seed');
       const seedVal = getRaidSeed(sessionId, sessionSeed);
       const salt = isVsFriendsSession ? 303 : 99;
+      const eligible = players.filter(p => p.transfers && p.transfers.length > 0);
       const arr = [];
-      for(let i=0; i<3; i++) {
-        arr.push(players[(seedVal + salt + i*7) % players.length]);
+      if (eligible.length > 0) {
+        for(let i=0; i<3; i++) {
+          arr.push(eligible[(seedVal + salt + i*7) % eligible.length]);
+        }
       }
       return arr;
     }

@@ -1047,7 +1047,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
       
       <nav className="wdl-nav">
-        {!(isRaid || isVsFriends) && <button className="wdl-logo" onClick={handleBack}>←</button>}
+        {!(isRaid || isVsFriends) ? <button className="wdl-logo" onClick={handleBack}>←</button> : <div style={{width: 32}}></div>}
         {isVsFriends ? (
           <div className="wdl-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
             <span className="wdl-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />

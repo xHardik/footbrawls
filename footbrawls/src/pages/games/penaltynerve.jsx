@@ -993,29 +993,32 @@ export default function PenaltyNerve({ onBack }) {
 
         if (sessionType === 'vs_friends') {
           document.body.insertAdjacentHTML('beforeend', `
-            <div id="vs-friends-loading" style="position:fixed;inset:0;background:rgba(5,7,15,0.95);backdrop-filter:blur(8px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;animation:fadeUp 0.3s ease;">
-              <div style="font-size:3rem;color:#3DD68C;margin-bottom:16px;text-shadow:0 0 20px rgba(61,214,140,0.4);">MATCH COMPLETE!</div>
-              <div style="font-size:1.5rem;color:rgba(255,255,255,0.6);">Loading next act...</div>
-            </div>
-          `);
-          setTimeout(() => {
-            const el = document.getElementById('vs-friends-loading');
-            if (el) el.remove();
-            const nextGame = sessionData?.gamesList?.[nextActVal - 1];
-            if (nextGame) {
-              navigate(nextGame.route);
-            } else {
-              navigate('/vs-friends');
-            }
-          }, 2500);
-        }
-        if (isRaid) {
-          const activeId = localStorage.getItem('active_game_session_id');
-          if (activeId) {
-            localStorage.setItem(`raid_completed_act3_${activeId}`, 'true');
-          }
+        <div id="vs-friends-loading" style="position:fixed;inset:0;background:rgba(5,7,15,0.95);backdrop-filter:blur(8px);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;animation:fadeUp 0.3s ease;">
+          <div style="font-size:3rem;color:#3DD68C;margin-bottom:16px;text-shadow:0 0 20px rgba(61,214,140,0.4);">MATCH COMPLETE!</div>
+          <div style="font-size:1.5rem;color:rgba(255,255,255,0.6);">Loading next act...</div>
+        </div>
+      `);
+      setTimeout(() => {
+        const el = document.getElementById('vs-friends-loading');
+        if (el) el.remove();
+        const nextGame = sessionData?.gamesList?.[nextActVal - 1];
+        if (nextGame) {
+          navigate(nextGame.route);
         } else {
-          const isWin = goals >= 3;
+          navigate('/vs-friends');
+        }
+      }, 2500);
+    }
+    if (isRaid) {
+      const activeId = localStorage.getItem('active_game_session_id');
+      if (activeId) {
+        localStorage.setItem(`raid_completed_act3_${activeId}`, 'true');
+      }
+      setTimeout(() => {
+        navigate('/raid');
+      }, 2000);
+    } else {
+      const isWin = goals >= 3;
           if (isWin) {
             triggerWinConfetti();
           } else {
@@ -1071,7 +1074,7 @@ export default function PenaltyNerve({ onBack }) {
 
       <nav className="pn-nav">
         <div style={{ justifySelf: 'start' }}>
-          {!(isRaid || isVsFriends) && <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'#E84040', fontSize:'1.6rem', fontWeight: 800, cursor:'pointer', padding: '0 8px 0 0' }}>←</button>}
+          {!(isRaid || isVsFriends) ? <button onClick={() => navigate('/')} style={{ background:'none', border:'none', color:'#E84040', fontSize:'1.6rem', fontWeight: 800, cursor:'pointer', padding: '0 8px 0 0' }}>←</button> : <div style={{width:32}}></div>}
         </div>
         {isVsFriends ? (
           <div className="pn-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
@@ -1318,9 +1321,7 @@ export default function PenaltyNerve({ onBack }) {
 
              {phase !== 'gameover' && (
                <div className="pn-controls">
-                 {isRaid ? (
-                   <button className="pn-btn pn-btn-raid" onClick={() => navigate('/raid')}>⚔️ Return to Raid</button>
-                 ) : (
+                 {!(isRaid || isVsFriends) && (
                    <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
                  )}
                </div>
@@ -1366,23 +1367,9 @@ export default function PenaltyNerve({ onBack }) {
 
                  <div className="pn-result-actions" style={{ justifyContent: 'center', width: '100%' }}>
                    {isRaid ? (
-                     <button
-                       className="pn-btn pn-btn-raid"
-                       onClick={async () => {
-                         const activeId = localStorage.getItem('active_game_session_id');
-                         if (activeId) {
-                           const snap = await getDoc(doc(db, 'gameSessions', activeId));
-                           if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                             navigate('/vs-friends');
-                             return;
-                           }
-                         }
-                         navigate('/raid');
-                       }}
-                       style={{ width: '100%', maxWidth: '280px' }}
-                     >
-                       Return to Lobby
-                     </button>
+                     <div style={{color:'var(--muted)', fontSize:'0.9rem', textAlign:'center', marginTop:16}}>
+                       {isVsFriends ? "Loading next act..." : "Returning to Raid..."}
+                     </div>
                    ) : (
                      <button 
                        className="pn-btn" 

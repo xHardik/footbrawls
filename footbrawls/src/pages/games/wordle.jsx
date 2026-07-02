@@ -684,6 +684,7 @@ function StreakDots({ history, today, puzzleDate, gameOver, won, xpAwarded, atte
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

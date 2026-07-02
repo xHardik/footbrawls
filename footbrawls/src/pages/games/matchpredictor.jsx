@@ -267,6 +267,7 @@ function getPlayers(name) {
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

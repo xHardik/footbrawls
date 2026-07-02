@@ -337,7 +337,8 @@ export default function DribbleGauntlet() {
   }, [history, today, repaint]);
 
   const adBreak = (options) => {
-    if (window.adBreak) {
+  
+  if (window.adBreak) {
       window.adBreak(options);
     } else {
       if (options.beforeAd) options.beforeAd();

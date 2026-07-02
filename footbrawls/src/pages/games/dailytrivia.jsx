@@ -60,6 +60,7 @@ const CATEGORY_META = {
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

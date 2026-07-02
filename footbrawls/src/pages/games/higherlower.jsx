@@ -104,6 +104,7 @@ function loadHistoryAndStats() {
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

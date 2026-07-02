@@ -575,6 +575,7 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

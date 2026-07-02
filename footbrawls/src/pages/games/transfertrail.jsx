@@ -13,6 +13,7 @@ import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "
 
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

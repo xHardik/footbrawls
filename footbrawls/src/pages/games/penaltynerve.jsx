@@ -740,6 +740,7 @@ function saveResult(today, goals, xp) {
 }
 
 const adBreak = (options) => {
+  
   if (window.adBreak) {
     window.adBreak(options);
   } else {

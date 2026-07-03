@@ -12,6 +12,7 @@ import { db } from '../../lib/firebase.js';
 import { PLAYERS } from '../../lib/players.js';
 import { PlayerPhoto, ClubLogo } from '../../lib/wikiAssets.jsx';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
+import RewardedAd from '../../components/RewardedAd';
 
 const MAX_ATTEMPTS = 8;
 const SCORES = [25, 23, 21, 19, 17, 15, 13, 11];
@@ -696,6 +697,7 @@ export default function WhoAreYa() {
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [isAdOpen, setIsAdOpen] = useState(false);
   const [loadingKey, setLoadingKey] = useState(null);
+  const [pendingHintKey, setPendingHintKey] = useState(null);
   const [msg, setMsg] = useState(null);
 
   const [stats, setStats]           = useState(loadStats);
@@ -773,34 +775,34 @@ export default function WhoAreYa() {
     if (gameOver) return;
     setIsAdLoading(true);
     setLoadingKey(hintKey);
-    adBreak({
-      type: "reward",
-      name: `who-are-ya-hint-${hintKey}`,
-      beforeAd: () => {
-        setIsAdLoading(true);
-      },
-      afterAd: () => {
-        setIsAdLoading(false);
-        setLoadingKey(null);
-      },
-      adDismissed: () => {
-        showMsg("Ad dismissed. Hint not unlocked.", "error");
-      },
-      adViewed: () => {
-        setUnlockedHints(prev => {
-          const updated = { ...prev, [hintKey]: true };
-          const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
-          saved.unlockedHints = updated;
-          localStorage.setItem('footbrawls_whoareya', JSON.stringify({ ...saved, date: puzzleDate }));
-          return updated;
-        });
-        showMsg("Hint unlocked successfully!", "success");
-      },
-      adBreakDone: () => {
-        setIsAdLoading(false);
-        setLoadingKey(null);
-      }
+    setPendingHintKey(hintKey);
+    setIsAdOpen(true);
+  }
+
+  function handleAdComplete() {
+    const hintKey = pendingHintKey;
+    setIsAdOpen(false);
+    setIsAdLoading(false);
+    setLoadingKey(null);
+    setPendingHintKey(null);
+    if (!hintKey) return;
+
+    setUnlockedHints(prev => {
+      const updated = { ...prev, [hintKey]: true };
+      const saved = JSON.parse(localStorage.getItem('footbrawls_whoareya') || '{}');
+      saved.unlockedHints = updated;
+      localStorage.setItem('footbrawls_whoareya', JSON.stringify({ ...saved, date: puzzleDate }));
+      return updated;
     });
+    showMsg("Hint unlocked successfully!", "success");
+  }
+
+  function handleAdError() {
+    setIsAdOpen(false);
+    setIsAdLoading(false);
+    setLoadingKey(null);
+    setPendingHintKey(null);
+    showMsg("Ad dismissed. Hint not unlocked.", "error");
   }
 
   async function submitGuess() {
@@ -949,6 +951,7 @@ export default function WhoAreYa() {
 
         
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
+        <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={handleAdError} />
 
         
         <nav className="wya-nav">

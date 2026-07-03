@@ -5,6 +5,7 @@ import { getUser } from '../../lib/user';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
+import RewardedAd from '../../components/RewardedAd';
 
 const ROUNDS = 5;
 const SEED = 42;
@@ -277,6 +278,7 @@ export default function DribbleGauntlet() {
   const [stats, setStats] = useState(loadStats);
   const [hasWatchedAd, setHasWatchedAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
+  const [isAdOpen, setIsAdOpen] = useState(false);
   const [userXP, setUserXP] = useState(0);
   const [floatingXP, setFloatingXP] = useState(null);
   const [isRaid, setIsRaid] = useState(false);
@@ -336,47 +338,29 @@ export default function DribbleGauntlet() {
     }
   }, [history, today, repaint]);
 
-  const adBreak = (options) => {
-  
-  if (window.adBreak) {
-      window.adBreak(options);
-    } else {
-      if (options.beforeAd) options.beforeAd();
-      setTimeout(() => {
-        if (options.type === 'reward') {
-          const ok = window.confirm(`[TEST AD] Watch ad to retake round?`);
-          if (ok) { if (options.adViewed) options.adViewed(); }
-          else    { if (options.adDismissed) options.adDismissed(); }
-        } else {
-          if (options.adViewed) options.adViewed();
-        }
-        if (options.afterAd) options.afterAd();
-        if (options.adBreakDone) options.adBreakDone({ showStatus: 'mocked' });
-      }, 800);
-    }
-  };
-
   const triggerRewardedAdToRetakeRound = () => {
     setIsAdLoading(true);
-    adBreak({
-      type: 'reward', name: 'dribble-gauntlet-retake',
-      beforeAd: () => setIsAdLoading(true),
-      afterAd:  () => setIsAdLoading(false),
-      adDismissed: () => setIsAdLoading(false),
-      adViewed: () => {
-        const s = stRef.current;
-        if (s.results.length > 0) s.results.pop();
-        Object.assign(s, {
-          phase: 'dribble', aiDefPick: null, playerPick: null,
-          zonePick: null, feedback: null, tackled: false, shotPhase: false,
-          playerX: 280, playerY: 255, ballX: 280, ballY: 265,
-          gkX: 280, gkY: 42, gkDiveX: 280, gkDiveY: 42, gkDiving: false,
-        });
-        setHasWatchedAd(true);
-        rerender();
-      },
-      adBreakDone: () => setIsAdLoading(false)
+    setIsAdOpen(true);
+  };
+
+  const handleAdComplete = () => {
+    setIsAdOpen(false);
+    setIsAdLoading(false);
+    const s = stRef.current;
+    if (s.results.length > 0) s.results.pop();
+    Object.assign(s, {
+      phase: 'dribble', aiDefPick: null, playerPick: null,
+      zonePick: null, feedback: null, tackled: false, shotPhase: false,
+      playerX: 280, playerY: 255, ballX: 280, ballY: 265,
+      gkX: 280, gkY: 42, gkDiveX: 280, gkDiveY: 42, gkDiving: false,
     });
+    setHasWatchedAd(true);
+    rerender();
+  };
+
+  const handleAdError = () => {
+    setIsAdOpen(false);
+    setIsAdLoading(false);
   };
 
   
@@ -616,6 +600,7 @@ export default function DribbleGauntlet() {
 
   return (
     <div className="db-wrapper">
+      <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={handleAdError} />
       <div className="db-page">
         <div className="db-bg2" />
         <div className="db-noise" />

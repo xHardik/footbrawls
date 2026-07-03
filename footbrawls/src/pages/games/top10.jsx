@@ -13,7 +13,7 @@ import { PLAYERS } from "../../lib/players.js";
 import { usePlayerWikiPhoto, useClubWikiLogo } from '../../lib/wikiAssets.jsx';
 import { getActivePuzzleDate, getDailySeed, getRaidSeed } from '../../lib/dailySeed.js';
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from '../../lib/effects.js';
-
+import RewardedAd from '../../components/RewardedAd';
 
 const STATS_KEY   = 'footbrawls_top10_stats';
 const HISTORY_KEY = 'footbrawls_top10_history';
@@ -109,27 +109,8 @@ function WikiAvatar({ name, isClub }) {
 }
 
 
-const adBreak = (options) => {
-  
-  if (window.adBreak) {
-    window.adBreak(options);
-  } else {
-    console.log('[AdSense H5 Mock] adBreak:', options.name);
-    if (options.beforeAd) options.beforeAd();
-    setTimeout(() => {
-      if (options.adViewed)    options.adViewed();
-      if (options.afterAd)     options.afterAd();
-      if (options.adBreakDone) options.adBreakDone({ showStatus: 'mocked' });
-    }, 600);
-  }
-};
 
-if (typeof window !== 'undefined') {
-  window.adConfig = window.adConfig || function () {
-    (window.adConfig.q = window.adConfig.q || []).push(arguments);
-  };
-  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
-}
+
 
 
 const CSS = `
@@ -512,6 +493,7 @@ export default function Top10Guess() {
   const [msg, setMsg]                     = useState(null);
   const [hasWatchedAd, setHasWatchedAd]   = useState(false);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
+  const [isAdOpen, setIsAdOpen]           = useState(false);
   const [isRaid, setIsRaid] = useState(false);
   const [isVsFriends, setIsVsFriends] = useState(false);
 
@@ -710,27 +692,29 @@ export default function Top10Guess() {
 
   function handleWatchAd() {
     setShowAdOverlay(false);
-    adBreak({
-      type: 'reward',
-      name: 'top10-extra-life',
-      beforeAd: () => {},
-      adViewed: () => {},
-      adBreakDone: () => {
-        setLives(1);
-        setHasWatchedAd(true);
-        setFeedback({ text: "📺 Ad viewed! +1 Extra Life restored. Keep guessing!", cls: "correct" });
-        localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
-          revealed: revealed,
-          lives: 1,
-          wrongGuesses: wrongGuesses,
-          phase: 'game',
-          xpAwarded: xpAwarded,
-          hasWatchedAd: true
-        }));
-        setTimeout(() => inputRef.current?.focus(), 100);
-      }
-    });
+    setIsAdOpen(true);
   }
+
+  const handleAdComplete = () => {
+    setIsAdOpen(false);
+    setLives(1);
+    setHasWatchedAd(true);
+    setFeedback({ text: "📺 Ad viewed! +1 Extra Life restored. Keep guessing!", cls: "correct" });
+    localStorage.setItem(`top10_${puzzleDate}_state`, JSON.stringify({
+      revealed: revealed,
+      lives: 1,
+      wrongGuesses: wrongGuesses,
+      phase: 'game',
+      xpAwarded: xpAwarded,
+      hasWatchedAd: true
+    }));
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const handleAdError = () => {
+    setIsAdOpen(false);
+    showMsg("No ad available right now, try again shortly.", "error");
+  };
 
   async function endGame(finalRevealed, finalLives) {
     setPhase('result');
@@ -846,7 +830,7 @@ export default function Top10Guess() {
         )}
 
         <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} isRaid={isRaid} isVsFriends={isVsFriends} />
-
+        <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={handleAdError} />
         {showAdOverlay && (
           <div className="t10-modal-overlay active">
             <div className="t10-modal-box">

@@ -10,6 +10,7 @@ import { db } from '../../lib/firebase.js';
 import { PLAYERS } from "../../lib/players.js";
 import { triggerWinConfetti, triggerLossHeartbreaks, autoScrollToResult } from "../../lib/effects.js";
 import { PlayerPhoto } from "../../lib/wikiAssets.jsx";
+import RewardedAd from '../../components/RewardedAd';
 
 
 const XP_BY_GUESS  = { 1:25, 2:23, 3:21, 4:19, 5:17, 6:15 };
@@ -734,6 +735,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [hasWatchedExtraTryAd, setHasWatchedExtraTryAd] = useState(false);
   const [isAdLoading, setIsAdLoading] = useState(false);
   const [isAdOpen, setIsAdOpen] = useState(false);
+  const [pendingAdReward, setPendingAdReward] = useState(null);
   const [hintsWatchedCount, setHintsWatchedCount] = useState(() => {
     const key = `wordle_hints_watched_${puzzleDate}`;
     return parseInt(localStorage.getItem(key) || '0', 10);
@@ -930,28 +932,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       return;
     }
     setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: "get-premium-hint",
-      beforeAd: () => {
-        setIsAdLoading(true);
-      },
-      afterAd: () => {
-        setIsAdLoading(false);
-      },
-      adDismissed: () => {
-        showMsg("Ad dismissed. No hint unlocked.", "error");
-      },
-      adViewed: () => {
-        unlockNextPremiumHint();
-        const next = hintsWatchedCount + 1;
-        localStorage.setItem(`wordle_hints_watched_${puzzleDate}`, String(next));
-        setHintsWatchedCount(next);
-      },
-      adBreakDone: () => {
-        setIsAdLoading(false);
-      }
-    });
+    setPendingAdReward('hint');
+    setIsAdOpen(true);
   }
 
   function triggerRewardedAdForExtraTry() {
@@ -960,47 +942,56 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       return;
     }
     setIsAdLoading(true);
-    adBreak({
-      type: "reward",
-      name: "get-extra-try",
-      beforeAd: () => {
-        setIsAdLoading(true);
-      },
-      afterAd: () => {
-        setIsAdLoading(false);
-      },
-      adDismissed: () => {
-        showMsg("Ad dismissed. No extra attempt granted.", "error");
-      },
-      adViewed: () => {
-        const newMaxGuesses = maxGuesses + 1;
-        setMaxGuesses(newMaxGuesses);
-        setGameOver(false);
-        setHasWatchedExtraTryAd(true);
-        showMsg("Granted 1 Extra Attempt! Keep guessing!", "success");
+    setPendingAdReward('extraTry');
+    setIsAdOpen(true);
+  }
 
-        const next = revivalsWatchedCount + 1;
-        localStorage.setItem(`wordle_revivals_watched_${puzzleDate}`, String(next));
-        setRevivalsWatchedCount(next);
+  function handleAdComplete() {
+    const reward = pendingAdReward;
+    setIsAdOpen(false);
+    setIsAdLoading(false);
+    setPendingAdReward(null);
 
-        
-        localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
-          guesses,
-          solved: false,
-          score: 0,
-          xpAwarded: 0,
-          gameOver: false,
-          maxGuesses: newMaxGuesses,
-          hasWatchedExtraTryAd: true,
-          rewardHints
-        }));
+    if (reward === 'hint') {
+      unlockNextPremiumHint();
+      const next = hintsWatchedCount + 1;
+      localStorage.setItem(`wordle_hints_watched_${puzzleDate}`, String(next));
+      setHintsWatchedCount(next);
+      return;
+    }
 
-        setTimeout(() => inputRef.current?.focus(), 100);
-      },
-      adBreakDone: () => {
-        setIsAdLoading(false);
-      }
-    });
+    if (reward === 'extraTry') {
+      const newMaxGuesses = maxGuesses + 1;
+      setMaxGuesses(newMaxGuesses);
+      setGameOver(false);
+      setHasWatchedExtraTryAd(true);
+      showMsg("Granted 1 Extra Attempt! Keep guessing!", "success");
+
+      const next = revivalsWatchedCount + 1;
+      localStorage.setItem(`wordle_revivals_watched_${puzzleDate}`, String(next));
+      setRevivalsWatchedCount(next);
+
+      localStorage.setItem(`footbrawls_wordle_${puzzleDate}`, JSON.stringify({
+        guesses,
+        solved: false,
+        score: 0,
+        xpAwarded: 0,
+        gameOver: false,
+        maxGuesses: newMaxGuesses,
+        hasWatchedExtraTryAd: true,
+        rewardHints
+      }));
+
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }
+
+  function handleAdError() {
+    const reward = pendingAdReward;
+    setIsAdOpen(false);
+    setIsAdLoading(false);
+    setPendingAdReward(null);
+    showMsg(reward === 'extraTry' ? "Ad dismissed. No extra attempt granted." : "Ad dismissed. No hint unlocked.", "error");
   }
 
 
@@ -1012,6 +1003,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
       <div className="wdl-noise" />
 
       <HowToPlayModal show={showModal} onClose={() => { setShowModal(false); inputRef.current?.focus(); }} isRaid={isRaid} isVsFriends={isVsFriends} />
+      <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={handleAdError} />
 
       
       <nav className="wdl-nav">

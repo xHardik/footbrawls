@@ -8,6 +8,7 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, getDoc, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { getUser } from '../../lib/user';
 import { awardXP } from '../../lib/xpEngine';
+import RewardedAd from '../../components/RewardedAd';
 
 
 const ALL_FIXTURES_SCHEDULE = [
@@ -308,6 +309,7 @@ export default function MatchPredictor() {
   const [scheduleFilter, setScheduleFilter] = useState('all');  
   const [unlockedInsights, setUnlockedInsights] = useState(false);
   const [isAdLoading, setIsAdLoading]     = useState(false);
+  const [isAdOpen, setIsAdOpen]           = useState(false);
   const [showModal, setShowModal]         = useState(false);
   const [insightVotes, setInsightVotes]   = useState(null);
   const [insightSource, setInsightSource] = useState('Footbrawls Users');
@@ -426,18 +428,20 @@ export default function MatchPredictor() {
   }
 
   function triggerRewardedAdForInsights() {
+    setIsAdLoading(true);
     setIsAdOpen(true);
   }
   const handleAdComplete = () => {
     setIsAdOpen(false);
-    setHasWatchedInsightAd(true);
-    setInsightsUnlocked(true);
-    persist({ hasWatchedInsightAd: true, insightsUnlocked: true });
-    showMsg("Expert Insights Unlocked!", "success");
+    setIsAdLoading(false);
+    setUnlockedInsights(true);
+    if (selected?.id) {
+      localStorage.setItem(`mp_insights_${selected.id}`, 'true');
+    }
   };
   const handleAdError = () => {
     setIsAdOpen(false);
-    showMsg("No ad available right now, try again shortly.", "error");
+    setIsAdLoading(false);
   };
 
   async function submitPrediction() {
@@ -551,6 +555,7 @@ export default function MatchPredictor() {
         </div>
       </nav>
       <HowToPlayModal show={showModal} onClose={() => setShowModal(false)} />
+      <RewardedAd isOpen={isAdOpen} onComplete={handleAdComplete} onError={handleAdError} onClose={handleAdError} />
 
       
       <div className="mp2-main">

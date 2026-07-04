@@ -716,7 +716,7 @@ export default function Raid() {
   useEffect(() => {
     if (!activeSessionId) { setPhase('lobby'); return; }
     const sessionRef = doc(db,'gameSessions',activeSessionId);
-    let timer;
+    let unmounted = false;
 
     const unsub = onSnapshot(sessionRef, async snap => {
       try {
@@ -822,8 +822,6 @@ export default function Raid() {
         const myAct3Done = !!s.scores?.[user.userId]?.act3 || l3;
         const raidDone = s.currentAct === 4 || (myAct3Done && newActs.act3);
 
-        if (timer) clearTimeout(timer);
-
         if (raidDone) {
           const out = computeRaidOutcome(newActs);
           setOutcome(out); setPhase('results');
@@ -832,10 +830,8 @@ export default function Raid() {
           localStorage.removeItem('active_game_session_id');
         } else if (!myAct1Done) {
           setPhase('matched');
-          timer = setTimeout(()=>navigate(gameObj.route), 2200);
         } else if (!myAct2Done) {
           setPhase('starting_act2');
-          timer = setTimeout(()=>navigate('/games/dribble'), 1200);
           
           if (isBotBuddy && s.currentAct === 1) {
             const finalNewActs = { ...newActs };
@@ -851,7 +847,6 @@ export default function Raid() {
           }
         } else if (!myAct3Done) {
           setPhase('starting_act3');
-          timer = setTimeout(()=>navigate('/games/penaltynerve'), 1200);
         } else {
           setPhase('waiting_teammate');
         }
@@ -875,10 +870,23 @@ export default function Raid() {
       }
     };
     window.addEventListener('beforeunload', handleUnload);
-    return () => { unsub(); window.removeEventListener('beforeunload',handleUnload); if(timer)clearTimeout(timer); };
+    return () => { unsub(); window.removeEventListener('beforeunload',handleUnload); };
   }, [activeSessionId, user, navigate, finalizeRaidFromState]);
 
-  
+  useEffect(() => {
+    let t;
+    if (phase === 'matched' && act1Game) {
+      t = setTimeout(() => navigate(act1Game.route), 2200);
+    } else if (phase === 'starting_act2') {
+      t = setTimeout(() => navigate('/games/dribble'), 1200);
+    } else if (phase === 'starting_act3') {
+      t = setTimeout(() => navigate('/games/penaltynerve'), 1200);
+    }
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [phase, navigate, act1Game]);
+
   const startSearch = useCallback(async type => {
     if (!user) return;
 
@@ -1445,35 +1453,34 @@ export default function Raid() {
               </div>
 
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                {standings.map((p, idx) => {
-                  const rankColor = idx===0 ? T.gold : idx===1 ? T.muted : T.muted2;
+                {[
+                  { name: 'Your Team', total: standings.filter(p => p.team === 'you').reduce((s, p) => s + p.total, 0), team: 'you', isUser: true },
+                  { name: 'Rivals', total: standings.filter(p => p.team === 'rival').reduce((s, p) => s + p.total, 0), team: 'rival', isUser: false }
+                ].sort((a,b) => b.total - a.total).map((t, idx) => {
+                  const rankColor = idx===0 ? T.gold : T.muted;
                   return (
-                    <div key={`${p.nickname}_${idx}`} className="raid-standing-row" style={{
-                      background: p.isUser ? `${T.purple}12` : 'rgba(255,255,255,.02)',
-                      border:`1px solid ${p.isUser ? T.purple+'40' : 'rgba(255,255,255,.06)'}`,
-                      boxShadow: p.isUser ? `0 0 16px ${T.purpleGlow}` : 'none',
+                    <div key={t.name} className="raid-standing-row" style={{
+                      background: t.isUser ? `${T.purple}12` : 'rgba(255,255,255,.02)',
+                      border:`1px solid ${t.isUser ? T.purple+'40' : 'rgba(255,255,255,.06)'}`,
+                      boxShadow: t.isUser ? `0 0 16px ${T.purpleGlow}` : 'none',
                     }}>
                       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                         <span style={{
                           fontFamily:"'Orbitron',sans-serif", fontSize:12, fontWeight:700,
                           color:rankColor, minWidth:20, textAlign:'center',
                         }}>#{idx+1}</span>
-                        <span style={{ fontSize:18 }}>{p.flag}</span>
                         <div>
-                          <div style={{ fontSize:13, fontWeight:600, fontFamily:"'Rajdhani',sans-serif", color:T.text }}>
-                            {p.nickname} {p.isUser && <span style={{ color:T.purple, fontSize:11 }}>(You)</span>}
-                          </div>
-                          <div style={{ fontSize:10, color:T.muted2, fontFamily:"'Inter',sans-serif" }}>
-                            {Math.round(p.act1)} · {Math.round(p.act2)} · {Math.round(p.act3)} pts
+                          <div style={{ fontSize:15, fontWeight:800, fontFamily:"'Orbitron',sans-serif", color:T.text, letterSpacing:1 }}>
+                            {t.name}
                           </div>
                         </div>
                       </div>
                       <div style={{
-                        fontFamily:"'Orbitron',sans-serif", fontSize:15, fontWeight:700,
+                        fontFamily:"'Orbitron',sans-serif", fontSize:18, fontWeight:800,
                         color: idx===0 ? T.gold : T.text,
                         textShadow: idx===0 ? `0 0 10px ${T.goldGlow}` : 'none',
                       }}>
-                        {p.total}
+                        {t.total} pts
                       </div>
                     </div>
                   );

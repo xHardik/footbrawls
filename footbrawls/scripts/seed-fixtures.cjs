@@ -117,25 +117,25 @@ const FIXTURES = [
   { id:"r32_15", home:"Argentina",     away:"Cape Verde",          kickoff:"2026-07-03T22:00:00.000Z", stage:"Round of 32 - Match 15", done:false },
   { id:"r32_16", home:"Colombia",      away:"Ghana",               kickoff:"2026-07-04T01:30:00.000Z", stage:"Round of 32 - Match 16", done:false },
 
-  { id:"r16_01", home:"TBD", away:"TBD", kickoff:"2026-07-04T17:00:00.000Z", stage:"Round of 16 - Match 1", done:false },
-  { id:"r16_02", home:"TBD", away:"TBD", kickoff:"2026-07-04T21:00:00.000Z", stage:"Round of 16 - Match 2", done:false },
-  { id:"r16_03", home:"TBD", away:"TBD", kickoff:"2026-07-05T20:00:00.000Z", stage:"Round of 16 - Match 3", done:false },
-  { id:"r16_04", home:"TBD", away:"TBD", kickoff:"2026-07-06T00:00:00.000Z", stage:"Round of 16 - Match 4", done:false },
-  { id:"r16_05", home:"TBD", away:"TBD", kickoff:"2026-07-06T19:00:00.000Z", stage:"Round of 16 - Match 5", done:false },
-  { id:"r16_06", home:"TBD", away:"TBD", kickoff:"2026-07-06T21:00:00.000Z", stage:"Round of 16 - Match 6", done:false },
-  { id:"r16_07", home:"TBD", away:"TBD", kickoff:"2026-07-07T16:00:00.000Z", stage:"Round of 16 - Match 7", done:false },
-  { id:"r16_08", home:"TBD", away:"TBD", kickoff:"2026-07-07T20:00:00.000Z", stage:"Round of 16 - Match 8", done:false },
+  { id:"r16_01", home:"Canada",      away:"Germany",               kickoff:"2026-07-04T17:00:00.000Z", stage:"Round of 16 - Match 1", done:false },
+  { id:"r16_02", home:"Morocco",     away:"Brazil",                kickoff:"2026-07-04T21:00:00.000Z", stage:"Round of 16 - Match 2", done:false },
+  { id:"r16_03", home:"France",      away:"Norway",                kickoff:"2026-07-05T20:00:00.000Z", stage:"Round of 16 - Match 3", done:false },
+  { id:"r16_04", home:"Mexico",      away:"England",               kickoff:"2026-07-06T00:00:00.000Z", stage:"Round of 16 - Match 4", done:false },
+  { id:"r16_05", home:"USA",         away:"Belgium",               kickoff:"2026-07-06T19:00:00.000Z", stage:"Round of 16 - Match 5", done:false },
+  { id:"r16_06", home:"Portugal",    away:"Spain",                 kickoff:"2026-07-06T21:00:00.000Z", stage:"Round of 16 - Match 6", done:false },
+  { id:"r16_07", home:"Switzerland", away:"Argentina",             kickoff:"2026-07-07T16:00:00.000Z", stage:"Round of 16 - Match 7", done:false },
+  { id:"r16_08", home:"Colombia",    away:"Australia",             kickoff:"2026-07-07T20:00:00.000Z", stage:"Round of 16 - Match 8", done:false },
 
-  { id:"qf_01",  home:"TBD", away:"TBD", kickoff:"2026-07-09T20:00:00.000Z", stage:"Quarter-Final 1", done:false },
-  { id:"qf_02",  home:"TBD", away:"TBD", kickoff:"2026-07-10T19:00:00.000Z", stage:"Quarter-Final 2", done:false },
-  { id:"qf_03",  home:"TBD", away:"TBD", kickoff:"2026-07-11T21:00:00.000Z", stage:"Quarter-Final 3", done:false },
-  { id:"qf_04",  home:"TBD", away:"TBD", kickoff:"2026-07-12T01:00:00.000Z", stage:"Quarter-Final 4", done:false },
+  { id:"qf_01",  home:"Germany",     away:"Brazil",                kickoff:"2026-07-09T20:00:00.000Z", stage:"Quarter-Final 1", done:false },
+  { id:"qf_02",  home:"France",      away:"England",               kickoff:"2026-07-10T19:00:00.000Z", stage:"Quarter-Final 2", done:false },
+  { id:"qf_03",  home:"Belgium",     away:"Portugal",              kickoff:"2026-07-11T21:00:00.000Z", stage:"Quarter-Final 3", done:false },
+  { id:"qf_04",  home:"Argentina",   away:"Colombia",              kickoff:"2026-07-12T01:00:00.000Z", stage:"Quarter-Final 4", done:false },
 
-  { id:"sf_01",  home:"TBD", away:"TBD", kickoff:"2026-07-14T19:00:00.000Z", stage:"Semi-Final 1", done:false },
-  { id:"sf_02",  home:"TBD", away:"TBD", kickoff:"2026-07-15T19:00:00.000Z", stage:"Semi-Final 2", done:false },
+  { id:"sf_01",  home:"Brazil",      away:"France",                kickoff:"2026-07-14T19:00:00.000Z", stage:"Semi-Final 1", done:false },
+  { id:"sf_02",  home:"Portugal",    away:"Argentina",             kickoff:"2026-07-15T19:00:00.000Z", stage:"Semi-Final 2", done:false },
 
-  { id:"3rd",    home:"TBD", away:"TBD", kickoff:"2026-07-18T21:00:00.000Z", stage:"Third-Place Playoff", done:false },
-  { id:"final",  home:"TBD", away:"TBD", kickoff:"2026-07-19T19:00:00.000Z", stage:"Final", done:false },
+  { id:"3rd",    home:"Brazil",      away:"Portugal",              kickoff:"2026-07-18T21:00:00.000Z", stage:"Third-Place Playoff", done:false },
+  { id:"final",  home:"France",      away:"Argentina",             kickoff:"2026-07-19T19:00:00.000Z", stage:"Final", done:false },
 ];
 
 async function seed() {

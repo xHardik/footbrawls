@@ -961,6 +961,11 @@ export default function WhoAreYa() {
             <span className="wya-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
             VS FRIENDS
           </div>
+        ) : isRaid ? (
+          <div className="wya-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7' }}>
+            <span className="wya-fire-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
+            RAID
+          </div>
         ) : (
           <div className="wya-nav-tag">
             <span className="wya-fire-dot" />

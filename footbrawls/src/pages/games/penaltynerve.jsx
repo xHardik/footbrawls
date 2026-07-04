@@ -1110,25 +1110,9 @@ export default function PenaltyNerve({ onBack }) {
               {displayGoals} of {MAX_KICKS} goals scored · New penalties tomorrow
             </div>
             <div className="pn-result-actions" style={{ justifyContent: 'center', width: '100%' }}>
-              {isRaid ? (
-                <button
-                  className="pn-btn pn-btn-raid"
-                  onClick={async () => {
-                    const activeId = localStorage.getItem('active_game_session_id');
-                    if (activeId) {
-                      const snap = await getDoc(doc(db, 'gameSessions', activeId));
-                      if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                        navigate('/vs-friends');
-                        return;
-                      }
-                    }
-                    navigate('/raid');
-                  }}
-                  style={{ width: '100%', maxWidth: '280px' }}
-                >
-                  Return to Lobby
-                </button>
-              ) : (
+              {isVsFriends ? (
+                <button className="pn-btn pn-btn-raid" onClick={() => navigate('/vs-friends')} style={{ width: '100%', maxWidth: '280px' }}>Return to Lobby</button>
+              ) : isRaid ? null : (
                 <button 
                   className="pn-btn" 
                   onClick={handleBack}

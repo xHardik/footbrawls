@@ -257,9 +257,16 @@ function useNextFixtures() {
   const [fixtures,setFixtures]=useState([]);
   useEffect(()=>{
     const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000);
-    const q=query(collection(db,"fixtures"),where("isComplete","==",false),where("kickoffAt",">=",threeHoursAgo),orderBy("kickoffAt","asc"),limit(2));
+    
+    const q=query(collection(db,"fixtures"),where("kickoffAt",">=",threeHoursAgo),orderBy("kickoffAt","asc"),limit(10));
     return onSnapshot(q,snap=>{
-      setFixtures(snap.empty?[]:snap.docs.map(d=>({id:d.id,...d.data()})));
+      if (snap.empty) {
+        setFixtures([]);
+      } else {
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        const incomplete = docs.filter(d => d.isComplete === false).slice(0, 2);
+        setFixtures(incomplete);
+      }
     },(err)=>{ console.error("Fixtures query failed:",err); setFixtures([]); });
   },[]);
   return fixtures;

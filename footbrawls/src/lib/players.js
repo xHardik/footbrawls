@@ -1,36 +1,33 @@
 // src/lib/players.js
 // `goals`    = international goals only (national team)
 // `totGoals` = total career goals (club + international, all competitions)
-// Stats corrected June 2026 — sources: Wikipedia, ESPN, Transfermarkt, FotMob, messixronaldo.com
+// Stats corrected July 2026 — sources: Wikipedia, ESPN, Transfermarkt, FotMob, messixronaldo.com
 //
-// ─── CORRECTIONS LOG (vs original file) ──────────────────────────────────────
-// Lionel Messi:      goals 119→122 (scored at 2026 WC; 122 in 201 apps per Wikipedia Jun 2026)
-//                    totGoals 913→915 (per messixronaldo.com Jun 2026)
-//                    caps 199→201 (200th cap vs Algeria on 16 Jun; scored 3 goals; another vs Jordan)
-//                    age 38→39 (born 24 Jun 1987; turned 39 on 24 Jun 2026)
-// Cristiano Ronaldo: goals 143→145, totGoals 971→975, caps 228→231
-//                    (145 intl goals per Wikipedia; 975 career goals per roadto1000goals.com/messixronaldo.com)
-// Harry Kane:        caps 112→116, goals 78→81 (per englandstats.com Jun 2026)
-//                    totGoals 532→550+ (scored 61 goals in 2025-26 season alone per FotMob; Wikipedia confirms 500+ career goals)
-// Erling Haaland:    caps 51→52, goals 57→59 (per Wikipedia/Time Jun 2026 — 59 goals in 52 apps)
-// Kylian Mbappe:     caps 100→101, goals 58→60 (100th cap vs Iraq 22 Jun; 60 goals per Wikipedia)
-// Robert Lewandowski: caps 152→167, goals 84→89, totGoals 685→700+
-//                    (167 caps, 89 intl goals per Wikipedia; departed Barcelona end of season)
-// Neymar:            goals 79→79 (CORRECT — 79 intl goals per ESPN/Olympics.com)
-//                    caps 128→128 (CORRECT)
-//                    club: Al Hilal→Santos (returned to Santos 2025, confirmed for WC 2026)
-// Florian Wirtz:     club: Bayer Leverkusen→Liverpool (transferred Jun 2025, £100m+)
-// Alexander Isak:    club: Newcastle→Liverpool (transferred Sep 1 2025, £125m record)
-// Marcus Rashford:   clubs updated — Aston Villa loan (Feb 2025), then Barcelona loan (Jul 2025)
-//                    club currently: Barcelona (loan from Man United)
-// Viktor Gyokeres:   club: Sporting CP→Arsenal (transferred Jul 2025, ~€73.5m)
-// Toni Kroos:        REMOVED — retired after Euro 2024, not playing at 2026 WC or for any club
-//                    (the original file's duplicate of Leroy Sane also removed)
-// Leroy Sane (duplicate): removed second entry
+// ─── ADDITIONAL CORRECTIONS LOG (on top of the original file's June-2026 pass) ──
+// Lionel Messi:      goals 122→123, caps 201→202 (per Wikipedia, current as of early Jul 2026;
+//                    he has played at least one more match — Round of 32 vs Cape Verde, 3 Jul — since
+//                    the file's last snapshot)
+// Cristiano Ronaldo: totGoals 975→976 (scored vs Croatia in Round of 32, 2 Jul 2026, per beIN Sports)
+// Kevin De Bruyne:   club Man City→Napoli — LEFT MAN CITY AS A FREE AGENT SUMMER 2025.
+//                    The original file's June-2026 pass missed this entirely.
+// Luka Modric:       club Real Madrid→AC Milan — LEFT REAL MADRID AS A FREE AGENT SUMMER 2025
+//                    (after the Club World Cup). Also missed by the original pass.
+// Jonathan David:    club Lille→Juventus — left Lille as a free agent, joined Juventus summer 2025.
+// Lois Openda:       club RB Leipzig→Juventus — joined Juventus for the 2025-26 season.
+// Manuel Akanji:     age 29→30 (born 19 Jul 1995)
+//
+// NOTE ON SCOPE: this pass re-verified the flagged/high-profile entries from the original
+// corrections log plus a spot-check of "stable-looking" veterans (which is how De Bruyne and
+// Modric were caught — their moves were free transfers with no fee/headline treatment in some
+// aggregators). The remaining ~120 players were NOT individually re-verified in this pass; treat
+// any player whose contract situation was newsworthy in 2025 as a risk area for a stale `club`
+// field. Robert Lewandowski's Barcelona contract technically expired 30 Jun 2026 with no
+// confirmed next move as of this writing, so 'Barcelona' remains the best current answer, not
+// a verified certainty.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PLAYERS = [
-  { name:'Lionel Messi',       country:'Argentina',  countryCode:'ARG', position:'Forward',    club:'Inter Miami',      age:39, foot:'Left',  flag:'🇦🇷', caps:201, goals:122, totGoals:915,  marketValue:15,  clubs: [{ club: 'Barcelona', years: '2004–2021' }, { club: 'PSG', years: '2021–2023' }, { club: 'Inter Miami', years: '2023–' }] },
+  { name:'Lionel Messi',       country:'Argentina',  countryCode:'ARG', position:'Forward',    club:'Inter Miami',      age:39, foot:'Left',  flag:'🇦🇷', caps:202, goals:123, totGoals:915,  marketValue:15,  clubs: [{ club: 'Barcelona', years: '2004–2021' }, { club: 'PSG', years: '2021–2023' }, { club: 'Inter Miami', years: '2023–' }] },
   { name:'Lautaro Martinez',   country:'Argentina',  countryCode:'ARG', position:'Forward',    club:'Inter Milan',      age:27, foot:'Right', flag:'🇦🇷', caps:56,  goals:22,  totGoals:170,  marketValue:100, clubs: [{ club: 'Racing Club', years: '2015–2018' }, { club: 'Inter Milan', years: '2018–' }] },
   { name:'Emiliano Martinez',  country:'Argentina',  countryCode:'ARG', position:'Goalkeeper', club:'Aston Villa',      age:32, foot:'Right', flag:'🇦🇷', caps:38,  goals:0,   totGoals:0,    marketValue:25,  clubs: [{ club: 'Arsenal', years: '2012–2020' }, { club: 'Sheffield Wednesday (loan)', years: '2013–2014' }, { club: 'Rotherham United (loan)', years: '2015' }, { club: 'Wolves (loan)', years: '2015–2016' }, { club: 'Getafe (loan)', years: '2017–2018' }, { club: 'Reading (loan)', years: '2019' }, { club: 'Aston Villa', years: '2020–' }] },
   { name:'Kylian Mbappe',      country:'France',     countryCode:'FRA', position:'Forward',    club:'Real Madrid',      age:27, foot:'Right', flag:'🇫🇷', caps:101, goals:60,  totGoals:440,  marketValue:180, clubs: [{ club: 'Monaco', years: '2015–2017' }, { club: 'PSG', years: '2017–2024' }, { club: 'Real Madrid', years: '2024–' }] },
@@ -62,8 +59,8 @@ export const PLAYERS = [
   { name:'Joao Felix',         country:'Portugal',   countryCode:'POR', position:'Forward',    club:'Chelsea',          age:25, foot:'Right', flag:'🇵🇹', caps:46,  goals:9,   totGoals:95,   marketValue:30,  clubs: [{ club: 'Benfica', years: '2018–2019' }, { club: 'Atletico Madrid', years: '2019–' }, { club: 'Chelsea (loan)', years: '2023' }, { club: 'Barcelona (loan)', years: '2023–2024' }, { club: 'Chelsea', years: '2024–' }] },
   { name:'Bruno Fernandes',    country:'Portugal',   countryCode:'POR', position:'Midfielder', club:'Man United',       age:30, foot:'Right', flag:'🇵🇹', caps:76,  goals:22,  totGoals:145,  marketValue:60,  clubs: [{ club: 'Novara', years: '2012–2013' }, { club: 'Udinese', years: '2013–2016' }, { club: 'Sampdoria', years: '2016–2017' }, { club: 'Sporting CP', years: '2017–2020' }, { club: 'Man United', years: '2020–' }] },
   { name:'Ruben Dias',         country:'Portugal',   countryCode:'POR', position:'Defender',   club:'Man City',         age:27, foot:'Right', flag:'🇵🇹', caps:65,  goals:3,   totGoals:12,   marketValue:70,  clubs: [{ club: 'Benfica', years: '2017–2020' }, { club: 'Man City', years: '2020–' }] },
-  // NOTE: Ronaldo totGoals 971→975 (as of 23 Jun 2026 per roadto1000goals.com); goals 143→145; caps 228→231
-  { name:'Cristiano Ronaldo',  country:'Portugal',   countryCode:'POR', position:'Forward',    club:'Al Nassr',         age:41, foot:'Right', flag:'🇵🇹', caps:231, goals:145, totGoals:975,  marketValue:10,  clubs: [{ club: 'Sporting CP', years: '2002–2003' }, { club: 'Man United', years: '2003–2009' }, { club: 'Real Madrid', years: '2009–2018' }, { club: 'Juventus', years: '2018–2021' }, { club: 'Man United', years: '2021–2022' }, { club: 'Al Nassr', years: '2023–' }] },
+  // NOTE: Ronaldo totGoals now 976 (as of 2 Jul 2026 goal vs Croatia); goals 145; caps 231
+  { name:'Cristiano Ronaldo',  country:'Portugal',   countryCode:'POR', position:'Forward',    club:'Al Nassr',         age:41, foot:'Right', flag:'🇵🇹', caps:231, goals:145, totGoals:976,  marketValue:10,  clubs: [{ club: 'Sporting CP', years: '2002–2003' }, { club: 'Man United', years: '2003–2009' }, { club: 'Real Madrid', years: '2009–2018' }, { club: 'Juventus', years: '2018–2021' }, { club: 'Man United', years: '2021–2022' }, { club: 'Al Nassr', years: '2023–' }] },
   { name:'Raphinha',           country:'Brazil',     countryCode:'BRA', position:'Forward',    club:'Barcelona',        age:28, foot:'Left',  flag:'🇧🇷', caps:36,  goals:9,   totGoals:145,  marketValue:45,  clubs: [{ club: 'Vitoria Guimaraes', years: '2016–2018' }, { club: 'Sporting CP', years: '2018–2019' }, { club: 'Rennes', years: '2019–2020' }, { club: 'Leeds', years: '2020–2022' }, { club: 'Barcelona', years: '2022–' }] },
   { name:'Achraf Hakimi',      country:'Morocco',    countryCode:'MAR', position:'Defender',   club:'PSG',              age:26, foot:'Right', flag:'🇲🇦', caps:82,  goals:11,  totGoals:65,   marketValue:65,  clubs: [{ club: 'Real Madrid', years: '2017–2020' }, { club: 'Borussia Dortmund (loan)', years: '2018–2020' }, { club: 'Inter Milan', years: '2020–2021' }, { club: 'PSG', years: '2021–' }] },
   { name:'Hakim Ziyech',       country:'Morocco',    countryCode:'MAR', position:'Midfielder', club:'Galatasaray',      age:31, foot:'Left',  flag:'🇲🇦', caps:63,  goals:22,  totGoals:135,  marketValue:8,   clubs: [{ club: 'Heerenveen', years: '2012–2014' }, { club: 'Twente', years: '2014–2016' }, { club: 'Ajax', years: '2016–2020' }, { club: 'Chelsea', years: '2020–2024' }, { club: 'Galatasaray', years: '2023–' }] },
@@ -75,7 +72,8 @@ export const PLAYERS = [
   { name:'Takumi Minamino',    country:'Japan',      countryCode:'JPN', position:'Midfielder', club:'Monaco',           age:29, foot:'Right', flag:'🇯🇵', caps:63,  goals:22,  totGoals:115,  marketValue:12,  clubs: [{ club: 'Cerezo Osaka', years: '2012–2014' }, { club: 'Red Bull Salzburg', years: '2015–2020' }, { club: 'Liverpool', years: '2020–2022' }, { club: 'Southampton (loan)', years: '2021' }, { club: 'Monaco', years: '2022–' }] },
   { name:'Ritsu Doan',         country:'Japan',      countryCode:'JPN', position:'Forward',    club:'Freiburg',         age:26, foot:'Right', flag:'🇯🇵', caps:55,  goals:9,   totGoals:75,   marketValue:16,  clubs: [{ club: 'Gamba Osaka', years: '2015–2018' }, { club: 'Groningen', years: '2017–2019' }, { club: 'PSV', years: '2019–2022' }, { club: 'Arminia Bielefeld (loan)', years: '2020–2021' }, { club: 'Freiburg', years: '2022–' }] },
   { name:'Ivan Perisic',       country:'Croatia',    countryCode:'CRO', position:'Midfielder', club:'Hajduk Split',     age:35, foot:'Left',  flag:'🇭🇷', caps:135, goals:34,  totGoals:230,  marketValue:3,   clubs: [{ club: 'Club Brugge', years: '2009–2011' }, { club: 'Borussia Dortmund', years: '2011–2013' }, { club: 'Wolfsburg', years: '2013–2015' }, { club: 'Inter Milan', years: '2015–2022' }, { club: 'Bayern Munich (loan)', years: '2019–2020' }, { club: 'Tottenham', years: '2022–2024' }, { club: 'Hajduk Split', years: '2024–' }] },
-  { name:'Luka Modric',        country:'Croatia',    countryCode:'CRO', position:'Midfielder', club:'Real Madrid',      age:40, foot:'Right', flag:'🇭🇷', caps:180, goals:25,  totGoals:120,  marketValue:5,   clubs: [{ club: 'Dinamo Zagreb', years: '2003–2008' }, { club: 'Zrinjski Mostar (loan)', years: '2003–2004' }, { club: 'Inter Zapresic (loan)', years: '2004–2005' }, { club: 'Tottenham', years: '2008–2012' }, { club: 'Real Madrid', years: '2012–' }] },
+  // NOTE: Modric left Real Madrid as a free agent (after the Club World Cup) and joined AC Milan, summer 2025
+  { name:'Luka Modric',        country:'Croatia',    countryCode:'CRO', position:'Midfielder', club:'AC Milan',         age:40, foot:'Right', flag:'🇭🇷', caps:180, goals:25,  totGoals:120,  marketValue:5,   clubs: [{ club: 'Dinamo Zagreb', years: '2003–2008' }, { club: 'Zrinjski Mostar (loan)', years: '2003–2004' }, { club: 'Inter Zapresic (loan)', years: '2004–2005' }, { club: 'Tottenham', years: '2008–2012' }, { club: 'Real Madrid', years: '2012–2025' }, { club: 'AC Milan', years: '2025–' }] },
   { name:'Dominik Livakovic',  country:'Croatia',    countryCode:'CRO', position:'Goalkeeper', club:'Fenerbahce',       age:29, foot:'Right', flag:'🇭🇷', caps:60,  goals:0,   totGoals:0,    marketValue:12,  clubs: [{ club: 'Zagreb', years: '2012–2015' }, { club: 'Dinamo Zagreb', years: '2015–2023' }, { club: 'Fenerbahce', years: '2023–' }] },
   { name:'Memphis Depay',      country:'Netherlands',countryCode:'NED', position:'Forward',    club:'Corinthians',      age:30, foot:'Right', flag:'🇳🇱', caps:96,  goals:45,  totGoals:270,  marketValue:5,   clubs: [{ club: 'PSV', years: '2011–2015' }, { club: 'Man United', years: '2015–2017' }, { club: 'Lyon', years: '2017–2021' }, { club: 'Barcelona', years: '2021–2023' }, { club: 'Atletico Madrid', years: '2023–2024' }, { club: 'Corinthians', years: '2024–' }] },
   { name:'Virgil van Dijk',    country:'Netherlands',countryCode:'NED', position:'Defender',   club:'Liverpool',        age:34, foot:'Right', flag:'🇳🇱', caps:75,  goals:7,   totGoals:40,   marketValue:25,  clubs: [{ club: 'Groningen', years: '2011–2013' }, { club: 'Celtic', years: '2013–2015' }, { club: 'Southampton', years: '2015–2018' }, { club: 'Liverpool', years: '2018–' }] },
@@ -83,7 +81,8 @@ export const PLAYERS = [
   { name:'Frenkie de Jong',    country:'Netherlands',countryCode:'NED', position:'Midfielder', club:'Barcelona',        age:28, foot:'Right', flag:'🇳🇱', caps:62,  goals:3,   totGoals:30,   marketValue:70,  clubs: [{ club: 'Willem II', years: '2015' }, { club: 'Ajax', years: '2015–2019' }, { club: 'Barcelona', years: '2019–' }] },
   { name:'Christian Pulisic',  country:'USA',        countryCode:'USA', position:'Forward',    club:'AC Milan',         age:26, foot:'Right', flag:'🇺🇸', caps:75,  goals:32,  totGoals:155,  marketValue:35,  clubs: [{ club: 'Borussia Dortmund', years: '2016–2019' }, { club: 'Chelsea', years: '2019–2023' }, { club: 'AC Milan', years: '2023–' }] },
   { name:'Alphonso Davies',    country:'Canada',     countryCode:'CAN', position:'Defender',   club:'Bayern Munich',    age:25, foot:'Left',  flag:'🇨🇦', caps:55,  goals:17,  totGoals:28,   marketValue:55,  clubs: [{ club: 'Vancouver Whitecaps', years: '2016–2018' }, { club: 'Bayern Munich', years: '2019–' }] },
-  { name:'Jonathan David',     country:'Canada',     countryCode:'CAN', position:'Forward',    club:'Lille',            age:25, foot:'Right', flag:'🇨🇦', caps:55,  goals:32,  totGoals:195,  marketValue:60,  clubs: [{ club: 'Gent', years: '2018–2020' }, { club: 'Lille', years: '2020–' }] },
+  // NOTE: Jonathan David left Lille as a free agent and joined Juventus, summer 2025
+  { name:'Jonathan David',     country:'Canada',     countryCode:'CAN', position:'Forward',    club:'Juventus',         age:25, foot:'Right', flag:'🇨🇦', caps:55,  goals:32,  totGoals:195,  marketValue:60,  clubs: [{ club: 'Gent', years: '2018–2020' }, { club: 'Lille', years: '2020–2025' }, { club: 'Juventus', years: '2025–' }] },
   { name:'Hirving Lozano',     country:'Mexico',     countryCode:'MEX', position:'Forward',    club:'PSV',              age:29, foot:'Right', flag:'🇲🇽', caps:80,  goals:21,  totGoals:155,  marketValue:15,  clubs: [{ club: 'Pachuca', years: '2014–2017' }, { club: 'PSV', years: '2017–2019' }, { club: 'Napoli', years: '2019–2023' }, { club: 'PSV', years: '2023–' }] },
   { name:'Edson Alvarez',      country:'Mexico',     countryCode:'MEX', position:'Midfielder', club:'West Ham',         age:27, foot:'Right', flag:'🇲🇽', caps:82,  goals:6,   totGoals:30,   marketValue:30,  clubs: [{ club: 'America', years: '2016–2019' }, { club: 'Ajax', years: '2019–2023' }, { club: 'West Ham', years: '2023–' }] },
   { name:'Paulo Dybala',       country:'Argentina',  countryCode:'ARG', position:'Forward',    club:'Roma',             age:31, foot:'Left',  flag:'🇦🇷', caps:38,  goals:3,   totGoals:210,  marketValue:18,  clubs: [{ club: 'Instituto', years: '2011–2012' }, { club: 'Palermo', years: '2012–2015' }, { club: 'Juventus', years: '2015–2022' }, { club: 'Roma', years: '2022–' }] },
@@ -96,7 +95,8 @@ export const PLAYERS = [
   { name:'Granit Xhaka',       country:'Switzerland',countryCode:'CHE', position:'Midfielder', club:'Bayer Leverkusen', age:32, foot:'Left',  flag:'🇨🇭', caps:130, goals:15,  totGoals:75,   marketValue:18,  clubs: [{ club: 'Basel', years: '2010–2012' }, { club: 'Borussia Monchengladbach', years: '2012–2016' }, { club: 'Arsenal', years: '2016–2023' }, { club: 'Bayer Leverkusen', years: '2023–' }] },
   { name:'Xherdan Shaqiri',    country:'Switzerland',countryCode:'CHE', position:'Midfielder', club:'Basel',            age:33, foot:'Right', flag:'🇨🇭', caps:125, goals:32,  totGoals:175,  marketValue:2,   clubs: [{ club: 'Basel', years: '2009–2012' }, { club: 'Bayern Munich', years: '2012–2015' }, { club: 'Inter Milan', years: '2015' }, { club: 'Stoke City', years: '2015–2018' }, { club: 'Liverpool', years: '2018–2021' }, { club: 'Lyon', years: '2021–2022' }, { club: 'Chicago Fire', years: '2022–2024' }, { club: 'Basel', years: '2024–' }] },
   { name:'Romelu Lukaku',      country:'Belgium',    countryCode:'BEL', position:'Forward',    club:'Napoli',           age:31, foot:'Right', flag:'🇧🇪', caps:118, goals:87,  totGoals:370,  marketValue:25,  clubs: [{ club: 'Anderlecht', years: '2009–2011' }, { club: 'Chelsea', years: '2011–2014' }, { club: 'West Brom (loan)', years: '2012–2013' }, { club: 'Everton', years: '2013–2017' }, { club: 'Manchester United', years: '2017–2019' }, { club: 'Inter Milan', years: '2019–2021' }, { club: 'Chelsea', years: '2021–' }, { club: 'Inter Milan (loan)', years: '2022–2023' }, { club: 'Roma (loan)', years: '2023–2024' }, { club: 'Napoli', years: '2024–' }] },
-  { name:'Kevin De Bruyne',    country:'Belgium',    countryCode:'BEL', position:'Midfielder', club:'Man City',         age:34, foot:'Right', flag:'🇧🇪', caps:106, goals:27,  totGoals:135,  marketValue:40,  clubs: [{ club: 'Genk', years: '2008–2012' }, { club: 'Chelsea', years: '2012–2014' }, { club: 'Werder Bremen (loan)', years: '2012–2013' }, { club: 'VfL Wolfsburg', years: '2014–2015' }, { club: 'Man City', years: '2015–' }] },
+  // NOTE: De Bruyne left Man City as a free agent and joined Napoli, summer 2025
+  { name:'Kevin De Bruyne',    country:'Belgium',    countryCode:'BEL', position:'Midfielder', club:'Napoli',           age:34, foot:'Right', flag:'🇧🇪', caps:106, goals:27,  totGoals:135,  marketValue:40,  clubs: [{ club: 'Genk', years: '2008–2012' }, { club: 'Chelsea', years: '2012–2014' }, { club: 'Werder Bremen (loan)', years: '2012–2013' }, { club: 'VfL Wolfsburg', years: '2014–2015' }, { club: 'Man City', years: '2015–2025' }, { club: 'Napoli', years: '2025–' }] },
   { name:'Thibaut Courtois',   country:'Belgium',    countryCode:'BEL', position:'Goalkeeper', club:'Real Madrid',      age:32, foot:'Right', flag:'🇧🇪', caps:105, goals:0,   totGoals:0,    marketValue:30,  clubs: [{ club: 'Genk', years: '2009–2011' }, { club: 'Chelsea', years: '2011–2018' }, { club: 'Atletico Madrid (loan)', years: '2011–2014' }, { club: 'Real Madrid', years: '2018–' }] },
   { name:'Rafael Leao',        country:'Portugal',   countryCode:'POR', position:'Forward',    club:'AC Milan',         age:25, foot:'Right', flag:'🇵🇹', caps:38,  goals:7,   totGoals:80,   marketValue:80,  clubs: [{ club: 'Sporting CP', years: '2017–2018' }, { club: 'Lille', years: '2018–2019' }, { club: 'AC Milan', years: '2019–' }] },
   { name:'Bernardo Silva',     country:'Portugal',   countryCode:'POR', position:'Midfielder', club:'Man City',         age:30, foot:'Left',  flag:'🇵🇹', caps:100, goals:12,  totGoals:90,   marketValue:70,  clubs: [{ club: 'Benfica', years: '2013–2015' }, { club: 'Monaco', years: '2014–2017' }, { club: 'Man City', years: '2017–' }] },
@@ -133,7 +133,7 @@ export const PLAYERS = [
   { name:'Christian Eriksen',  country:'Denmark',    countryCode:'DEN', position:'Midfielder', club:'Man United',       age:34, foot:'Right', flag:'🇩🇰', caps:138, goals:44,  totGoals:165,  marketValue:6,   clubs: [{ club: 'Ajax', years: '2010–2013' }, { club: 'Tottenham', years: '2013–2020' }, { club: 'Inter Milan', years: '2020–2021' }, { club: 'Brentford', years: '2022' }, { club: 'Man United', years: '2022–' }] },
   { name:'Rasmus Hojlund',     country:'Denmark',    countryCode:'DEN', position:'Forward',    club:'Man United',       age:22, foot:'Left',  flag:'🇩🇰', caps:22,  goals:10,  totGoals:75,   marketValue:60,  clubs: [{ club: 'Copenhagen', years: '2020–2022' }, { club: 'Sturm Graz', years: '2022' }, { club: 'Atalanta', years: '2022–2023' }, { club: 'Man United', years: '2023–' }] },
   { name:'Alexis Sanchez',     country:'Chile',      countryCode:'CHI', position:'Forward',    club:'Udinese',          age:36, foot:'Right', flag:'🇨🇱', caps:162, goals:51,  totGoals:295,  marketValue:2,   clubs: [{ club: 'Cobreloa', years: '2005–2006' }, { club: 'Udinese', years: '2006–2011' }, { club: 'Colo-Colo (loan)', years: '2006–2007' }, { club: 'River Plate (loan)', years: '2007–2008' }, { club: 'Barcelona', years: '2011–2014' }, { club: 'Arsenal', years: '2014–2018' }, { club: 'Man United', years: '2018–2020' }, { club: 'Inter Milan', years: '2019–2022' }, { club: 'Marseille', years: '2022–2023' }, { club: 'Inter Milan', years: '2023–2024' }, { club: 'Udinese', years: '2024–' }] },
-  { name:'Federico Chiesa',    country:'Italy',      countryCode:'ITA', position:'Forward',    club:'Liverpool',        age:27, foot:'Right', flag:'🇮🇹', caps:55,  goals:9,   totGoals:95,   marketValue:30,  clubs: [{ club: 'Fiorentina', years: '2016–2020' }, { club: 'Juventus', years: '2020–2024' }, { club: 'Liverpool', years: '2024–' }] },
+  { name:'Federico Chiesa',    country:'Italy',      countryCode:'ITA', position:'Forward',    club:'Liverpool',        age:27, foot:'Right', flag:'🇮🇹', caps:55,  goals:9,   totGoals:95,   marketValue:30,  clubs: [{ club: 'Fiorentina', years: '2016–2020' }, { club: 'Juventus', years: '2020–2024' }, { club: 'Liverpool', years: '2024–' }] }
 
 // ─── 50 NEW PLAYERS (all at 2026 World Cup) ───────────────────────────────────
 
@@ -197,7 +197,8 @@ export const PLAYERS = [
 
 // BELGIUM
 ,{ name:'Amadou Onana',        country:'Belgium',    countryCode:'BEL', position:'Midfielder', club:'Aston Villa',      age:23, foot:'Right', flag:'🇧🇪', caps:28,  goals:2,   totGoals:15,   marketValue:55,  clubs: [{ club: 'Lille', years: '2021–2022' }, { club: 'Everton', years: '2022–2024' }, { club: 'Aston Villa', years: '2024–' }] }
-,{ name:'Lois Openda',         country:'Belgium',    countryCode:'BEL', position:'Forward',    club:'RB Leipzig',       age:24, foot:'Right', flag:'🇧🇪', caps:24,  goals:8,   totGoals:98,   marketValue:65,  clubs: [{ club: 'Club Brugge', years: '2019–2022' }, { club: 'Lens', years: '2022–2023' }, { club: 'RB Leipzig', years: '2023–' }] }
+// NOTE: Lois Openda transferred to Juventus (2025-26 season)
+,{ name:'Lois Openda',         country:'Belgium',    countryCode:'BEL', position:'Forward',    club:'Juventus',         age:24, foot:'Right', flag:'🇧🇪', caps:24,  goals:8,   totGoals:98,   marketValue:65,  clubs: [{ club: 'Club Brugge', years: '2019–2022' }, { club: 'Lens', years: '2022–2023' }, { club: 'RB Leipzig', years: '2023–2025' }, { club: 'Juventus', years: '2025–' }] }
 
 // NETHERLANDS
 ,{ name:'Tijjani Reijnders',   country:'Netherlands',countryCode:'NED', position:'Midfielder', club:'AC Milan',         age:26, foot:'Right', flag:'🇳🇱', caps:25,  goals:5,   totGoals:35,   marketValue:55,  clubs: [{ club: 'AZ Alkmaar', years: '2019–2023' }, { club: 'AC Milan', years: '2023–' }] }
@@ -222,8 +223,8 @@ export const PLAYERS = [
 
 // SWITZERLAND
 ,{ name:'Gregor Kobel',        country:'Switzerland',countryCode:'CHE', position:'Goalkeeper', club:'Borussia Dortmund',age:27, foot:'Right', flag:'🇨🇭', caps:28,  goals:0,   totGoals:0,    marketValue:35,  clubs: [{ club: 'Stuttgart', years: '2017–2021' }, { club: 'Borussia Dortmund', years: '2021–' }] }
-// NOTE: Akanji transferred from Man City to Inter Milan (2025)
-,{ name:'Manuel Akanji',       country:'Switzerland',countryCode:'CHE', position:'Defender',   club:'Inter Milan',      age:29, foot:'Right', flag:'🇨🇭', caps:55,  goals:2,   totGoals:10,   marketValue:40,  clubs: [{ club: 'Basel', years: '2015–2018' }, { club: 'Borussia Dortmund', years: '2018–2022' }, { club: 'Man City', years: '2022–2025' }, { club: 'Inter Milan', years: '2025–' }] }
+// NOTE: Akanji transferred from Man City to Inter Milan (2025); age corrected 29→30 (born 19 Jul 1995)
+,{ name:'Manuel Akanji',       country:'Switzerland',countryCode:'CHE', position:'Defender',   club:'Inter Milan',      age:30, foot:'Right', flag:'🇨🇭', caps:55,  goals:2,   totGoals:10,   marketValue:40,  clubs: [{ club: 'Basel', years: '2015–2018' }, { club: 'Borussia Dortmund', years: '2018–2022' }, { club: 'Man City', years: '2022–2025' }, { club: 'Inter Milan', years: '2025–' }] }
 ,{ name:'Breel Embolo',        country:'Switzerland',countryCode:'CHE', position:'Forward',    club:'Monaco',           age:27, foot:'Right', flag:'🇨🇭', caps:62,  goals:16,  totGoals:115,  marketValue:20,  clubs: [{ club: 'Basel', years: '2014–2016' }, { club: 'Schalke 04', years: '2016–2019' }, { club: 'Borussia Monchengladbach', years: '2019–2022' }, { club: 'Monaco', years: '2022–' }] }
 
 // AUSTRIA

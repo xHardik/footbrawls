@@ -7,7 +7,7 @@ export function usePlayerWikiPhoto(playerName) {
   useEffect(() => {
     if (!playerName) return;
 
-    const cacheKey = `wya_photo_${playerName}`;
+    const cacheKey = `wya_photo_v2_${playerName}`;
     const cached = localStorage.getItem(cacheKey);
 
     if (cached) {
@@ -48,7 +48,7 @@ export function useClubWikiLogo(clubName) {
   useEffect(() => {
     if (!clubName) return;
 
-    const cacheKey = `wya_logo_${clubName}`;
+    const cacheKey = `wya_logo_v2_${clubName}`;
     const cached = localStorage.getItem(cacheKey);
 
     if (cached) {

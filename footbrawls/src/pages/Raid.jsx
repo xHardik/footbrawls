@@ -1276,23 +1276,27 @@ export default function Raid() {
 
         {phase === 'starting_act2' && (
           <Section>
-            <InterstitialCard
-              icon={<SwordsIcon size={42} color={T.gold} />}
-              actLabel="Act 2 — Dribble"
-              title="GET READY"
-              subtitle="Act 2 is starting..."
-            />
+            <div style={{ textAlign:'center', padding:'60px 0' }}>
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-float 2s ease-in-out infinite' }}>
+                <SwordsIcon size={52} color={T.gold} />
+              </div>
+              <h2 style={{ fontFamily:"'Orbitron',sans-serif", color:T.text, fontSize:24, marginBottom:10 }}>GET READY</h2>
+              <p style={{ color:T.muted, fontSize:14, marginBottom:20 }}>Act 2 — Dribble Gauntlet is starting...</p>
+              <Spinner size={32} color={T.green} />
+            </div>
           </Section>
         )}
 
         {phase === 'starting_act3' && (
           <Section>
-            <InterstitialCard
-              icon={<SwordsIcon size={42} color={T.red} />}
-              actLabel="Act 3 — Penalty Nerve"
-              title="FINAL ACT"
-              subtitle="Act 3 is starting..."
-            />
+            <div style={{ textAlign:'center', padding:'60px 0' }}>
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-float 2s ease-in-out infinite' }}>
+                <SwordsIcon size={52} color={T.red} />
+              </div>
+              <h2 style={{ fontFamily:"'Orbitron',sans-serif", color:T.text, fontSize:24, marginBottom:10 }}>FINAL ACT</h2>
+              <p style={{ color:T.muted, fontSize:14, marginBottom:20 }}>Act 3 — Penalty Shootout is starting...</p>
+              <Spinner size={32} color={T.green} />
+            </div>
           </Section>
         )}
 

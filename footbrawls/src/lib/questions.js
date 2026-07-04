@@ -17,6 +17,11 @@ export const TRIVIA_QUESTIONS = [
   { id: 'h13', cat: 'history', q: 'Which club won five consecutive European Cups from 1956 to 1960?', opts: ['AC Milan', 'Benfica', 'Real Madrid', 'Internazionale'], ans: 2 },
   { id: 'h14', cat: 'history', q: "Leicester City's miraculous Premier League title was won in which season?", opts: ['2014-15', '2015-16', '2016-17', '2013-14'], ans: 1 },
   { id: 'h15', cat: 'history', q: 'Which Brazilian scored a hat-trick at the 1970 World Cup final?', opts: ['Pelé', 'Rivelino', 'Jairzinho', 'Tostão'], ans: 0 },
+  { id: 'h16', cat: 'history', q: 'Who scored the very first goal in FIFA World Cup history, at the 1930 tournament?', opts: ['Lucien Laurent', 'Guillermo Stábile', 'Bert Patenaude', 'Adalbert Deșu'], ans: 0 },
+  { id: 'h17', cat: 'history', q: 'What is the "Maracanazo," the result that stunned host nation Brazil at the 1950 World Cup?', opts: ["Brazil lost the decisive final match to Uruguay, 2-1", 'Brazil were disqualified for fielding an ineligible player', "The Maracanã's stands collapsed mid-tournament", 'Brazil forfeited the final after a walkout'], ans: 0 },
+  { id: 'h18', cat: 'history', q: 'Which goalkeeper remains the only one ever to win the Ballon d\'Or, back in 1963?', opts: ['Gianluigi Buffon', 'Lev Yashin', 'Iker Casillas', 'Manuel Neuer'], ans: 1 },
+  { id: 'h19', cat: 'history', q: 'Italy captain and goalkeeper Dino Zoff became the oldest player to win a World Cup in 1982, at what age?', opts: ['38', '39', '40', '42'], ans: 2 },
+  { id: 'h20', cat: 'history', q: 'At what age did Pelé become the youngest player to win a World Cup, with Brazil in 1958?', opts: ['16', '17', '18', '19'], ans: 1 },
 
   // TRANSFERS
   { id: 't01', cat: 'transfer', q: 'What was the world-record transfer fee when Neymar moved from Barcelona to PSG in 2017?', opts: ['€150m', '€180m', '€200m', '€222m'], ans: 3 },
@@ -31,6 +36,10 @@ export const TRIVIA_QUESTIONS = [
   { id: 't10', cat: 'transfer', q: 'Which club signed Karim Benzema after he left Real Madrid in 2023?', opts: ['PSG', 'Inter Miami', 'Al-Ittihad', 'Al-Nassr'], ans: 2 },
   { id: 't11', cat: 'transfer', q: 'Which South American club sold Vinicius Jr. to Real Madrid when he was just 16?', opts: ['Santos', 'Flamengo', 'Palmeiras', 'Cruzeiro'], ans: 1 },
   { id: 't12', cat: 'transfer', q: 'Zlatan Ibrahimović joined AC Milan permanently in 2020 from which club?', opts: ['LA Galaxy', 'PSG', 'Manchester United', 'Inter Milan'], ans: 2 },
+  { id: 't13', cat: 'transfer', q: "As of 2026, whose 2017 transfer to PSG remains the outright world-record transfer fee ever paid for a player?", opts: ['Kylian Mbappé', 'Neymar', 'Cristiano Ronaldo', 'Ousmane Dembélé'], ans: 1 },
+  { id: 't14', cat: 'transfer', q: 'Who is the most expensive goalkeeper in football history, moving to Chelsea for around €80m in 2018?', opts: ['Alisson Becker', 'Ederson', 'Kepa Arrizabalaga', 'Gianluigi Donnarumma'], ans: 2 },
+  { id: 't15', cat: 'transfer', q: "Which player holds the world-record transfer fee for a defender, having joined Manchester City from RB Leipzig?", opts: ['Virgil van Dijk', 'Joško Gvardiol', 'Harry Maguire', 'Wesley Fofana'], ans: 1 },
+  { id: 't16', cat: 'transfer', q: 'Which club did Erling Haaland leave to join Manchester City in 2022?', opts: ['RB Salzburg', 'Molde', 'Borussia Dortmund', 'Bayern Munich'], ans: 2 },
 
   // RECORDS
   { id: 'r01', cat: 'records', q: "How many Ballon d'Or awards has Lionel Messi won in total as of 2024?", opts: ['6', '7', '8', '9'], ans: 2 },
@@ -45,6 +54,12 @@ export const TRIVIA_QUESTIONS = [
   { id: 'r10', cat: 'records', q: 'Bayer Leverkusen went unbeaten for how many Bundesliga games in 2023-24?', opts: ['32', '34', '36', '38'], ans: 1 },
   { id: 'r11', cat: 'records', q: "Lamine Yamal's goal at Euro 2024 made him the youngest scorer in Euros history, at what age?", opts: ['15', '16', '17', '18'], ans: 1 },
   { id: 'r12', cat: 'records', q: 'What is the highest number of goals scored in a single UEFA Champions League group stage game?', opts: ['10', '11', '12', '14'], ans: 2 },
+  { id: 'r13', cat: 'records', q: "Who holds the men's record for most international appearances, having reached 231 caps for Portugal?", opts: ['Lionel Messi', 'Bader Al-Mutawa', 'Cristiano Ronaldo', 'Luka Modrić'], ans: 2 },
+  { id: 'r14', cat: 'records', q: 'Which player holds the overall record for most international caps in football history (men\'s or women\'s), with 354 appearances for the USA?', opts: ['Christine Sinclair', 'Kristine Lilly', 'Carli Lloyd', 'Formiga'], ans: 1 },
+  { id: 'r15', cat: 'records', q: "Who scored the fastest goal in men's World Cup history, netting after just 11 seconds against South Korea in 2002?", opts: ['Václav Mašek', 'Hakan Şükür', 'Bryan Robson', 'Clint Dempsey'], ans: 1 },
+  { id: 'r16', cat: 'records', q: 'Which country recorded the biggest official win in men\'s international football history, beating American Samoa 31-0 in 2001?', opts: ['Brazil', 'Germany', 'Australia', 'Japan'], ans: 2 },
+  { id: 'r17', cat: 'records', q: 'Who is the all-time top scorer in UEFA Champions League history, with 140 goals?', opts: ['Lionel Messi', 'Robert Lewandowski', 'Cristiano Ronaldo', 'Karim Benzema'], ans: 2 },
+  { id: 'r18', cat: 'records', q: 'Robert Lewandowski became just the third player ever to score 100 UEFA Champions League goals — after Ronaldo and which other player?', opts: ['Karim Benzema', 'Lionel Messi', 'Thomas Müller', 'Raúl'], ans: 1 },
 
   // TACTICS
   { id: 'tc01', cat: 'tactics', q: 'What does the "False 9" position refer to in modern football?', opts: ['A goalkeeper who plays outfield', 'A striker who drops deep to create space', 'A winger who cuts inside', 'A defender who pushes forward'], ans: 1 },
@@ -57,6 +72,9 @@ export const TRIVIA_QUESTIONS = [
   { id: 'tc08', cat: 'tactics', q: 'In a 4-3-3, how many defensive players are there (excluding goalkeeper)?', opts: ['3', '4', '5', '6'], ans: 1 },
   { id: 'tc09', cat: 'tactics', q: 'What is the "pressing trap" tactic designed to do?', opts: ['Draw the opponent offside', 'Force the opponent into a predetermined zone to win the ball', 'Tire out the opponent by running without the ball', 'Create 2v1 situations on the wings'], ans: 1 },
   { id: 'tc10', cat: 'tactics', q: 'Which Italian club pioneered the use of a "three-at-the-back" system in the late 1980s and early 1990s?', opts: ['Juventus', 'Inter Milan', 'AC Milan', 'Roma'], ans: 2 },
+  { id: 'tc11', cat: 'tactics', q: 'What term describes a modern goalkeeper who acts almost like an extra outfield player, sweeping up well outside the box behind a high defensive line?', opts: ['Sweeper-keeper', 'Libero', 'Regista', 'Trequartista'], ans: 0 },
+  { id: 'tc12', cat: 'tactics', q: 'What Italian tactical term describes a deep-lying playmaker who dictates the tempo of play from a withdrawn midfield position?', opts: ['Trequartista', 'Regista', 'Mezzala', 'Incursore'], ans: 1 },
+  { id: 'tc13', cat: 'tactics', q: 'The audacious "Panenka" penalty — a soft chip down the middle — is named after the player who famously scored one in a major final. In what competition and year?', opts: ['1974 World Cup final', '1976 Euro final', '1982 World Cup final', '1988 Euro final'], ans: 1 },
 
   // PLAYERS
   { id: 'p01', cat: 'players', q: 'Which country does Rodri (Rodrigo Hernández) play international football for?', opts: ['Argentina', 'Portugal', 'Spain', 'Brazil'], ans: 2 },
@@ -74,6 +92,11 @@ export const TRIVIA_QUESTIONS = [
   { id: 'p13', cat: 'players', q: 'Joshua Kimmich can play right-back, but which position does he predominantly fill at Bayern Munich?', opts: ['Attacking midfielder', 'Left winger', 'Defensive midfielder', 'Centre-back'], ans: 2 },
   { id: 'p14', cat: 'players', q: 'Lamine Yamal represents which country?', opts: ['Morocco', 'France', 'Spain', 'Algeria'], ans: 2 },
   { id: 'p15', cat: 'players', q: 'Who was named Player of the Tournament at the 2022 FIFA World Cup?', opts: ['Kylian Mbappé', 'Lionel Messi', 'Julián Álvarez', 'Luka Modric'], ans: 1 },
+  { id: 'p16', cat: 'players', q: 'Which player is the only goalkeeper ever to have won the Ballon d\'Or, back in 1963?', opts: ['Dino Zoff', 'Lev Yashin', 'Gordon Banks', 'Peter Shilton'], ans: 1 },
+  { id: 'p17', cat: 'players', q: 'Who captained Italy to the 1982 World Cup title as goalkeeper, becoming, at 40, the oldest player to win the World Cup?', opts: ['Dino Zoff', 'Walter Zenga', 'Gianluigi Buffon', 'Giovanni Trapattoni'], ans: 0 },
+  { id: 'p18', cat: 'players', q: 'Which Chilean player received the first-ever red card in FIFA World Cup history, sent off against West Germany in 1974?', opts: ['Alexis Sánchez', 'Carlos Caszely', 'Elías Figueroa', 'Iván Zamorano'], ans: 1 },
+  { id: 'p19', cat: 'players', q: 'French forward Lucien Laurent is remembered in football history for what feat?', opts: ['Scoring the first hat-trick in World Cup history', 'Scoring the first-ever FIFA World Cup goal, in 1930', 'Scoring the first penalty in a World Cup final', 'Scoring the first own goal in World Cup history'], ans: 1 },
+  { id: 'p20', cat: 'players', q: 'Robert Lewandowski became the first Polish player to achieve what feat in UEFA Champions League history, doing so with Bayern Munich in 2019-20?', opts: ['Win the competition as captain', 'Finish as the competition\'s outright top scorer in a season', 'Score in every group-stage game', 'Play for four different clubs in the competition'], ans: 1 },
 
   // STADIUMS
   { id: 's01', cat: 'stadiums', q: 'In which city is the Santiago Bernabéu stadium located?', opts: ['Barcelona', 'Seville', 'Valencia', 'Madrid'], ans: 3 },
@@ -86,6 +109,9 @@ export const TRIVIA_QUESTIONS = [
   { id: 's08', cat: 'stadiums', q: 'Which stadium has the largest capacity in world football?', opts: ['Camp Nou', 'Wembley', 'Narendra Modi Stadium', 'Rungrado 1st of May'], ans: 3 },
   { id: 's09', cat: 'stadiums', q: 'Anfield is home to which Premier League club?', opts: ['Manchester City', 'Everton', 'Liverpool', 'Newcastle United'], ans: 2 },
   { id: 's10', cat: 'stadiums', q: 'Where did the 2023 UEFA Champions League final take place?', opts: ['Wembley', 'Atatürk Olympic Stadium', 'Olimpico', 'Stade de France'], ans: 0 },
+  { id: 's11', cat: 'stadiums', q: 'What is the official capacity of Wembley Stadium, home of the England national team?', opts: ['Around 60,000', 'Around 75,000', 'Around 90,000', 'Around 100,000'], ans: 2 },
+  { id: 's12', cat: 'stadiums', q: 'San Siro (officially the Stadio Giuseppe Meazza) in Milan is the shared home of which two clubs?', opts: ['Inter Milan and Juventus', 'AC Milan and Inter Milan', 'AC Milan and Roma', 'Inter Milan and Napoli'], ans: 1 },
+  { id: 's13', cat: 'stadiums', q: "Which stadium, home to the Bolivian national team, is one of the highest-altitude venues in world football at roughly 3,600 metres above sea level?", opts: ['Estadio Nacional (Lima)', 'Estadio Hernando Siles (La Paz)', 'Estadio Monumental (Lima)', 'Estadio Centenario (Montevideo)'], ans: 1 },
 
   // MANAGERS
   { id: 'm01', cat: 'managers', q: 'Which manager led Liverpool to Champions League glory in 2019?', opts: ['Brendan Rodgers', 'Rafa Benítez', 'Jürgen Klopp', 'Kenny Dalglish'], ans: 2 },
@@ -95,9 +121,12 @@ export const TRIVIA_QUESTIONS = [
   { id: 'm05', cat: 'managers', q: 'Which manager guided Argentina to their 2022 World Cup triumph?', opts: ['Gerardo Martino', 'Edgardo Bauza', 'Lionel Scaloni', 'Jorge Sampaoli'], ans: 2 },
   { id: 'm06', cat: 'managers', q: 'Xabi Alonso led Bayer Leverkusen to their first-ever Bundesliga title in which season?', opts: ['2022-23', '2023-24', '2024-25', '2021-22'], ans: 1 },
   { id: 'm07', cat: 'managers', q: 'Who managed France when they won the 2018 World Cup?', opts: ['Raymond Domenech', 'Laurent Blanc', 'Didier Deschamps', 'Guy Roux'], ans: 2 },
-  { id: 'm08', cat: 'managers', q: 'Carlo Ancelotti has won the Champions League with how many different clubs?', opts: ['2', '3', '4', '1'], ans: 1 },
+  { id: 'm08', cat: 'managers', q: 'Carlo Ancelotti has won a record five UEFA Champions League titles — but with how many different clubs?', opts: ['2', '3', '4', '1'], ans: 0 },
   { id: 'm09', cat: 'managers', q: 'Which manager\'s "Gegenpressing" system made Liverpool into Premier League and European champions?', opts: ['Pep Guardiola', 'Jürgen Klopp', 'Thomas Tuchel', 'Roberto Mancini'], ans: 1 },
   { id: 'm10', cat: 'managers', q: 'Mikel Arteta played for Arsenal and managed which club before returning to the Emirates?', opts: ['Everton', 'Manchester City', 'PSG', 'Villarreal'], ans: 1 },
+  { id: 'm11', cat: 'managers', q: 'Which two clubs has Carlo Ancelotti won the UEFA Champions League with?', opts: ['AC Milan and Real Madrid', 'Chelsea and Real Madrid', 'AC Milan and Bayern Munich', 'Real Madrid and Napoli'], ans: 0 },
+  { id: 'm12', cat: 'managers', q: 'Carlo Ancelotti became the first manager in history to win a league title in each of which set of leagues?', opts: ["Europe's 'big five' domestic leagues", 'Every UEFA confederation league', 'Both the Premier League and MLS', 'All four English divisions'], ans: 0 },
+  { id: 'm13', cat: 'managers', q: 'Which manager has won the Champions League with two different clubs by winning it twice with Porto/Inter, twice with Milan/Real, or similar exactly-twice-each double-club feats — a club shared by seven managers in competition history?', opts: ['José Mourinho (Porto & Inter Milan)', 'Carlo Ancelotti (only with Milan)', 'Pep Guardiola (only with Barcelona)', 'Zinedine Zidane (only with Real Madrid)'], ans: 0 },
 
   // RULES
   { id: 'ru01', cat: 'rules', q: 'How many substitutes is a team allowed to use in a standard FIFA-approved match?', opts: ['3', '4', '5', '6'], ans: 2 },
@@ -110,6 +139,9 @@ export const TRIVIA_QUESTIONS = [
   { id: 'ru08', cat: 'rules', q: 'A player receives a straight red card. How many matches is the standard suspension?', opts: ['1', '2', '3', '5'], ans: 2 },
   { id: 'ru09', cat: 'rules', q: 'When was the back-pass rule introduced — making it illegal for a goalkeeper to pick up a deliberate pass from a teammate?', opts: ['1988', '1990', '1992', '1994'], ans: 2 },
   { id: 'ru10', cat: 'rules', q: 'How large is a standard football goal (in metres, width × height)?', opts: ['6.4m × 2.2m', '7.32m × 2.44m', '8m × 2.5m', '7m × 2.4m'], ans: 1 },
+  { id: 'ru11', cat: 'rules', q: 'Yellow and red disciplinary cards were introduced to football at which World Cup?', opts: ['1966', '1970', '1974', '1978'], ans: 1 },
+  { id: 'ru12', cat: 'rules', q: 'In what year was the offside law changed to require only two defenders (rather than three) between the attacker and the goal line?', opts: ['1907', '1925', '1938', '1950'], ans: 1 },
+  { id: 'ru13', cat: 'rules', q: 'UEFA abolished its long-standing "away goals" rule for two-legged club competition ties in which year?', opts: ['2018', '2019', '2020', '2021'], ans: 3 },
 ];
 
 export const RAPID_FIRE_QUESTIONS = [
@@ -124,6 +156,9 @@ export const RAPID_FIRE_QUESTIONS = [
   { q: 'Wataru Endō captains which national side?', type: 'country', opts: ['South Korea', 'China', 'Japan', 'Australia'], ans: 2 },
   { q: 'Federico Valverde was born in Montevideo and represents…', type: 'country', opts: ['Argentina', 'Uruguay', 'Paraguay', 'Chile'], ans: 1 },
   { q: 'Brahim Díaz switched international allegiance from Spain to which country?', type: 'country', opts: ['Algeria', 'Tunisia', 'Senegal', 'Morocco'], ans: 3 },
+  { q: 'Erling Haaland represents which national team?', type: 'country', opts: ['Sweden', 'Denmark', 'Norway', 'Iceland'], ans: 2 },
+  { q: 'Bukayo Saka represents which national team?', type: 'country', opts: ['Nigeria', 'England', 'Ghana', 'Ireland'], ans: 1 },
+  { q: 'Which country does Pedri represent internationally?', type: 'country', opts: ['Portugal', 'Spain', 'Morocco', 'France'], ans: 1 },
 
   // Club / transfer
   { q: 'Erling Haaland left Borussia Dortmund for Manchester City in which year?', type: 'club', opts: ['2021', '2022', '2023', '2024'], ans: 1 },
@@ -138,6 +173,8 @@ export const RAPID_FIRE_QUESTIONS = [
   { q: 'Which club did Pedri leave to join Barcelona as a 17-year-old?', type: 'club', opts: ['Villarreal', 'Las Palmas', 'Sporting Gijón', 'Granada'], ans: 1 },
   { q: 'Lamine Yamal is a product of which club\'s academy?', type: 'club', opts: ['Real Madrid', 'Atlético Madrid', 'Espanyol', 'Barcelona'], ans: 3 },
   { q: 'Which English club did Ivan Toney leave to join Al-Ahli in 2024?', type: 'club', opts: ['Crystal Palace', 'Brentford', 'Nottingham Forest', 'Fulham'], ans: 1 },
+  { q: 'Which boyhood club did Neymar rejoin in 2025, having left as a teenager back in 2013?', type: 'club', opts: ['Corinthians', 'Flamengo', 'Santos', 'São Paulo'], ans: 2 },
+  { q: 'Which club did Kevin De Bruyne leave as a free agent in 2025 after nearly a decade there?', type: 'club', opts: ['Chelsea', 'Wolfsburg', 'Manchester City', 'Werder Bremen'], ans: 2 },
 
   // Position / role
   { q: 'What position does Trent Alexander-Arnold typically play for Liverpool?', type: 'position', opts: ['Left-back', 'Centre-back', 'Right-back', 'Defensive midfielder'], ans: 2 },
@@ -148,6 +185,8 @@ export const RAPID_FIRE_QUESTIONS = [
   { q: 'Rúben Dias is an elite practitioner of which position?', type: 'position', opts: ['Goalkeeper', 'Defensive midfielder', 'Centre-back', 'Right-back'], ans: 2 },
   { q: 'Bukayo Saka usually starts from which flank for Arsenal?', type: 'position', opts: ['Left wing', 'Right wing', 'Left-back', 'Centre-forward'], ans: 1 },
   { q: 'What is Casemiro\'s primary position?', type: 'position', opts: ['Centre-back', 'Right midfielder', 'Defensive midfielder', 'Attacking midfielder'], ans: 2 },
+  { q: 'What position does Virgil van Dijk play?', type: 'position', opts: ['Right-back', 'Defensive midfielder', 'Centre-back', 'Goalkeeper'], ans: 2 },
+  { q: 'What is Alisson Becker\'s position?', type: 'position', opts: ['Centre-back', 'Goalkeeper', 'Right-back', 'Defensive midfielder'], ans: 1 },
 
   // Facts / stats / records
   { q: 'How many Ballon d\'Or awards has Lionel Messi won as of 2024?', type: 'fact', opts: ['6', '7', '8', '9'], ans: 2 },
@@ -168,6 +207,11 @@ export const RAPID_FIRE_QUESTIONS = [
   { q: 'Lamine Yamal became the youngest scorer in Euro history at what age at Euro 2024?', type: 'fact', opts: ['16', '17', '18', '15'], ans: 0 },
   { q: 'Which club did Bayer Leverkusen go the entire 2023-24 Bundesliga season unbeaten to deny?', type: 'fact', opts: ['Bayern Munich', 'Borussia Dortmund', 'RB Leipzig', 'Stuttgart'], ans: 0 },
   { q: 'How many times has Cristiano Ronaldo won the UEFA Champions League?', type: 'fact', opts: ['4', '5', '6', '7'], ans: 1 },
+  { q: 'Neymar\'s move to PSG in 2017 remains the outright world-record football transfer fee — how much was it?', type: 'fact', opts: ['€180m', '€200m', '€222m', '€250m'], ans: 2 },
+  { q: 'Which goalkeeper is the only one ever to win the Ballon d\'Or?', type: 'fact', opts: ['Gianluigi Buffon', 'Iker Casillas', 'Manuel Neuer', 'Lev Yashin'], ans: 3 },
+  { q: 'Who scored the first-ever goal in FIFA World Cup history, in 1930?', type: 'fact', opts: ['Guillermo Stábile', 'Lucien Laurent', 'Bert Patenaude', 'Héctor Castro'], ans: 1 },
+  { q: 'Which country recorded a staggering 31-0 win in World Cup qualifying in 2001?', type: 'fact', opts: ['Germany', 'Australia', 'Brazil', 'Iran'], ans: 1 },
+  { q: 'Who is the all-time top scorer in UEFA Champions League history?', type: 'fact', opts: ['Lionel Messi', 'Cristiano Ronaldo', 'Robert Lewandowski', 'Karim Benzema'], ans: 1 },
 ];
 
 export const TOP10_QUESTIONS = [
@@ -297,6 +341,22 @@ export const TOP10_QUESTIONS = [
       { name: "Jairzinho", value: "33 goals", accepts: ["jairzinho"] },
       { name: "Ronaldinho", value: "33 goals", accepts: ["ronaldinho", "ronaldinho gaucho"] },
       { name: "Ademir", value: "32 goals", accepts: ["ademir"] }
+    ]
+  },
+  {
+    id: 't10_09',
+    question: "All-Time Top Scorers in UEFA Champions League History (as of mid-2026)",
+    answers: [
+      { name: "Cristiano Ronaldo", value: "140 goals", accepts: ["cristiano ronaldo", "ronaldo", "cr7"] },
+      { name: "Lionel Messi", value: "129 goals", accepts: ["lionel messi", "messi", "leo messi"] },
+      { name: "Robert Lewandowski", value: "109 goals", accepts: ["robert lewandowski", "lewandowski", "lewa"] },
+      { name: "Karim Benzema", value: "90 goals", accepts: ["karim benzema", "benzema"] },
+      { name: "Raúl", value: "71 goals", accepts: ["raul", "raúl", "raul gonzalez"] },
+      { name: "Kylian Mbappé", value: "70 goals", accepts: ["kylian mbappe", "mbappe", "mbappé"] },
+      { name: "Erling Haaland", value: "57 goals", accepts: ["erling haaland", "haaland"] },
+      { name: "Thomas Müller", value: "57 goals", accepts: ["thomas muller", "muller", "thomas müller", "müller"] },
+      { name: "Ruud van Nistelrooy", value: "56 goals", accepts: ["ruud van nistelrooy", "van nistelrooy"] },
+      { name: "Harry Kane", value: "54 goals", accepts: ["harry kane", "kane"] }
     ]
   }
 ];

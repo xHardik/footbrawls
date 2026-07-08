@@ -643,9 +643,10 @@ export default function Raid() {
   useEffect(() => { injectStyles(); }, []);
 
   
-  
+  const finalizingRef = useRef(false);
   const finalizeRaidFromState = useCallback(async (currentActs, raidOutcome, currentMatch, currentRaidType, scores) => {
-    if (finalizing) return;
+    if (finalizingRef.current) return;
+    finalizingRef.current = true;
     setFinalizing(true);
     try {
       if (currentRaidType === 'challenge') {
@@ -702,7 +703,7 @@ export default function Raid() {
       });
       setFinalizeResult({ ...res, isBuddyMvp });
     } catch (err) { console.error('[Raid] finalize:', err); }
-    finally { setFinalizing(false); }
+    finally { setFinalizing(false); finalizingRef.current = false; }
   }, [user]);
 
   
@@ -1452,7 +1453,7 @@ export default function Raid() {
             {outcome==='win' && !isTraining && raidType==='challenge' && (
               <div style={{ position:'relative', zIndex:2 }}>
                 <CastleDamageVisual
-                  damagePct={RAID_TYPES[raidType]?.castleDamagePct ?? 0.02}
+                  damagePct={RAID_TYPES[raidType]?.castleDamagePct ?? 0.03}
                   rivalName={match?.rivals?.[0]?.homeCountry}
                 />
               </div>

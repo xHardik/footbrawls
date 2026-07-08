@@ -36,7 +36,7 @@ const XP_REWARDS = {
   prediction_score:        0,
   // Raids
   raid_win_normal:         100,
-  raid_win_challenge:      200,
+  raid_win_challenge:      300,
   raid_loss:               30,
   raid_mvp:                50,
   // Social
@@ -83,7 +83,8 @@ export async function awardXP(userId, source, opts = {}) {
           let normalized = rawScore;
 
           if (session.sessionType === 'raid') {
-            if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
+            if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete' ||
+                source === 'whoareya_loss' || source === 'wordle_loss' || source === 'higherLower_loss' || source === 'transferTrail_loss' || source === 'top10_loss' || source === 'dailytrivia_loss') {
               normalized = normScore(source, opts);
               await updateDoc(sessionRef, {
                 [`scores.${userId}.act1`]: {
@@ -118,7 +119,8 @@ export async function awardXP(userId, source, opts = {}) {
               currentActVal++;
             }
             let normalized = rawScore;
-            if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete') {
+            if (source === 'whoareya_correct' || source === 'wordle_correct' || source === 'higherLower_correct' || source === 'transferTrail_correct' || source === 'top10_complete' || source === 'dailytrivia_complete' ||
+                source === 'whoareya_loss' || source === 'wordle_loss' || source === 'higherLower_loss' || source === 'transferTrail_loss' || source === 'top10_loss' || source === 'dailytrivia_loss') {
               normalized = normScore(source, opts);
             } else if (source === 'dribble_correct') {
               normalized = Math.min(5, Math.max(0, Math.round(rawScore / 5))) * 20;

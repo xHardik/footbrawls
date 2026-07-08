@@ -85,7 +85,7 @@ async function performClientFinalizeFallback(payload) {
           const dLevel = dData.guildLevel || 1;
           const dCap = getHPCap(dLevel);
           // Normal Raid deals 0% castle damage, Challenge Raid deals 2%
-          const dmgPct = raidType === 'challenge' ? 0.02 : 0.00;
+          const dmgPct = raidType === 'challenge' ? 0.03 : 0.00;
           damageDealt = Math.floor(dCap * dmgPct);
           const rawHP = dData.castleHP || 0;
           dUpdate.castleHP = Math.max(0, rawHP - damageDealt);

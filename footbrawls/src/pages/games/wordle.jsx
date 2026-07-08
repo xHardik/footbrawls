@@ -870,6 +870,9 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         if (activeId) {
           localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
         }
+        setTimeout(() => {
+          navigate('/raid');
+        }, 2000);
       } else {
         
         if (won) {
@@ -1202,24 +1205,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         
         {!gameOver && (
           <div className="wdl-controls">
-            {isRaid ? (
+            {isVsFriends ? (
               <button 
                 className="wdl-btn wdl-btn-raid" 
-                onClick={async () => {
-                  const activeId = localStorage.getItem('active_game_session_id');
-                  if (activeId) {
-                    const snap = await getDoc(doc(db, 'gameSessions', activeId));
-                    if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                      navigate('/vs-friends');
-                      return;
-                    }
-                  }
-                  navigate('/raid');
-                }}
+                onClick={() => navigate('/vs-friends')}
               >
                 ⚔️ Return to Lobby
               </button>
-            ) : (
+            ) : isRaid ? null : (
               <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
             )}
           </div>
@@ -1261,25 +1254,15 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
 
             <div className="wdl-result-actions">
-              {isRaid ? (
+              {isVsFriends ? (
                 <button 
                   className="wdl-btn wdl-btn-raid" 
-                  onClick={async () => {
-                    const activeId = localStorage.getItem('active_game_session_id');
-                    if (activeId) {
-                      const snap = await getDoc(doc(db, 'gameSessions', activeId));
-                      if (snap.exists() && snap.data().sessionType === 'vs_friends') {
-                        navigate('/vs-friends');
-                        return;
-                      }
-                    }
-                    navigate('/raid');
-                  }} 
+                  onClick={() => navigate('/vs-friends')} 
                   style={{ width: '100%' }}
                 >
                   ⚔️ Return to Lobby
                 </button>
-              ) : (
+              ) : isRaid ? null : (
                 <button 
                   className="wdl-btn" 
                   onClick={handleBack} 

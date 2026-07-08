@@ -302,6 +302,7 @@ function injectStyles() {
     @keyframes raid-shimmer{ 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
     @keyframes raid-orb    { 0%,100%{transform:scale(1) translate(0,0)} 33%{transform:scale(1.15) translate(20px,-15px)} 66%{transform:scale(.9) translate(-10px,20px)} }
     @keyframes raid-bar    { from{width:0} to{width:var(--w,100%)} }
+    @keyframes raid-crown-bob { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-4px) rotate(6deg)} }
 
     .raid-btn-primary {
       position:relative; overflow:hidden;
@@ -632,8 +633,6 @@ export default function Raid() {
   const [hasFinishedAct3, setHasFinishedAct3] = useState(false);
   const [finalizeResult, setFinalizeResult]   = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(() => localStorage.getItem('active_game_session_id'));
-  const [readyAct2, setReadyAct2]             = useState({});
-  const [readyAct3, setReadyAct3]             = useState({});
   const [toast, setToast]                     = useState("");
   const [showHelp, setShowHelp]               = useState(false);
   const [castleRaidEntries, setCastleRaidEntries] = useState(() => {
@@ -642,18 +641,6 @@ export default function Raid() {
   });
 
   useEffect(() => { injectStyles(); }, []);
-
-  
-  const handleReadyAct2 = async () => {
-    if (!activeSessionId) return;
-    try { await updateDoc(doc(db,'gameSessions',activeSessionId),{[`readyAct2.${user.userId}`]:true}); }
-    catch(e) { console.error('[Raid] Ready Act 2:', e); }
-  };
-  const handleReadyAct3 = async () => {
-    if (!activeSessionId) return;
-    try { await updateDoc(doc(db,'gameSessions',activeSessionId),{[`readyAct3.${user.userId}`]:true}); }
-    catch(e) { console.error('[Raid] Ready Act 3:', e); }
-  };
 
   
   
@@ -672,9 +659,15 @@ export default function Raid() {
 
       
       const uScores = scores?.[user.userId] || {};
-      const userScore = (uScores.act1?.normalized || 0) +
-        ((uScores.act2?.wins || 0) * 20) +
-        ((uScores.act3?.goals || 0) * 20);
+      const calculateScore = (s) => {
+        const act1 = s.act1?.normalized || 0;
+        let act2 = s.act2?.wins || 0;
+        if (act2 <= 5) act2 *= 20;
+        let act3 = s.act3?.goals || 0;
+        if (act3 <= 5) act3 *= 20;
+        return act1 + act2 + act3;
+      };
+      const userScore = calculateScore(uScores);
 
       let buddyScore = 0;
       if (currentMatch?.buddy?.userId && currentMatch.buddy.userId !== user.userId) {
@@ -812,11 +805,6 @@ export default function Raid() {
         setHasFinishedAct2(!!s.scores?.[user.userId]?.act2||l2);
         setHasFinishedAct3(!!s.scores?.[user.userId]?.act3||l3);
 
-        const r2 = s.readyAct2||{}, r3 = s.readyAct3||{};
-        setReadyAct2(r2); setReadyAct3(r3);
-        const y2 = r2[user.userId]===true, b2 = isBotBuddy||(r2[buddyObj?.userId]===true);
-        const y3 = r3[user.userId]===true, b3 = isBotBuddy||(r3[buddyObj?.userId]===true);
-
         const myAct1Done = !!s.scores?.[user.userId]?.act1 || l1;
         const myAct2Done = !!s.scores?.[user.userId]?.act2 || l2;
         const myAct3Done = !!s.scores?.[user.userId]?.act3 || l3;
@@ -848,6 +836,7 @@ export default function Raid() {
         } else if (!myAct3Done) {
           setPhase('starting_act3');
         } else {
+          
           setPhase('waiting_teammate');
         }
       } catch(err) {
@@ -873,10 +862,12 @@ export default function Raid() {
     return () => { unsub(); window.removeEventListener('beforeunload',handleUnload); };
   }, [activeSessionId, user, navigate, finalizeRaidFromState]);
 
+  
+  const act1Route = act1Game?.route;
   useEffect(() => {
     let t;
-    if (phase === 'matched' && act1Game) {
-      t = setTimeout(() => navigate(act1Game.route), 2200);
+    if (phase === 'matched' && act1Route) {
+      t = setTimeout(() => navigate(act1Route), 2200);
     } else if (phase === 'starting_act2') {
       t = setTimeout(() => navigate('/games/dribble'), 1200);
     } else if (phase === 'starting_act3') {
@@ -885,7 +876,7 @@ export default function Raid() {
     return () => {
       if (t) clearTimeout(t);
     };
-  }, [phase, navigate, act1Game]);
+  }, [phase, navigate, act1Route]);
 
   const startSearch = useCallback(async type => {
     if (!user) return;
@@ -1309,169 +1300,138 @@ export default function Raid() {
         )}
 
         
-        {phase === 'act2_interstitial' && match && (
-          <Section>
-            <InterstitialCard
-              icon={<BoltIcon size={44} color={T.gold} />}
-              actLabel="Act 1 Complete"
-              actWinners={actWinners}
-              upToAct={1}
-              title="Act 2 — Dribble Gauntlet"
-              subtitle="Dribble past defenders and slot it past the keeper."
-              breakdown={{
-                label:'Act 1 point breakdown',
-                yourTotal:acts.act1?.yourTotal,
-                rivalTotal:acts.act1?.rivalTotal,
-                yourRows:[
-                  { name:`You (${user.nickname})`, score:acts.act1?.playerScore },
-                  ...(raidType !== 'training' ? [{ name:match.buddy?.nickname || 'Buddy', score:acts.act1?.buddyScore }] : []),
-                ],
-                rivalNote: raidType === 'training' ? `Score of ${match.rivals?.[0]?.nickname||'Rival'}` : `Combined score of ${match.rivals?.[0]?.nickname||'Rival 1'} & ${match.rivals?.[1]?.nickname||'Rival 2'}`,
-              }}
-              isFinished={hasFinishedAct2}
-              isBotMatch={match.isBotMatch}
-              isUserReady={readyAct2[user.userId]===true}
-              isBuddyReady={match.isBotMatch || readyAct2[match.buddy?.userId]===true}
-              onReady={handleReadyAct2}
-              onNavigate={() => navigate('/games/dribble')}
-              routeLabel="Stage 2 — Dribble"
-            />
-          </Section>
-        )}
-
-        
-        {phase === 'act3_interstitial' && match && (
-          <Section>
-            <InterstitialCard
-              icon={<ShieldIcon size={44} color={T.blue} />}
-              actLabel="Act 2 Complete"
-              actWinners={actWinners}
-              upToAct={2}
-              title="Act 3 — Penalty Shootout"
-              subtitle="The high-stakes 5-kick final showdown."
-              breakdown={{
-                label:'Act 2 point breakdown',
-                yourTotal:(acts.act2?.yourTotal||0)*20,
-                rivalTotal:(acts.act2?.rivalTotal||0)*20,
-                yourRows:[
-                  { name:`You (${user.nickname})`, score:(acts.act2?.playerRoundWins||0)*20 },
-                  ...(raidType !== 'training' ? [{ name:match.buddy?.nickname || 'Buddy', score:(acts.act2?.buddyRoundWins||0)*20 }] : []),
-                ],
-                rivalNote: raidType === 'training' ? 'Defenders bypassed by opponent' : 'Defenders bypassed by your opponents',
-              }}
-              isFinished={hasFinishedAct3}
-              isBotMatch={match.isBotMatch}
-              isUserReady={readyAct3[user.userId]===true}
-              isBuddyReady={match.isBotMatch || readyAct3[match.buddy?.userId]===true}
-              onReady={handleReadyAct3}
-              onNavigate={() => navigate('/games/penaltynerve')}
-              routeLabel="Stage 3 — Penalty Shootout"
-            />
-          </Section>
-        )}
-
-        
         {phase === 'results' && (
           <Section style={{ position:'relative' }}>
             <ParticleEffect type={outcome === 'win' ? 'win' : 'loss'} />
 
             
             <div style={{
-              position:'relative', zIndex:2,
-              textAlign:'center', padding:'24px 20px',
+              position:'relative', zIndex:2, textAlign:'center', padding:'28px 20px',
               border:`2px solid ${outcome==='win' ? T.green : outcome==='loss' ? T.red : T.muted}`,
               borderRadius:20, marginBottom:20,
-              background:outcome==='win' ? `${T.green}08` : `${T.red}08`,
+              background:`linear-gradient(180deg, ${outcome==='win' ? T.green : T.red}12, transparent)`,
               boxShadow:`0 0 40px ${outcome==='win' ? T.greenGlow : T.redGlow}`,
               animation:'raid-glow 2.5s ease-in-out infinite',
               '--glow': outcome==='win' ? T.greenGlow : T.redGlow,
             }}>
-              <div style={{ display:'flex', justifyContent:'center', marginBottom:8 }}>
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:10 }}>
                 {outcome==='win'
-                  ? <TrophyIcon size={40} color={T.green} />
+                  ? <TrophyIcon size={44} color={T.green} />
                   : outcome==='loss'
-                    ? <SkullIcon size={40} color={T.red} />
-                    : <HandshakeIcon size={40} color={T.purple} />
+                    ? <SkullIcon size={44} color={T.red} />
+                    : <HandshakeIcon size={44} color={T.purple} />
                 }
               </div>
               <div style={{
-                fontFamily:"'Orbitron',sans-serif", fontSize:22, fontWeight:900, letterSpacing:3,
+                fontFamily:"'Orbitron',sans-serif", fontSize:24, fontWeight:900, letterSpacing:3,
                 color: outcome==='win' ? T.green : outcome==='loss' ? T.red : T.muted,
                 textShadow:`0 0 20px ${outcome==='win' ? T.greenGlow : T.redGlow}`,
               }}>
                 {outcome==='win' ? 'RAID VICTORIOUS' : outcome==='loss' ? 'RAID DEFEATED' : 'POINTS DRAWN'}
               </div>
-            </div>
 
-            
-            <div style={{
-              position:'relative', zIndex:2,
-              display:'flex', gap:8, justifyContent:'center', marginBottom:20,
-            }}>
-              {['Act 1','Act 2','Act 3'].map((label,i) => (
-                <div key={i} style={{ textAlign:'center' }}>
-                  <div style={{
-                    fontFamily:"'Orbitron',sans-serif", fontSize:9,
-                    letterSpacing:1.5, color:T.muted2, marginBottom:5,
-                    textTransform:'uppercase',
-                  }}>{label}</div>
-                  <ActBadge winner={actWinners[i]} />
-                </div>
-              ))}
-            </div>
-
-            
-            <div style={{
-              position:'relative', zIndex:2,
-              background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`,
-              borderRadius:14, padding:'14px 20px', marginBottom:16,
-              display:'flex', justifyContent:'space-around', alignItems:'center'
-            }}>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.gold, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Your Team</div>
-                <div style={{ fontSize:22, fontWeight:800, color:T.gold, fontFamily:"'Orbitron',sans-serif" }}>
-                  {standings.filter(p => p.team === 'you').reduce((sum, p) => sum + (p.total || 0), 0)}
-                </div>
-              </div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:12, color:T.muted2, fontWeight:700 }}>VS</div>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, color:T.red, letterSpacing:1, marginBottom:4, fontWeight:700, textTransform:'uppercase' }}>Rivals</div>
-                <div style={{ fontSize:22, fontWeight:800, color:T.red, fontFamily:"'Orbitron',sans-serif" }}>
-                  {standings.filter(p => p.team === 'rival').reduce((sum, p) => sum + (p.total || 0), 0)}
-                </div>
+              
+              <div style={{ display:'flex', gap:10, justifyContent:'center', marginTop:18 }}>
+                {['Act 1','Act 2','Act 3'].map((label,i) => (
+                  <div key={i} style={{ textAlign:'center' }}>
+                    <div style={{
+                      fontFamily:"'Orbitron',sans-serif", fontSize:9,
+                      letterSpacing:1.5, color:T.muted2, marginBottom:5,
+                      textTransform:'uppercase',
+                    }}>{label}</div>
+                    <ActBadge winner={actWinners[i]} />
+                  </div>
+                ))}
               </div>
             </div>
 
             
-            <div className="raid-card" style={{ padding:'16px 18px', marginBottom:16, position:'relative', zIndex:2 }}>
+            {(() => {
+              const yourTotal = standings.filter(p => p.team === 'you').reduce((s,p)=>s+p.total,0);
+              const rivalTotal = standings.filter(p => p.team === 'rival').reduce((s,p)=>s+p.total,0);
+              const sum = Math.max(1, yourTotal + rivalTotal);
+              const yourPct = (yourTotal / sum) * 100;
+              return (
+                <div className="raid-card" style={{ padding:'18px 20px', marginBottom:16, position:'relative', zIndex:2 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:12 }}>
+                    <div>
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, letterSpacing:1.5, color:T.gold, textTransform:'uppercase', fontWeight:700 }}>
+                        Your Team
+                      </div>
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:26, fontWeight:800, color:T.gold, textShadow:`0 0 12px ${T.goldGlow}` }}>
+                        {yourTotal}
+                      </div>
+                    </div>
+                    <div style={{ alignSelf:'center', fontFamily:"'Orbitron',sans-serif", fontSize:11, color:T.muted2, fontWeight:700 }}>VS</div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:10, letterSpacing:1.5, color:T.red, textTransform:'uppercase', fontWeight:700 }}>
+                        Rivals
+                      </div>
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:26, fontWeight:800, color:T.red, textShadow:`0 0 12px ${T.redGlow}` }}>
+                        {rivalTotal}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ height:10, borderRadius:99, overflow:'hidden', background:`${T.red}30`, display:'flex' }}>
+                    <div style={{
+                      width:`${yourPct}%`, background:`linear-gradient(90deg,${T.gold},#e8a800)`,
+                      transition:'width 1s cubic-bezier(.16,1,.3,1)',
+                    }} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            
+            <div className="raid-card" style={{ padding:'18px 20px', marginBottom:16, position:'relative', zIndex:2 }}>
               <div style={{
                 fontFamily:"'Orbitron',sans-serif", fontSize:10, letterSpacing:2,
                 color:T.purple, textTransform:'uppercase', marginBottom:14, fontWeight:700,
                 display:'flex', alignItems:'center', gap:6,
               }}>
-                <StarIcon size={12} /> Final standings
+                <StarIcon size={12} /> Player Standings
               </div>
 
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-                {[
-                  { name: 'Your Team', total: standings.filter(p => p.team === 'you').reduce((s, p) => s + p.total, 0), team: 'you', isUser: true },
-                  { name: 'Rivals', total: standings.filter(p => p.team === 'rival').reduce((s, p) => s + p.total, 0), team: 'rival', isUser: false }
-                ].sort((a,b) => b.total - a.total).map((t, idx) => {
-                  const rankColor = idx===0 ? T.gold : T.muted;
+                {standings.map((p, idx) => {
+                  const teamColor = p.team === 'you' ? T.green : T.red;
                   return (
-                    <div key={t.name} className="raid-standing-row" style={{
-                      background: t.isUser ? `${T.purple}12` : 'rgba(255,255,255,.02)',
-                      border:`1px solid ${t.isUser ? T.purple+'40' : 'rgba(255,255,255,.06)'}`,
-                      boxShadow: t.isUser ? `0 0 16px ${T.purpleGlow}` : 'none',
+                    <div key={p.nickname + idx} className="raid-standing-row" style={{
+                      background: p.isUser ? `${T.purple}14` : 'rgba(255,255,255,.02)',
+                      border:`1px solid ${p.isUser ? T.purple+'45' : 'rgba(255,255,255,.06)'}`,
+                      boxShadow: p.isUser ? `0 0 14px ${T.purpleGlow}` : 'none',
+                      alignItems:'center',
                     }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                         <span style={{
-                          fontFamily:"'Orbitron',sans-serif", fontSize:12, fontWeight:700,
-                          color:rankColor, minWidth:20, textAlign:'center',
-                        }}>#{idx+1}</span>
+                          fontFamily:"'Orbitron',sans-serif", fontSize:12, fontWeight:800,
+                          color: idx===0 ? T.gold : T.muted, minWidth:20, textAlign:'center',
+                          position:'relative',
+                        }}>
+                          {idx===0 && (
+                            <span style={{ position:'absolute', top:-16, left:'50%', transform:'translateX(-50%)', fontSize:14, animation:'raid-crown-bob 1.8s ease-in-out infinite' }}>👑</span>
+                          )}
+                          #{idx+1}
+                        </span>
+                        <span style={{ fontSize:20 }}>{p.flag}</span>
                         <div>
-                          <div style={{ fontSize:15, fontWeight:800, fontFamily:"'Orbitron',sans-serif", color:T.text, letterSpacing:1 }}>
-                            {t.name}
+                          <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                            <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:700, fontSize:14, color:T.text }}>
+                              {p.nickname}
+                            </span>
+                            {p.isUser && <GlowBadge color={T.purple}>YOU</GlowBadge>}
+                            <span style={{ fontSize:9, fontFamily:"'Orbitron',sans-serif", color:teamColor, letterSpacing:1, opacity:0.8 }}>
+                              {p.team === 'you' ? '· ALLY' : '· RIVAL'}
+                            </span>
+                          </div>
+                          <div style={{ display:'flex', gap:6, marginTop:5 }}>
+                            {[['A1',p.act1],['A2',p.act2],['A3',p.act3]].map(([lbl,val]) => (
+                              <span key={lbl} style={{
+                                fontSize:10, fontFamily:"'Orbitron',sans-serif", fontWeight:600,
+                                color:T.muted, background:'rgba(255,255,255,.05)',
+                                border:`1px solid rgba(255,255,255,.08)`, borderRadius:6, padding:'2px 6px',
+                              }}>{lbl} {Math.round(val)}</span>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -1480,7 +1440,7 @@ export default function Raid() {
                         color: idx===0 ? T.gold : T.text,
                         textShadow: idx===0 ? `0 0 10px ${T.goldGlow}` : 'none',
                       }}>
-                        {t.total} pts
+                        {p.total}
                       </div>
                     </div>
                   );
@@ -1502,8 +1462,8 @@ export default function Raid() {
             {!isTraining && (
               <div style={{
                 position:'relative', zIndex:2,
-                padding:'16px 20px',
-                background:'rgba(255,255,255,0.015)', border:`1px solid ${T.border}`,
+                padding:'18px 20px',
+                background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`,
                 borderRadius:16, marginBottom:16,
               }}>
                 <div style={{
@@ -1511,7 +1471,7 @@ export default function Raid() {
                   color:T.purple, textTransform:'uppercase', marginBottom:12, fontWeight:700,
                   display:'flex', alignItems:'center', gap:6,
                 }}>
-                  📈 XP Rewards earned
+                  <ZapIcon size={12} /> XP Rewards Earned
                 </div>
 
                 {finalizing ? (
@@ -1522,25 +1482,25 @@ export default function Raid() {
                 ) : (
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                     
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
-                      <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.text }}>
-                        👤 You ({user.nickname})
+                    <div className="raid-player-row" style={{ justifyContent:'space-between' }}>
+                      <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.text, display:'flex', alignItems:'center', gap:8 }}>
+                        <PersonIcon size={14} color={T.text} /> You ({user.nickname})
                       </span>
                       <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
                         +{(finalizeResult?.xpResults?.win?.xpAwarded ?? (outcome === 'win' ? xpPreview.win : xpPreview.loss)) + (finalizeResult?.xpResults?.mvp?.xpAwarded || 0)} XP
-                        {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                        {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>👑 MVP</span>}
                       </span>
                     </div>
 
                     
                     {!isTraining && match?.buddy && match.buddy.userId !== user.userId && (
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13 }}>
-                        <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted }}>
-                          🤝 Teammate ({match?.buddy?.nickname || 'Buddy'})
+                      <div className="raid-player-row" style={{ justifyContent:'space-between' }}>
+                        <span style={{ fontFamily:"'Rajdhani',sans-serif", fontWeight:600, color:T.muted, display:'flex', alignItems:'center', gap:8 }}>
+                          <HandshakeIcon size={14} color={T.muted} /> {match?.buddy?.nickname || 'Buddy'}
                         </span>
                         <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
                           +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
-                          {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>(MVP)</span>}
+                          {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>👑 MVP</span>}
                         </span>
                       </div>
                     )}
@@ -1615,130 +1575,6 @@ export default function Raid() {
       )}
 
       <HelpModal show={showHelp} onClose={() => setShowHelp(false)} />
-    </div>
-  );
-}
-
-
-function InterstitialCard({
-  icon, actLabel, actWinners, upToAct,
-  title, subtitle, breakdown,
-  isFinished, isBotMatch, isUserReady, isBuddyReady,
-  onReady, onNavigate, routeLabel,
-}) {
-  return (
-    <div className="raid-card" style={{ padding:24 }}>
-      
-      <div style={{ textAlign:'center', marginBottom:20 }}>
-        <div style={{ display:'flex', justifyContent:'center', marginBottom:10, animation:'raid-float 2.5s ease-in-out infinite' }}>
-          {icon}
-        </div>
-        <div style={{ marginBottom:6 }}>
-          <GlowBadge color={T.green}>{actLabel}</GlowBadge>
-        </div>
-        <h2 style={{
-          fontFamily:"'Orbitron',sans-serif", fontSize:16, fontWeight:700,
-          letterSpacing:1.5, color:T.text, margin:'10px 0 6px',
-        }}>{title}</h2>
-        <p style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif", lineHeight:1.6 }}>
-          {subtitle}
-        </p>
-      </div>
-
-      {upToAct > 0 && (
-        <div style={{ display:'flex', gap:8, justifyContent:'center', marginBottom:18 }}>
-          {Array.from({ length:upToAct }, (_,i) => (
-            <div key={i} style={{ textAlign:'center' }}>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:1.5, color:T.muted2, marginBottom:5, textTransform:'uppercase' }}>
-                Act {i+1}
-              </div>
-              <ActBadge winner={actWinners ? actWinners[i] : null} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {breakdown && (
-        <div style={{
-          background:'rgba(255,255,255,.025)', border:`1px solid ${T.border}`,
-          borderRadius:14, padding:16, marginBottom:18,
-        }}>
-          <div style={{
-            fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2,
-            color:T.muted, textTransform:'uppercase', marginBottom:12,
-          }}>
-            {breakdown.label}
-          </div>
-
-          <div style={{ marginBottom:10 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-              <span style={{ fontSize:13, fontWeight:600, color:T.gold, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
-                <ShieldIcon size={13} color={T.gold} /> Your Duo
-              </span>
-              <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.gold }}>
-                {breakdown.yourTotal} pts
-              </span>
-            </div>
-            {breakdown.yourRows.map((row, i) => (
-              <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'4px 0 4px 12px', fontSize:12, color:T.muted, fontFamily:"'Inter',sans-serif" }}>
-                <span>{row.name}</span>
-                <span>{row.score} pts</span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ height:'1px', background:'rgba(255,255,255,.07)', margin:'10px 0' }} />
-
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-            <span style={{ fontSize:13, fontWeight:600, color:T.red, fontFamily:"'Rajdhani',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
-              <SwordsIcon size={13} color={T.red} /> Rivals
-            </span>
-            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:13, fontWeight:700, color:T.red }}>
-              {breakdown.rivalTotal} pts
-            </span>
-          </div>
-          <p style={{ fontSize:11, color:T.muted2, fontStyle:'italic', paddingLeft:12, fontFamily:"'Inter',sans-serif" }}>
-            {breakdown.rivalNote}
-          </p>
-        </div>
-      )}
-
-      
-      {isFinished ? (
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 0' }}>
-          <Spinner size={24} />
-          <span style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif" }}>
-            Waiting for buddy to finish…
-          </span>
-        </div>
-      ) : isUserReady && isBuddyReady ? (
-        <div style={{ textAlign:'center' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginBottom:14 }}>
-            <Spinner size={22} color={T.green} />
-            <span style={{ color:T.green, fontSize:13, fontFamily:"'Inter',sans-serif", fontWeight:500 }}>
-              Both ready! Launching…
-            </span>
-          </div>
-          <button className="raid-btn-primary" style={{ width:'100%', padding:15, fontSize:14 }} onClick={onNavigate}>
-            <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-              <SwordsIcon size={15} color="#111" /> Enter {routeLabel}
-            </span>
-          </button>
-        </div>
-      ) : isUserReady ? (
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, padding:'12px 0' }}>
-          <Spinner size={24} />
-          <span style={{ color:T.muted, fontSize:13, fontFamily:"'Inter',sans-serif" }}>
-            Waiting for teammate…
-          </span>
-        </div>
-      ) : (
-        <button className="raid-btn-primary" style={{ width:'100%', padding:15, fontSize:14 }} onClick={onReady}>
-          <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-            <SwordsIcon size={15} color="#111" /> Ready up — {routeLabel}
-          </span>
-        </button>
-      )}
     </div>
   );
 }
@@ -1857,6 +1693,7 @@ function HelpModal({ show, onClose }) {
             <li><strong>Synergy:</strong> If you and your buddy perfectly sync during Acts, you'll trigger a damage multiplier!</li>
           </ul>
         </section>
+        
         
         <button className="raid-btn-primary" style={{ width: '100%', padding: 14 }} onClick={onClose}>
           Understood, Commander

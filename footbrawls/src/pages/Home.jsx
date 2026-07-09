@@ -286,6 +286,7 @@ const GlobalStyles = () => (
     @font-face {
       font-family: "Twemoji Country Flags";
       src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/CountryFlagEmojiPolyfill.ttf") format("truetype");
+      unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
     }
     body, button, input, select, textarea {
       font-family: "Twemoji Country Flags", "DM Sans", "Segoe UI", sans-serif;
@@ -816,11 +817,28 @@ const GAME_THEMES = {
   training:   { bg:"radial-gradient(ellipse at 70% 30%,rgba(163,230,53,0.15),rgba(5,8,15,0.95) 60%)", accent:"rgba(163,230,53,0.6)",  label:"TRAINING GROUND"   },
 };
 
-function GamePortalCard({ game, done, onPlay }) {
+function GamePortalCard({ game, done, onPlay, index }) {
   const [hovered, setHovered] = useState(false);
   const ca = game.color;
   const theme = GAME_THEMES[game.theme] || GAME_THEMES.broadcast;
-  const GameIcon = game.Icon;
+  const isActionBanner = index === 8;
+  const hasBanner = index <= 8;
+
+  let bgImage = "url('/assets/banners.jpg')";
+  let bgSize = "200% 400%";
+  let bgPos = "0% 0%";
+
+  if (isActionBanner) {
+    bgImage = "url('/assets/action_banners.jpg')";
+    bgSize = "100% 300%";
+    bgPos = "50% 1%"; // Top row (slightly adjusted)
+  } else {
+    const col = index % 2;
+    const row = Math.floor(index / 2);
+    const yOffsets = ["0%", "35%", "69.5%", "100%"];
+    const xOffset = col === 0 ? "1%" : "99%";
+    bgPos = `${xOffset} ${yOffsets[row]}`;
+  }
 
   return (
     <div
@@ -829,8 +847,7 @@ function GamePortalCard({ game, done, onPlay }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         position:"relative", overflow:"hidden",
-        display:"flex", flexDirection:"column", justifyContent:"space-between",
-        padding:"16px 14px 20px",
+        display:"flex", flexDirection:"column",
         background: hovered ? theme.bg : "rgba(255,255,255,0.09)",
         border:`1px solid ${hovered ? ca + "cc" : C.border}`,
         borderRadius:16,
@@ -840,50 +857,59 @@ function GamePortalCard({ game, done, onPlay }) {
           ? `0 24px 52px rgba(0,0,0,0.65), 0 0 0 1px ${ca}55, 0 0 40px ${ca}18`
           : "0 1px 0 rgba(255,255,255,0.03)",
         transition:"all 0.25s cubic-bezier(0.22,1,0.36,1)",
-        minHeight:132,
       }}
     >
-      
-      <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.3,transition:"all 0.25s"}}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:hovered?3:2,background:`linear-gradient(90deg,transparent,${ca},transparent)`,opacity:hovered?1:0.3,transition:"all 0.25s",zIndex:3}}/>
+      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}14,transparent)`,transition:"left 0.5s ease",pointerEvents:"none",zIndex:3}}/>
 
-      
-      <div style={{position:"absolute",top:0,left:hovered?"-5%":"-120%",width:"50%",height:"100%",background:`linear-gradient(105deg,transparent,${ca}14,transparent)`,transition:"left 0.5s ease",pointerEvents:"none"}}/>
+      <div style={{
+        position:"relative", 
+        height:150, 
+        width:"100%",
+        display:"flex",
+        alignItems:"center",
+        justifyContent:"center",
+        overflow:"hidden",
+        borderBottom:`1px solid ${C.border}`
+      }}>
+        {hasBanner ? (
+          <div style={{
+            position:"absolute", top:0, left:0, right:0, bottom:0,
+            backgroundImage: bgImage,
+            backgroundSize: bgSize,
+            backgroundPosition: bgPos,
+            transform: isActionBanner ? (hovered ? "scale(1.26)" : "scale(1.2)") : (hovered ? "scale(1.28)" : "scale(1.22)"),
+            transition:"transform 0.5s ease"
+          }} />
+        ) : (
+          <div style={{
+            width:"100%", height:"100%", display:"flex", alignItems:"center", justifyContent:"center",
+            background: `radial-gradient(circle at center, ${ca}30, ${ca}10)`
+          }}>
+            <GameIcon size={48} color={ca}/>
+          </div>
+        )}
 
-      
-      <div style={{position:"relative",zIndex:2,display:"flex",alignItems:"flex-start",justifyContent:"space-between",width:"100%",marginBottom:12}}>
         <div style={{
-          width:44,height:44,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          background: hovered ? `${ca}30` : `${ca}10`,
-          border:`1px solid ${hovered ? ca+"88" : ca+"28"}`,
-          borderRadius:11,
-          transform: hovered ? "scale(1.15) rotate(-6deg)" : "scale(1)",
-          boxShadow: hovered ? `0 0 28px ${ca}77, inset 0 0 14px ${ca}22` : "none",
-          transition:"all 0.28s cubic-bezier(0.34,1.56,0.64,1)",
-          flexShrink:0,
-        }}>
-          <GameIcon size={20} color={ca}/>
-        </div>
-
-        <div style={{
+          position:"absolute", top:10, right:10,
           display:"flex",alignItems:"center",gap:3,
-          padding:"4px 8px",borderRadius:99,
-          background: hovered ? `${C.gold}22` : `${C.gold}0c`,
-          border:`1px solid ${hovered ? C.gold+"66" : C.gold+"22"}`,
-          boxShadow: hovered ? `0 0 14px ${C.gold}44` : "none",
-          transition:"all 0.22s",
+          padding:"5px 10px",borderRadius:99,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(6px)",
+          border:`1px solid ${C.gold}66`,
+          boxShadow: `0 0 14px ${C.gold}44`,
+          zIndex:4
         }}>
           <Icon.Zap size={10} color={C.gold}/>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,color:C.gold,letterSpacing:0.5}}>+{game.xp}</span>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",fontWeight:700,color:C.gold,letterSpacing:0.5}}>+{game.xp}</span>
         </div>
       </div>
 
-      
-      <div style={{position:"relative",zIndex:2,width:"100%"}}>
+      <div style={{position:"relative",zIndex:2,width:"100%", padding:"12px 14px 16px", flex:1, display:"flex", flexDirection:"column", justifyContent:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
           <div style={{
             fontFamily:"'Bebas Neue',sans-serif",
-            fontSize:"1.05rem",letterSpacing:1.8,lineHeight:1,
+            fontSize:"1.1rem",letterSpacing:1.8,lineHeight:1,
             color:C.text,
             textShadow: hovered ? `0 0 20px ${ca}99` : "none",
             transition:"text-shadow 0.22s",
@@ -897,11 +923,11 @@ function GamePortalCard({ game, done, onPlay }) {
         </div>
 
         <div style={{
-          fontFamily:"'Syne',sans-serif", fontSize:"0.61rem",
+          fontFamily:"'Syne',sans-serif", fontSize:"0.65rem",
           color: hovered ? "#ffffff" : "rgba(255,255,255,0.85)",
           lineHeight:1.5,
           overflow:"hidden", display:"-webkit-box",
-          WebkitLineClamp:3, WebkitBoxOrient:"vertical",
+          WebkitLineClamp:2, WebkitBoxOrient:"vertical",
           transition:"color 0.22s",
         }}>{game.desc}</div>
       </div>
@@ -1226,7 +1252,7 @@ function ActionButtons({ onRaid, onFriends }) {
     transition:"all 0.22s cubic-bezier(0.22,1,0.36,1)",
   };
   return (
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:14}}>
+    <div className="action-buttons-grid">
       
       <div
         onClick={onRaid}
@@ -1234,22 +1260,28 @@ function ActionButtons({ onRaid, onFriends }) {
         onMouseLeave={()=>setRH(false)}
         style={{
           ...btnBase,
-          background: rH ? "radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.22),transparent 65%),rgba(168,85,247,0.06)" : "radial-gradient(ellipse at 50% 0%,rgba(168,85,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
           border:`1px solid rgba(168,85,247,${rH?0.65:0.2})`,
           transform: rH ? "translateY(-3px)" : "none",
           boxShadow: rH ? "0 20px 44px rgba(0,0,0,0.55),0 0 36px rgba(168,85,247,0.12)" : "0 1px 0 rgba(255,255,255,0.03)",
+          minHeight: 170,
         }}
       >
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:rH?1:0.35,transition:"opacity 0.2s"}}/>
-        <div style={{position:"absolute",top:0,left:rH?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(168,85,247,0.08),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-        <div style={{width:50,height:50,borderRadius:14,background:rH?"rgba(168,85,247,0.2)":"rgba(168,85,247,0.08)",border:`1.5px solid rgba(168,85,247,${rH?0.6:0.22})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:rH?"0 0 24px rgba(168,85,247,0.4)":"none",transform:rH?"scale(1.08) rotate(-4deg)":"scale(1)",transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
-          <Icon.Swords size={24} color={C.purple}/>
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, bottom:0,
+          backgroundImage: "url('/assets/action_banners.jpg')",
+          backgroundSize: "100% 300%",
+          backgroundPosition: "50% 102%", // Bottom row (moved up past 100% to crop top border)
+          transform: rH ? "scale(1.26)" : "scale(1.2)",
+          transition: "transform 0.5s ease",
+          zIndex: 0
+        }} />
+        <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:rH?"linear-gradient(to top, rgba(168,85,247,0.3), rgba(0,0,0,0.15))":"linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.2))",zIndex:1,transition:"background 0.3s ease"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:rH?1:0.35,transition:"opacity 0.2s",zIndex:2}}/>
+
+        <div style={{position:"relative",zIndex:3,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.4rem",letterSpacing:2,color:"#fff",lineHeight:1,textShadow:rH?"0 0 20px rgba(168,85,247,0.8)":"0 2px 4px rgba(0,0,0,0.8)",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:"#fff",letterSpacing:1,opacity:rH?1:0.7,textShadow:"0 1px 3px rgba(0,0,0,0.8)",background:rH?"rgba(168,85,247,0.4)":"rgba(0,0,0,0.4)",padding:"4px 10px",borderRadius:6,border:`1px solid rgba(168,85,247,${rH?0.6:0.2})`}}>BUCKLE UP · TEAM UP</div>
         </div>
-        <div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:rH?"0 0 20px rgba(168,85,247,0.6)":"none",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(168,85,247,0.6)",letterSpacing:1,marginTop:5}}>BUCKLE UP · TEAM UP</div>
-        </div>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.purple,background:rH?"rgba(168,85,247,0.18)":"rgba(168,85,247,0.08)",border:`1px solid rgba(168,85,247,${rH?0.55:0.25})`,textTransform:"uppercase",boxShadow:rH?"0 0 14px rgba(168,85,247,0.35)":"none",transition:"all 0.2s"}}>JOIN RAID →</div>
       </div>
 
       
@@ -1259,22 +1291,28 @@ function ActionButtons({ onRaid, onFriends }) {
         onMouseLeave={()=>setFH(false)}
         style={{
           ...btnBase,
-          background: fH ? "radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.22),transparent 65%),rgba(79,142,247,0.06)" : "radial-gradient(ellipse at 50% 0%,rgba(79,142,247,0.08),transparent 60%),rgba(255,255,255,0.025)",
           border:`1px solid rgba(79,142,247,${fH?0.65:0.2})`,
           transform: fH ? "translateY(-3px)" : "none",
           boxShadow: fH ? "0 20px 44px rgba(0,0,0,0.55),0 0 36px rgba(79,142,247,0.12)" : "0 1px 0 rgba(255,255,255,0.03)",
+          minHeight: 170,
         }}
       >
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:fH?1:0.35,transition:"opacity 0.2s"}}/>
-        <div style={{position:"absolute",top:0,left:fH?"-10%":"-130%",width:"60%",height:"100%",background:"linear-gradient(105deg,transparent,rgba(79,142,247,0.08),transparent)",transition:"left 0.55s ease",pointerEvents:"none"}}/>
-        <div style={{width:50,height:50,borderRadius:14,background:fH?"rgba(79,142,247,0.2)":"rgba(79,142,247,0.08)",border:`1.5px solid rgba(79,142,247,${fH?0.6:0.22})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:fH?"0 0 24px rgba(79,142,247,0.4)":"none",transform:fH?"scale(1.08) rotate(4deg)":"scale(1)",transition:"all 0.22s cubic-bezier(0.34,1.56,0.64,1)"}}>
-          <Icon.Users size={24} color={C.blue}/>
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, bottom:0,
+          backgroundImage: "url('/assets/action_banners.jpg')",
+          backgroundSize: "100% 300%",
+          backgroundPosition: "50% 53%", // Middle row (moved up)
+          transform: fH ? "scale(1.22)" : "scale(1.15)",
+          transition: "transform 0.5s ease",
+          zIndex: 0
+        }} />
+        <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:fH?"linear-gradient(to top, rgba(79,142,247,0.3), rgba(0,0,0,0.15))":"linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.2))",zIndex:1,transition:"background 0.3s ease"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:fH?1:0.35,transition:"opacity 0.2s",zIndex:2}}/>
+
+        <div style={{position:"relative",zIndex:3,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.4rem",letterSpacing:2,color:"#fff",lineHeight:1,textShadow:fH?"0 0 20px rgba(79,142,247,0.8)":"0 2px 4px rgba(0,0,0,0.8)",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.5rem",color:"#fff",letterSpacing:1,opacity:fH?1:0.7,textShadow:"0 1px 3px rgba(0,0,0,0.8)",background:fH?"rgba(79,142,247,0.4)":"rgba(0,0,0,0.4)",padding:"4px 10px",borderRadius:6,border:`1px solid rgba(79,142,247,${fH?0.6:0.2})`}}>PRIVATE LOBBY · LIVE</div>
         </div>
-        <div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.2rem",letterSpacing:2,color:C.text,lineHeight:1,textShadow:fH?"0 0 20px rgba(79,142,247,0.6)":"none",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",color:"rgba(79,142,247,0.6)",letterSpacing:1,marginTop:5}}>PRIVATE LOBBY · LIVE</div>
-        </div>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.44rem",fontWeight:700,letterSpacing:1.2,padding:"5px 14px",borderRadius:5,color:C.blue,background:fH?"rgba(79,142,247,0.18)":"rgba(79,142,247,0.08)",border:`1px solid rgba(79,142,247,${fH?0.55:0.25})`,textTransform:"uppercase",boxShadow:fH?"0 0 14px rgba(79,142,247,0.35)":"none",transition:"all 0.2s"}}>PLAY NOW →</div>
       </div>
     </div>
   );
@@ -1818,12 +1856,13 @@ export default function Home() {
           <div id="games-section">
             <SectionDivider label="Game Portals" count={`${doneCount}/${games.length} Complete`} color={C.gold}/>
             <div className="home-games-grid">
-              {games.map(game => (
+              {games.map((game, i) => (
                 <GamePortalCard
                   key={game.id}
                   game={game}
                   done={game.done}
                   onPlay={() => navigate(game.route)}
+                  index={i}
                 />
               ))}
             </div>

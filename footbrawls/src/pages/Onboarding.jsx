@@ -36,6 +36,7 @@ const CSS = `
 @font-face {
   font-family: "TwemojiFlags";
   src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1.3/dist/CountryFlagEmojiPolyfill.ttf") format("truetype");
+  unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
 }
 .ob-root *, .ob-root *::before, .ob-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
 .ob-root { font-family: "TwemojiFlags","Syne","Segoe UI",sans-serif; }

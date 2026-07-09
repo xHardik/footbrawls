@@ -1,8 +1,6 @@
-
-
-
 import { useState, useEffect } from "react";
 import { getUser } from "../lib/user";
+import { EmojiFlag } from './EmojiFlag.jsx';
 
 const C = {
   bg:      "rgba(6,8,16,0.92)",
@@ -131,7 +129,7 @@ export default function Nav() {
 
               
               <div style={s.identity}>
-                <span style={s.flag}>{user.flag || "🏳️"}</span>
+                <EmojiFlag emoji={user.flag || "🏳️"} size={14} style={{ flexShrink: 0 }} />
                 <span style={s.nickname}>{user.nickname || "Player"}</span>
                 <span
                   style={{

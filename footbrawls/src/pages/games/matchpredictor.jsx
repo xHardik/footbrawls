@@ -123,44 +123,43 @@ const ALL_FIXTURES_SCHEDULE = [
   { id:'gs_H5', home:'Uruguay',      away:'Spain',                 kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   { id:'gs_H6', home:'Cape Verde',   away:'Saudi Arabia',          kickoff:'2026-06-27T00:00:00Z', stage:'Group H · MD3', done:true,  hs:1, as:2 },
   
-  { id:'r32_01', home:'South Africa',away:'Canada',                kickoff:'2026-06-28T19:00:00Z', stage:'Round of 32 · M73', done:true, hs:2, as:1 },
-  { id:'r32_02', home:'Germany',     away:'Paraguay',              kickoff:'2026-06-29T17:00:00Z', stage:'Round of 32 · M74', done:true, hs:3, as:0 },
-  { id:'r32_03', home:'Netherlands', away:'Morocco',               kickoff:'2026-06-29T21:00:00Z', stage:'Round of 32 · M75', done:true, hs:1, as:2 },
-  { id:'r32_04', home:'Brazil',      away:'Japan',                 kickoff:'2026-06-29T23:30:00Z', stage:'Round of 32 · M76', done:true, hs:2, as:1 },
-  { id:'r32_05', home:'France',      away:'Sweden',                kickoff:'2026-06-30T18:00:00Z', stage:'Round of 32 · M77', done:true, hs:4, as:0 },
-  { id:'r32_06', home:'Ivory Coast', away:'Norway',                kickoff:'2026-06-30T21:00:00Z', stage:'Round of 32 · M78', done:true, hs:1, as:3 },
-  { id:'r32_07', home:'Mexico',      away:'Ecuador',               kickoff:'2026-06-30T23:30:00Z', stage:'Round of 32 · M79', done:true, hs:1, as:2 },
-  { id:'r32_08', home:'England',     away:'DR Congo',              kickoff:'2026-07-01T18:00:00Z', stage:'Round of 32 · M80', done:false },
-  { id:'r32_09', home:'USA',         away:'Bosnia and Herzegovina',kickoff:'2026-07-01T21:00:00Z', stage:'Round of 32 · M81', done:false },
-  { id:'r32_10', home:'Belgium',     away:'Senegal',               kickoff:'2026-07-01T23:30:00Z', stage:'Round of 32 · M82', done:false },
-  { id:'r32_11', home:'Portugal',    away:'Croatia',               kickoff:'2026-07-02T18:00:00Z', stage:'Round of 32 · M83', done:false },
-  { id:'r32_12', home:'Spain',       away:'Austria',               kickoff:'2026-07-02T21:00:00Z', stage:'Round of 32 · M84', done:false },
-  { id:'r32_13', home:'Switzerland', away:'Algeria',               kickoff:'2026-07-02T23:30:00Z', stage:'Round of 32 · M85', done:false },
-  { id:'r32_14', home:'Argentina',   away:'Cape Verde',            kickoff:'2026-07-03T18:00:00Z', stage:'Round of 32 · M86', done:false },
-  { id:'r32_15', home:'Colombia',    away:'Ghana',                 kickoff:'2026-07-03T21:00:00Z', stage:'Round of 32 · M87', done:false },
-  { id:'r32_16', home:'Australia',   away:'Egypt',                 kickoff:'2026-07-03T23:30:00Z', stage:'Round of 32 · M88', done:false },
+  { id:'r32_01', home:'South Africa',away:'Canada',                kickoff:'2026-06-28T19:00:00Z', stage:'Round of 32 · Match 1', done:true, hs:0, as:1 },
+  { id:'r32_02', home:'Brazil',      away:'Japan',                 kickoff:'2026-06-29T17:00:00Z', stage:'Round of 32 · Match 2', done:true, hs:2, as:1 },
+  { id:'r32_03', home:'Germany',     away:'Paraguay',              kickoff:'2026-06-29T20:30:00Z', stage:'Round of 32 · Match 3', done:true, hs:1, as:1, hp:3, ap:4 },
+  { id:'r32_04', home:'Netherlands', away:'Morocco',               kickoff:'2026-06-30T01:00:00Z', stage:'Round of 32 · Match 4', done:true, hs:1, as:1, hp:2, ap:3 },
+  { id:'r32_05', home:'Ivory Coast', away:'Norway',                kickoff:'2026-06-30T17:00:00Z', stage:'Round of 32 · Match 5', done:true, hs:0, as:2 },
+  { id:'r32_06', home:'France',      away:'Sweden',                kickoff:'2026-06-30T21:00:00Z', stage:'Round of 32 · Match 6', done:true, hs:3, as:0 },
+  { id:'r32_07', home:'Mexico',      away:'Ecuador',               kickoff:'2026-07-01T01:00:00Z', stage:'Round of 32 · Match 7', done:true, hs:2, as:0 },
+  { id:'r32_08', home:'England',     away:'DR Congo',              kickoff:'2026-07-01T16:00:00Z', stage:'Round of 32 · Match 8', done:true, hs:3, as:1 },
+  { id:'r32_09', home:'Belgium',     away:'Senegal',               kickoff:'2026-07-01T20:00:00Z', stage:'Round of 32 · Match 9', done:true, hs:2, as:0 },
+  { id:'r32_10', home:'USA',         away:'Bosnia and Herzegovina',kickoff:'2026-07-02T00:00:00Z', stage:'Round of 32 · Match 10', done:true, hs:2, as:1 },
+  { id:'r32_11', home:'Spain',       away:'Austria',               kickoff:'2026-07-02T19:00:00Z', stage:'Round of 32 · Match 11', done:true, hs:2, as:0 },
+  { id:'r32_12', home:'Portugal',    away:'Croatia',               kickoff:'2026-07-02T23:00:00Z', stage:'Round of 32 · Match 12', done:true, hs:1, as:0 },
+  { id:'r32_13', home:'Switzerland', away:'Algeria',               kickoff:'2026-07-03T03:00:00Z', stage:'Round of 32 · Match 13', done:true, hs:2, as:0 },
+  { id:'r32_14', home:'Australia',   away:'Egypt',                 kickoff:'2026-07-03T18:00:00Z', stage:'Round of 32 · Match 14', done:true, hs:1, as:1, hp:2, ap:4 },
+  { id:'r32_15', home:'Argentina',   away:'Cape Verde',            kickoff:'2026-07-03T22:00:00Z', stage:'Round of 32 · Match 15', done:true, hs:3, as:0 },
+  { id:'r32_16', home:'Colombia',    away:'Ghana',                 kickoff:'2026-07-04T01:30:00Z', stage:'Round of 32 · Match 16', done:true, hs:1, as:0 },
   
   
-  { id:'r16_01', home:'Canada',      away:'Germany',               kickoff:'2026-07-04T17:00:00Z', stage:'Round of 16 · M1', done:false },
-  { id:'r16_02', home:'Morocco',     away:'Brazil',                kickoff:'2026-07-04T21:00:00Z', stage:'Round of 16 · M2', done:false },
-  { id:'r16_03', home:'France',      away:'Norway',                kickoff:'2026-07-05T20:00:00Z', stage:'Round of 16 · M3', done:false },
-  { id:'r16_04', home:'Mexico',      away:'England',               kickoff:'2026-07-06T00:00:00Z', stage:'Round of 16 · M4', done:false },
-  { id:'r16_05', home:'USA',         away:'Belgium',               kickoff:'2026-07-06T19:00:00Z', stage:'Round of 16 · M5', done:false },
-  { id:'r16_06', home:'Portugal',    away:'Spain',                 kickoff:'2026-07-06T21:00:00Z', stage:'Round of 16 · M6', done:false },
-  { id:'r16_07', home:'Switzerland', away:'Argentina',             kickoff:'2026-07-07T16:00:00Z', stage:'Round of 16 · M7', done:false },
-  { id:'r16_08', home:'Colombia',    away:'Australia',             kickoff:'2026-07-07T20:00:00Z', stage:'Round of 16 · M8', done:false },
+  { id:'r16_01', home:'France',      away:'Paraguay',              kickoff:'2026-07-04T17:00:00Z', stage:'Round of 16 · M1', done:true, hs:1, as:0 },
+  { id:'r16_02', home:'Morocco',     away:'Canada',                kickoff:'2026-07-04T21:00:00Z', stage:'Round of 16 · M2', done:true, hs:3, as:0 },
+  { id:'r16_03', home:'Spain',       away:'Portugal',              kickoff:'2026-07-05T20:00:00Z', stage:'Round of 16 · M3', done:true, hs:1, as:0 },
+  { id:'r16_04', home:'Belgium',     away:'USA',                   kickoff:'2026-07-06T00:00:00Z', stage:'Round of 16 · M4', done:true, hs:4, as:1 },
+  { id:'r16_05', home:'Norway',      away:'Brazil',                kickoff:'2026-07-06T19:00:00Z', stage:'Round of 16 · M5', done:true, hs:2, as:1 },
+  { id:'r16_06', home:'England',     away:'Mexico',                kickoff:'2026-07-06T21:00:00Z', stage:'Round of 16 · M6', done:true, hs:3, as:2 },
+  { id:'r16_07', home:'Argentina',   away:'Egypt',                 kickoff:'2026-07-07T16:00:00Z', stage:'Round of 16 · M7', done:true, hs:3, as:2 },
+  { id:'r16_08', home:'Switzerland', away:'Colombia',              kickoff:'2026-07-07T20:00:00Z', stage:'Round of 16 · M8', done:true, hs:0, as:0, hp:4, ap:3 },
   
   
-  { id:'qf_01',  home:'Germany',     away:'Brazil',                kickoff:'2026-07-09T20:00:00Z', stage:'Quarter-Final 1', done:false },
-  { id:'qf_02',  home:'France',      away:'England',               kickoff:'2026-07-10T19:00:00Z', stage:'Quarter-Final 2', done:false },
-  { id:'qf_03',  home:'Belgium',     away:'Portugal',              kickoff:'2026-07-11T21:00:00Z', stage:'Quarter-Final 3', done:false },
-  { id:'qf_04',  home:'Argentina',   away:'Colombia',              kickoff:'2026-07-12T01:00:00Z', stage:'Quarter-Final 4', done:false },
+  { id:'qf_01',  home:'France',      away:'Morocco',               kickoff:'2026-07-09T20:00:00Z', stage:'Quarter-Final 1', done:false },
+  { id:'qf_02',  home:'Spain',       away:'Belgium',               kickoff:'2026-07-10T19:00:00Z', stage:'Quarter-Final 2', done:false },
+  { id:'qf_03',  home:'Norway',      away:'England',               kickoff:'2026-07-11T21:00:00Z', stage:'Quarter-Final 3', done:false },
+  { id:'qf_04',  home:'Argentina',   away:'Switzerland',           kickoff:'2026-07-12T01:00:00Z', stage:'Quarter-Final 4', done:false },
   
-  
-  { id:'sf_01',  home:'Brazil',      away:'France',                kickoff:'2026-07-14T19:00:00Z', stage:'Semi-Final 1',    done:false },
-  { id:'sf_02',  home:'Portugal',    away:'Argentina',             kickoff:'2026-07-15T19:00:00Z', stage:'Semi-Final 2',    done:false },
-  { id:'3rd',    home:'Brazil',      away:'Portugal',              kickoff:'2026-07-18T21:00:00Z', stage:'3rd Place Playoff',done:false },
-  { id:'final',  home:'France',      away:'Argentina',             kickoff:'2026-07-19T19:00:00Z', stage:'⚽ FINAL',          done:false },
+  { id:'sf_01',  home:'W QF1',       away:'W QF2',                 kickoff:'2026-07-14T19:00:00Z', stage:'Semi-Final 1',    done:false },
+  { id:'sf_02',  home:'W QF3',       away:'W QF4',                 kickoff:'2026-07-15T19:00:00Z', stage:'Semi-Final 2',    done:false },
+  { id:'3rd',    home:'L SF1',       away:'L SF2',                 kickoff:'2026-07-18T21:00:00Z', stage:'3rd Place Playoff',done:false },
+  { id:'final',  home:'W SF1',       away:'W SF2',                 kickoff:'2026-07-19T19:00:00Z', stage:'⚽ FINAL',          done:false },
 ];
 
 
@@ -175,6 +174,8 @@ function scheduleToFixture(s) {
     isComplete: s.done || false,
     homeScore: s.done ? (s.hs ?? null) : null,
     awayScore: s.done ? (s.as ?? null) : null,
+    homePens: s.done ? (s.hp ?? null) : null,
+    awayPens: s.done ? (s.ap ?? null) : null,
     kickoffAt: { toMillis: () => new Date(s.kickoff).getTime() },
     locksAt:   { toMillis: () => new Date(s.kickoff).getTime() - 1_000 },
   };
@@ -630,9 +631,16 @@ export default function MatchPredictor() {
 
                     <div className="mp2-vs-box">
                       {selected.isComplete ? (
-                        <div className="mp2-score-display">
-                          {selected.homeScore} – {selected.awayScore}
-                        </div>
+                        <>
+                          <div className="mp2-score">
+                            {selected.homeScore} – {selected.awayScore}
+                          </div>
+                          {selected.homePens != null && (
+                            <div className="mp2-pens" style={{fontSize:'0.85em', color:'var(--muted)', textAlign:'center', marginTop:'4px'}}>
+                              ({selected.homePens} - {selected.awayPens} on pens)
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div className="mp2-vs-display">VS</div>
                       )}

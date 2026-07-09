@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { EmojiFlag } from "./EmojiFlag.jsx";
 
 const C = {
   accent:  "#F7C344",
@@ -540,7 +541,10 @@ export default function CastleHP({ hp = 7000, maxHp = 10000, contributors = [], 
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
               {contributors.map((c,i) => (
                 <span key={i} style={{ fontFamily:"'Space Mono',monospace", fontSize:"0.6rem", color:levelConfig.color, background:`${levelConfig.color}15`, border:`1px solid ${levelConfig.color}28`, borderRadius:99, padding:"2px 8px" }}>
-                  {c.flag||"🏳️"} {c.nickname} +{c.contribution||0}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <EmojiFlag emoji={c.flag || "🏳️"} size={14} />
+                    <span>{c.nickname} +{c.contribution || 0}</span>
+                  </div>
                 </span>
               ))}
             </div>

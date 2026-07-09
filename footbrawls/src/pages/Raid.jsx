@@ -542,10 +542,10 @@ function ParticleEffect({ type }) {
           ctx.fillStyle = p.color;
           ctx.fillRect(-p.size/2, -p.size, p.size, p.size*2);
         } else {
-          ctx.font = `${Math.floor(p.size * 2)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('💔', 0, 0);
+          ctx.fillStyle = 'rgba(150, 150, 170, 0.4)';
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 1.5, 0, Math.PI * 2);
+          ctx.fill();
         }
         ctx.restore();
       }
@@ -965,14 +965,14 @@ export default function Raid() {
     const a3t = (acts.act3?.rivalBotGoals||0)*20;
     const a3r1 = Math.round(a3t/2), a3r2 = a3t-a3r1;
     const list = [
-      { nickname:user.nickname, flag:user.flag||'', act1:(acts.act1?.playerScore||0)*100, act2:(acts.act2?.playerRoundWins||0)*20, act3:(acts.act3?.playerGoals||0)*20, isUser:true, team:'you' },
+      { nickname:user.nickname, flag:user.flag||'', act1:acts.act1?.playerScore||0, act2:(acts.act2?.playerRoundWins||0)*20, act3:(acts.act3?.playerGoals||0)*20, isUser:true, team:'you' },
     ];
     if (match.buddy?.userId !== user.userId) {
-      list.push({ nickname:match.buddy?.nickname||'Buddy', flag:match.buddy?.flag||'', act1:(acts.act1?.buddyScore||0)*100, act2:(acts.act2?.buddyRoundWins||0)*20, act3:(acts.act3?.buddyGoals||0)*20, isUser:false, team:'you' });
+      list.push({ nickname:match.buddy?.nickname||'Buddy', flag:match.buddy?.flag||'', act1:acts.act1?.buddyScore||0, act2:(acts.act2?.buddyRoundWins||0)*20, act3:(acts.act3?.buddyGoals||0)*20, isUser:false, team:'you' });
     }
     list.push(
-      { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1*100, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
-      { nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2*100, act2:a2r2, act3:a3r2, isUser:false, team:'rival' }
+      { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
+      { nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2, act2:a2r2, act3:a3r2, isUser:false, team:'rival' }
     );
     const finalList = list.map(p => ({ ...p, total:Math.round(p.act1+p.act2+p.act3) }));
     return finalList.sort((a,b)=>b.total-a.total);
@@ -1225,7 +1225,7 @@ export default function Raid() {
                 <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:9, letterSpacing:2, color:T.green, marginBottom:12, textTransform:'uppercase' }}>
                   {raidType === 'training' ? 'You' : 'Your Duo'}
                 </div>
-                {[user, match.buddy].filter(Boolean).map(p => (
+                {[user, match.buddy].filter(Boolean).sort((a,b) => a.userId.localeCompare(b.userId)).map(p => (
                   <div key={p.userId} className="raid-player-row" style={{ marginBottom:6 }}>
                     <span style={{ fontSize:20 }}>{p.flag}</span>
                     <span style={{ fontSize:13, fontFamily:"'Inter',sans-serif", fontWeight:500, color:T.text, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
@@ -1488,7 +1488,7 @@ export default function Raid() {
                         <PersonIcon size={14} color={T.text} /> You ({user.nickname})
                       </span>
                       <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
-                        +{(finalizeResult?.xpResults?.win?.xpAwarded ?? (outcome === 'win' ? xpPreview.win : xpPreview.loss)) + (finalizeResult?.xpResults?.mvp?.xpAwarded || 0)} XP
+                        +{(finalizeResult?.xpResults?.win?.xpAwarded ?? (outcome === 'win' ? xpPreview.win : outcome === 'draw' ? 100 : xpPreview.loss)) + (finalizeResult?.xpResults?.mvp?.xpAwarded || 0)} XP
                         {finalizeResult?.xpResults?.mvp?.xpAwarded > 0 && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>👑 MVP</span>}
                       </span>
                     </div>
@@ -1500,7 +1500,7 @@ export default function Raid() {
                           <HandshakeIcon size={14} color={T.muted} /> {match?.buddy?.nickname || 'Buddy'}
                         </span>
                         <span style={{ fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:T.green }}>
-                          +{(outcome === 'win' ? xpPreview.win : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
+                          +{(outcome === 'win' ? xpPreview.win : outcome === 'draw' ? 100 : xpPreview.loss) + (finalizeResult?.isBuddyMvp ? 50 : 0)} XP
                           {finalizeResult?.isBuddyMvp && <span style={{ fontSize:9, color:T.gold, marginLeft:4 }}>👑 MVP</span>}
                         </span>
                       </div>

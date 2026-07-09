@@ -4,6 +4,7 @@ import {
   onSnapshot, addDoc, serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { EmojiFlag } from "./EmojiFlag";
 
 const BAD_WORDS = ["fuck","shit","bitch","asshole","cunt","bastard"];
 function sanitize(text) {
@@ -31,7 +32,7 @@ function MessageBubble({ msg, isSelf }) {
     <div style={{ display:"flex", flexDirection:isSelf?"row-reverse":"row", alignItems:"flex-start", gap:8, marginBottom:10 }}>
       {!isSelf && (
         <div style={{ width:30, height:30, borderRadius:"50%", background:"rgba(255,255,255,0.05)", border:`2px solid ${tierColor}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>
-          {msg.flag || "🏳️"}
+          <EmojiFlag emoji={msg.flag || "🏳️"} size={12} style={{ marginRight: 6, opacity: 0.9 }} />
         </div>
       )}
       <div style={{ maxWidth:"72%", display:"flex", flexDirection:"column", alignItems:isSelf?"flex-end":"flex-start" }}>

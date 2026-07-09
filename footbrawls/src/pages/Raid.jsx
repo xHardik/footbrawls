@@ -967,7 +967,7 @@ export default function Raid() {
     const a3r1 = Math.round(a3t/2), a3r2 = a3t-a3r1;
 
     const myScores = scores[user.userId] || {};
-    const buddyObj = match.creatorId === user.userId ? match.buddy : match.creator;
+    const buddyObj = match.buddy;
     const buddyScores = buddyObj ? (scores[buddyObj.userId] || {}) : {};
     const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_');
 
@@ -980,14 +980,14 @@ export default function Raid() {
     let buddyAct3 = isBotBuddy ? (acts.act3?.buddyGoals || 0) * 20 : (buddyScores.act3?.goals || 0) * 20;
 
     const list = [
-      { nickname:user.nickname, flag:user.flag||'', act1:myAct1, act2:myAct2, act3:myAct3, isUser:true, team:'you' },
+      { userId: user.userId, nickname:user.nickname, flag:user.flag||'', act1:myAct1, act2:myAct2, act3:myAct3, isUser:true, team:'you' },
     ];
     if (buddyObj) {
-      list.push({ nickname:buddyObj.nickname||'Buddy', flag:buddyObj.flag||'', act1:buddyAct1, act2:buddyAct2, act3:buddyAct3, isUser:false, team:'you' });
+      list.push({ userId: buddyObj.userId, nickname:buddyObj.nickname||'Buddy', flag:buddyObj.flag||'', act1:buddyAct1, act2:buddyAct2, act3:buddyAct3, isUser:false, team:'you' });
     }
     list.push(
-      { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
-      { nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2, act2:a2r2, act3:a3r2, isUser:false, team:'rival' }
+      { userId: 'rival_1', nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
+      { userId: 'rival_2', nickname:match.rivals?.[1]?.nickname||'Rival 2', flag:match.rivals?.[1]?.flag||'', act1:a1b.rival2, act2:a2r2, act3:a3r2, isUser:false, team:'rival' }
     );
     const finalList = list.map(p => ({ ...p, total:Math.round(p.act1+p.act2+p.act3) }));
     return finalList.sort((a,b)=>b.total-a.total);
@@ -1025,20 +1025,27 @@ export default function Raid() {
         borderBottom: `1px solid ${T.gold}25`,
         boxShadow: `0 4px 20px ${T.gold}15`
       }}>
-        <button onClick={() => navigate('/')} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          border: 'none', cursor: 'pointer', outline: 'none', backgroundColor: 'transparent',
-          justifySelf: 'start'
-        }}>
-          <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px ${T.goldGlow})` }} />
-          <span style={{
-            fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
-            background: `linear-gradient(135deg, ${T.gold}, #e8a800)`,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'start' }}>
+          <button onClick={() => navigate('/')} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            border: 'none', cursor: 'pointer', outline: 'none', backgroundColor: 'transparent',
           }}>
-            RAIDS
-          </span>
-        </button>
+            <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px ${T.goldGlow})` }} />
+            <span style={{
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
+              background: `linear-gradient(135deg, ${T.gold}, #e8a800)`,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>
+              RAIDS
+            </span>
+          </button>
+          {phase !== 'lobby' && (
+            <div className="pn-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7', padding: '4px 10px', fontSize: '0.65rem' }}>
+              <span className="pn-tag-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
+              RAID
+            </div>
+          )}
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <button style={{
@@ -1413,8 +1420,10 @@ export default function Raid() {
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {standings.map((p, idx) => {
                   const teamColor = p.team === 'you' ? T.green : T.red;
+                  // Compute true rank based on ties
+                  const trueRank = standings.filter(other => other.total > p.total).length + 1;
                   return (
-                    <div key={p.nickname + idx} className="raid-standing-row" style={{
+                    <div key={p.userId || (p.nickname + idx)} className="raid-standing-row" style={{
                       background: p.isUser ? `${T.purple}14` : 'rgba(255,255,255,.02)',
                       border:`1px solid ${p.isUser ? T.purple+'45' : 'rgba(255,255,255,.06)'}`,
                       boxShadow: p.isUser ? `0 0 14px ${T.purpleGlow}` : 'none',
@@ -1423,13 +1432,13 @@ export default function Raid() {
                       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                         <span style={{
                           fontFamily:"'Orbitron',sans-serif", fontSize:12, fontWeight:800,
-                          color: idx===0 ? T.gold : T.muted, minWidth:20, textAlign:'center',
+                          color: trueRank===1 ? T.gold : T.muted, minWidth:20, textAlign:'center',
                           position:'relative',
                         }}>
-                          {idx===0 && (
+                          {trueRank===1 && (
                             <span style={{ position:'absolute', top:-16, left:'50%', transform:'translateX(-50%)', fontSize:14, animation:'raid-crown-bob 1.8s ease-in-out infinite' }}>👑</span>
                           )}
-                          #{idx+1}
+                          #{trueRank}
                         </span>
                         <span style={{ fontSize:20 }}>{p.flag}</span>
                         <div>

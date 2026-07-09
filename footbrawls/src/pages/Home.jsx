@@ -1279,7 +1279,6 @@ function ActionButtons({ onRaid, onFriends }) {
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent)",opacity:rH?1:0.35,transition:"opacity 0.2s",zIndex:2}}/>
 
         <div style={{position:"relative",zIndex:3,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:8}}>
-          <Icon.Swords size={48} color="#A855F7" />
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:2,color:"#fff",lineHeight:1,textShadow:rH?"0 0 20px rgba(168,85,247,0.8)":"0 2px 4px rgba(0,0,0,0.8)",transition:"text-shadow 0.2s"}}>CHALLENGE RAID</div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.55rem",color:"#fff",letterSpacing:1,opacity:rH?1:0.7,textShadow:"0 1px 3px rgba(0,0,0,0.8)",background:rH?"rgba(168,85,247,0.4)":"rgba(0,0,0,0.4)",padding:"4px 10px",borderRadius:6,border:`1px solid rgba(168,85,247,${rH?0.6:0.2})`}}>BUCKLE UP · TEAM UP</div>
         </div>
@@ -1311,7 +1310,6 @@ function ActionButtons({ onRaid, onFriends }) {
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(79,142,247,0.7),transparent)",opacity:fH?1:0.35,transition:"opacity 0.2s",zIndex:2}}/>
 
         <div style={{position:"relative",zIndex:3,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:8}}>
-          <Icon.Users size={48} color="#4F8EF7" />
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"1.6rem",letterSpacing:2,color:"#fff",lineHeight:1,textShadow:fH?"0 0 20px rgba(79,142,247,0.8)":"0 2px 4px rgba(0,0,0,0.8)",transition:"text-shadow 0.2s"}}>VS FRIENDS</div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:"0.55rem",color:"#fff",letterSpacing:1,opacity:fH?1:0.7,textShadow:"0 1px 3px rgba(0,0,0,0.8)",background:fH?"rgba(79,142,247,0.4)":"rgba(0,0,0,0.4)",padding:"4px 10px",borderRadius:6,border:`1px solid rgba(79,142,247,${fH?0.6:0.2})`}}>PRIVATE LOBBY · LIVE</div>
         </div>

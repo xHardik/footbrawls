@@ -202,7 +202,7 @@ html { scroll-behavior: smooth; }
     linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), 
     linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px),
     linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%),
-    url('/stadium.jpg');
+    url('/stadium_striker.png');
   background-size: 16px 16px, 16px 16px, cover, cover;
   background-position: 0 0, 0 0, center, center 40%;
   z-index: 1;
@@ -264,19 +264,19 @@ html { scroll-behavior: smooth; }
   grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px;
 }
 .pn-goal-zone {
-  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  border-radius: 0; display: flex; align-items: center; justify-content: center;
   transition: all 0.25s ease; position: relative;
-  background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.06);
+  background: transparent; border: none; cursor: pointer;
 }
-.pn-goal-zone.zone-aimed { background: rgba(232,64,64,0.1); border: 1px solid rgba(232,64,64,0.4); box-shadow: inset 0 0 15px rgba(232,64,64,0.2); }
+.pn-goal-zone.zone-aimed { background: rgba(232,64,64,0.1); box-shadow: inset 0 0 15px rgba(232,64,64,0.2); }
 .pn-goal-zone.zone-aimed::after {
   content: ''; position: absolute; inset: 8px; border-radius: 6px;
   border: 2px solid rgba(232,64,64,0.65); animation: pnAimPulse 1.1s ease-in-out infinite;
 }
 @keyframes pnAimPulse { 0%,100%{opacity:0.45; transform:scale(0.92);} 50%{opacity:1; transform:scale(1);} }
-.pn-goal-zone.zone-gk-dived { background: rgba(255,164,0,0.12); border: 1px solid rgba(255,164,0,0.45); box-shadow: inset 0 0 15px rgba(255,164,0,0.25); }
-.pn-goal-zone.zone-ball-scored { background: rgba(61,214,140,0.18); border: 1px solid rgba(61,214,140,0.5); box-shadow: inset 0 0 20px rgba(61,214,140,0.3); }
-.pn-goal-zone:hover { border-color: rgba(255,255,255,0.2); }
+.pn-goal-zone.zone-gk-dived { background: rgba(255,164,0,0.12); box-shadow: inset 0 0 15px rgba(255,164,0,0.25); }
+.pn-goal-zone.zone-ball-scored { background: rgba(61,214,140,0.18); box-shadow: inset 0 0 20px rgba(61,214,140,0.3); }
+.pn-goal-zone:hover { background: rgba(255,255,255,0.05); }
 
 /* ── BALL ── */
 .pn-ball {
@@ -338,41 +338,12 @@ html { scroll-behavior: smooth; }
   filter: drop-shadow(0 0 6px rgba(247,195,68,0.9));
 }
 
-/* topLeft: both arms swing up-left, fully outstretched (~90deg off the body) */
-.pn-goalkeeper.pn-gk-diving.dive-topLeft .pn-gk-arm-left  { animation: pnArmA_TopLeft 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-topLeft .pn-gk-arm-right { animation: pnArmB_TopLeft 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_TopLeft { 0%{transform:rotate(0deg)} 45%{transform:rotate(-70deg)} 100%{transform:rotate(-98deg)} }
-@keyframes pnArmB_TopLeft { 0%{transform:rotate(0deg)} 45%{transform:rotate(-65deg)} 100%{transform:rotate(-92deg)} }
+/* ── ARMS: both hands snap out to a full perpendicular reach, starfish-style ── */
+.pn-goalkeeper.pn-gk-diving .pn-gk-arm-left  { animation: armReachLeft 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
+.pn-goalkeeper.pn-gk-diving .pn-gk-arm-right { animation: armReachRight 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
 
-/* topRight: mirror */
-.pn-goalkeeper.pn-gk-diving.dive-topRight .pn-gk-arm-right { animation: pnArmA_TopRight 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-topRight .pn-gk-arm-left  { animation: pnArmB_TopRight 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_TopRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(70deg)} 100%{transform:rotate(98deg)} }
-@keyframes pnArmB_TopRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(65deg)} 100%{transform:rotate(92deg)} }
-
-/* topCenter: both arms shoot straight up, perpendicular, forming a "Y" */
-.pn-goalkeeper.pn-gk-diving.dive-topCenter .pn-gk-arm-left  { animation: pnArmA_TopCenter 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-topCenter .pn-gk-arm-right { animation: pnArmB_TopCenter 0.6s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_TopCenter { 0%{transform:rotate(0deg)} 45%{transform:rotate(-65deg)} 100%{transform:rotate(-92deg)} }
-@keyframes pnArmB_TopCenter { 0%{transform:rotate(0deg)} 45%{transform:rotate(65deg)} 100%{transform:rotate(92deg)} }
-
-/* bottomLeft: both arms drop and extend toward the low corner, fully stretched */
-.pn-goalkeeper.pn-gk-diving.dive-bottomLeft .pn-gk-arm-left   { animation: pnArmA_BotLeft 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-bottomLeft .pn-gk-arm-right  { animation: pnArmB_BotLeft 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_BotLeft { 0%{transform:rotate(0deg)} 45%{transform:rotate(-72deg)} 100%{transform:rotate(-100deg)} }
-@keyframes pnArmB_BotLeft { 0%{transform:rotate(0deg)} 45%{transform:rotate(-64deg)} 100%{transform:rotate(-90deg)} }
-
-/* bottomRight: mirror */
-.pn-goalkeeper.pn-gk-diving.dive-bottomRight .pn-gk-arm-right { animation: pnArmA_BotRight 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-bottomRight .pn-gk-arm-left  { animation: pnArmB_BotRight 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_BotRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(72deg)} 100%{transform:rotate(100deg)} }
-@keyframes pnArmB_BotRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(64deg)} 100%{transform:rotate(90deg)} }
-
-/* bottomCenter: both arms scoop down and outward, perpendicular to the body */
-.pn-goalkeeper.pn-gk-diving.dive-bottomCenter .pn-gk-arm-left  { animation: pnArmA_BotCenter 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-.pn-goalkeeper.pn-gk-diving.dive-bottomCenter .pn-gk-arm-right { animation: pnArmB_BotCenter 0.52s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
-@keyframes pnArmA_BotCenter { 0%{transform:rotate(0deg)} 45%{transform:rotate(-60deg)} 100%{transform:rotate(-88deg)} }
-@keyframes pnArmB_BotCenter { 0%{transform:rotate(0deg)} 45%{transform:rotate(60deg)} 100%{transform:rotate(88deg)} }
+@keyframes armReachLeft  { 0%{transform:rotate(0deg)} 45%{transform:rotate(-120deg)} 100%{transform:rotate(-160deg)} }
+@keyframes armReachRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(120deg)}  100%{transform:rotate(160deg)}  }
 
 /* ── DIVING — body only, arms/legs driven by JS ── */
 .pn-goalkeeper.pn-gk-diving { animation: none; }
@@ -1059,37 +1030,7 @@ export default function PenaltyNerve({ onBack }) {
             <div className="pn-result-actions" style={{ justifyContent: 'center', width: '100%' }}>
               {isVsFriends ? (
                 <button className="pn-btn pn-btn-raid" onClick={() => navigate('/vs-friends')} style={{ width: '100%', maxWidth: '280px' }}>Return to Lobby</button>
-              ) : isRaid ? null : (
-                <button 
-                  className="pn-btn" 
-                  onClick={handleBack}
-                  style={{
-                    background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
-                    color: '#fff',
-                    padding: '14px 40px',
-                    borderRadius: '12px',
-                    fontWeight: '800',
-                    fontSize: '0.9rem',
-                    letterSpacing: '1px',
-                    border: 'none',
-                    boxShadow: '0 4px 18px rgba(124, 58, 237, 0.35)',
-                    transition: 'all 0.22s ease',
-                    width: '100%',
-                    maxWidth: '280px',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(124, 58, 237, 0.5)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(124, 58, 237, 0.35)';
-                  }}
-                >
-                  Home
-                </button>
-              )}
+              ) : null}
             </div>
           </div>
         ) : (

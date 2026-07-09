@@ -1205,14 +1205,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         
         {!gameOver && (
           <div className="wdl-controls">
-            {isVsFriends ? (
-              <button 
-                className="wdl-btn wdl-btn-raid" 
-                onClick={() => navigate('/vs-friends')}
-              >
-                ⚔️ Return to Lobby
-              </button>
-            ) : isRaid ? null : (
+            {!(isRaid || isVsFriends) && (
               <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
             )}
           </div>
@@ -1254,15 +1247,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
 
             <div className="wdl-result-actions">
-              {isVsFriends ? (
-                <button 
-                  className="wdl-btn wdl-btn-raid" 
-                  onClick={() => navigate('/vs-friends')} 
-                  style={{ width: '100%' }}
-                >
-                  ⚔️ Return to Lobby
-                </button>
-              ) : isRaid ? null : (
+              {!(isRaid || isVsFriends) && (
                 <button 
                   className="wdl-btn" 
                   onClick={handleBack} 

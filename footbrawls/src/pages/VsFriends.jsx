@@ -21,15 +21,83 @@ const C = {
   goldGlow:"rgba(247,195,68,0.3)"
 };
 
+const Icon = {
+  Person: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.5"/>
+      <path d="M4 21v-1a8 8 0 0116 0v1" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Puzzle: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1" stroke={color} strokeWidth="1.5"/>
+      <path d="M10 6.5h4M6.5 10v4M17.5 10v4M10 17.5h4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Chart: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="14" width="4" height="7" rx="1" fill={color} opacity="0.5"/>
+      <rect x="10" y="9" width="4" height="12" rx="1" fill={color} opacity="0.7"/>
+      <rect x="17" y="4" width="4" height="17" rx="1" fill={color}/>
+      <line x1="2" y1="21" x2="22" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Network: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="5" cy="12" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="19" cy="5" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <circle cx="19" cy="19" r="2.5" stroke={color} strokeWidth="1.5"/>
+      <line x1="7.2" y1="11" x2="16.8" y2="6.4" stroke={color} strokeWidth="1.3"/>
+      <line x1="7.2" y1="13" x2="16.8" y2="17.6" stroke={color} strokeWidth="1.3"/>
+      <line x1="19" y1="7.5" x2="19" y2="16.5" stroke={color} strokeWidth="1.3" strokeDasharray="2 2"/>
+    </svg>
+  ),
+  Trophy: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M6 2h12v8a6 6 0 01-12 0V2z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M6 5H3a1 1 0 00-1 1v2a4 4 0 004 4" stroke={color} strokeWidth="1.5"/>
+      <path d="M18 5h3a1 1 0 011 1v2a4 4 0 01-4 4" stroke={color} strokeWidth="1.5"/>
+      <path d="M12 16v4M8 20h8" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Question: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5"/>
+      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <line x1="12" y1="17" x2="12.01" y2="17" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  Ball: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5"/>
+      <path d="M12 2c0 0-2.5 3-2.5 5s2.5 5 2.5 5 2.5-2 2.5-5S12 2 12 2z" fill={color} opacity="0.7"/>
+      <path d="M2 12h4l2 3-2 3H2" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+      <path d="M22 12h-4l-2 3 2 3h4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+      <path d="M5 5.5l3 2.5 1 4-4-2-1.5-4z" fill={color} opacity="0.6"/>
+      <path d="M19 5.5l-3 2.5-1 4 4-2 1.5-4z" fill={color} opacity="0.6"/>
+      <path d="M8 19l1-4 3-1 3 1 1 4" stroke={color} strokeWidth="1.2" fill="none" opacity="0.6"/>
+    </svg>
+  ),
+  Flame: ({size=18,color="currentColor"}) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path d="M12 22c4.4 0 8-3.3 8-7.4 0-2.4-1-4.4-2.6-5.9 0 1.4-.8 2.6-2 3.3C15.1 9.7 14 7 14 4c0 0-5 3-5 9.5 0 .8.1 1.5.3 2.2C8.5 15 8 13.6 8 12c-1.2 1.2-2 3-2 4.6C6 20.7 8.7 22 12 22z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="12" cy="17" r="2" stroke={color} strokeWidth="1.2"/>
+    </svg>
+  ),
+};
+
 const GAMES_POOL = [
-  { id: 'whoareya_correct', label: 'Who Are Ya?', route: '/games/whoareya', icon: '👤' },
-  { id: 'wordle_correct', label: 'Player Wordle', route: '/games/wordle', icon: '🟩' },
-  { id: 'higherLower_correct', label: 'Higher or Lower', route: '/games/higherlower', icon: '📊' },
-  { id: 'transferTrail_correct', label: 'Transfer Trail', route: '/games/transfertrail', icon: '🔗' },
-  { id: 'top10', label: 'Top 10 Guess', route: '/games/top10', icon: '🏆' },
-  { id: 'dailyTrivia', label: 'Daily Trivia', route: '/games/dailytrivia', icon: '📝' },
-  { id: 'dribble_correct', label: 'Dribble Gauntlet', route: '/games/dribble', icon: '⚽' },
-  { id: 'penaltyNerve_all5', label: 'Penalty Shootout', route: '/games/penaltynerve', icon: '🥅' }
+  { id: 'whoareya_correct', label: 'Who Are Ya?', route: '/games/whoareya', IconC: Icon.Person },
+  { id: 'wordle_correct', label: 'Player Wordle', route: '/games/wordle', IconC: Icon.Puzzle },
+  { id: 'higherLower_correct', label: 'Higher or Lower', route: '/games/higherlower', IconC: Icon.Chart },
+  { id: 'transferTrail_correct', label: 'Transfer Trail', route: '/games/transfertrail', IconC: Icon.Network },
+  { id: 'top10', label: 'Top 10 Guess', route: '/games/top10', IconC: Icon.Trophy },
+  { id: 'dailyTrivia', label: 'Daily Trivia', route: '/games/dailytrivia', IconC: Icon.Question },
+  { id: 'dribble_correct', label: 'Dribble Gauntlet', route: '/games/dribble', IconC: Icon.Ball },
+  { id: 'penaltyNerve_all5', label: 'Penalty Shootout', route: '/games/penaltynerve', IconC: Icon.Flame }
 ];
 
 export default function VsFriends() {
@@ -317,7 +385,7 @@ export default function VsFriends() {
         borderBottom: `1px solid ${C.green}25`,
         boxShadow: `0 4px 20px ${C.green}15`
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'start' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'start' }}>
           <button onClick={() => navigate('/')} style={{
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
             color: '#fff', borderRadius: '8px', width: 32, height: 32,
@@ -326,16 +394,16 @@ export default function VsFriends() {
           }}>
             ←
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px rgba(61,214,140,0.3))` }} />
-            <span style={{
-              fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
-              background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>
-              VS FRIENDS
-            </span>
-          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifySelf: 'end' }}>
+          <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px rgba(61,214,140,0.3))` }} />
+          <span style={{
+            fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
+            background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            VS FRIENDS
+          </span>
         </div>
       </nav>
 
@@ -371,7 +439,7 @@ export default function VsFriends() {
                       background: selected ? `rgba(61,214,140,0.15)` : 'rgba(255,255,255,0.05)',
                       fontSize: 16
                     }}>
-                      {g.icon}
+                      <g.IconC size={18} color={selected ? C.green : "rgba(255,255,255,0.4)"} />
                     </div>
                     <span style={{ fontSize: 11.5, fontFamily:"'Syne',sans-serif", fontWeight: 700, color: selected ? '#fff' : 'rgba(255,255,255,0.5)', letterSpacing: 0.5 }}>{g.label}</span>
                   </button>
@@ -456,6 +524,9 @@ export default function VsFriends() {
                 {session.gamesList?.map((g, idx) => {
                   const isActive = idx + 1 === session.currentAct;
                   const isCompleted = idx + 1 < session.currentAct;
+                  const poolGame = GAMES_POOL.find(p => p.id === g.id);
+                  const IconComp = poolGame ? poolGame.IconC : null;
+
                   return (
                     <div
                       key={g.id}
@@ -469,8 +540,8 @@ export default function VsFriends() {
                         border: isActive ? `1px solid ${C.accent}` : `1px solid ${C.border}`
                       }}
                     >
-                      <span style={{ fontSize: 12, fontFamily:"'Orbitron',sans-serif", color: isActive ? C.accent : isCompleted ? C.green : C.text }}>
-                        Act {idx + 1}: {g.label}
+                      <span style={{ fontSize: 12, fontFamily:"'Orbitron',sans-serif", color: isActive ? C.accent : isCompleted ? C.green : C.text, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {IconComp && <IconComp size={14} color={isActive ? C.accent : isCompleted ? C.green : "rgba(255,255,255,0.4)"} />} Act {idx + 1}: {g.label}
                       </span>
                       <span>
                         {isActive ? '➡️ PLAYING' : isCompleted ? '✅ DONE' : '⏳ LOCKED'}
@@ -560,11 +631,16 @@ export default function VsFriends() {
                   const hPct = (hScore / maxPossible) * 100;
                   const gPct = (gScore / maxPossible) * 100;
 
+                  const poolGame = GAMES_POOL.find(p => p.id === g.id);
+                  const IconComp = poolGame ? poolGame.IconC : null;
+
                   return (
                     <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontFamily: "'Syne', sans-serif" }}>
                         <span style={{ color: hScore > gScore ? C.green : 'rgba(255,255,255,0.6)', fontWeight: hScore > gScore ? 700 : 400 }}>{hScore}</span>
-                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>{g.icon} {g.label}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {IconComp && <IconComp size={14} color="rgba(255,255,255,0.4)" />} {g.label}
+                        </span>
                         <span style={{ color: gScore > hScore ? C.green : 'rgba(255,255,255,0.6)', fontWeight: gScore > hScore ? 700 : 400 }}>{gScore}</span>
                       </div>
                       <div style={{ display: 'flex', width: '100%', height: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' }}>

@@ -491,16 +491,43 @@ function GuildsList({ guilds, currentUser }) {
       );
     }
 
+    // Find which of the top 10 players belong to this guild code (using homeCountry)
+    const topPlayersInGuild = (window.__top10GlobalPlayers || []).filter(u => u.homeCountry === g.code);
+
     const RowComponent = i < 3 ? PodiumRow : NormalRow;
     return (
-      <RowComponent
-        key={g.code || i}
-        item={item}
-        rank={i}
-        isLast={i === guilds.length - 1}
-        renderBadge={renderBadge}
-        renderScore={renderScore}
-      />
+      <div key={g.code || i} style={{ borderBottom: i === guilds.length - 1 ? "none" : "1px solid rgba(255,255,255,0.05)" }}>
+        <RowComponent
+          item={item}
+          rank={i}
+          isLast={true}
+          renderBadge={renderBadge}
+          renderScore={renderScore}
+        />
+        {topPlayersInGuild.length > 0 && (
+          <div style={{
+            background: "rgba(255,255,255,0.015)",
+            padding: "8px 20px 10px 48px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+            borderTop: "1px solid rgba(255,255,255,0.02)"
+          }}>
+            <div style={{ fontSize: "0.55rem", fontFamily: "'Space Mono', monospace", color: "rgba(242,242,244,0.35)", letterSpacing: "1px", textTransform: "uppercase" }}>
+              ⭐ Top 10 Global Players in Guild:
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px" }}>
+              {topPlayersInGuild.map(u => (
+                <div key={u.userId} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: "0.72rem", color: u.userId === currentUser?.userId ? C.green : "rgba(255,255,255,0.7)" }}>
+                  <span>{u.flag}</span>
+                  <span style={{ fontWeight: 600 }}>{u.nickname}</span>
+                  <span style={{ fontSize: "0.62rem", color: C.muted, fontFamily: "'Space Mono', monospace" }}>({formatXP(u.totalXP)})</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     );
   });
 }
@@ -657,6 +684,16 @@ export default function Ranks() {
         else if (allUsers[49]) final50.push(allUsers[49]);
         setUsers(final50);
       }
+      
+      // Calculate top 10 players globally
+      const top10Users = allUsers.slice(0, 10).map(u => ({
+        userId: u.userId,
+        nickname: u.nickname,
+        totalXP: u.totalXP,
+        flag: u.flag,
+        homeCountry: u.homeCountry
+      }));
+      window.__top10GlobalPlayers = top10Users;
     });
 
     

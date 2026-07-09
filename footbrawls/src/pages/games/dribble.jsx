@@ -52,6 +52,124 @@ function getGKZones(round) {
 function zoneScreenX(i) { return 211 + i * 23 + 11; }
 function zoneScreenY()  { return 18; } 
 
+function drawShadow(ctx, x, y, rx, ry) {
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCrowdAndLights(ctx, t) {
+  const H = 320;
+  [[0, 150], [410, 560]].forEach(([sx, ex]) => {
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#1c2733');
+    grad.addColorStop(1, '#0d141c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(sx, 0, ex - sx, H);
+    ctx.save();
+    for (let row = 0; row < 10; row++) {
+      for (let col = 0; col < 6; col++) {
+        const px = sx + 8 + col * ((ex - sx - 16) / 5);
+        const py = 6 + row * 30 + (col % 2 === 0 ? 4 : 0);
+        const flicker = 0.35 + 0.3 * Math.abs(Math.sin(t / 900 + px * 0.13 + py * 0.07));
+        ctx.globalAlpha = flicker;
+        ctx.fillStyle = '#ffe1aa';
+        ctx.fillRect(px, py, 3, 3);
+      }
+    }
+    ctx.restore();
+  });
+  [80, 480].forEach(fx => {
+    const glow = ctx.createRadialGradient(fx, 0, 0, fx, 0, 130);
+    glow.addColorStop(0, 'rgba(255,250,220,0.32)');
+    glow.addColorStop(1, 'rgba(255,250,220,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(fx - 130, 0, 260, 160);
+  });
+}
+
+function drawGoalNet(ctx) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 0.6;
+  for (let x = 205; x <= 355; x += 8) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 10); ctx.stroke();
+  }
+  for (let y = 0; y <= 10; y += 4) {
+    ctx.beginPath(); ctx.moveTo(205, y); ctx.lineTo(355, y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/**
+ * Draws a stylized human player figure: boots + legs, shorts, arms, jersey torso,
+ * and a head, so each figure reads as an actual person on the pitch rather than
+ * a labeled blob. (x, y) is the torso anchor point.
+ */
+function drawFigure(ctx, x, y, o) {
+  const stride = o.stride || 0;
+  const armSwing = o.armSwing || 0;
+
+  // legs + boots
+  ctx.strokeStyle = '#161616'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - 4, y + 2); ctx.lineTo(x - 4 + stride, y + 16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 4, y + 2); ctx.lineTo(x + 4 - stride, y + 16); ctx.stroke();
+  ctx.fillStyle = '#101010';
+  ctx.beginPath(); ctx.ellipse(x - 4 + stride, y + 17.5, 3.6, 2, 0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x + 4 - stride, y + 17.5, 3.6, 2, -0.2, 0, Math.PI * 2); ctx.fill();
+
+  // shorts
+  ctx.fillStyle = o.shorts;
+  ctx.beginPath();
+  ctx.moveTo(x - 8, y - 4); ctx.lineTo(x + 8, y - 4);
+  ctx.lineTo(x + 6, y + 4); ctx.lineTo(x - 6, y + 4);
+  ctx.closePath(); ctx.fill();
+
+  // arms
+  ctx.strokeStyle = o.jersey; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - 9, y - 12); ctx.lineTo(x - 13 + armSwing, y - 1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 9, y - 12); ctx.lineTo(x + 13 - armSwing, y - 1); ctx.stroke();
+  ctx.fillStyle = o.skin;
+  ctx.beginPath(); ctx.arc(x - 13 + armSwing, y - 1, 2.4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 13 - armSwing, y - 1, 2.4, 0, Math.PI * 2); ctx.fill();
+
+  // torso / jersey
+  ctx.fillStyle = o.jersey;
+  roundRect(ctx, x - 10, y - 16, 20, 14, 5); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+  roundRect(ctx, x - 10, y - 16, 20, 14, 5); ctx.stroke();
+  if (o.number) {
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(o.number, x, y - 9);
+  }
+
+  // neck + head
+  ctx.fillStyle = o.skin;
+  ctx.fillRect(x - 2, y - 18, 4, 4);
+  ctx.beginPath(); ctx.arc(x, y - 22, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = o.hair;
+  ctx.beginPath(); ctx.arc(x, y - 24, 6.2, Math.PI, 0); ctx.fill();
+  if (o.cap) {
+    ctx.fillStyle = o.jersey;
+    ctx.beginPath(); ctx.arc(x, y - 24.5, 6.6, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
+  }
+}
+
 const botScores = { buddy: simBot(SEED, 'buddy'), rival: simBot(SEED, 'rival') };
 
 function initState() {
@@ -73,21 +191,29 @@ function initState() {
     gkX: 280, gkY: 42,
     gkDiveX: 280, gkDiveY: 42,
     gkDiving: false,
-    gkDiveDir: 0, 
+    gkDiveDir: 0,
+    animClock: 0,
+    ballTrail: [],
+    ballRot: 0,
+    playerMoving: false,
   };
 }
 
 
 
-function drawField(ctx) {
+function drawField(ctx, t) {
   const W = 560, H = 320;
   ctx.canvas.width = W; ctx.canvas.height = H;
-  
+
+  drawCrowdAndLights(ctx, t || 0);
+
+  ctx.fillStyle = '#3f8f3f'; ctx.fillRect(150, 0, 260, H);
+  const stripeW = 260 / 6;
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i % 2 === 0 ? '#4a9e4a' : '#459645';
-    ctx.fillRect(i * 94, 0, 94, H);
+    ctx.fillRect(150 + i * stripeW, 0, stripeW, H);
   }
-  
+
   ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
   ctx.strokeRect(150, 10, 260, 300);
   
@@ -103,10 +229,17 @@ function drawField(ctx) {
   ctx.beginPath(); ctx.arc(280, 320, 70, Math.PI, 0); ctx.stroke();
   
   ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(0, 210); ctx.lineTo(560, 210); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(150, 210); ctx.lineTo(410, 210); ctx.stroke();
+
+  const vg = ctx.createRadialGradient(280, 190, 60, 280, 190, 260);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.24)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(150, 0, 260, H);
 }
 
 function drawGoalZones(ctx, st) {
+  drawGoalNet(ctx);
   const revealed = st.phase === 'shot_result';
   for (let i = 0; i < 6; i++) {
     const x = 211 + i * 23;
@@ -137,6 +270,7 @@ function drawGoalZones(ctx, st) {
 
 
 function drawGK(ctx, st) {
+  const t = st.animClock || 0;
   if (st.gkDiving) {
     
     const x1 = zoneScreenX(st.gkZones[0]);
@@ -144,6 +278,7 @@ function drawGK(ctx, st) {
     const midX = (x1 + x2) / 2;
     const bodyY = st.gkDiveY;
 
+    drawShadow(ctx, midX, 30, 16, 4);
     
     ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 7; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(midX, bodyY); ctx.lineTo(x1, bodyY - 4); ctx.stroke();
@@ -165,71 +300,101 @@ function drawGK(ctx, st) {
     ctx.fillText('GK', midX, bodyY);
   } else {
     
-    const x = st.gkX, y = st.gkY;
-    ctx.fillStyle = '#ff9f1c';
-    ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = 'white'; ctx.font = 'bold 8px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('GK', x, y - 2);
-    
-    ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x - 15, y); ctx.lineTo(x - 28, y - 5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + 15, y); ctx.lineTo(x + 28, y - 5); ctx.stroke();
+    const sway = Math.sin(t / 600) * 3;
+    const x = st.gkX + sway, y = st.gkY;
+    drawShadow(ctx, x, y + 15, 13, 4);
+    const breathe = Math.sin(t / 700) * 1;
+    drawFigure(ctx, x, y + breathe, {
+      jersey: '#ff9f1c', shorts: '#2b1a00', skin: '#e8b48c', hair: '#111',
+      number: 'GK', cap: true, armSwing: Math.sin(t / 600) * 3,
+    });
   }
 }
 
-function drawDefender(ctx, x, y, beaten, isAI) {
+function drawDefender(ctx, x, y, beaten, isAI, t) {
+  t = t || 0;
+  const bob = beaten ? 0 : Math.sin(t / 480 + x) * 1.4;
+  y = y + bob;
+  drawShadow(ctx, x, y + 18, 16, 5);
+  const lane = x < 200 ? 'L' : x > 360 ? 'R' : 'C';
+
   if (beaten) {
-    ctx.fillStyle = 'rgba(61,214,140,0.2)';
-    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.globalAlpha = 0.4;
+    drawFigure(ctx, x, y, {
+      jersey: '#E84040', shorts: '#2b0d0d', skin: '#c99', hair: 'rgba(30,20,15,0.4)', number: lane,
+    });
+    ctx.restore();
+    ctx.fillStyle = 'rgba(61,214,140,0.22)';
+    ctx.beginPath(); ctx.arc(x, y - 8, 22, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#3DD68C'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#3DD68C'; ctx.font = 'bold 14px sans-serif';
+    ctx.beginPath(); ctx.arc(x, y - 8, 22, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#3DD68C'; ctx.font = 'bold 15px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('✓', x, y);
+    ctx.fillText('✓', x, y - 8);
     return;
   }
-  ctx.fillStyle = isAI ? 'rgba(232,64,64,0.9)' : 'rgba(200,50,50,0.75)';
-  ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = 'white'; ctx.font = '600 11px sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(x < 200 ? 'L' : x > 360 ? 'R' : 'C', x, y - 4);
-  ctx.font = '9px sans-serif'; ctx.fillText('DEF', x, y + 7);
+
+  if (isAI) {
+    ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#E84040';
+    ctx.beginPath(); ctx.arc(x, y - 8, 25, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
+
+  drawFigure(ctx, x, y, {
+    jersey: '#E84040', shorts: '#2b0d0d', skin: '#dba374', hair: '#161616', number: lane,
+    armSwing: Math.sin(t / 480 + x) * 2,
+  });
 }
 
-function drawPlayer(ctx, x, y) {
-  ctx.fillStyle = '#4A90E2';
-  ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, y, 17, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = 'white'; ctx.font = 'bold 10px sans-serif';
+function drawPlayer(ctx, x, y, t, moving) {
+  t = t || 0;
+  drawShadow(ctx, x, y + 18, 15, 5);
+  const stride = moving ? Math.sin(t / 65) * 11 : Math.sin(t / 550) * 1.5;
+  const armSwing = moving ? Math.sin(t / 65 + Math.PI) * 7 : Math.sin(t / 550) * 1;
+  drawFigure(ctx, x, y, {
+    jersey: '#4A90E2', shorts: '#182a42', skin: '#e8b48c', hair: '#2b1b12',
+    number: '9', stride, armSwing,
+  });
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = 'bold 7px sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('YOU', x, y);
+  ctx.fillText('YOU', x, y + 28);
 }
 
-function drawBall(ctx, x, y) {
+function drawBall(ctx, x, y, rot) {
+  drawShadow(ctx, x, y + 9, 7, 2.5);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot || 0);
   ctx.fillStyle = 'white';
-  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.stroke();
   ctx.strokeStyle = '#555'; ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(x - 3, y - 5); ctx.bezierCurveTo(x, y - 2, x + 3, y - 5, x + 3, y); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x - 3, y + 5); ctx.bezierCurveTo(x, y + 2, x + 3, y + 5, x + 3, y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-3, -5); ctx.bezierCurveTo(0, -2, 3, -5, 3, 0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-3, 5); ctx.bezierCurveTo(0, 2, 3, 5, 3, 0); ctx.stroke();
+  ctx.restore();
+}
+
+function drawBallTrail(ctx, trail) {
+  trail.forEach((p, i) => {
+    ctx.save();
+    ctx.globalAlpha = ((i + 1) / (trail.length + 1)) * 0.32;
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  });
 }
 
 function drawScene(ctx, st) {
-  drawField(ctx);
+  const t = st.animClock || 0;
+  drawField(ctx, t);
   if (st.shotPhase || st.phase === 'shot_result') drawGoalZones(ctx, st);
   drawGK(ctx, st);
   st.defX.forEach((x, i) =>
     drawDefender(ctx, x, st.defY[i], st.defBeaten[i],
-      st.aiDefPick === i && st.feedback === 'tackled'));
-  drawPlayer(ctx, st.playerX, st.playerY);
-  drawBall(ctx, st.ballX, st.ballY);
+      st.aiDefPick === i && st.feedback === 'tackled', t));
+  drawPlayer(ctx, st.playerX, st.playerY, t, !!st.playerMoving);
+  if (st.ballTrail && st.ballTrail.length) drawBallTrail(ctx, st.ballTrail);
+  drawBall(ctx, st.ballX, st.ballY, st.ballRot || 0);
 }
 
 function StreakDots({ history, today }) {
@@ -299,6 +464,18 @@ export default function DribbleGauntlet() {
 
   useEffect(() => { repaint(); }, [repaint]);
 
+  const [fx, setFx] = useState(null);
+  useEffect(() => {
+    let raf;
+    const loop = (t) => {
+      stRef.current.animClock = t;
+      repaint();
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [repaint]);
+
   useEffect(() => {
     if (!document.getElementById('db-css-injected')) {
       const s = document.createElement('style');
@@ -353,6 +530,7 @@ export default function DribbleGauntlet() {
       zonePick: null, feedback: null, tackled: false, shotPhase: false,
       playerX: 280, playerY: 255, ballX: 280, ballY: 265,
       gkX: 280, gkY: 42, gkDiveX: 280, gkDiveY: 42, gkDiving: false,
+      ballTrail: [], ballRot: 0, playerMoving: false,
     });
     setHasWatchedAd(true);
     rerender();
@@ -368,13 +546,21 @@ export default function DribbleGauntlet() {
     const s = stRef.current;
     const sx = s.ballX, sy = s.ballY, spx = s.playerX, spy = s.playerY;
     const start = performance.now();
+    s.playerMoving = true;
     function step(now) {
       const p = Math.min(1, (now - start) / dur);
       const e = 1 - Math.pow(1 - p, 3);
-      s.ballX = sx + (tx - sx) * e; s.ballY = sy + (ty - sy) * e;
+      const nx = sx + (tx - sx) * e, ny = sy + (ty - sy) * e;
+      s.ballRot = (s.ballRot || 0) + Math.hypot(nx - s.ballX, ny - s.ballY) * 0.15;
+      s.ballTrail = [...(s.ballTrail || []).slice(-4), { x: s.ballX, y: s.ballY }];
+      s.ballX = nx; s.ballY = ny;
       s.playerX = spx + (tx - spx) * e; s.playerY = spy + (ty - spy) * e;
       repaint();
-      rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        s.playerMoving = false; s.ballTrail = []; rafRef.current = null; cb?.();
+      }
     }
     rafRef.current = requestAnimationFrame(step);
   };
@@ -386,9 +572,16 @@ export default function DribbleGauntlet() {
     function step(now) {
       const p = Math.min(1, (now - start) / dur);
       const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-      s.ballX = sx + (tx - sx) * e; s.ballY = sy + (ty - sy) * e;
+      const nx = sx + (tx - sx) * e, ny = sy + (ty - sy) * e;
+      s.ballRot = (s.ballRot || 0) + Math.hypot(nx - s.ballX, ny - s.ballY) * 0.15;
+      s.ballTrail = [...(s.ballTrail || []).slice(-4), { x: s.ballX, y: s.ballY }];
+      s.ballX = nx; s.ballY = ny;
       repaint();
-      rafRef.current = p < 1 ? requestAnimationFrame(step) : (cb?.(), null);
+      if (p < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        s.ballTrail = []; rafRef.current = null; cb?.();
+      }
     }
     rafRef.current = requestAnimationFrame(step);
   };
@@ -429,6 +622,7 @@ export default function DribbleGauntlet() {
       s.feedback = 'tackled'; s.tackled = true; rerender();
       animateTo(tx, s.defY[s.playerPick] + 5, 380, () => {
         s.results = [...s.results, { dribbleWon: false, goal: false }]; rerender();
+        setFx('shake'); setTimeout(() => setFx(null), 420);
       });
     } else {
       s.feedback = 'beaten'; s.defBeaten[s.playerPick] = true;
@@ -452,6 +646,8 @@ export default function DribbleGauntlet() {
         s.feedback = gkBlocked ? 'saved' : 'goal';
         s.results = [...s.results, { dribbleWon: true, goal: !gkBlocked }];
         rerender();
+        setFx(gkBlocked ? 'shake' : 'goal');
+        setTimeout(() => setFx(null), gkBlocked ? 420 : 700);
       });
     }, 80);
   };
@@ -556,6 +752,7 @@ export default function DribbleGauntlet() {
       defX: [140, 280, 420], defY: [130, 130, 130],
       defBeaten: [false, false, false],
       gkX: 280, gkY: 42, gkDiveX: 280, gkDiveY: 42, gkDiving: false,
+      ballTrail: [], ballRot: 0, playerMoving: false,
     });
     rerender();
   };
@@ -749,7 +946,7 @@ export default function DribbleGauntlet() {
                 </div>
 
                 
-                <div className="db-canvas-wrapper">
+                <div className={`db-canvas-wrapper ${fx ? `fx-${fx}` : ''}`}>
                   <canvas ref={canvasRef} width={560} height={320} className="db-canvas" />
                 </div>
 
@@ -1011,6 +1208,22 @@ const CSS = `
   margin-bottom: 18px;
 }
 .db-canvas { display: block; width: 100%; height: auto; }
+
+@keyframes dbShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-0.3deg); }
+  40% { transform: translateX(5px) rotate(0.3deg); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+.fx-shake { animation: dbShake 0.42s ease; }
+
+@keyframes dbGoalFlash {
+  0% { box-shadow: 0 0 0 0 rgba(61,214,140,0.65), 0 8px 32px rgba(0,0,0,0.4); }
+  40% { box-shadow: 0 0 46px 12px rgba(61,214,140,0.55), 0 8px 32px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(61,214,140,0), 0 8px 32px rgba(0,0,0,0.4); }
+}
+.fx-goal { animation: dbGoalFlash 0.7s ease; }
 
 /* controls */
 .db-controls { display: flex; flex-direction: column; gap: 0; }

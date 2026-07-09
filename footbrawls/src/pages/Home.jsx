@@ -244,8 +244,10 @@ function isDoneToday(game) {
 }
 
 function getDailyXP(user) {
-  const today = getTodayKey();
-  if (user?.dailyXPDate === today) return user.dailyXP || 0;
+  const todayUTC = getTodayKey();
+  const dt = new Date();
+  const todayLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+  if (user?.dailyXPDate === todayUTC || user?.dailyXPDate === todayLocal) return user.dailyXP || 0;
   return 0;
 }
 
@@ -1562,29 +1564,6 @@ function Footer({ navigate }) {
               </p>
 
               
-              <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                {socials.map(s => (
-                  <a
-                    key={s.id} href={s.href} target="_blank" rel="noreferrer"
-                    onMouseEnter={() => setHoveredSocial(s.id)}
-                    onMouseLeave={() => setHoveredSocial(null)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "7px",
-                      padding: "7px 14px",
-                      background: hoveredSocial === s.id ? s.bg : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${hoveredSocial === s.id ? s.border : "rgba(255,255,255,0.07)"}`,
-                      borderRadius: "9px",
-                      color: hoveredSocial === s.id ? s.color : "rgba(242,242,244,0.36)",
-                      textDecoration: "none",
-                      fontSize: "0.72rem",
-                      fontFamily: "'Space Mono', monospace", fontWeight: 700,
-                      letterSpacing: "0.5px", transition: "all 0.2s",
-                    }}
-                  >
-                    {s.svg}{s.label}
-                  </a>
-                ))}
-              </div>
             </div>
 
             
@@ -1794,9 +1773,12 @@ export default function Home() {
     return onSnapshot(doc(db, "users", uid), snap => {
       if (!snap.exists()) return;
       const d = snap.data();
-      const today = new Date().toISOString().split("T")[0];
+      const todayUTC = new Date().toISOString().split("T")[0];
+      const dt = new Date();
+      const todayLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+      const isToday = d.dailyXPDate === todayUTC || d.dailyXPDate === todayLocal;
       setLocalUser(prev => {
-        const fresh = { ...prev, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:d.dailyXPDate===today?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
+        const fresh = { ...prev, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:isToday?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
         saveUserLocally(fresh);
         return fresh;
       });

@@ -182,7 +182,11 @@ export default function Profile() {
   const totalXP = user?.totalXP || 0;
   
   if (totalXP > totalBreakdownXP) {
-    userBreakdown.other = (userBreakdown.other || 0) + (totalXP - totalBreakdownXP);
+    userBreakdown.games = (userBreakdown.games || 0) + (totalXP - totalBreakdownXP);
+  }
+  if (userBreakdown.other) {
+    userBreakdown.games = (userBreakdown.games || 0) + userBreakdown.other;
+    delete userBreakdown.other;
   }
 
   const ALL_CATEGORIES = [
@@ -197,8 +201,7 @@ export default function Profile() {
     { key: "whoareya", label: "Who Are Ya", color: "#84cc16" },
     { key: "wordle", label: "Wordle", color: "#14b8a6" },
     { key: "social", label: "Social & Bonuses", color: "#64748b" },
-    { key: "games", label: "Legacy Games", color: "#a8a29e" },
-    { key: "other", label: "Other", color: "#78716c" },
+    { key: "games", label: "Games", color: "#a8a29e" },
     { key: "predictor", label: "Legacy Predictor", color: "#3DD68C" },
     { key: "trivia", label: "Legacy Trivia", color: "#F7C344" },
   ];

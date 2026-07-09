@@ -553,6 +553,7 @@ body{font-family:"Twemoji Country Flags", 'DM Sans',sans-serif}
 @media(max-width:700px){
   .wya-nav {padding: 0 14px; height: 54px}
   .wya-nav-logo {font-size: 1.35rem}
+  .wya-nav-logo-img {display: none}
   .wya-nav-tag {font-size: .6rem; padding: 4px 10px}
   .wya-main {padding: 18px 14px 56px}
   .wya-page-header h1 {font-size: 1.9rem}
@@ -956,7 +957,10 @@ export default function WhoAreYa() {
 
         
         <nav className="wya-nav">
-          <div style={{display:'flex', alignItems:'center', gap:8}}><img src="/logo.png" alt="Logo" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />{!(isRaid || isVsFriends) && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}</div>
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <img src="/logo.png" alt="Logo" className="wya-nav-logo-img" style={{ height: 24, filter: 'drop-shadow(0 0 6px rgba(247,195,68,0.4))' }} />
+            {!(isRaid || isVsFriends) && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}
+          </div>
           {isVsFriends ? (
           <div className="wya-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
             <span className="wya-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />

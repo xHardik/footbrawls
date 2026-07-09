@@ -1149,24 +1149,6 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
                 )}
               </div>
             </div>
-
-            
-            <div className="tt-controls" style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",animation:"ttFadeUp 0.45s ease 0.15s both"}}>
-              <button
-                className="tt-control-btn"
-                onClick={() => setShowModal(true)}
-                style={{
-                  background:T.surface,color:T.muted,
-                  border:`1px solid ${T.border}`,borderRadius:10,
-                  padding:"12px 26px",fontFamily:"'DM Sans',sans-serif",
-                  fontSize:"0.88rem",fontWeight:700,cursor:"pointer",
-                  transition:"all 0.22s",textTransform:"uppercase",letterSpacing:0.5,
-                  minWidth:140,
-                }}
-                onMouseEnter={e=>{e.currentTarget.style.color=T.text;e.currentTarget.style.transform="translateY(-2px)"}}
-                onMouseLeave={e=>{e.currentTarget.style.color=T.muted;e.currentTarget.style.transform="none"}}
-              >? How to Play</button>
-            </div>
           </>
         )}
 

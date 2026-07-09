@@ -617,6 +617,7 @@ function fmtSecs(ms) { return Math.ceil(ms / 1000); }
 export default function Raid() {
   const navigate = useNavigate();
   const user     = useMemo(() => getUser(), []);
+  const botTimerRef = useRef(null);
 
   const [phase, setPhase]                     = useState('lobby');
   const [raidType, setRaidType]               = useState('normal');
@@ -787,7 +788,17 @@ export default function Raid() {
         if (updated) {
           let next = s.currentAct;
           if (newActs.act3) next=4; else if (newActs.act2) next=3; else if (newActs.act1) next=2;
-          await updateDoc(sessionRef,{ acts:newActs, actWinners:newWinners, currentAct:next });
+          
+          if (isBotBuddy && next > s.currentAct) {
+            if (!botTimerRef.current) {
+              botTimerRef.current = setTimeout(() => {
+                updateDoc(sessionRef,{ acts:newActs, actWinners:newWinners, currentAct:next }).catch(()=>{});
+                botTimerRef.current = null;
+              }, 4000);
+            }
+          } else {
+            await updateDoc(sessionRef,{ acts:newActs, actWinners:newWinners, currentAct:next });
+          }
         }
 
         const l1 = localStorage.getItem(`raid_completed_act1_${activeSessionId}`)==='true';
@@ -860,9 +871,9 @@ export default function Raid() {
     if (phase === 'matched' && act1Route) {
       t = setTimeout(() => navigate(act1Route), 2200);
     } else if (phase === 'starting_act2') {
-      t = setTimeout(() => navigate('/games/dribble'), 1200);
+      t = setTimeout(() => navigate('/games/dribble'), 2500);
     } else if (phase === 'starting_act3') {
-      t = setTimeout(() => navigate('/games/penaltynerve'), 1200);
+      t = setTimeout(() => navigate('/games/penaltynerve'), 2500);
     }
     return () => {
       if (t) clearTimeout(t);
@@ -1280,26 +1291,28 @@ export default function Raid() {
 
         {phase === 'starting_act2' && (
           <Section>
-            <div style={{ textAlign:'center', padding:'60px 0' }}>
-              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-float 2s ease-in-out infinite' }}>
-                <SwordsIcon size={52} color={T.gold} />
+            <div style={{ textAlign:'center', padding:'60px 0', animation:'ttFadeUp 0.3s ease' }}>
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-pulse 1.5s infinite' }}>
+                <BoltIcon size={52} color={T.gold} />
               </div>
-              <h2 style={{ fontFamily:"'Orbitron',sans-serif", color:T.text, fontSize:24, marginBottom:10 }}>GET READY</h2>
-              <p style={{ color:T.muted, fontSize:14, marginBottom:20 }}>Act 2 — Dribble Gauntlet is starting...</p>
-              <Spinner size={32} color={T.green} />
+              <h2 style={css.searchTitle}>Act 2 is starting...</h2>
+              <p style={{ color:T.muted, fontSize:14, fontFamily:"'Inter',sans-serif", marginTop:8 }}>
+                Get ready for Dribble Gauntlet!
+              </p>
             </div>
           </Section>
         )}
 
         {phase === 'starting_act3' && (
           <Section>
-            <div style={{ textAlign:'center', padding:'60px 0' }}>
-              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-float 2s ease-in-out infinite' }}>
-                <SwordsIcon size={52} color={T.red} />
+            <div style={{ textAlign:'center', padding:'60px 0', animation:'ttFadeUp 0.3s ease' }}>
+              <div style={{ display:'flex', justifyContent:'center', marginBottom:20, animation:'raid-pulse 1.5s infinite' }}>
+                <SwordSingleIcon size={52} color={T.red} />
               </div>
-              <h2 style={{ fontFamily:"'Orbitron',sans-serif", color:T.text, fontSize:24, marginBottom:10 }}>FINAL ACT</h2>
-              <p style={{ color:T.muted, fontSize:14, marginBottom:20 }}>Act 3 — Penalty Shootout is starting...</p>
-              <Spinner size={32} color={T.green} />
+              <h2 style={css.searchTitle}>Act 3 is starting...</h2>
+              <p style={{ color:T.muted, fontSize:14, fontFamily:"'Inter',sans-serif", marginTop:8 }}>
+                The Final Showdown: Penalty Nerve!
+              </p>
             </div>
           </Section>
         )}

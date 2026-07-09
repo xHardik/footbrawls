@@ -193,13 +193,19 @@ html { scroll-behavior: smooth; }
 
 .pn-goal-frame {
   position: relative; width: 100%; aspect-ratio: 2/1;
-  background: rgba(255,255,255,0.01);
+  background-color: #060810;
   border: 3px solid rgba(255,255,255,0.15);
   border-bottom: 2px solid rgba(255,255,255,0.3);
   border-radius: 10px; margin-bottom: 6px; overflow: hidden;
-  box-shadow: 0 22px 46px rgba(0,0,0,0.55), 0 4px 0 rgba(0,0,0,0.35), inset 0 0 60px rgba(0,0,0,0.25);
-  background-image: linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 16px 16px; z-index: 1;
+  box-shadow: 0 22px 46px rgba(0,0,0,0.55), 0 4px 0 rgba(0,0,0,0.35), inset 0 0 60px rgba(0,0,0,0.65);
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), 
+    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%),
+    url('/stadium.jpg');
+  background-size: 16px 16px, 16px 16px, cover, cover;
+  background-position: 0 0, 0 0, center, center 40%;
+  z-index: 1;
   transform: perspective(1000px) rotateX(4deg);
   transform-origin: 50% 100%;
 }
@@ -1235,9 +1241,6 @@ export default function PenaltyNerve({ onBack }) {
 
              {phase !== 'gameover' && (
                <div className="pn-controls">
-                 {!(isRaid || isVsFriends) && (
-                   <button className="pn-btn pn-btn-back" onClick={handleBack}>← Home</button>
-                 )}
                </div>
              )}
 
@@ -1285,35 +1288,7 @@ export default function PenaltyNerve({ onBack }) {
                        {isVsFriends ? "Loading next act..." : "Returning to Raid..."}
                      </div>
                    ) : (
-                     <button 
-                       className="pn-btn" 
-                       onClick={handleBack}
-                       style={{
-                         background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
-                         color: '#fff',
-                         padding: '14px 40px',
-                         borderRadius: '12px',
-                         fontWeight: '800',
-                         fontSize: '0.9rem',
-                         letterSpacing: '1px',
-                         border: 'none',
-                         boxShadow: '0 4px 18px rgba(124, 58, 237, 0.35)',
-                         transition: 'all 0.22s ease',
-                         width: '100%',
-                         maxWidth: '280px',
-                         cursor: 'pointer'
-                       }}
-                       onMouseEnter={e => {
-                         e.currentTarget.style.transform = 'translateY(-2px)';
-                         e.currentTarget.style.boxShadow = '0 6px 24px rgba(124, 58, 237, 0.5)';
-                       }}
-                       onMouseLeave={e => {
-                         e.currentTarget.style.transform = 'none';
-                         e.currentTarget.style.boxShadow = '0 4px 18px rgba(124, 58, 237, 0.35)';
-                       }}
-                     >
-                       Home
-                     </button>
+                    null
                    )}
                  </div>
               </div>

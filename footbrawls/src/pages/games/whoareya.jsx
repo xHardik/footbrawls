@@ -1169,9 +1169,7 @@ export default function WhoAreYa() {
                   >
                     ⚔️ Return to Lobby
                   </button>
-                ) : (
-                  <button className="wya-btn primary" onClick={() => navigate('/')} style={{ width: '100%', background: 'linear-gradient(135deg, var(--accent), #ffd700)', color: '#060810' }}>← Back to Home</button>
-                )}
+                ) : null}
               </div>
             </div>
           )}

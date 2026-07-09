@@ -719,8 +719,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [gameOver,  setGameOver]  = useState(false);
   const [solved,    setSolved]    = useState(false);
   const [xpAwarded, setXpAwarded] = useState(0);
-  const [isRaid, setIsRaid] = useState(false);
-  const [isVsFriends, setIsVsFriends] = useState(false);
+  const [isRaid, setIsRaid] = useState(() => !!localStorage.getItem('active_game_session_id'));
+  const [isVsFriends, setIsVsFriends] = useState(() => !!localStorage.getItem('active_vs_friends_session_id'));
   const [score,     setScore]     = useState(0);
   const [msg,       setMsg]       = useState(null);
   const [hint,      setHint]      = useState(null);

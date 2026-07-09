@@ -528,7 +528,7 @@ const effectiveCurse = (isExpired && guild?.currentCurse !== 'death_curse') ? nu
           className="ly-guild-btn"
           onClick={() => navigate(`/guild/${user?.homeCountry}`)}
         >
-          🏰 Guild Room
+          🏰 Home Page
         </div>
       </div>
 

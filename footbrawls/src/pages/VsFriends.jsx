@@ -317,20 +317,26 @@ export default function VsFriends() {
         borderBottom: `1px solid ${C.green}25`,
         boxShadow: `0 4px 20px ${C.green}15`
       }}>
-        <button onClick={() => navigate('/')} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          border: 'none', cursor: 'pointer', outline: 'none', backgroundColor: 'transparent',
-          justifySelf: 'start'
-        }}>
-          <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px rgba(61,214,140,0.3))` }} />
-          <span style={{
-            fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
-            background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'start' }}>
+          <button onClick={() => navigate('/')} style={{
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+            color: '#fff', borderRadius: '8px', width: 32, height: 32,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer'
           }}>
-            VS FRIENDS
-          </span>
-        </button>
+            ←
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/logo.png" alt="Logo" style={{ height: 26, filter:`drop-shadow(0 0 8px rgba(61,214,140,0.3))` }} />
+            <span style={{
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.5rem', letterSpacing: 2,
+              background: `linear-gradient(135deg, ${C.green}, #2cb071)`,
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            }}>
+              VS FRIENDS
+            </span>
+          </div>
+        </div>
       </nav>
 
       <main style={styles.main}>

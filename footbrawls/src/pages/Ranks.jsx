@@ -336,23 +336,32 @@ function PodiumRow({ item, rank, isLast, renderBadge, renderScore }) {
 }
 
 
-function NormalRow({ item, rank, isLast, renderBadge, renderScore }) {
+function NormalRow({ item, rank, isLast, renderBadge, renderScore, bgImage }) {
   return (
     <div
       className="rk-row-normal"
-      style={{ borderBottom: isLast ? "none" : undefined }}
+      style={{ 
+        borderBottom: isLast ? "none" : undefined,
+        backgroundImage: bgImage || undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        position: "relative"
+      }}
     >
-      <div className="rk-rank-num">
-        <span className="rk-rank-index">{rank + 1}</span>
+      {bgImage && <div style={{ position:'absolute', inset:0, background:'rgba(6,8,16,0.85)', zIndex:0, borderRadius:8 }} />}
+      <div className="rk-rank-num" style={{ position:'relative', zIndex:1, width: typeof rank === 'number' ? 32 : 'auto' }}>
+        <span className="rk-rank-index" style={{ fontSize: typeof rank === 'number' ? undefined : '0.5rem', letterSpacing: typeof rank === 'number' ? undefined : '1px' }}>
+          {typeof rank === 'number' ? rank + 1 : 'UNRANKED'}
+        </span>
       </div>
-      <div className="rk-flag">{item.flag || "🏳️"}</div>
-      <div className="rk-name-zone">
+      <div className="rk-flag" style={{ position:'relative', zIndex:1, marginLeft: typeof rank === 'number' ? 0 : 4 }}>{item.flag || "🏳️"}</div>
+      <div className="rk-name-zone" style={{ position:'relative', zIndex:1 }}>
         <span className="rk-name" style={{ color: item.nameColor || C.text }}>
           {item.name}{item.suffix ? ` · ${item.suffix}` : ""}
         </span>
         {renderBadge(item)}
       </div>
-      <div className="rk-score">
+      <div className="rk-score" style={{ position:'relative', zIndex:1 }}>
         {renderScore(item, rank)}
       </div>
     </div>
@@ -372,6 +381,7 @@ function IndividualsList({ users, currentUser }) {
   return users.map((u, i) => {
     const tier = getTier(u.totalXP);
     const isMe = u.userId === currentUser?.userId;
+    const actualRank = u.actualRank !== undefined ? u.actualRank : i;
 
     const item = {
       flag: u.flag,
@@ -385,38 +395,53 @@ function IndividualsList({ users, currentUser }) {
     const renderScore = (_, rank) => (
       <>
         <div className="rk-score-primary">{formatXP(u.totalXP)} XP</div>
-        {rank < 3 && (
+        {typeof rank === 'number' && rank < 3 && (
           <div className="rk-score-sub">Rank #{rank + 1}</div>
         )}
+        {isMe && (typeof rank !== 'number' || rank >= 3) && (
+          <div className="rk-score-sub" style={{color: C.green}}>
+            {typeof rank === 'number' ? `Rank #${rank + 1}` : 'UNRANKED'}
+          </div>
+        )}
       </>
+    );
+
+    const isPodium = typeof actualRank === 'number' && actualRank < 3;
+    const RowComponent = isPodium ? PodiumRow : NormalRow;
+    const isLast = i === users.length - 1;
+    const skipped = isLast && (typeof actualRank !== 'number' || actualRank > i);
+
+    const row = (
+      <RowComponent
+        key={u.userId || i}
+        item={item}
+        rank={actualRank}
+        isLast={isLast}
+        renderBadge={renderBadge}
+        renderScore={renderScore}
+        bgImage={skipped ? "url('/locker_room_bg.png')" : null}
+      />
     );
 
     if (i === 3) {
       return (
         <div key={u.userId || i}>
           <SectionDivider label="Contenders" />
-          <NormalRow
-            item={item}
-            rank={i}
-            isLast={i === users.length - 1}
-            renderBadge={renderBadge}
-            renderScore={renderScore}
-          />
+          {row}
+        </div>
+      );
+    }
+    
+    if (skipped) {
+      return (
+        <div key={u.userId || i}>
+          <SectionDivider label="Your Rank" />
+          {row}
         </div>
       );
     }
 
-    const RowComponent = i < 3 ? PodiumRow : NormalRow;
-    return (
-      <RowComponent
-        key={u.userId || i}
-        item={item}
-        rank={i}
-        isLast={i === users.length - 1}
-        renderBadge={renderBadge}
-        renderScore={renderScore}
-      />
-    );
+    return row;
   });
 }
 
@@ -619,10 +644,19 @@ export default function Ranks() {
     );
 
     const unsubUsers = onSnapshot(usersQuery, snap => {
-      const list = snap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .slice(0, 50);
-      setUsers(list);
+      const allUsers = snap.docs.map((doc, idx) => ({ id: doc.id, actualRank: idx, ...doc.data() }));
+      let top49 = allUsers.slice(0, 49);
+      let meIndex = allUsers.findIndex(u => u.userId === currentUser?.userId);
+
+      if (meIndex >= 0 && meIndex < 49) {
+        setUsers(allUsers.slice(0, 50));
+      } else {
+        let meObj = meIndex >= 0 ? allUsers[meIndex] : { ...currentUser, actualRank: '?' };
+        let final50 = [...top49];
+        if (currentUser) final50.push(meObj);
+        else if (allUsers[49]) final50.push(allUsers[49]);
+        setUsers(final50);
+      }
     });
 
     

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { getUser } from "../lib/user";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { EmojiFlag } from './EmojiFlag.jsx';
 
 const C = {
@@ -83,6 +85,22 @@ export default function Nav() {
   useEffect(() => {
     const u = getUser();
     setUser(u);
+    if (u && u.userId && u.userId !== "guest") {
+      const unsub = onSnapshot(doc(db, "users", u.userId), snap => {
+        if (snap.exists()) {
+          const d = snap.data();
+          const today = new Date().toISOString().split("T")[0];
+          setUser(prev => ({
+            ...prev,
+            totalXP: d.totalXP ?? prev?.totalXP ?? 0,
+            dailyXP: d.dailyXPDate === today ? (d.dailyXP ?? 0) : 0,
+            dailyXPDate: d.dailyXPDate ?? null,
+            tier: d.tier ?? prev?.tier ?? "lurker"
+          }));
+        }
+      });
+      return unsub;
+    }
   }, []);
 
   

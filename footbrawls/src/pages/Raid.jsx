@@ -141,7 +141,7 @@ const SwordSingleIcon = ({ size = 36, color = '#F7C344' }) => (
 function AttackerFigure() {
   return (
     <div style={{
-      position: 'fixed', right: 0, bottom: 0,
+      position: 'fixed', right: '10%', bottom: 0,
       width: 220, height: 400,
       zIndex: 0, pointerEvents: 'none',
     }}>
@@ -202,7 +202,7 @@ function AttackerFigure() {
 function DefenderFigure() {
   return (
     <div style={{
-      position: 'fixed', left: 0, bottom: 0,
+      position: 'fixed', left: '10%', bottom: 0,
       width: 220, height: 400,
       zIndex: 0, pointerEvents: 'none',
     }}>
@@ -515,8 +515,8 @@ function ParticleEffect({ type }) {
     const ctx = canvas.getContext('2d');
     let id;
     const resize = () => {
-      canvas.width  = canvas.parentElement?.offsetWidth || 400;
-      canvas.height = 380;
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     resize();
 
@@ -558,8 +558,8 @@ function ParticleEffect({ type }) {
 
   return (
     <canvas ref={canvasRef} style={{
-      position:'absolute', top:0, left:0, width:'100%', height:380,
-      pointerEvents:'none', zIndex:1,
+      position:'fixed', top:0, left:0, width:'100vw', height:'100vh',
+      pointerEvents:'none', zIndex:9999,
     }} />
   );
 }
@@ -625,6 +625,7 @@ export default function Raid() {
   const [match, setMatch]                     = useState(null);
   const [act1Game, setAct1Game]               = useState(null);
   const [acts, setActs]                       = useState({});
+  const [scores, setScores]                   = useState({});
   const [actWinners, setActWinners]           = useState([]);
   const [outcome, setOutcome]                 = useState(null);
   const [finalizing, setFinalizing]           = useState(false);
@@ -801,7 +802,7 @@ export default function Raid() {
         if (l3&&!s.scores?.[user.userId]?.act3&&s.status==='active')
           updateDoc(sessionRef,{[`scores.${user.userId}.act3`]:{gameId:'penaltyNerve_all5',rawScore:0,goals:0}});
 
-        setActs(newActs); setActWinners(newWinners);
+        setActs(newActs); setActWinners(newWinners); setScores(s.scores || {});
         setHasFinishedAct1(!!s.scores?.[user.userId]?.act1||l1);
         setHasFinishedAct2(!!s.scores?.[user.userId]?.act2||l2);
         setHasFinishedAct3(!!s.scores?.[user.userId]?.act3||l3);
@@ -817,27 +818,16 @@ export default function Raid() {
           await finalizeRaidFromState(newActs,out,currentMatch,s.raidType, s.scores);
           await updateDoc(sessionRef,{status:'completed'});
           localStorage.removeItem('active_game_session_id');
-        } else if (!myAct1Done) {
-          setPhase('matched');
-        } else if (!myAct2Done) {
-          setPhase('starting_act2');
-          
-          if (isBotBuddy && s.currentAct === 1) {
-            const finalNewActs = { ...newActs };
-            if (!newActs.act1) {
-              const p1v = p1Scores.act1?.normalized || 0;
-              const bv = bots1.buddy;
-              const yt = sumAct1Duo(p1v, bv);
-              const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
-              finalNewActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
-              newWinners[0] = finalNewActs.act1.winner;
-            }
-            await updateDoc(sessionRef, { acts: finalNewActs, actWinners: newWinners, currentAct: 2 });
-          }
-        } else if (!myAct3Done) {
-          setPhase('starting_act3');
+        } else if (s.currentAct === 1) {
+          if (!myAct1Done) setPhase('matched');
+          else setPhase('waiting_teammate');
+        } else if (s.currentAct === 2) {
+          if (!myAct2Done) setPhase('starting_act2');
+          else setPhase('waiting_teammate');
+        } else if (s.currentAct === 3) {
+          if (!myAct3Done) setPhase('starting_act3');
+          else setPhase('waiting_teammate');
         } else {
-          
           setPhase('waiting_teammate');
         }
       } catch(err) {
@@ -964,11 +954,25 @@ export default function Raid() {
     const a2r1 = Math.round(a2t/2), a2r2 = a2t-a2r1;
     const a3t = (acts.act3?.rivalBotGoals||0)*20;
     const a3r1 = Math.round(a3t/2), a3r2 = a3t-a3r1;
+
+    const myScores = scores[user.userId] || {};
+    const buddyObj = match.creatorId === user.userId ? match.buddy : match.creator;
+    const buddyScores = buddyObj ? (scores[buddyObj.userId] || {}) : {};
+    const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_');
+
+    const myAct1 = myScores.act1?.normalized || 0;
+    const myAct2 = (myScores.act2?.wins || 0) * 20;
+    const myAct3 = (myScores.act3?.goals || 0) * 20;
+
+    let buddyAct1 = isBotBuddy ? (acts.act1?.buddyScore || 0) : (buddyScores.act1?.normalized || 0);
+    let buddyAct2 = isBotBuddy ? (acts.act2?.buddyRoundWins || 0) * 20 : (buddyScores.act2?.wins || 0) * 20;
+    let buddyAct3 = isBotBuddy ? (acts.act3?.buddyGoals || 0) * 20 : (buddyScores.act3?.goals || 0) * 20;
+
     const list = [
-      { nickname:user.nickname, flag:user.flag||'', act1:acts.act1?.playerScore||0, act2:(acts.act2?.playerRoundWins||0)*20, act3:(acts.act3?.playerGoals||0)*20, isUser:true, team:'you' },
+      { nickname:user.nickname, flag:user.flag||'', act1:myAct1, act2:myAct2, act3:myAct3, isUser:true, team:'you' },
     ];
-    if (match.buddy?.userId !== user.userId) {
-      list.push({ nickname:match.buddy?.nickname||'Buddy', flag:match.buddy?.flag||'', act1:acts.act1?.buddyScore||0, act2:(acts.act2?.buddyRoundWins||0)*20, act3:(acts.act3?.buddyGoals||0)*20, isUser:false, team:'you' });
+    if (buddyObj) {
+      list.push({ nickname:buddyObj.nickname||'Buddy', flag:buddyObj.flag||'', act1:buddyAct1, act2:buddyAct2, act3:buddyAct3, isUser:false, team:'you' });
     }
     list.push(
       { nickname:match.rivals?.[0]?.nickname||'Rival 1', flag:match.rivals?.[0]?.flag||'', act1:a1b.rival1, act2:a2r1, act3:a3r1, isUser:false, team:'rival' },
@@ -976,7 +980,7 @@ export default function Raid() {
     );
     const finalList = list.map(p => ({ ...p, total:Math.round(p.act1+p.act2+p.act3) }));
     return finalList.sort((a,b)=>b.total-a.total);
-  }, [user, match, acts, raidSeed]);
+  }, [user, match, acts, raidSeed, scores]);
 
   const xpPreview   = getRaidXpPreview(raidType, outcome);
   const isTraining  = raidType === 'training';

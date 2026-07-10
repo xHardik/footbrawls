@@ -1,6 +1,6 @@
-// lib/dailySeed.js
-// Pure deterministic math. Zero DB calls. Works offline.
-// Same seed = same player/puzzle for every user on earth, all day.
+
+
+
 
 const TOURNAMENT_START_UTC = new Date('2026-06-11T00:00:00Z');
 
@@ -25,12 +25,12 @@ export function getDailySeed(dateOverride = null) {
   const today = dateOverride ? new Date(dateOverride) : new Date();
   today.setUTCHours(0, 0, 0, 0);
   const seed = Math.floor((today - TOURNAMENT_START_UTC) / 86400000);
-  return Math.max(0, seed); // Never negative (pre-tournament dates = day 0)
+  return Math.max(0, seed);
 }
 
-// ─── Per-game offsets ─────────────────────────────────────────────────────────
-// Prime-ish numbers so each game gets a different player every day.
-// Even if two games share the same pool, they'll never have the same answer.
+
+
+
 
 const GAME_OFFSETS = {
   whoAreYa:       0,
@@ -38,19 +38,12 @@ const GAME_OFFSETS = {
   higherLower:    67,
   transferTrail:  113,
   penaltyNerve:   149,
-  matchPredictor: 0,   // fixture-driven — offset unused
+  matchPredictor: 0,
 };
 
-// ─── Player selection ─────────────────────────────────────────────────────────
 
-/**
- * Returns today's player for a specific game.
- * Pass gameId so each game gets a different answer on the same day.
- *
- * @param {Array}   playerList   - full players array
- * @param {string}  gameId       - 'whoAreYa' | 'wordle' | 'higherLower' | 'transferTrail' | 'penaltyNerve'
- * @param {string}  dateOverride - optional 'YYYY-MM-DD' for archive mode
- */
+
+
 export function getDailyPlayer(playerList, gameId = 'whoAreYa', dateOverride = null) {
   if (!playerList?.length) return null;
   const seed = getDailySeed(dateOverride);
@@ -58,13 +51,7 @@ export function getDailyPlayer(playerList, gameId = 'whoAreYa', dateOverride = n
   return playerList[(seed + offset) % playerList.length];
 }
 
-/**
- * Returns { start, end } players for Transfer Trail.
- * 11 positions apart — prime gap ensures variety across all pool sizes.
- *
- * @param {Array}   playerList
- * @param {string}  dateOverride - optional 'YYYY-MM-DD' for archive mode
- */
+
 export function getDailyTrail(playerList, dateOverride = null) {
   if (!playerList?.length) return null;
   const seed = getDailySeed(dateOverride);
@@ -74,20 +61,20 @@ export function getDailyTrail(playerList, dateOverride = null) {
   return { start, end };
 }
 
-// ─── Seeded random ────────────────────────────────────────────────────────────
 
-// Get a seeded random number between 0 and 1 (deterministic)
-// Use for anything that needs "random but same for everyone today"
+
+
+
 export function seededRandom(seed, index = 0) {
-  // Simple LCG (good enough for game purposes)
+
   let s = (seed * 1664525 + index * 1013904223 + 1013904223) & 0xffffffff;
   s = Math.imul(s ^ (s >>> 16), 0x45d9f3b);
   s = Math.imul(s ^ (s >>> 16), 0x45d9f3b);
   s = s ^ (s >>> 16);
-  return (s >>> 0) / 0xffffffff; // Normalise to [0, 1]
+  return (s >>> 0) / 0xffffffff;
 }
 
-// Pick N items from array using daily seed (no repeats)
+
 export function getDailySelection(arr, count, dateOverride = null) {
   const seed = getDailySeed(dateOverride);
   const copy = [...arr];
@@ -101,7 +88,7 @@ export function getDailySelection(arr, count, dateOverride = null) {
   return result;
 }
 
-// ─── Score Normalisation (for Act 1 Raid fairness) ───────────────────────────
+
 
 const NORMALISATION_RULES = {
   higherLower:  { fn: (s) => s,              desc: '/10 direct' },
@@ -126,9 +113,9 @@ export function normaliseScore(game, rawScore) {
   return Math.max(0, Math.min(10, Number(normalised.toFixed(2))));
 }
 
-// ─── Archive Mode ─────────────────────────────────────────────────────────────
 
-// Returns true if a given date is in the valid archive range
+
+
 export function isArchiveDateValid(dateStr) {
   const ARCHIVE_START = new Date('2026-03-01T00:00:00Z');
   const date = new Date(dateStr);
@@ -136,7 +123,7 @@ export function isArchiveDateValid(dateStr) {
   return date >= ARCHIVE_START && date < now;
 }
 
-// Get the puzzle date from URL param (archive mode) or today
+
 export function getActivePuzzleDate() {
   const params = new URLSearchParams(window.location.search);
   const archiveDate = params.get('date');
@@ -146,22 +133,4 @@ export function getActivePuzzleDate() {
   return new Date().toISOString().split('T')[0];
 }
 
-// ─── Usage Examples ───────────────────────────────────────────────────────────
-/*
-  import { getDailyPlayer, getDailyTrail, getDailySelection, normaliseScore, getActivePuzzleDate } from './dailySeed.js';
 
-  // Who Are Ya — today's mystery player (different from Wordle answer)
-  const puzzleDate = getActivePuzzleDate();
-  const whoAreYaPlayer   = getDailyPlayer(allPlayers, 'whoAreYa', puzzleDate);
-  const wordlePlayer     = getDailyPlayer(allPlayers, 'wordle', puzzleDate);
-  const higherLowerStart = getDailyPlayer(allPlayers, 'higherLower', puzzleDate);
-
-  // Transfer Trail — start and end players guaranteed different
-  const { start, end } = getDailyTrail(allPlayers, puzzleDate);
-
-  // Daily Trivia — 10 questions from pool of 500
-  const todaysQuestions = getDailySelection(questionBank, 10, puzzleDate);
-
-  // Raid score normalisation
-  const normScore = normaliseScore('rapidFire', 15); // → 7.5
-*/

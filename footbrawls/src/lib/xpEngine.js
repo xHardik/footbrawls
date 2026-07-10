@@ -1,7 +1,7 @@
-// src/lib/xpEngine.js
-// The single source of truth for all XP operations.
-// Now includes guild level upgrade logic — castleHP never resets daily,
-// instead upgrades the guild to the next level on reaching the cap.
+
+
+
+
 
 import { db } from './firebase';
 import {
@@ -11,12 +11,12 @@ import {
 import { checkUpgrade, getXPMultiplier, getHPCap } from './guildLevels';
 import { normScore } from './scoreNorm';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+
 
 const DAILY_XP_CAP = 1000;
 
 const XP_REWARDS = {
-  // Games
+
   whoareya_correct:        25,
   wordle_correct:          25,
   higherLower_correct:     25,
@@ -30,16 +30,16 @@ const XP_REWARDS = {
   passport_correct:        25,
   feeOrFree_correct:       25,
   whatYear_correct:        25,
-  // Predictions
+
   prediction_result:       15,
   prediction_scorer:       5,
   prediction_score:        0,
-  // Raids
+
   raid_win_normal:         100,
   raid_win_challenge:      300,
   raid_loss:               30,
   raid_mvp:                50,
-  // Social
+
   share_card:              15,
   reveal_ad_watched:       5,
   daily_login:             20,
@@ -54,7 +54,7 @@ const TIERS = [
   { name: 'ultra',   min: 500 },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 function getTier(totalXP) {
   const tier = [...TIERS].reverse().find(t => totalXP >= t.min);
@@ -65,9 +65,9 @@ function getTodayUTC() {
   return new Date().toISOString().split('T')[0];
 }
 
-// ─── Core XP Award Function ───────────────────────────────────────────────────
+
 export async function awardXP(userId, source, opts = {}) {
-  // ─── CENTRAL RAID/MULTIPLAYER INTERCEPTION ──────────────────────────────────
+
   const activeRaidId = typeof window !== 'undefined' ? localStorage.getItem('active_game_session_id') : null;
   const activeVsFriendsId = typeof window !== 'undefined' ? localStorage.getItem('active_vs_friends_session_id') : null;
   const activeSessionId = activeRaidId || activeVsFriendsId;
@@ -152,17 +152,17 @@ export async function awardXP(userId, source, opts = {}) {
     const user  = userSnap.data();
     const today = getTodayUTC();
 
-    // Reset daily XP if it's a new day
+
     const dailyXP  = user.dailyXPDate === today ? (user.dailyXP || 0) : 0;
     const roomLeft = DAILY_XP_CAP - dailyXP;
     if (roomLeft <= 0 && !opts.skipCap) {
       return { xpAwarded: 0, cappedOut: true, dailyXPUsed: dailyXP };
     }
 
-    // Base XP
+
     let baseXP = opts.rawXP ?? (XP_REWARDS[source] || 0);
 
-    // Override/force game/prediction rewards based on the source to guarantee 25 XP / 50 XP maximums
+
     if (source && (
       source.endsWith('_correct') ||
       source.endsWith('_complete') ||
@@ -174,7 +174,7 @@ export async function awardXP(userId, source, opts = {}) {
       baseXP = Math.min(50, baseXP);
     }
 
-    // ── ALL READS FIRST (Firestore requires reads before writes) ─────────────
+
     const homeGuildRef  = doc(db, 'guilds', user.homeCountry);
     const homeGuildSnap = await t.get(homeGuildRef);
     const homeGuildData = homeGuildSnap.exists() ? homeGuildSnap.data() : {};
@@ -188,7 +188,7 @@ export async function awardXP(userId, source, opts = {}) {
       supportGuildData  = supportSnap.exists() ? supportSnap.data() : {};
     }
 
-    // ── ALL COMPUTATION ───────────────────────────────────────────────────────
+
     const multiplier   = getXPMultiplier(homeGuildData);
     const xpAfterCurse = Math.round(baseXP * multiplier);
     const xpToAward    = opts.skipCap
@@ -202,7 +202,7 @@ export async function awardXP(userId, source, opts = {}) {
     const isRaidSource = source && source.startsWith('raid_');
     const newTotal  = (user.totalXP || 0) + xpToAward;
 
-    // ── ALL WRITES (only after all reads complete) ────────────────────────────
+
     let category = 'other';
     if (source && source.startsWith('raid_')) category = 'raids';
     else if (source && source.startsWith('prediction_')) category = 'matchpredictor';
@@ -219,12 +219,12 @@ export async function awardXP(userId, source, opts = {}) {
     const stats = user.stats || {};
     const achievements = user.achievements || {};
 
-    // 1. Striker Hero (1,000 XP in 24 hours)
+
     if (!achievements.strikerHero && !isRaidSource && (dailyXP + xpToAward >= 1000)) {
       achievements.strikerHero = true;
     }
 
-    // 2. Trivia God (100 Trivia correct overall)
+
     if (category === 'trivia' && opts && opts.rawScore) {
       stats.totalTriviaCorrect = (stats.totalTriviaCorrect || 0) + opts.rawScore;
       if (!achievements.triviaGod && stats.totalTriviaCorrect >= 100) {
@@ -232,14 +232,14 @@ export async function awardXP(userId, source, opts = {}) {
       }
     }
 
-    // 3. Dedicated Athlete (9 daily games for 15 days)
+
     if (category === 'games' && source) {
       if (stats.dailyGamesDate !== today) {
         stats.dailyGamesDate = today;
         stats.dailyGamesPlayed = [];
         stats.dedicatedAthleteDailyHit = false;
         
-        // Check if streak was broken (missed yesterday)
+
         const yesterday = new Date(new Date(today).getTime() - 86400000).toISOString().split('T')[0];
         if (stats.lastDedicatedDay !== yesterday) {
           stats.consecutiveDaysPlayed = 0;
@@ -258,7 +258,7 @@ export async function awardXP(userId, source, opts = {}) {
       }
     }
 
-    // 4. Consul MVP (Raid MVP 50 times)
+
     if (source === 'raid_mvp') {
       stats.raidMvpCount = (stats.raidMvpCount || 0) + 1;
       if (!achievements.consulMvp && stats.raidMvpCount >= 50) {
@@ -266,7 +266,7 @@ export async function awardXP(userId, source, opts = {}) {
       }
     }
 
-    // 5. Oracle (5 match prediction streak)
+
     if (category === 'predictor') {
       if (!achievements.oracle && user.predictionStreak >= 5) {
         achievements.oracle = true;
@@ -305,7 +305,7 @@ export async function awardXP(userId, source, opts = {}) {
     };
   });
 
-  // Sync to local cache after successful Firestore transaction
+
   try {
     const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
     if (localUser && localUser.userId === userId) {
@@ -327,12 +327,9 @@ export async function awardXP(userId, source, opts = {}) {
   return result;
 }
 
-// ─── Guild HP + Level Up ──────────────────────────────────────────────────────
 
-/**
- * Apply HP to a guild. If it reaches the cap, upgrade to next level
- * and carry overflow HP into the new level.
- */
+
+
 function applyGuildHP(t, guildRef, guildData, hpToAdd) {
   const currentLevel = guildData.guildLevel || 1;
   const currentHP    = guildData.castleHP   || 0;
@@ -341,26 +338,26 @@ function applyGuildHP(t, guildRef, guildData, hpToAdd) {
   const { shouldUpgrade, overflow, newLevel } = checkUpgrade(newHP, currentLevel);
 
   if (shouldUpgrade) {
-    // Level up — reset HP to overflow amount, bump level
+
     t.update(guildRef, {
       castleHP:        overflow,
       castleHPCap:     getHPCap(newLevel),
       guildLevel:      newLevel,
       lastLevelUpAt:   serverTimestamp(),
-      // Announce level up in guild (picked up by Guild.jsx onSnapshot)
+
       levelUpPending:  true,
       levelUpTo:       newLevel,
     });
   } else {
-    // Normal increment
+
     t.update(guildRef, {
       castleHP:    increment(hpToAdd),
-      castleHPCap: getHPCap(currentLevel), // keep in sync
+      castleHPCap: getHPCap(currentLevel),
     });
   }
 }
 
-// ─── Prediction XP ────────────────────────────────────────────────────────────
+
 
 export function getPredictionMultiplier(streakCount) {
   if (streakCount >= 8) return 3.0;
@@ -374,7 +371,7 @@ export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, 
   const userSnap = await getDoc(userRef);
   const user     = userSnap.data();
 
-  // 1. Result (Winner) Streak & Multiplier
+
   let resultStreak = user.predictionStreak || 0;
   if (resultCorrect) {
     resultStreak += 1;
@@ -384,7 +381,7 @@ export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, 
   const resultMult = getPredictionMultiplier(resultStreak);
   const resultXP = resultCorrect ? Math.round(XP_REWARDS.prediction_result * resultMult) : 0;
 
-  // 2. Scorer Streak & Multiplier
+
   let scorerStreak = user.predictionScorerStreak || 0;
   if (scorerCorrect) {
     scorerStreak += 1;
@@ -410,7 +407,7 @@ export async function awardPredictionXP(userId, { resultCorrect, scorerCorrect, 
   return awardXP(userId, 'prediction_result', { rawXP: finalXP });
 }
 
-// ─── Login Streak ─────────────────────────────────────────────────────────────
+
 
 export async function handleDailyLogin(userId) {
   const userRef  = doc(db, 'users', userId);
@@ -437,7 +434,7 @@ export async function handleDailyLogin(userId) {
   return awardXP(userId, isWeekStreak ? 'login_streak_7day' : 'daily_login');
 }
 
-// ─── Clear level-up notification (call from Guild.jsx after showing banner) ───
+
 
 export async function clearLevelUpNotification(guildCode) {
   await updateDoc(doc(db, 'guilds', guildCode), {

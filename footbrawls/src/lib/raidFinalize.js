@@ -9,7 +9,7 @@ async function performClientFinalizeFallback(payload) {
   try {
     const { raidType, outcome, isTraining, homeCountry, rivalGuildCode, acts, match, playerPerformance, xpAwarded } = payload;
 
-    // 1. Log the raid in the 'raids' collection
+
     const raidsRef = collection(db, 'raids');
     const raidRef = await addDoc(raidsRef, {
       raidType,
@@ -29,7 +29,7 @@ async function performClientFinalizeFallback(payload) {
 
     const batch = writeBatch(db);
 
-    // Attacker Guild Update
+
     const attackerRef = doc(db, 'guilds', homeCountry);
     const attackerSnap = await getDoc(attackerRef);
     const attackerData = attackerSnap.exists() ? attackerSnap.data() : {};
@@ -46,7 +46,7 @@ async function performClientFinalizeFallback(payload) {
       lastMatch:    `Raid vs ${rivalGuildCode || 'rivals'}`,
     };
 
-    // curseRaidWins
+
     let curseLifted = false;
     let curseRaidWins = attackerData.curseRaidWins ?? 0;
     if (outcome === 'win' && attackerData.currentCurse) {
@@ -69,7 +69,7 @@ async function performClientFinalizeFallback(payload) {
 
     batch.set(attackerRef, attackerUpdate, { merge: true });
 
-    // Defender Guild Update
+
     let damageDealt = 0;
     if (rivalGuildCode) {
       const defenderRef = doc(db, 'guilds', rivalGuildCode);
@@ -84,7 +84,7 @@ async function performClientFinalizeFallback(payload) {
         if (outcome === 'win') {
           const dLevel = dData.guildLevel || 1;
           const dCap = getHPCap(dLevel);
-          // Normal Raid deals 0% castle damage, Challenge Raid deals 2%
+
           const dmgPct = raidType === 'challenge' ? 0.03 : 0.00;
           damageDealt = Math.floor(dCap * dmgPct);
           const rawHP = dData.castleHP || 0;
@@ -119,7 +119,7 @@ async function performClientFinalizeFallback(payload) {
 
         batch.set(userRef, { stats, achievements }, { merge: true });
 
-        // sync to localStorage
+
         try {
           const localUser = JSON.parse(localStorage.getItem('footbrawls_user') || '{}');
           if (localUser && localUser.userId === payload.userId) {
@@ -203,7 +203,7 @@ export async function finalizeRaid({
 
   let serverResult = null;
   try {
-    // Simplified: Push directly to Firebase from client to avoid API fallback issues locally
+
     serverResult = await performClientFinalizeFallback(payload);
   } catch (err) {
     console.error('[raidFinalize] Client finalize failed:', err);

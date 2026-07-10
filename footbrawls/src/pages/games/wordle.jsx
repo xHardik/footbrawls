@@ -1158,22 +1158,21 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
           
           {!gameOver && (
-            <div className="wdl-input-row">
+            <form onSubmit={e => { e.preventDefault(); handleSubmit(); }} className="wdl-input-row">
               <input
                 ref={inputRef}
                 className="wdl-input"
                 value={input}
                 onChange={e => setInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
-                onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 placeholder="Enter player name…"
                 maxLength={targetName.length || 15}
                 autoComplete="off"
                 disabled={gameOver || isAdLoading}
               />
-              <button className="wdl-submit" onClick={handleSubmit} disabled={!input.trim() || gameOver || isAdLoading}>
+              <button type="submit" className="wdl-submit" disabled={!input.trim() || gameOver || isAdLoading}>
                 Submit
               </button>
-            </div>
+            </form>
           )}
 
           {!gameOver && !(isRaid || isVsFriends) && (

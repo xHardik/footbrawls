@@ -1,6 +1,6 @@
-// lib/countries.js
-// All ~200 countries with ISO code, name, flag emoji
-// WC 2026 qualifying teams marked with wc: true
+
+
+
 
 const WC_2026_TEAMS = [
   'ARG','AUS','BEL','BRA','CMR','CAN','CHI','COL','CRC','CRO',

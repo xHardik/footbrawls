@@ -6,7 +6,7 @@ import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
 import { getHPCap } from "../lib/guildLevels";
 
-const DAILY_XP_CAP  = 250;
+const DAILY_XP_CAP  = 1000;
 const CASTLE_HP_CAP = 10000;
 
 const C = {
@@ -1778,7 +1778,7 @@ export default function Home() {
       const todayLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
       const isToday = d.dailyXPDate === todayUTC || d.dailyXPDate === todayLocal;
       setLocalUser(prev => {
-        const fresh = { ...prev, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:isToday?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
+        const fresh = { ...prev, ...d, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:isToday?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
         saveUserLocally(fresh);
         return fresh;
       });

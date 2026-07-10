@@ -646,6 +646,15 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
         setXpAwarded(s.xpAwarded ?? 0);
         setUnlockedHints(s.unlockedHints ?? {});
       } catch {}
+    } else {
+      setCurrentIdx(0);
+      setXpEarned(0);
+      setStreak(0);
+      setCorrectCount(0);
+      setGameOver(false);
+      setRevealed({});
+      setXpAwarded(0);
+      setUnlockedHints({});
     }
   }, [stateKey]);
 

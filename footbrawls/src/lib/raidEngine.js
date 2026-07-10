@@ -3,18 +3,14 @@ import { normScore } from './scoreNorm';
 import { seededRandom, getDailySeed } from './dailySeed';
 import { getHPCap } from './guildLevels';
 
-/**
- * Pick a random Act 1 game for this raid session.
- */
+
 export function pickAct1Game(raidSeed = Date.now()) {
   const seed = getDailySeed() + (raidSeed % 997);
   const idx  = Math.floor(seededRandom(seed, 42) * ACT1_GAME_POOL.length);
   return ACT1_GAME_POOL[idx];
 }
 
-/**
- * Simulate bot scores for Act 1 (buddy + rivals).
- */
+
 export function simulateBotAct1Scores(gameId, raidSeed = Date.now()) {
   const buddyRaw = buildAct1BotResult(gameId, raidSeed, 1);
   const rival1Raw = buildAct1BotResult(gameId, raidSeed, 2);
@@ -59,37 +55,28 @@ function buildAct1BotResult(gameId, seed, botIndex) {
   }
 }
 
-/**
- * Simulate bot round wins for Dribble Gauntlet (Act 2) best-of-5.
- */
+
 export function simulateBotAct2Scores(raidSeed = Date.now()) {
   const buddyWins  = Math.floor(seededRandom(raidSeed, 50) * 3) + 2;
   const rivalWins  = Math.floor(seededRandom(raidSeed, 51) * 3) + 2;
   return { buddyWins, rivalWins };
 }
 
-/**
- * Simulate bot penalty goals for Act 3 (buddy striker + rival strikers).
- */
+
 export function simulateBotAct3Scores(raidSeed = Date.now()) {
   const buddyGoals = Math.floor(seededRandom(raidSeed, 60) * 4) + 2;
   const rivalGoals = Math.floor(seededRandom(raidSeed, 61) * 4) + 2;
   return { buddyGoals, rivalGoals };
 }
 
-/**
- * Determine act winner from duo totals.
- * @returns {'you' | 'rival' | 'draw'}
- */
+
 export function determineActWinner(yourTotal, rivalTotal) {
   if (yourTotal > rivalTotal) return 'you';
   if (rivalTotal > yourTotal) return 'rival';
   return 'draw';
 }
 
-/**
- * Compute overall raid outcome from total combined team points.
- */
+
 export function computeRaidOutcome(acts) {
   const yourTotal  = Math.round(((acts.act1?.yourTotal || 0) * 100) + ((acts.act2?.yourTotal || 0) * 20) + ((acts.act3?.yourTotal || 0) * 20));
   const rivalTotal = Math.round(((acts.act1?.rivalTotal || 0) * 100) + ((acts.act2?.rivalTotal || 0) * 20) + ((acts.act3?.rivalTotal || 0) * 20));
@@ -98,9 +85,7 @@ export function computeRaidOutcome(acts) {
   return 'draw';
 }
 
-/**
- * Castle HP damage dealt to the losing guild (% of current level cap).
- */
+
 export function calculateCastleDamage(raidType, loserGuildLevel = 1) {
   const config = RAID_TYPES[raidType] || RAID_TYPES.normal;
   if (!config.castleDamagePct) return 0;
@@ -108,37 +93,27 @@ export function calculateCastleDamage(raidType, loserGuildLevel = 1) {
   return Math.floor(cap * config.castleDamagePct);
 }
 
-/**
- * Combine player + buddy scores for Act 1.
- */
+
 export function sumAct1Duo(playerScore, buddyScore) {
   return Number((playerScore + buddyScore).toFixed(2));
 }
 
-/**
- * Combine rival duo scores.
- */
+
 export function sumAct1Rival(rival1Score, rival2Score) {
   return Number((rival1Score + rival2Score).toFixed(2));
 }
 
-/**
- * Act 2 duo round wins (player rounds + buddy bot rounds).
- */
+
 export function sumAct2Duo(playerRoundWins, buddyRoundWins) {
   return playerRoundWins + buddyRoundWins;
 }
 
-/**
- * Act 3 duo goals (player + buddy bot).
- */
+
 export function sumAct3Duo(playerGoals, buddyGoals) {
   return playerGoals + buddyGoals;
 }
 
-/**
- * Pick MVP from performance map { userId: score }.
- */
+
 export function pickMvp(scores) {
   let bestId = null;
   let best   = -1;

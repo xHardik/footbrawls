@@ -1,7 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUser } from "../lib/user";
+import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 const C = {
   bg:       "#05080f",
@@ -170,8 +172,23 @@ const Icon = {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const user = getUser();
+  const [localUser, setLocalUser] = useState(() => getUser());
 
+  useEffect(() => {
+    const uid = localUser?.userId;
+    if (!uid || uid === "guest") return;
+    return onSnapshot(doc(db, "users", uid), snap => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      setLocalUser(prev => {
+        const fresh = { ...prev, ...d };
+        saveUserLocally(fresh);
+        return fresh;
+      });
+    }, () => {});
+  }, [localUser?.userId]);
+
+  const user = localUser;
   const countryCode = user?.homeCountry || "FR";
   const countryObj = COUNTRIES.find(c => c.code === countryCode) || { name: "FRANCE", flag: "🇫🇷" };
   const kit = KIT_COLORS[countryCode] || { ...KIT_COLORS.FR, flag: countryObj.flag, name: countryObj.name.toUpperCase() };

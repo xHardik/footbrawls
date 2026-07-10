@@ -823,17 +823,16 @@ export default function Raid() {
           await finalizeRaidFromState(newActs,out,currentMatch,s.raidType, s.scores);
           await updateDoc(sessionRef,{status:'completed'});
           localStorage.removeItem('active_game_session_id');
-        } else if (s.currentAct === 1) {
-          if (!myAct1Done) setPhase('matched');
-          else setPhase('waiting_teammate');
-        } else if (s.currentAct === 2) {
-          if (!myAct2Done) setPhase('starting_act2');
-          else setPhase('waiting_teammate');
-        } else if (s.currentAct === 3) {
-          if (!myAct3Done) setPhase('starting_act3');
-          else setPhase('waiting_teammate');
         } else {
-          setPhase('waiting_teammate');
+          if (!myAct1Done) {
+            setPhase('matched');
+          } else if (!myAct2Done) {
+            setPhase('starting_act2');
+          } else if (!myAct3Done) {
+            setPhase('starting_act3');
+          } else {
+            setPhase('waiting_teammate');
+          }
         }
       } catch(err) {
         console.error('[Raid] snapshot error:', err);

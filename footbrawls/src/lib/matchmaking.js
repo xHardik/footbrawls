@@ -66,7 +66,7 @@ async function tryFirestoreMatch(user, raidType) {
   try {
     const queueRef = doc(db, 'raidQueue', user.userId);
     
-    // 1. Check if our own document is already matched by someone else
+
     const myDocSnap = await getDoc(queueRef);
     if (myDocSnap.exists()) {
       const myData = myDocSnap.data();
@@ -77,7 +77,7 @@ async function tryFirestoreMatch(user, raidType) {
 
         const { rivals } = createBotRivalDuo(user, seed);
 
-        // Delete our queue document now that we've retrieved the buddy
+
         try { await deleteDoc(queueRef); } catch (e) {}
 
         return {
@@ -91,7 +91,7 @@ async function tryFirestoreMatch(user, raidType) {
         };
       }
     } else {
-      // Create initial waiting document
+
       await setDoc(queueRef, {
         userId:       user.userId,
         nickname:     user.nickname,
@@ -103,7 +103,7 @@ async function tryFirestoreMatch(user, raidType) {
         status:       'waiting',
       });
 
-      // Write a dummy pending document to gameSessions to ensure collection is created and visible in console
+
       const initialSessionId = `search_pending_${user.userId}`;
       await setDoc(doc(db, 'gameSessions', initialSessionId), {
         sessionId: initialSessionId,
@@ -116,7 +116,7 @@ async function tryFirestoreMatch(user, raidType) {
       });
     }
 
-    // 2. Query for other waiting candidates in our guild
+
     const q = query(
       collection(db, 'raidQueue'),
       where('status', '==', 'waiting'),
@@ -129,12 +129,12 @@ async function tryFirestoreMatch(user, raidType) {
 
     if (!candidate) return null;
 
-    // Deterministic match initiator conflict resolution (avoid double session creation)
+
     if (user.userId > candidate.id) {
       return null;
     }
 
-    // 3. Atomically match with the candidate using a transaction
+
     const matchedSeed = Date.now();
     const sessionId = `raid_${matchedSeed}`;
     const { rivals } = createBotRivalDuo(user, matchedSeed);
@@ -151,7 +151,7 @@ async function tryFirestoreMatch(user, raidType) {
       const mySnap = await transaction.get(queueRef);
       if (!mySnap.exists()) return null;
 
-      // Update candidate status to matched with us
+
       transaction.update(candRef, {
         status: 'matched',
         matchedWith: {
@@ -166,7 +166,7 @@ async function tryFirestoreMatch(user, raidType) {
         sessionId,
       });
 
-      // Update our own status to matched with candidate
+
       const buddyData = {
         userId:      candData.userId,
         nickname:    candData.nickname,
@@ -182,7 +182,7 @@ async function tryFirestoreMatch(user, raidType) {
         sessionId,
       });
 
-      // Create the shared raid session in gameSessions collection atomically
+
       const sessionRef = doc(db, 'gameSessions', sessionId);
       transaction.set(sessionRef, {
         sessionId,
@@ -213,7 +213,7 @@ async function tryFirestoreMatch(user, raidType) {
     });
 
     if (resultBuddy) {
-      // Clean up our own queue document
+
       try { await deleteDoc(queueRef); } catch (e) {}
 
       return {
@@ -252,8 +252,8 @@ export function findBuddy(user, raidType, onProgress) {
       if (unsubSnapshot) {
         try { unsubSnapshot(); } catch (e) {}
       }
-      try { deleteDoc(doc(db, 'raidQueue', user.userId)); } catch { /* noop */ }
-      try { deleteDoc(doc(db, 'gameSessions', `search_pending_${user.userId}`)); } catch { /* noop */ }
+      try { deleteDoc(doc(db, 'raidQueue', user.userId)); } catch {  }
+      try { deleteDoc(doc(db, 'gameSessions', `search_pending_${user.userId}`)); } catch {  }
       resolve(match);
     };
 

@@ -1,13 +1,13 @@
-// src/lib/user.js
-// User identity management — localStorage + Firestore mirror
-// No auth required. UUID-based identity persists in browser.
+
+
+
 
 import { db } from './firebase';
 import { doc, setDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 
 const USER_KEY = 'footbrawls_user';
 
-// ─── UUID Generator ───────────────────────────────────────────────────────────
+
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -17,7 +17,7 @@ function generateUUID() {
   });
 }
 
-// ─── Read from localStorage ───────────────────────────────────────────────────
+
 
 export function getUser() {
   try {
@@ -28,7 +28,7 @@ export function getUser() {
   }
 }
 
-// ─── Save to localStorage ─────────────────────────────────────────────────────
+
 
 export function saveUserLocally(userData) {
   try {
@@ -38,7 +38,7 @@ export function saveUserLocally(userData) {
   }
 }
 
-// ─── Create New User ──────────────────────────────────────────────────────────
+
 
 export async function createUser({ nickname, homeCountry, supportTeam , flag}) {
   const userId = generateUUID();
@@ -63,31 +63,31 @@ export async function createUser({ nickname, homeCountry, supportTeam , flag}) {
     createdAt: now,
   };
 
-  // Save locally first — app works even if Firestore write fails
+
   saveUserLocally(user);
 
-  // Mirror to Firestore (fire and forget — don't block UI)
+
   mirrorUserToFirestore(user, homeCountry, supportTeam);
 
   return user;
 }
 
-// ─── Mirror to Firestore ──────────────────────────────────────────────────────
+
 
 async function mirrorUserToFirestore(user, homeCountry, supportTeam) {
   try {
-    // Write user document
+
     await setDoc(doc(db, 'users', user.userId), {
       ...user,
       createdAt: serverTimestamp(),
     });
 
-    // Increment memberCount on home country guild
+
     await updateDoc(doc(db, 'guilds', homeCountry), {
       memberCount: increment(1),
     });
 
-    // Increment supporterCount on support team (if different from home)
+
     if (supportTeam && supportTeam !== homeCountry) {
       await updateDoc(doc(db, 'guilds', supportTeam), {
         supporterCount: increment(1),
@@ -95,11 +95,11 @@ async function mirrorUserToFirestore(user, homeCountry, supportTeam) {
     }
   } catch (err) {
     console.error('Failed to mirror user to Firestore:', err);
-    // Non-fatal — user still works locally
+
   }
 }
 
-// ─── Update User ──────────────────────────────────────────────────────────────
+
 
 export async function updateUser(updates) {
   const current = getUser();
@@ -108,7 +108,7 @@ export async function updateUser(updates) {
   const updated = { ...current, ...updates };
   saveUserLocally(updated);
 
-  // Mirror updates to Firestore
+
   try {
     await updateDoc(doc(db, 'users', current.userId), updates);
   } catch (err) {
@@ -118,7 +118,7 @@ export async function updateUser(updates) {
   return updated;
 }
 
-// ─── Clear User (for testing) ─────────────────────────────────────────────────
+
 
 export function clearUser() {
   localStorage.removeItem(USER_KEY);

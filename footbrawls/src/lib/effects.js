@@ -1,8 +1,6 @@
 import confetti from 'canvas-confetti';
 
-/**
- * Triggers a beautiful confetti explosion from the bottom corners of the screen.
- */
+
 export function triggerWinConfetti() {
   const duration = 2.5 * 1000;
   const animationEnd = Date.now() + duration;
@@ -20,15 +18,13 @@ export function triggerWinConfetti() {
     }
 
     const particleCount = 50 * (timeLeft / duration);
-    // since particles fall down, animate a bit higher than they would
+
     confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
     confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
   }, 250);
 }
 
-/**
- * Renders stylized falling heartbreak emojis on the screen for game over losses.
- */
+
 export function triggerLossHeartbreaks() {
   const container = document.createElement('div');
   container.style.position = 'fixed';
@@ -51,14 +47,14 @@ export function triggerLossHeartbreaks() {
     heart.style.fontSize = `${20 + Math.random() * 30}px`;
     heart.style.opacity = `${0.4 + Math.random() * 0.6}`;
     
-    // Add fallback animation inline
+
     const speed = 2 + Math.random() * 3;
     const delay = Math.random() * 2;
     
     heart.style.transition = `transform ${speed}s linear ${delay}s, opacity ${speed}s linear ${delay}s`;
     container.appendChild(heart);
 
-    // Trigger animation via requestAnimationFrame
+
     requestAnimationFrame(() => {
       setTimeout(() => {
         heart.style.transform = `translateY(110vh) rotate(${randomAngle()}deg)`;
@@ -76,11 +72,9 @@ function randomAngle() {
   return Math.random() * 360 - 180;
 }
 
-/**
- * Handles smooth auto-scroll to a DOM element selector, optionally restricted to single-player mode.
- */
+
 export function autoScrollToResult(selector, isRaidSession = false) {
-  if (isRaidSession) return; // Only auto-scroll in single mode as requested
+  if (isRaidSession) return;
   setTimeout(() => {
     const el = document.querySelector(selector);
     if (el) {

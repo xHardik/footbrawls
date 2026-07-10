@@ -265,7 +265,7 @@ export default function VsFriends() {
       }
       
       if (changed) {
-        updateDoc(doc(db, 'gameSessions', session.id), updates).catch(console.error);
+        updateDoc(doc(db, 'gameSessions', session.sessionId), updates).catch(console.error);
       }
     }
   }, [session, user]);
@@ -278,7 +278,7 @@ export default function VsFriends() {
       const botName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
       const botId = "bot_" + Math.floor(Math.random() * 99999);
       
-      await updateDoc(doc(db, 'gameSessions', session.id), {
+      await updateDoc(doc(db, 'gameSessions', session.sessionId), {
         guestId: botId,
         guestName: botName,
         guestFlag: '🤖',

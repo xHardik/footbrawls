@@ -6,7 +6,7 @@ import { getUser, saveUserLocally } from "../lib/user";
 import { COUNTRIES } from "../lib/countries";
 import { getHPCap } from "../lib/guildLevels";
 
-const DAILY_XP_CAP  = 1000;
+const DAILY_XP_CAP  = 250;
 const CASTLE_HP_CAP = 10000;
 
 const C = {

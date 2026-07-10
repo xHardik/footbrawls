@@ -708,7 +708,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const targetName = useMemo(() => {
     if (!target?.name) return "";
     const parts = target.name.trim().split(/\s+/);
-    return parts[parts.length - 1].toUpperCase();
+    const rawLastName = parts[parts.length - 1].toUpperCase();
+    return rawLastName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }, [target]);
 
   const navigate = useNavigate();

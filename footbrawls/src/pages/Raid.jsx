@@ -843,6 +843,8 @@ export default function Raid() {
             setPhase('waiting_teammate');
           } else if (bothAct2Done && !myAct3Done) {
             setPhase('starting_act3');
+          } else if (myAct3Done && !buddyAct3Done) {
+            setPhase('waiting_teammate');
           } else {
             setPhase('waiting_teammate');
           }

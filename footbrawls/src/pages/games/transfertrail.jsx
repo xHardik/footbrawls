@@ -319,7 +319,8 @@ function SearchDropdown({ players, onSelect, disabled }) {
           {results.map(p => (
             <div
               key={p.name}
-              onMouseDown={() => pick(p)}
+              onMouseDown={e => { e.preventDefault(); pick(p); }}
+              onTouchStart={e => { e.preventDefault(); pick(p); }}
               onMouseEnter={() => setHovered(p.name)}
               onMouseLeave={() => setHovered(null)}
               style={{

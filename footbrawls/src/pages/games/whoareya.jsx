@@ -766,10 +766,10 @@ export default function WhoAreYa() {
 
   
   useEffect(() => {
-    if (!search.trim()) { setDropdown([]); return; }
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+    if (q.length < 2) { setDropdown([]); return; }
     setDropdown(
-      PLAYERS.filter(p => p.name.toLowerCase().includes(q) && !guessedNames.includes(p.name)).slice(0, 8)
+      PLAYERS.filter(p => p.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q) && !guessedNames.includes(p.name)).slice(0, 8)
     );
   }, [search, guessedNames]);
 
@@ -1056,7 +1056,8 @@ export default function WhoAreYa() {
                     <div
                       key={p.name}
                       className="wya-di"
-                      onClick={() => { setSelected(p); setSearch(p.name); setDropdown([]); }}
+                      onMouseDown={e => { e.preventDefault(); setSelected(p); setSearch(p.name); setDropdown([]); }}
+                      onTouchStart={e => { e.preventDefault(); setSelected(p); setSearch(p.name); setDropdown([]); }}
                     >
                       <span className="wya-di-flag">{p.flag}</span>
                       <div className="wya-di-info">

@@ -1771,7 +1771,7 @@ export default function Home() {
       const todayLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
       const isToday = d.dailyXPDate === todayUTC || d.dailyXPDate === todayLocal;
       setLocalUser(prev => {
-        const fresh = { ...prev, ...d, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:isToday?(d.dailyXP??0):0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
+        const fresh = { ...prev, ...d, totalXP:d.totalXP??prev?.totalXP??0, dailyXP:d.dailyXP??0, dailyXPDate:d.dailyXPDate??null, tier:d.tier??prev?.tier??"lurker" };
         saveUserLocally(fresh);
         return fresh;
       });

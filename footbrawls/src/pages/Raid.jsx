@@ -812,10 +812,15 @@ export default function Raid() {
         setHasFinishedAct2(!!s.scores?.[user.userId]?.act2||l2);
         setHasFinishedAct3(!!s.scores?.[user.userId]?.act3||l3);
 
-        const myAct1Done = !!s.scores?.[user.userId]?.act1 || l1;
-        const myAct2Done = !!s.scores?.[user.userId]?.act2 || l2;
-        const myAct3Done = !!s.scores?.[user.userId]?.act3 || l3;
-        const raidDone = s.currentAct === 4 || (myAct3Done && newActs.act3);
+        const buddyAct1Done = isBotBuddy || !!s.scores?.[buddyObj?.userId]?.act1;
+        const buddyAct2Done = isBotBuddy || !!s.scores?.[buddyObj?.userId]?.act2;
+        const buddyAct3Done = isBotBuddy || !!s.scores?.[buddyObj?.userId]?.act3;
+
+        const bothAct1Done = myAct1Done && buddyAct1Done;
+        const bothAct2Done = myAct2Done && buddyAct2Done;
+        const bothAct3Done = myAct3Done && buddyAct3Done;
+
+        const raidDone = s.currentAct === 4 || bothAct3Done;
 
         if (raidDone) {
           const out = computeRaidOutcome(newActs);
@@ -824,11 +829,16 @@ export default function Raid() {
           await updateDoc(sessionRef,{status:'completed'});
           localStorage.removeItem('active_game_session_id');
         } else {
+          // Teammate act sync routing
           if (!myAct1Done) {
             setPhase('matched');
-          } else if (!myAct2Done) {
+          } else if (myAct1Done && !buddyAct1Done) {
+            setPhase('waiting_teammate');
+          } else if (bothAct1Done && !myAct2Done) {
             setPhase('starting_act2');
-          } else if (!myAct3Done) {
+          } else if (myAct2Done && !buddyAct2Done) {
+            setPhase('waiting_teammate');
+          } else if (bothAct2Done && !myAct3Done) {
             setPhase('starting_act3');
           } else {
             setPhase('waiting_teammate');

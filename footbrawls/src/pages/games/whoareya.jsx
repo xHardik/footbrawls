@@ -962,21 +962,16 @@ export default function WhoAreYa() {
             {!(isRaid || isVsFriends) && <button className="wya-nav-logo" onClick={() => navigate('/')}>←</button>}
           </div>
           {isVsFriends ? (
-          <div className="wya-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
-            <span className="wya-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
-            VS FRIENDS
-          </div>
-        ) : isRaid ? (
-          <div className="wya-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7' }}>
-            <span className="wya-fire-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
-            RAID
-          </div>
-        ) : (
-          <div className="wya-nav-tag">
-            <span className="wya-fire-dot" />
-            Who Are Ya?
-          </div>
-        )}
+            <div className="wya-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+              <span className="wya-fire-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+              VS FRIENDS
+            </div>
+          ) : (
+            <div className="wya-nav-tag">
+              <span className="wya-fire-dot" />
+              Who Are Ya?
+            </div>
+          )}
           <div className="wya-nav-right">
             <button className="wya-nav-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>

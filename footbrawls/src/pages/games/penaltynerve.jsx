@@ -991,11 +991,6 @@ export default function PenaltyNerve({ onBack }) {
             <span className="pn-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
             VS FRIENDS
           </div>
-        ) : isRaid ? (
-          <div className="pn-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7' }}>
-            <span className="pn-tag-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
-            RAID
-          </div>
         ) : (
           <div className="pn-nav-tag">
             <span className="pn-tag-dot" />

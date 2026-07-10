@@ -830,18 +830,13 @@ export default function DribbleGauntlet() {
         <nav className="db-nav">
           {!(isRaid || isVsFriends) ? <button className="db-logo" onClick={() => navigate('/')}>←</button> : <div style={{width:32}}></div>}
           {isVsFriends ? (
-          <div className="db-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
-            <span className="db-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
-            VS FRIENDS
-          </div>
-        ) : isRaid ? (
-          <div className="db-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7' }}>
-            <span className="db-tag-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
-            RAID
-          </div>
-        ) : (
-          <div className="db-nav-tag"><span className="db-tag-dot" />Dribble Gauntlet</div>
-        )}
+            <div className="db-nav-tag" style={{ background: 'rgba(61,214,140,0.15)', borderColor: '#3DD68C', color: '#3DD68C' }}>
+              <span className="db-tag-dot" style={{ background: '#3DD68C', boxShadow: '0 0 8px #3DD68C' }} />
+              VS FRIENDS
+            </div>
+          ) : (
+            <div className="db-nav-tag"><span className="db-tag-dot" />Dribble Gauntlet</div>
+          )}
           <div className="db-nav-right">
             <button className="db-help-btn" onClick={() => setShowModal(true)}>❓ Help</button>
           </div>

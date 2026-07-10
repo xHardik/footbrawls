@@ -162,7 +162,10 @@ export default function VsFriends() {
 
     const code = generateInviteCode();
     const sid = `vs_${Date.now()}`;
-    const playlist = selectedGames.map(id => GAMES_POOL.find(g => g.id === id));
+    const playlist = selectedGames.map(id => {
+      const match = GAMES_POOL.find(g => g.id === id);
+      return { id: match.id, label: match.label, route: match.route };
+    });
 
     
     const uniqueSessionSeed = String(Math.floor(100000 + Math.random() * 900000));

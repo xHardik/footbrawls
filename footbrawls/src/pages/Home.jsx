@@ -321,9 +321,6 @@ const GlobalStyles = () => (
     ::-webkit-scrollbar{width:4px;height:4px}
     ::-webkit-scrollbar-track{background:transparent}
     ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px}
-    @media (max-width: 768px) {
-      .home-top-nav-xp { display: none !important; }
-    }
     .footer-link:hover {
       color: #F7C344 !important;
       text-shadow: 0 0 8px rgba(247, 195, 68, 0.35);

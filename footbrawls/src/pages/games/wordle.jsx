@@ -708,8 +708,7 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const targetName = useMemo(() => {
     if (!target?.name) return "";
     const parts = target.name.trim().split(/\s+/);
-    const rawLastName = parts[parts.length - 1].toUpperCase();
-    return rawLastName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return parts[parts.length - 1].toUpperCase();
   }, [target]);
 
   const navigate = useNavigate();
@@ -720,8 +719,8 @@ export default function Wordle({ players = PLAYERS, onBack }) {
   const [gameOver,  setGameOver]  = useState(false);
   const [solved,    setSolved]    = useState(false);
   const [xpAwarded, setXpAwarded] = useState(0);
-  const [isRaid, setIsRaid] = useState(() => !!localStorage.getItem('active_game_session_id'));
-  const [isVsFriends, setIsVsFriends] = useState(() => !!localStorage.getItem('active_vs_friends_session_id'));
+  const [isRaid, setIsRaid] = useState(false);
+  const [isVsFriends, setIsVsFriends] = useState(false);
   const [score,     setScore]     = useState(0);
   const [msg,       setMsg]       = useState(null);
   const [hint,      setHint]      = useState(null);
@@ -1159,21 +1158,22 @@ export default function Wordle({ players = PLAYERS, onBack }) {
 
           
           {!gameOver && (
-            <form onSubmit={e => { e.preventDefault(); handleSubmit(); }} className="wdl-input-row">
+            <div className="wdl-input-row">
               <input
                 ref={inputRef}
                 className="wdl-input"
                 value={input}
                 onChange={e => setInput(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
+                onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 placeholder="Enter player name…"
                 maxLength={targetName.length || 15}
                 autoComplete="off"
                 disabled={gameOver || isAdLoading}
               />
-              <button type="submit" className="wdl-submit" disabled={!input.trim() || gameOver || isAdLoading}>
+              <button className="wdl-submit" onClick={handleSubmit} disabled={!input.trim() || gameOver || isAdLoading}>
                 Submit
               </button>
-            </form>
+            </div>
           )}
 
           {!gameOver && !(isRaid || isVsFriends) && (
@@ -1205,7 +1205,14 @@ export default function Wordle({ players = PLAYERS, onBack }) {
         
         {!gameOver && (
           <div className="wdl-controls">
-            {!(isRaid || isVsFriends) && (
+            {isVsFriends ? (
+              <button 
+                className="wdl-btn wdl-btn-raid" 
+                onClick={() => navigate('/vs-friends')}
+              >
+                ⚔️ Return to Lobby
+              </button>
+            ) : isRaid ? null : (
               <button className="wdl-btn wdl-btn-back" onClick={handleBack}>← Home</button>
             )}
           </div>
@@ -1247,7 +1254,15 @@ export default function Wordle({ players = PLAYERS, onBack }) {
             </div>
 
             <div className="wdl-result-actions">
-              {!(isRaid || isVsFriends) && (
+              {isVsFriends ? (
+                <button 
+                  className="wdl-btn wdl-btn-raid" 
+                  onClick={() => navigate('/vs-friends')} 
+                  style={{ width: '100%' }}
+                >
+                  ⚔️ Return to Lobby
+                </button>
+              ) : isRaid ? null : (
                 <button 
                   className="wdl-btn" 
                   onClick={handleBack} 

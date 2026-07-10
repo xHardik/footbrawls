@@ -557,9 +557,47 @@ export default function VsFriends() {
 
             {session.status === 'active' && (
               isMyScoreSubmitted ? (
-                <button type="button" style={{...styles.gameBtn, opacity: 0.5, cursor: 'not-allowed'}} disabled>
-                  ⏳ Waiting for opponent...
-                </button>
+                <div style={{
+                  padding: '24px 20px',
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(247,195,68,0.06), rgba(255,255,255,0.02))',
+                  border: '1px solid rgba(247,195,68,0.22)',
+                  boxShadow: '0 8px 32px rgba(247,195,68,0.05)',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 12,
+                  margin: '20px 0 10px',
+                  animation: 'ttFadeUp 0.4s ease'
+                }}>
+                  <div style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    border: `3px solid ${C.accent}`,
+                    borderTopColor: 'transparent',
+                    animation: 'ttSpin 1.2s linear infinite',
+                    boxShadow: `0 0 15px ${C.goldGlow}`
+                  }} />
+                  <div style={{
+                    fontFamily: "'Bebas Neue', sans-serif",
+                    fontSize: '1.6rem',
+                    letterSpacing: 1.5,
+                    color: C.accent,
+                    textTransform: 'uppercase'
+                  }}>
+                    Waiting for Teammate
+                  </div>
+                  <p style={{
+                    fontSize: '0.82rem',
+                    color: C.muted,
+                    margin: 0,
+                    lineHeight: 1.4
+                  }}>
+                    Your score is submitted! Stand by while your opponent finishes playing this act.
+                  </p>
+                </div>
               ) : (
                 <button type="button" style={styles.gameBtn} onClick={handleStartGame}>
                   🎮 Launch Act {session.currentAct}

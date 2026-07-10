@@ -808,9 +808,12 @@ export default function Raid() {
           updateDoc(sessionRef,{[`scores.${user.userId}.act3`]:{gameId:'penaltyNerve_all5',rawScore:0,goals:0}});
 
         setActs(newActs); setActWinners(newWinners); setScores(s.scores || {});
-        setHasFinishedAct1(!!s.scores?.[user.userId]?.act1||l1);
-        setHasFinishedAct2(!!s.scores?.[user.userId]?.act2||l2);
-        setHasFinishedAct3(!!s.scores?.[user.userId]?.act3||l3);
+        const myAct1Done = !!s.scores?.[user.userId]?.act1 || l1;
+        const myAct2Done = !!s.scores?.[user.userId]?.act2 || l2;
+        const myAct3Done = !!s.scores?.[user.userId]?.act3 || l3;
+        setHasFinishedAct1(myAct1Done);
+        setHasFinishedAct2(myAct2Done);
+        setHasFinishedAct3(myAct3Done);
 
         const buddyAct1Done = isBotBuddy || !!s.scores?.[buddyObj?.userId]?.act1;
         const buddyAct2Done = isBotBuddy || !!s.scores?.[buddyObj?.userId]?.act2;

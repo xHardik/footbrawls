@@ -726,7 +726,7 @@ export default function Raid() {
         localStorage.setItem('active_game_session_seed', String(s.raidSeed || ''));
 
         const buddyObj  = s.players?.find(p => p.userId !== user.userId) || null;
-        const isBotBuddy = !buddyObj || buddyObj.userId.startsWith('bot_') ||
+        const isBotBuddy = !buddyObj || buddyObj.userId?.startsWith('bot_') ||
                            s.disconnectedPlayers?.[buddyObj?.userId] === true;
         const currentMatch = {
           buddy: buddyObj, rivals: s.rivals || [],

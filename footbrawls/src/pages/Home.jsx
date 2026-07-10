@@ -244,11 +244,7 @@ function isDoneToday(game) {
 }
 
 function getDailyXP(user) {
-  const todayUTC = getTodayKey();
-  const dt = new Date();
-  const todayLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
-  if (user?.dailyXPDate === todayUTC || user?.dailyXPDate === todayLocal) return user.dailyXP || 0;
-  return 0;
+  return user?.dailyXP || 0;
 }
 
 function clampPct(v,max){ return !max?0:Math.max(0,Math.min(100,Math.round((v/max)*100))); }

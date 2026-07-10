@@ -660,7 +660,7 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
   }, [stateKey]);
 
   function persist(updates) {
-    if (isRaid) return;
+    if (isRaid || isVsFriends) return;
     const fullState = {
       currentIdx: updates.currentIdx ?? currentIdx,
       xpEarned: updates.xpEarned ?? xpEarned,
@@ -751,7 +751,10 @@ export default function TransferTrail({ players = PLAYERS, userId, onComplete })
       if (activeId) {
         localStorage.setItem(`raid_completed_act1_${activeId}`, 'true');
       }
-    } else {
+      setTimeout(() => {
+        navigate('/raid');
+      }, 2000);
+    } else if (sessionType !== 'vs_friends') {
       const isWin = correctCount >= 2;
       if (isWin) {
         triggerWinConfetti();

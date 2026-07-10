@@ -687,8 +687,8 @@ export default function Raid() {
         }
       }
 
-      const isUserMvp = userScore > buddyScore;
-      const isBuddyMvp = buddyScore > userScore;
+      const isUserMvp = userScore > buddyScore && userScore > 0;
+      const isBuddyMvp = buddyScore > userScore && buddyScore > 0;
 
       const perf = {
         [user.userId]: userScore,
@@ -749,23 +749,19 @@ export default function Raid() {
         if (p1Scores.act1 && !newActs.act1) {
           const p1v = p1Scores.act1.normalized || 0;
           const bv  = isBotBuddy ? bots1.buddy : (p2Scores.act1?.normalized || 0);
-          if (isBotBuddy || p2Scores.act1) {
-            const yt = sumAct1Duo(p1v, bv);
-            const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
-            newActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
-            newWinners[0] = newActs.act1.winner; updated = true;
-          }
+          const yt = sumAct1Duo(p1v, bv);
+          const rt = sumAct1Rival(bots1.rival1, bots1.rival2);
+          newActs.act1 = { gameId:gameObj.id, playerScore:p1v, buddyScore:bv, rivalTotal:rt, yourTotal:yt, winner:determineActWinner(yt,rt) };
+          newWinners[0] = newActs.act1.winner; updated = true;
         }
         if (p1Scores.act2 && newActs.act1 && !newActs.act2) {
           const p1w = p1Scores.act2.wins || 0;
           const is1v1 = s.raidType === 'training';
           const bw  = isBotBuddy ? (is1v1 ? 0 : bots2.buddyWins) : (p2Scores.act2?.wins || 0);
-          if (isBotBuddy || p2Scores.act2) {
-            const yt = p1w + bw;
-            const rt = is1v1 ? Math.min(3, bots2.rivalWins) : bots2.rivalWins; 
-            newActs.act2 = { winner:determineActWinner(yt,rt), playerRoundWins:p1w, buddyRoundWins:bw, rivalBotWins:rt, yourTotal:yt, rivalTotal:rt };
-            newWinners[1] = newActs.act2.winner; updated = true;
-          }
+          const yt = p1w + bw;
+          const rt = is1v1 ? Math.min(3, bots2.rivalWins) : bots2.rivalWins; 
+          newActs.act2 = { winner:determineActWinner(yt,rt), playerRoundWins:p1w, buddyRoundWins:bw, rivalBotWins:rt, yourTotal:yt, rivalTotal:rt };
+          newWinners[1] = newActs.act2.winner; updated = true;
         }
         if (p1Scores.act3 && newActs.act2 && !newActs.act3) {
           const p1g = p1Scores.act3.goals || 0;
@@ -777,12 +773,10 @@ export default function Raid() {
           const buddyOpp = isHigher ? duo2[0] : duo2[1];
           const off = Math.round(((buddy?.totalXP||0)-(buddyOpp?.totalXP||0))/2500);
           const bg  = isBotBuddy ? (is1v1 ? 0 : Math.max(0,Math.min(5,baseBots3.buddyGoals+off))) : (p2Scores.act3?.goals||0);
-          if (isBotBuddy || p2Scores.act3) {
-            const yt = p1g + bg;
-            const rt = is1v1 ? Math.min(5, baseBots3.rivalGoals) : baseBots3.rivalGoals;
-            newActs.act3 = { winner:determineActWinner(yt,rt), playerGoals:p1g, playerSaves:5-p1g, buddyGoals:bg, rivalBotGoals:rt, yourTotal:yt, rivalTotal:rt };
-            newWinners[2] = newActs.act3.winner; updated = true;
-          }
+          const yt = p1g + bg;
+          const rt = is1v1 ? Math.min(5, baseBots3.rivalGoals) : baseBots3.rivalGoals;
+          newActs.act3 = { winner:determineActWinner(yt,rt), playerGoals:p1g, playerSaves:5-p1g, buddyGoals:bg, rivalBotGoals:rt, yourTotal:yt, rivalTotal:rt };
+          newWinners[2] = newActs.act3.winner; updated = true;
         }
 
         if (updated) {
@@ -1039,12 +1033,6 @@ export default function Raid() {
               RAIDS
             </span>
           </button>
-          {phase !== 'lobby' && (
-            <div className="pn-nav-tag" style={{ background: 'rgba(168,85,247,0.15)', borderColor: '#a855f7', color: '#a855f7', padding: '4px 10px', fontSize: '0.65rem' }}>
-              <span className="pn-tag-dot" style={{ background: '#a855f7', boxShadow: '0 0 8px #a855f7' }} />
-              RAID
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -1574,11 +1562,10 @@ export default function Raid() {
         {[
           { id: "home",  label: "Games", IconC: BallIcon,   route: "/" },
           { id: "guild", label: "Guild", IconC: ShieldIcon, route: "/guild" },
-          { id: "raids", label: "Raids", IconC: SwordsIcon, route: "/raid" },
           { id: "ranks", label: "Ranks", IconC: RankIcon,   route: "/ranks" },
           { id: "me",    label: "Profile", IconC: PersonIcon, route: "/profile" },
         ].map(item => {
-          const active = item.id === "raids";
+          const active = false;
           const NavIcon = item.IconC;
           return (
             <button key={item.id} className="raid-nav-item" onClick={() => {

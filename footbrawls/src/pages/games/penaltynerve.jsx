@@ -338,12 +338,25 @@ html { scroll-behavior: smooth; }
   filter: drop-shadow(0 0 6px rgba(247,195,68,0.9));
 }
 
-/* ── ARMS: both hands snap out to a full perpendicular reach, starfish-style ── */
+/* ── ARMS: default spread (used for center dives / idle fallback) ── */
 .pn-goalkeeper.pn-gk-diving .pn-gk-arm-left  { animation: armReachLeft 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
 .pn-goalkeeper.pn-gk-diving .pn-gk-arm-right { animation: armReachRight 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards; }
 
 @keyframes armReachLeft  { 0%{transform:rotate(0deg)} 45%{transform:rotate(-120deg)} 100%{transform:rotate(-160deg)} }
 @keyframes armReachRight { 0%{transform:rotate(0deg)} 45%{transform:rotate(120deg)}  100%{transform:rotate(160deg)}  }
+
+/* ── When diving to a side, BOTH arms reach toward that same side ── */
+.pn-goalkeeper.pn-gk-diving.dive-topLeft .pn-gk-arm-right,
+.pn-goalkeeper.pn-gk-diving.dive-bottomLeft .pn-gk-arm-right {
+  animation: armReachLeftCross 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards;
+}
+.pn-goalkeeper.pn-gk-diving.dive-topRight .pn-gk-arm-left,
+.pn-goalkeeper.pn-gk-diving.dive-bottomRight .pn-gk-arm-left {
+  animation: armReachRightCross 0.55s cubic-bezier(0.2,0.9,0.3,1.15) forwards;
+}
+
+@keyframes armReachLeftCross  { 0%{transform:rotate(0deg)} 45%{transform:rotate(-140deg)} 100%{transform:rotate(-185deg)} }
+@keyframes armReachRightCross { 0%{transform:rotate(0deg)} 45%{transform:rotate(140deg)}  100%{transform:rotate(185deg)}  }
 
 /* ── DIVING — body only, arms/legs driven by JS ── */
 .pn-goalkeeper.pn-gk-diving { animation: none; }

@@ -1,5 +1,6 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from "@vercel/analytics/react"
 import { getUser } from './lib/user';
 import Onboarding from './pages/Onboarding';
 import Home from './pages/Home';
@@ -31,30 +32,33 @@ function RequireUser({ children }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/" element={<RequireUser><Home /></RequireUser>} />
-        <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
-        <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
-        <Route path="/vs-friends" element={<RequireUser><VsFriends /></RequireUser>} />
-        <Route path="/ranks" element={<RequireUser><Layout><Ranks /></Layout></RequireUser>} />
-        <Route path="/profile" element={<RequireUser><Profile /></RequireUser>} />
-        <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
-        <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
-        <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />
-        <Route path="/games/higherlower" element={<RequireUser><Layout hideMobileNav><HigherOrLower /></Layout></RequireUser>} />
-        <Route path="/games/matchpredictor" element={<RequireUser><Layout hideMobileNav><MatchPredictor /></Layout></RequireUser>} />
-        <Route path="/games/penaltynerve" element={<RequireUser><Layout hideMobileNav><PenaltyNerve /></Layout></RequireUser>} />
-        <Route path="/games/dribble" element={<RequireUser><Layout hideMobileNav><DribbleGauntlet /></Layout></RequireUser>} />
-        <Route path="/games/dailytrivia" element={<RequireUser><Layout hideMobileNav><DailyTrivia /></Layout></RequireUser>} />
-        <Route path="/games/top10" element={<RequireUser><Layout hideMobileNav><Top10Guess /></Layout></RequireUser>} />
-        <Route path="/about" element={<AboutUs />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/contact" element={<ContactUs />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/" element={<RequireUser><Home /></RequireUser>} />
+          <Route path="/guild" element={<RequireUser><Guild /></RequireUser>} />
+          <Route path="/raid" element={<RequireUser><Raid /></RequireUser>} />
+          <Route path="/vs-friends" element={<RequireUser><VsFriends /></RequireUser>} />
+          <Route path="/ranks" element={<RequireUser><Layout><Ranks /></Layout></RequireUser>} />
+          <Route path="/profile" element={<RequireUser><Profile /></RequireUser>} />
+          <Route path="/games/whoareya" element={<RequireUser><Layout hideMobileNav><WhoAreYa /></Layout></RequireUser>} />
+          <Route path="/games/wordle" element={<RequireUser><Layout hideMobileNav><Wordle /></Layout></RequireUser>} />
+          <Route path="/games/transfertrail" element={<RequireUser><Layout><TransferTrail /></Layout></RequireUser>} />
+          <Route path="/games/higherlower" element={<RequireUser><Layout hideMobileNav><HigherOrLower /></Layout></RequireUser>} />
+          <Route path="/games/matchpredictor" element={<RequireUser><Layout hideMobileNav><MatchPredictor /></Layout></RequireUser>} />
+          <Route path="/games/penaltynerve" element={<RequireUser><Layout hideMobileNav><PenaltyNerve /></Layout></RequireUser>} />
+          <Route path="/games/dribble" element={<RequireUser><Layout hideMobileNav><DribbleGauntlet /></Layout></RequireUser>} />
+          <Route path="/games/dailytrivia" element={<RequireUser><Layout hideMobileNav><DailyTrivia /></Layout></RequireUser>} />
+          <Route path="/games/top10" element={<RequireUser><Layout hideMobileNav><Top10Guess /></Layout></RequireUser>} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      <Analytics />
+    </>
   );
 }

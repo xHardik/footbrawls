@@ -8,7 +8,7 @@ export const GUILD_LEVELS = [
     level:      1,
     name:       "Grassroots",
     emoji:      "🌱",
-    hpCap:      10_000,
+    hpCap:      25_000,
     color:      "#6b7280",
     perks: {
       blessingXPBonus:     0.25,   // +25% XP when blessed
@@ -22,7 +22,7 @@ export const GUILD_LEVELS = [
     level:      2,
     name:       "Rising",
     emoji:      "⚡",
-    hpCap:      25_000,
+    hpCap:      60_000, // 35k + 25k = 60k
     color:      "#3b82f6",
     perks: {
       blessingXPBonus:     0.30,
@@ -36,7 +36,7 @@ export const GUILD_LEVELS = [
     level:      3,
     name:       "Established",
     emoji:      "🏟️",
-    hpCap:      50_000,
+    hpCap:      110_000, // 50k + 35k + 25k = 110k
     color:      "#10b981",
     perks: {
       blessingXPBonus:     0.35,
@@ -50,7 +50,7 @@ export const GUILD_LEVELS = [
     level:      4,
     name:       "Elite",
     emoji:      "🏆",
-    hpCap:      100_000,
+    hpCap:      185_000, // 75k + 110k = 185k
     color:      "#f59e0b",
     perks: {
       blessingXPBonus:     0.40,
@@ -75,8 +75,6 @@ export const GUILD_LEVELS = [
     perkLabels: ["Permanent +10% XP bonus", "Blessing +50% XP", "+3 raid defence zones", "Full curse resistance", "Max raid fortress"],
   },
 ];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
  * Get level config by level number (1–5)
